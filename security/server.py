@@ -22,10 +22,10 @@ staged run, each exploit dir, REPORT.md) is produced by the model/script -
 it is all server-related, hence the `server/` subfolder.
 
 Usage:
-  python3 security-server.py scan    > findings.txt 2> progress.log
-  python3 security-server.py exploit                 # reads findings.txt
-  python3 security-server.py all                     # scan then exploit
-  (no arg defaults to `scan`)
+  python3 security-server.py         > findings.txt 2> progress.log   # DEFAULT
+  python3 security-server.py scan                               # whole-file (legacy)
+  python3 security-server.py exploit                           # reads findings.txt
+  (no arg defaults to per-function scan + exploit)
 """
 
 import concurrent.futures
@@ -388,6 +388,34 @@ ADVERSARIAL_PREAMBLE = (
     "identified' - but ONLY after naming, for each length/index/id consumed, "
     "the FILE:LINE guard that bounds it. A bare clean verdict without those "
     "guards is rejected.\n\n")
+
+# Preamble prepended to an ADVERSARIAL VALIDATION exploit pass (see run_exploit):
+# a second, independent model re-attacks a finding the primary model could not
+# confirm. Two %s slots carry the primary pass's (verdict, reason) so the
+# validator knows exactly which conclusion to refute. Its brief is deliberately
+# WIDER than memory-safety - it must also hunt GAME-LOGIC / rule-invariant
+# exploits (object duplication, illicit acquisition, impossible actions) and
+# prove them via GDB read-only state inspection (SUCCESS case c), which need not
+# crash the server.
+ADVERSARIAL_EXPLOIT_PREAMBLE = (
+    "ADVERSARIAL VALIDATION. A first exploit pass by a DIFFERENT model concluded:\n"
+    "  VERDICT: %s\n  REASON: %s\n"
+    "Treat that conclusion as WRONG and find the exploit it missed. Your brief is "
+    "WIDER than memory-safety: hunt GAME-LOGIC / RULE-INVARIANT exploits too and "
+    "prove them via GDB read-only state inspection (SUCCESS case c) - the real "
+    "server state IS the proof, it need not crash:\n"
+    "- OBJECT DUPLICATION: make an item / monster / object count rise with no "
+    "legitimate cost, or clone a unique object (dupe via trade/drop/craft/"
+    "warehouse race, a replayed packet, or an interrupted/aborted transaction).\n"
+    "- ILLICIT ACQUISITION: obtain an item / monster / cash / reputation the rules "
+    "forbid, or reach an object through a path that should be impossible.\n"
+    "- IMPOSSIBLE ACTION / RULE BYPASS: perform an action the rules must reject "
+    "(act in the wrong state, bypass an ownership / quantity / range / auth check, "
+    "win a fight that is not won).\n"
+    "Demonstrate any of these by GDB-reading the real player/item/monster fields "
+    "BEFORE vs AFTER your RUN and comparing to what the rules allow. A crash / "
+    "hang / valgrind memory error still counts too. Only if you also make a "
+    "genuine attempt and still find it safe, give the concrete logic path.\n\n")
 
 # ---------------------------------------------------------------------------
 # Semantic static analysis: the Clang Static Analyzer, driven through clang-tidy
@@ -2090,11 +2118,13 @@ _BUDGET_BY_SIZE = (
 )
 
 
-def _auto_budget_for_model():
-    """Suggested per-exploit budget (seconds) for the configured model based on
-    its parameter count, or None if unknown. Used ONLY when SECSERVER_BUDGET is
-    not set, so an explicit operator choice always wins."""
-    name = (common.MODEL_NAME or "").split("@", 1)[0]
+def _auto_budget_for_spec(spec):
+    """Suggested per-exploit budget (seconds) for an arbitrary model spec, by its
+    parameter count, or None if unknown (a Claude spec, or a model absent from the
+    local Ollama list). The spec may carry an '@host' backend pin, stripped here."""
+    name = (spec or "").split("@", 1)[0]
+    if name in ("claude", "claude-cli") or name.startswith(("claude:", "claude-cli:")):
+        return None
     for nm, size in ollama_models():
         if nm == name and size is not None:
             for floor, secs in _BUDGET_BY_SIZE:
@@ -2102,6 +2132,13 @@ def _auto_budget_for_model():
                     return secs
             return None
     return None
+
+
+def _auto_budget_for_model():
+    """Suggested per-exploit budget (seconds) for the configured model based on
+    its parameter count, or None if unknown. Used ONLY when SECSERVER_BUDGET is
+    not set, so an explicit operator choice always wins."""
+    return _auto_budget_for_spec(common.MODEL_NAME)
 
 
 def _warn_slow_model(hard_budget):
@@ -2133,6 +2170,61 @@ def _effective_budgets():
         return resolve_budgets()
     soft = int(suggested * 0.75)
     return suggested, soft
+
+
+# Adversarial validation of the exploit phase. ON BY DEFAULT: a SECOND pass
+# re-attacks every finding the primary model could not confirm, on its OWN
+# separate budget (below), so its analysis time is NEVER charged against the
+# primary exploit's budget; its brief also covers game-LOGIC exploits (object
+# dup / illicit acquisition / impossible action), not only memory-safety.
+# SECSERVER_ADVERSARIAL_MODEL selects the validator:
+#   unset / 'same' / 'self' / '1' ... -> REUSE the primary --model (the default,
+#                                        so one flag drives audit + validation);
+#   a model spec ('@host' pin ok, or 'claude' / 'claude-cli') -> that model;
+#   'off' / 'none' / '0' / 'no' -> DISABLE the pass.
+ADVERSARIAL_MODEL_REQUEST = os.environ.get("SECSERVER_ADVERSARIAL_MODEL", "").strip()
+_ADVERSARIAL_SAME_TOKENS = {"same", "self", "1", "primary", "yes", "true", "on"}
+_ADVERSARIAL_OFF_TOKENS = {"off", "none", "0", "no", "false", "disable", "disabled"}
+
+
+def _primary_model_spec():
+    """chat_with() spec for the CURRENTLY configured primary backend/model - what
+    the default (and 'same') resolves the validator to."""
+    if common.USE_CLAUDE:
+        base = "claude-cli" if common.CLAUDE_VIA_CLI else "claude"
+        return "%s:%s" % (base, common.CLAUDE_MODEL) if common.CLAUDE_MODEL else base
+    return common.MODEL_NAME
+
+
+def _adversarial_model():
+    """The resolved adversarial-validation model spec ('' = disabled). Resolved at
+    RUN time (after --model parsing) so the DEFAULT (unset) and 'same'/'self'/'1'
+    reuse the ACTUAL primary model - one --model drives audit + validation. An
+    explicit off-token disables the pass."""
+    req = ADVERSARIAL_MODEL_REQUEST
+    low = req.lower()
+    if low in _ADVERSARIAL_OFF_TOKENS:
+        return ""                      # explicitly disabled
+    if not req or low in _ADVERSARIAL_SAME_TOKENS:
+        return _primary_model_spec()   # DEFAULT (unset) or 'same' -> reuse primary
+    return req                          # a specific validator model
+
+
+def _adversarial_budgets(primary_hard, adv_model):
+    """(hard, soft) seconds for the adversarial-validation pass - SEPARATE from
+    the primary exploit budget. SECSERVER_ADVERSARIAL_BUDGET / _SOFT_BUDGET win;
+    else the validator model's own size-based budget (a 119B wants ~2h/exploit),
+    else the primary hard budget as a floor."""
+    env_hard = os.environ.get("SECSERVER_ADVERSARIAL_BUDGET")
+    if env_hard:
+        hard = int(env_hard)
+    else:
+        hard = _auto_budget_for_spec(adv_model) or primary_hard
+    env_soft = os.environ.get("SECSERVER_ADVERSARIAL_SOFT_BUDGET")
+    soft = int(env_soft) if env_soft else int(hard * 0.75)
+    return hard, soft
+
+
 EXPLOIT_MAX_STEPS = int(os.environ.get("SECSERVER_STEPS", "400"))  # safety cap
 # Stall guard: after this many compile+run cycles with NO crash/hang/memerr the
 # model is hammering a dead end -> demand a verdict, then drop the finding at 2x.
@@ -3594,21 +3686,57 @@ def exploit_reach_context(rel, src_path):
     return ("\n\n" + "\n\n".join(blocks)) if blocks else ""
 
 
-def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None):
+# Model spec the exploit loop's chat() turns target while an adversarial-
+# validation pass is running (set by exploit_one for the duration of that pass);
+# None -> the default configured backend. Sequential exploit phase, so a plain
+# module global is safe: every exploit_one call re-sets it at entry.
+_EXPLOIT_MODEL_SPEC = None
+
+# Total candidate count for the current run_exploit(), so the per-finding log
+# line can show "idx/total". Set once in run_exploit before the loop; 0 means
+# unknown (exploit_one called standalone) -> the log omits the total.
+_EXPLOIT_TOTAL = 0
+
+
+def _exploit_chat(messages, timeout=None):
+    """A chat turn for the exploit loop, routed to the adversarial-validation
+    model (_EXPLOIT_MODEL_SPEC) when one is active, else the configured backend."""
+    if _EXPLOIT_MODEL_SPEC:
+        return chat_with(_EXPLOIT_MODEL_SPEC, messages, timeout)
+    return chat(messages, timeout)
+
+
+def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
+                model_spec=None, adversarial=False, refute_verdict="",
+                refute_reason=""):
     """Run the exploit agent for one candidate. Returns (verdict, reason, dir).
 
     `mode_override` ('gdb' | 'valgrind') forces the starting supervisor
     instead of RUN_UNDER; used by run_exploit's valgrind-retry path: when a
     gdb-mode pass returned NOT-EXPLOITABLE, run_exploit calls this again with
     mode_override='valgrind' to catch the silent OOB/bad-free reads gdb
-    can't see (one retry per finding, disabled by CC_NO_VALGRIND_RETRY=1)."""
-    global _CURRENT_LIVE
+    can't see (one retry per finding, disabled by CC_NO_VALGRIND_RETRY=1).
+
+    `model_spec` (+ `adversarial`) drive an ADVERSARIAL VALIDATION pass: the loop's
+    chat turns target `model_spec` (a second, stronger model) and the user prompt
+    is prefixed with ADVERSARIAL_EXPLOIT_PREAMBLE carrying the primary pass's
+    (`refute_verdict`, `refute_reason`) to refute - including game-logic exploits.
+    Output goes to a distinct '-adv' dir."""
+    global _CURRENT_LIVE, _EXPLOIT_MODEL_SPEC
+    _EXPLOIT_MODEL_SPEC = model_spec
     outdir = os.path.join(OUTPUT_ROOT, slugify(rel, idx))
     os.makedirs(outdir, exist_ok=True)
     if mode_override:
         outdir = outdir + ("-vg" if mode_override == "valgrind" else "-gdb")
         os.makedirs(outdir, exist_ok=True)
-    sys.stderr.write("\n%s [exploit %02d] %s -> %s\n" % (_ts(), idx, rel, outdir))
+    if adversarial:
+        outdir = outdir + "-adv"
+        os.makedirs(outdir, exist_ok=True)
+    sys.stderr.write("\n%s [exploit %02d%s%s] %s -> %s\n"
+                     % (_ts(), idx,
+                        "/%02d" % _EXPLOIT_TOTAL if _EXPLOIT_TOTAL else "",
+                        " ADV %s" % model_spec if adversarial else "",
+                        rel, outdir))
     # server.py OWNS the supervisor instance: we boot the server under gdb (or
     # valgrind) up front and tear it down at the end. The model never starts/
     # stops it - it only pokes the already-running instance via TCP (and, in gdb
@@ -3684,6 +3812,10 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None)
         "other supervisor better exposes this bug (valgrind for OOB/bad-free, "
         "gdb for live game-state inspection). Begin."
         % (rel, finding, src_block, reach_block, outdir, GDB_PORT, live.mode))
+    if adversarial:
+        user = (ADVERSARIAL_EXPLOIT_PREAMBLE
+                % (refute_verdict or "NOT-EXPLOITABLE",
+                   refute_reason or "(no reason given)")) + user
     messages = [
         {"role": "system", "content": EXPLOIT_SYSTEM},
         {"role": "user", "content": user},
@@ -3714,7 +3846,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None)
                               % _human_dur(hard_budget))
             break
         step += 1
-        answer = chat(messages, timeout=max(1, int(deadline - time.time())))
+        answer = _exploit_chat(messages, timeout=max(1, int(deadline - time.time())))
         remaining = int(deadline - time.time())
         transcript.append("### assistant (step %d, %ds left)\n%s"
                           % (step, remaining, answer))
@@ -3948,7 +4080,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None)
                 "have a working CONFIRMED proof emit 'VERDICT CONFIRMED "
                 "<reason>', otherwise emit 'VERDICT FALSEPOSITIVE <one-line "
                 "reason it is not exploitable>' now."})
-            final = chat(messages, timeout=max(1, int(deadline - time.time())))
+            final = _exploit_chat(messages, timeout=max(1, int(deadline - time.time())))
             transcript.append("### assistant (final, soft budget)\n%s" % final)
             act = parse_action(final)
             if act and act[0] == "VERDICT":
@@ -3975,6 +4107,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None)
 
     live.stop()
     _CURRENT_LIVE = None
+    _EXPLOIT_MODEL_SPEC = None   # clear the adversarial override for the next call
     open(os.path.join(outdir, "transcript.md"), "w").write(
         "# Exploit transcript: %s\n\nVERDICT: %s - %s\n\n%s\n"
         % (rel, verdict, reason, "\n\n".join(transcript)))
@@ -4155,12 +4288,23 @@ def run_exploit():
     _cap = os.environ.get("SECSERVER_MAX")
     if _cap:
         candidates = candidates[:int(_cap)]
+    global _EXPLOIT_TOTAL
+    _EXPLOIT_TOTAL = len(candidates)
     os.makedirs(OUTPUT_ROOT, exist_ok=True)
     hard_budget, soft_budget = _effective_budgets()
     sys.stderr.write("%s [INIT] %d findings, %d look exploitable; generating "
                      "exploits via %s (budget per exploit: hard %s / soft %s)\n"
                      % (_ts(), len(findings), len(candidates), common.IA_LABEL,
                         _human_dur(hard_budget), _human_dur(soft_budget)))
+    adv_model = _adversarial_model()
+    if adv_model:
+        adv_hard, adv_soft = _adversarial_budgets(hard_budget, adv_model)
+        sys.stderr.write("%s [INIT] adversarial validation ON: findings the "
+                         "primary model cannot confirm are re-attacked by %s on a "
+                         "SEPARATE budget (hard %s / soft %s), also hunting "
+                         "game-logic exploits (dup / illicit-get / impossible)\n"
+                         % (_ts(), adv_model, _human_dur(adv_hard),
+                            _human_dur(adv_soft)))
     _warn_slow_model(hard_budget)
 
     results = []
@@ -4221,6 +4365,38 @@ def run_exploit():
                 # the gdb pass's verdict/reason stand.
                 sys.stderr.write("%s     [valgrind-retry] also clean (%s); gdb "
                                  "verdict stands\n" % (_ts(), vg_verdict))
+        # ADVERSARIAL VALIDATION: a SEPARATE, independent (usually stronger) model
+        # re-attacks a finding the primary passes could not confirm - on its OWN
+        # budget, so its analysis time is NOT charged to the primary exploit. Its
+        # brief also covers game-LOGIC exploits (object dup / illicit acquisition /
+        # impossible action) proven via GDB state inspection, not just crashes.
+        # Opt-in via SECSERVER_ADVERSARIAL_MODEL; a CONFIRMED here wins.
+        if verdict != "CONFIRMED" and adv_model:
+            adv_hard, adv_soft = _adversarial_budgets(hard_budget, adv_model)
+            sys.stderr.write("%s     [adversarial-validation] primary was %s -> "
+                             "re-attacking with %s (separate budget: hard %s / "
+                             "soft %s)\n"
+                             % (_ts(), verdict, adv_model,
+                                _human_dur(adv_hard), _human_dur(adv_soft)))
+            try:
+                adv_verdict, adv_reason, adv_outdir = exploit_one(
+                    rel, body, idx, adv_hard, adv_soft,
+                    model_spec=adv_model, adversarial=True,
+                    refute_verdict=verdict, refute_reason=reason)
+            except Exception as e:  # noqa - a bad validation pass never aborts the run
+                sys.stderr.write("    [adversarial-validation error] %s\n" % e)
+                adv_verdict, adv_reason, adv_outdir = "ERROR", str(e), "-"
+            finally:
+                if _CURRENT_LIVE is not None:
+                    _CURRENT_LIVE.stop()
+            if adv_verdict == "CONFIRMED":
+                verdict, reason, outdir = (
+                    adv_verdict,
+                    adv_reason + " [adversarial validation: %s]" % adv_model,
+                    adv_outdir)
+            else:
+                sys.stderr.write("%s     [adversarial-validation] also %s; primary "
+                                 "verdict stands\n" % (_ts(), adv_verdict))
         # Keep EVERY exploit folder (confirmed or not). A non-confirmed one is
         # not deleted - we just drop a fail.md marker into it recording the
         # verdict and the logic-path explanation of WHY it is not exploitable.
@@ -4310,14 +4486,20 @@ def _print_help(prog):
     sys.stderr.write(
         "usage: %s [--model=NAME] [scan|exploit|all] [2> progress.log]\n"
         "\n"
-        "Modes (default: all):\n"
-        "  scan     Audit server/cli; findings printed to stdout AND written\n"
-        "           to %s\n"
-        "  exploit  Generate+run exploits for %s\n"
-        "  all      scan then exploit  [DEFAULT]\n"
+        "Modes (default: all = per-function security scan + exploit):\n"
+        "  all       PER-FUNCTION audit (one function + its caller tree at a\n"
+        "            time, small-model friendly) then exploit  [DEFAULT]\n"
+        "            aliases: codecheck, per-function, perfunc\n"
+        "  scan      WHOLE-FILE audit (legacy): analyze() dumps each full file\n"
+        "            + caller/related context. Findings printed to stdout AND\n"
+        "            written to %s\n"
+        "  exploit   Generate+run exploits for %s\n"
         "\n"
         "Options:\n"
         "  --model=NAME   Ollama model to use (default: %s)\n"
+        "                 In the default (per-function) mode this is the lone\n"
+        "                 reviewer when CC_IA_PANEL is unset; with CC_IA_PANEL>=2\n"
+        "                 it is ignored in favour of the multi-IA workgroup.\n"
         "                 e.g. --model=gemma4:26b or --model=qwen2.5-coder:32b\n"
         "                 append '@host:port' to pin a specific Ollama backend,\n"
         "                 e.g. --model=qwen3:30b-a3b@gpu1:11434\n"
@@ -4335,37 +4517,40 @@ def _print_help(prog):
         "Examples:\n"
         "  # Default (backend + model come from ~/.config/CatchChallenger/\n"
         "  # ia-settings.json: 'ia_backend' + 'claude_api_key' OR 'ollama_host').\n"
-        "  # Scan (detection) then exploit, both via the configured backend.\n"
-        "  python3 server.py all 2> progress.log\n"
+        "  # Per-function security scan then exploit, via the configured backend.\n"
+        "  python3 server.py 2> progress.log\n"
         "\n"
         "  # Claude (Anthropic API) - detection + exploit on Claude Opus 4.8.\n"
         "  # Key + ia_backend='claude' live in the out-of-repo settings; no env.\n"
         "  CC_IA_BACKEND=claude CC_CLAUDE_MODEL=claude-opus-4-8 \\\n"
-        "      python3 server.py all 2> progress.log\n"
+        "      python3 server.py 2> progress.log\n"
         "\n"
         "  # Claude via the OFFICIAL CLI - the ONLY ToS-safe way to use a Pro/Max\n"
         "  # SUBSCRIPTION (replaying its OAuth token from the API path is a Terms\n"
         "  # violation). Just `claude` logged in once; no token/key here at all.\n"
-        "  CC_IA_BACKEND=claude-cli python3 server.py all 2> progress.log\n"
+        "  CC_IA_BACKEND=claude-cli python3 server.py 2> progress.log\n"
         "\n"
         "  # LOCAL Ollama with a SPECIFIC model (override the settings default).\n"
         "  # Hit 127.0.0.1:11434 directly; --model picks the served model.\n"
         "  OLLAMA_HOST=http://127.0.0.1:11434 \\\n"
-        "      python3 server.py --model=qwen2.5-coder:32b all 2> progress.log\n"
+        "      python3 server.py --model=qwen2.5-coder:32b 2> progress.log\n"
         "\n"
         "  # REMOTE Ollama daemon (or the PHP router) + a specific model.\n"
         "  # The URL embeds infra IP - keep it in the out-of-repo settings, NOT\n"
         "  # on the command line; append '@host:port' to pin a backend per model.\n"
-        "  python3 server.py --model=gemma4:26b@rtx5090:11434 all 2> progress.log\n"
+        "  python3 server.py --model=gemma4:26b@rtx5090:11434 2> progress.log\n"
         "\n"
-        "  # ALL models work TOGETHER (collaborative panel): several local Ollama\n"
-        "  # models + Claude audit each file at once, discuss up to 10 rounds,\n"
-        "  form work groups, and a lead synthesises the consensus. 'auto' picks\n"
-        "  every installed Ollama model <35B; add Claude explicitly if a key is\n"
-        "  set. Detection (scan) uses the panel; exploit uses the single lead.\n"
-        "  CC_IA_PANEL=auto,claude python3 server.py scan 2> progress.log\n"
+        "  # ALL models work TOGETHER (collaborative workgroup): several local\n"
+        "  # Ollama models + Claude review each function, discuss, form work\n"
+        "  # groups around shared findings. 'auto' picks every installed Ollama\n"
+        "  # model <35B; add Claude explicitly if a key is set.\n"
+        "  CC_IA_PANEL=auto,claude python3 server.py 2> progress.log\n"
         "  # Explicit panel across multiple backends (each pinned to its host):\n"
-        "  python3 server.py --collaborate=qwen3:30b@gpu1:11434,deepseek:33b@gpu2:11434,claude all 2> progress.log\n"
+        "  python3 server.py --collaborate=qwen3:30b@gpu1:11434,deepseek:33b@gpu2:11434,claude 2> progress.log\n"
+        "\n"
+        "  # Legacy WHOLE-FILE audit (one full file + caller context per turn;\n"
+        "  # needs a large-context model). Explicit opt-in:\n"
+        "  python3 server.py scan 2> progress.log\n"
         "\n"
         "Environment overrides:\n"
         "  CC_IA_BACKEND         ollama (default) | claude (API) | claude-cli\n"
@@ -4394,6 +4579,20 @@ def _print_help(prog):
         "                        the exploit model switches at runtime (see --mode)\n"
         "  SECSERVER_BUDGET      Hard per-exploit budget in seconds\n"
         "  SECSERVER_SOFT_BUDGET Soft per-exploit budget in seconds (default 75%%)\n"
+        "  SECSERVER_ADVERSARIAL_MODEL   the adversarial-validation model. A\n"
+        "                        SECOND pass RE-ATTACKS every finding the primary\n"
+        "                        model could not confirm, on its OWN budget\n"
+        "                        (analysis time not charged to the primary), also\n"
+        "                        hunting game-LOGIC exploits (object dup / illicit\n"
+        "                        acquisition / impossible action); a CONFIRMED here\n"
+        "                        wins. ON BY DEFAULT reusing the primary --model.\n"
+        "                        Set a model spec (mistral-small-4:119b, '@host'\n"
+        "                        pin ok, claude / claude-cli) to validate with a\n"
+        "                        DIFFERENT model; 'off' / 'none' disables the pass.\n"
+        "  SECSERVER_ADVERSARIAL_BUDGET       hard budget (s) for that pass\n"
+        "                        (default: the validator's size-based budget, else\n"
+        "                        the primary hard budget)\n"
+        "  SECSERVER_ADVERSARIAL_SOFT_BUDGET  soft budget (s) for that pass (75%%)\n"
         "  SECSERVER_STEPS       Max exploit turns (default 400)\n"
         "  SECSERVER_RUNTIMEOUT  RUN wall timeout in seconds (default 900)\n"
         "  SECSERVER_CPU         Sandbox RLIMIT_CPU seconds (default 10)\n"
@@ -4436,8 +4635,10 @@ def run_codecheck():
     turn, may pull more data); the IAs discuss and form consensus WORKGROUPS around
     shared findings. The workgroup-vetted candidates are written to FINDINGS and
     run_exploit() DEVELOPS the proof. So server.py = multi-IA security audit + exploit
-    generation, small-model friendly. Single-IA (no CC_IA_PANEL) = the lone agentic
-    reviewer; no proof => no claim."""
+    generation, small-model friendly. DEFAULT mode (no arg / `all`): when CC_IA_PANEL
+    is unset the lone agentic reviewer is the configured model (--model / CC_IA_MODEL
+    / claude[-cli]); CC_IA_PANEL>=2 upgrades to a multi-IA workgroup. No proof => no
+    claim."""
     # codecheck.py (the shared per-function engine) lives in tools/codecheck/.
     _cc_dir = os.path.normpath(os.path.join(
         os.path.dirname(os.path.abspath(__file__)), "..", "tools", "codecheck"))
@@ -4445,14 +4646,12 @@ def run_codecheck():
         sys.path.insert(0, _cc_dir)
     import codecheck
     import agentic
-    # The LLM(s) are MANDATORY and never auto-chosen — fail fast before the build.
-    specs = agentic.resolve_llms()
-    if not specs:
-        sys.stderr.write(
-            "error: at least one LLM is MANDATORY and is never auto-chosen — set "
-            "CC_IA_PANEL to a model[@ollama-url] list (>= 2 => panel/workgroup) or "
-            "'claude' (the official CLI).\n")
-        return 2
+    # The LLM(s): an explicit CC_IA_PANEL list (>= 2 => multi-IA workgroup), else
+    # the CONFIGURED single model — spec None makes common.chat_with route to the
+    # active backend with its default model (Ollama MODEL_NAME / claude[-cli]).
+    # Mirrors run_scan's model resolution so the DEFAULT mode works out of the box
+    # with just --model / CC_IA_MODEL, no CC_IA_PANEL required.
+    specs = agentic.resolve_llms() or [None]
     os.makedirs(OUTPUT_ROOT, exist_ok=True)
     # CC_CODECHECK_SCOPE / CC_CODECHECK_LIMIT bound the run (for a quick test or a
     # focused audit); default is the whole C/C++ tree.
@@ -4477,8 +4676,10 @@ def run_codecheck():
     codecheck.prewarm_tidy(funcs)
     codecheck.reset_cache_stats()
     by_file = {}
+    total = len(funcs)
+    nfind = 0
     i = 0
-    while i < len(funcs):
+    while i < total:
         fi = funcs[i]
         i += 1
         blocks = agentic.audit_function(idx, fi, specs, role="security",
@@ -4487,6 +4688,13 @@ def run_codecheck():
             rel = os.path.relpath(fi.file, REPO_ROOT)
             by_file.setdefault(rel, []).append(
                 "## %s (%s:%d)\n%s" % (fi.qual_name, rel, fi.line, "\n\n".join(blocks)))
+            nfind += 1
+        # Progress: each function is a slow LLM turn, so print often enough that a
+        # long run does not look hung (every 10, plus the last). Show the running
+        # finding count so the user sees candidates accruing.
+        if i % 10 == 0 or i == total:
+            sys.stderr.write("  %d/%d funcs, %d with finding(s)\n"
+                             % (i, total, nfind))
     sys.stderr.write("[codecheck] %s\n" % codecheck.cache_summary())
     # Deterministic static-analyzer findings (whole-file, every function — not just
     # the indexed ones) as extra security candidates for the exploit phase.
@@ -4576,24 +4784,18 @@ def main(argv):
 
     mode = args[0] if args else "all"
     if mode in ("scan", "-s", "--scan"):
+        # Legacy WHOLE-FILE audit (analyze() dumps the full file + caller/related
+        # context). Explicit opt-in: the default path below is per-function.
         return run_scan(sys.stdout)
     if mode in ("exploit", "-e", "--exploit"):
         return run_exploit()
-    if mode in ("all", "-a", "--all"):
-        os.makedirs(OUTPUT_ROOT, exist_ok=True)
-        rc = run_scan(sys.stdout)
-        sys.stdout.flush()
-        if rc != 0:
-            return rc
-        return run_exploit()
-    if mode in ("codecheck", "per-function", "perfunc"):
-        # SHARED engine with codecheck.py: audit the C/C++ tree FUNCTION-BY-FUNCTION
-        # with a LIMITED per-function view (headers in full + the one body + its
-        # caller tree + ONE callee branch at a time). Each IA turn stays a few-K
-        # tokens, so a SMALL local model (CC_IA_MODEL=qwen3-coder:30b, small num_ctx)
-        # can do the audit where the per-file scan above needs a large-context model.
-        # Unlike codecheck.py this stays SECURITY-focused and then GENERATES EXPLOITS
-        # for what it finds (run_codecheck -> run_exploit).
+    if mode in ("all", "-a", "--all", "codecheck", "per-function", "perfunc"):
+        # DEFAULT: per-function SECURITY audit via the shared codecheck engine
+        # (agentic.py: limited per-function view + caller tree, one callee branch
+        # per turn — small-model friendly), then run_exploit() develops the proof.
+        # run_codecheck() resolves the LLM the same way run_scan does (CC_IA_PANEL
+        # for a multi-IA workgroup, else the configured --model / CC_IA_MODEL /
+        # claude[-cli] backend), so `python3 server.py` works out of the box.
         return run_codecheck()
     sys.stderr.write("error: unknown mode %r\n" % mode)
     _print_help(argv[0])
