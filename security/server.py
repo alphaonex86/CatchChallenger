@@ -4231,20 +4231,146 @@ def stage_run():
     return True
 
 
+# --- Exploit resume-cache ----------------------------------------------------
+# Re-running the (expensive, days-long) exploit phase should NOT re-attack a
+# finding already proven/cleared when nothing has changed. The whole cache is
+# guarded by a hash of the freshly-built server BINARY (+ the model spec doing
+# the work): if either differs from what the cache was written with, the cache
+# is INVALIDATED wholesale. The binary is the right guard because it IS the
+# audited code as compiled - any C/C++ change (even uncommitted) rebuilds it to
+# a different hash, while a change to the Python TOOLING never touches it (so it
+# never spuriously invalidates, unlike a git-commit guard which moves on every
+# commit incl. Python-only ones). ccache makes the per-run rebuild a few-seconds
+# relink. While the guard holds, each candidate is keyed by finding text (rel +
+# body); a cached candidate is SKIPPED and its stored verdict reused. Only
+# terminal verdicts (CONFIRMED / NOT-EXPLOITABLE) are cached; transient ERROR/
+# ABORT always retry. Cache lives under OUTPUT_ROOT (tmpfs scratch), not the repo.
+VERDICT_CACHE = os.path.join(OUTPUT_ROOT, "verdict-cache.json")
+
+
+def _server_bin_fingerprint():
+    """Hash of the (freshly-built) server binary = fingerprint of the audited
+    C/C++ as actually compiled. '' if the binary is missing -> guard disabled
+    (cache kept rather than wrongly wiped)."""
+    try:
+        with open(SERVER_BIN, "rb") as f:
+            return hashlib.sha1(f.read()).hexdigest()
+    except OSError:
+        return ""
+
+
+def _exploit_sig(rel, body):
+    """Per-candidate key: finding text (rel + body). Code changes are handled by
+    the cache-wide git-commit guard, not per candidate."""
+    h = hashlib.sha1()
+    h.update(rel.encode("utf-8", "replace"))
+    h.update(b"\0")
+    h.update(body.encode("utf-8", "replace"))
+    return h.hexdigest()
+
+
+def _load_verdict_cache(codehash, models):
+    """Load the resume-cache's verdict map. Empty dict if absent/corrupt, or if
+    the stored binary hash / model spec differs from now (INVALIDATED wholesale)."""
+    if os.environ.get("CC_EXPLOIT_NO_CACHE"):
+        return {}
+    try:
+        with open(VERDICT_CACHE, "r") as f:
+            data = json.load(f)
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    # codehash '' means "no binary to hash" on EITHER side -> don't invalidate on it.
+    if codehash and data.get("code") and data.get("code") != codehash:
+        sys.stderr.write("%s [INIT] resume-cache invalidated: server binary "
+                         "changed (%s -> %s); every exploit will be re-run\n"
+                         % (_ts(), (data.get("code") or "")[:12], codehash[:12]))
+        return {}
+    if data.get("models") != models:
+        return {}
+    v = data.get("verdicts")
+    return v if isinstance(v, dict) else {}
+
+
+def _read_transcript_verdict(dirpath):
+    """(verdict, reason) parsed from an exploit dir's transcript.md / fail.md;
+    (None, '') if absent or it holds no terminal verdict."""
+    fn = 0
+    for name in ("transcript.md", "fail.md"):
+        fn += 1
+        try:
+            with open(os.path.join(dirpath, name), errors="replace") as f:
+                for line in f:
+                    m = re.match(r"VERDICT:\s*(\S+)\s*(?:-\s*(.*))?$", line.strip())
+                    if m:
+                        return m.group(1), (m.group(2) or "").strip()
+        except OSError:
+            continue
+    return None, ""
+
+
+def _backfill_verdict_cache(candidates):
+    """Bootstrap the resume-cache from a PRIOR run's on-disk exploit dirs when no
+    cache file exists yet (first run after the cache was added, or a run killed
+    mid-way). For each candidate we read the verdict from its transcript.md and
+    its -vg / -adv siblings - CONFIRMED from ANY pass wins, matching the live
+    loop - so a multi-day run interrupted at N/M is not restarted from zero.
+    Assumes the on-disk dirs were produced by the CURRENT binary (the binary-hash
+    guard governs future invalidation once this backfill is saved)."""
+    out = {}
+    idx = 0
+    for rel, body in candidates:
+        idx += 1
+        base = os.path.join(OUTPUT_ROOT, slugify(rel, idx))
+        verdict, reason = None, ""
+        for suffix in ("", "-vg", "-adv"):
+            v, r = _read_transcript_verdict(base + suffix)
+            if v == "CONFIRMED":
+                verdict, reason = v, r
+                break
+            if v == "NOT-EXPLOITABLE" and verdict is None:
+                verdict, reason = v, r
+        if verdict in ("CONFIRMED", "NOT-EXPLOITABLE"):
+            out[_exploit_sig(rel, body)] = {"verdict": verdict, "reason": reason,
+                                            "kept": os.path.basename(base),
+                                            "rel": rel}
+    return out
+
+
+def _save_verdict_cache(verdicts, codehash, models):
+    """Persist the resume-cache atomically (tmp + rename); best-effort. Stamps the
+    server-binary hash + model spec so a later run can invalidate on a mismatch."""
+    if os.environ.get("CC_EXPLOIT_NO_CACHE"):
+        return
+    try:
+        os.makedirs(OUTPUT_ROOT, exist_ok=True)
+        tmp = VERDICT_CACHE + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump({"code": codehash, "models": models, "verdicts": verdicts},
+                      f, indent=1, sort_keys=True)
+        os.replace(tmp, VERDICT_CACHE)
+    except OSError as exc:
+        sys.stderr.write("%s     [cache] could not save %s: %s\n"
+                         % (_ts(), VERDICT_CACHE, exc))
+
+
 def run_exploit():
     """Phase 2. Returns 0/1."""
     check_tooling()
-    if not os.path.isfile(SERVER_BIN):
-        sys.stderr.write("%s [!] prebuilt server not found: %s - building it now\n"
-                         % (_ts(), SERVER_BIN))
-        if not build_server():
-            sys.stderr.write(
-                "[!] automatic build failed. Build it manually:\n"
-                "    cmake -S %s/server/cli -B %s "
-                "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo "
-                "&& cmake --build %s -j\n"
-                % (REPO_ROOT, BUILD_DIR, BUILD_DIR))
-            return 1
+    # Rebuild the target EVERY run (ccache makes an unchanged tree a few-seconds
+    # relink). The fresh binary's hash is the resume-cache freshness guard: same
+    # source -> same binary -> cached verdicts stay valid; any C/C++ change ->
+    # different binary -> cache invalidated. A build hiccup is non-fatal as long
+    # as some binary remains to attack (we then attack the previous one).
+    if not build_server() and not os.path.isfile(SERVER_BIN):
+        sys.stderr.write(
+            "[!] automatic build failed. Build it manually:\n"
+            "    cmake -S %s/server/cli -B %s "
+            "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo "
+            "&& cmake --build %s -j\n"
+            % (REPO_ROOT, BUILD_DIR, BUILD_DIR))
+        return 1
     # Stage the run kit (datapack + server-properties.xml + binary copy) the
     # LiveServer boots from. Without it every exploit aborts with "server kit
     # missing". Rebuilt each run so a fresh binary is always staged.
@@ -4264,24 +4390,27 @@ def run_exploit():
                          "first.\n" % (FINDINGS, sys.argv[0]))
         return 1
 
-    # CANDIDATE_RE is a PRIORITY ORDER, not a hard filter: a real bug worded
-    # without a trigger keyword must NOT be silently dropped (recall loss that
-    # trusts the model's phrasing over the code). Keyword-matched findings go
-    # first (most likely a rewarded class), the rest follow and are logged so
-    # the operator sees what was deprioritized. CC_EXPLOIT_MATCHED_ONLY=1
-    # restores the old matched-only behaviour if a run must stay tight.
+    # CANDIDATE_RE selects the findings whose wording matches a likely-rewarded
+    # bug class (memory-safety / crash / dup / auth-bypass / ...). By DEFAULT the
+    # exploit phase runs ONLY those (matched-only): a slow model exploiting the
+    # full 500+-finding tail costs weeks for near-zero extra yield. Set
+    # CC_EXPLOIT_MATCHED_ONLY=0 to also queue the unmatched findings after the
+    # matched ones (the old priority-order behaviour) when a run must be exhaustive
+    # and can afford it - a real bug worded without a trigger keyword is then not
+    # dropped, only deprioritized.
+    matched_only = os.environ.get("CC_EXPLOIT_MATCHED_ONLY", "1") != "0"
     matched = [(rel, body) for rel, body in findings if CANDIDATE_RE.search(body)]
     unmatched = [(rel, body) for rel, body in findings if not CANDIDATE_RE.search(body)]
     if unmatched:
         sys.stderr.write("%s [INIT] %d finding(s) did NOT match CANDIDATE_RE "
-                         "(deprioritized, %s):\n"
+                         "(%s):\n"
                          % (_ts(), len(unmatched),
-                            "DROPPED" if os.environ.get("CC_EXPLOIT_MATCHED_ONLY")
-                            else "still queued after matched"))
+                            "DROPPED - set CC_EXPLOIT_MATCHED_ONLY=0 to queue them"
+                            if matched_only else "queued after matched"))
         for rel, body in unmatched:
             sys.stderr.write("    - %s: %s\n"
                              % (rel, " ".join(body.split())[:120]))
-    if os.environ.get("CC_EXPLOIT_MATCHED_ONLY"):
+    if matched_only:
         candidates = matched
     else:
         candidates = matched + unmatched
@@ -4315,8 +4444,39 @@ def run_exploit():
     # when valgrind isn't installed; one retry per finding, same budget.
     valgrind_retry = (not os.environ.get("CC_NO_VALGRIND_RETRY")
                       and VALGRIND is not None)
+    # Resume-cache: guarded wholesale by the git HEAD commit + the model spec, so
+    # any C/C++ change (or model switch) re-attacks everything, while Python-
+    # tooling changes never invalidate. Loaded once; updated + persisted per
+    # candidate so a mid-way kill still resumes. On first run after the cache was
+    # added (no cache file yet) it BACKFILLS from any prior run's on-disk dirs.
+    cache_code = _server_bin_fingerprint()
+    cache_models = "%s|%s" % (common.IA_LABEL, adv_model or "")
+    verdict_cache = _load_verdict_cache(cache_code, cache_models)
+    if not verdict_cache and not os.environ.get("CC_EXPLOIT_NO_CACHE"):
+        verdict_cache = _backfill_verdict_cache(candidates)
+        if verdict_cache:
+            _save_verdict_cache(verdict_cache, cache_code, cache_models)
+            sys.stderr.write("%s [INIT] resume-cache backfilled %d verdict(s) from "
+                             "a prior on-disk run\n" % (_ts(), len(verdict_cache)))
+    if verdict_cache:
+        sys.stderr.write("%s [INIT] resume-cache: %d prior verdict(s) in %s "
+                         "(bin %s); unchanged candidates will be SKIPPED "
+                         "(CC_EXPLOIT_NO_CACHE=1 to force a full re-run)\n"
+                         % (_ts(), len(verdict_cache), VERDICT_CACHE,
+                            (cache_code or "no-bin")[:12]))
+    skipped = 0
     for rel, body in candidates:
         idx += 1
+        sig = _exploit_sig(rel, body)
+        hit = verdict_cache.get(sig)
+        if hit and not os.environ.get("CC_EXPLOIT_NO_CACHE"):
+            skipped += 1
+            sys.stderr.write("%s [exploit %02d/%02d] [cache] SKIP %s -> %s "
+                             "(unchanged since last run)\n"
+                             % (_ts(), idx, _EXPLOIT_TOTAL, rel, hit["verdict"]))
+            results.append((rel, hit["verdict"], hit.get("reason", ""),
+                            hit.get("kept", "-")))
+            continue
         try:
             verdict, reason, outdir = exploit_one(rel, body, idx,
                                                   hard_budget, soft_budget)
@@ -4415,6 +4575,14 @@ def run_exploit():
             sys.stderr.write("    [fail] %s -> not exploitable; marked with "
                              "%s/fail.md\n" % (rel, os.path.basename(outdir)))
         results.append((rel, verdict, reason, kept))
+        # Cache only TERMINAL verdicts so this candidate is skipped on a re-run
+        # (unless its code/finding/model changes). ERROR/ABORT are transient and
+        # never cached -> they always retry. Persist immediately so a run killed
+        # mid-way still resumes from the last completed candidate.
+        if verdict in ("CONFIRMED", "NOT-EXPLOITABLE"):
+            verdict_cache[sig] = {"verdict": verdict, "reason": reason,
+                                  "kept": kept, "rel": rel}
+            _save_verdict_cache(verdict_cache, cache_code, cache_models)
         # Notebook stays project-wide + short; the full path is in the file above.
         short = " ".join((reason or "").split())[:120]
         append_notes(rel, "<<<NOTES\n- exploit verdict: %s (%s) [%s]\nNOTES>>>"
