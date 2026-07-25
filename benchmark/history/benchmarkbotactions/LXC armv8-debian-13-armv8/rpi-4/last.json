@@ -16,9 +16,7 @@
         "binary_size_bytes": {
           "better": "lower",
           "median": 7542000,
-          "stddev": 0.0,
-          "unit": "bytes",
-          "value": 7542000
+          "unit": "bytes"
         }
       },
       "status": "PASS"

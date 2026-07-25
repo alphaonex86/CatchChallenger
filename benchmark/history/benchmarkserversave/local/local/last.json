@@ -18,9 +18,7 @@
         "binary_size_bytes": {
           "better": "lower",
           "median": 2885000,
-          "stddev": 0.0,
-          "unit": "bytes",
-          "value": 2885000
+          "unit": "bytes"
         }
       },
       "status": "PASS"
@@ -33,30 +31,22 @@
         "perf_branch-misses:u": {
           "better": "lower",
           "median": 159100,
-          "stddev": 0.0,
-          "unit": "count",
-          "value": 159100
+          "unit": "count"
         },
         "perf_cache-misses:u": {
           "better": "lower",
           "median": 95440,
-          "stddev": 0.0,
-          "unit": "count",
-          "value": 95440
+          "unit": "count"
         },
         "perf_cycles:u": {
           "better": "lower",
           "median": 32890000,
-          "stddev": 0.0,
-          "unit": "count",
-          "value": 32890000
+          "unit": "count"
         },
         "perf_instructions:u": {
           "better": "lower",
           "median": 49320000,
-          "stddev": 0.0,
-          "unit": "count",
-          "value": 49320000
+          "unit": "count"
         }
       },
       "status": "PASS"
@@ -66,44 +56,35 @@
         "cache_bytes": {
           "better": "lower",
           "median": 51320,
-          "stddev": 0.0,
-          "unit": "bytes",
-          "value": 51320
+          "unit": "bytes"
         },
         "cpu_percent": {
           "better": "lower",
           "median": 50.0,
           "stddev": 50.0,
-          "unit": "%",
-          "value": 50.0
+          "unit": "%"
         },
         "max_rss_kb": {
           "better": "lower",
           "median": 8280,
           "stddev": 163.1,
-          "unit": "kb",
-          "value": 8280
+          "unit": "kb"
         },
         "sys_s": {
           "better": "lower",
           "median": 0.0,
-          "stddev": 0.0,
-          "unit": "s",
-          "value": 0.0
+          "unit": "s"
         },
         "user_s": {
           "better": "lower",
           "median": 0.005,
           "stddev": 0.005,
-          "unit": "s",
-          "value": 0.005
+          "unit": "s"
         },
         "wall_s": {
           "better": "lower",
           "median": 0.01,
-          "stddev": 0.0,
-          "unit": "s",
-          "value": 0.01
+          "unit": "s"
         }
       },
       "status": "PASS",
@@ -112,44 +93,35 @@
           "cache_bytes": {
             "better": "lower",
             "median": 51320,
-            "stddev": 0.0,
-            "unit": "bytes",
-            "value": 51320
+            "unit": "bytes"
           },
           "cpu_percent": {
             "better": "lower",
             "median": 50.0,
             "stddev": 50.0,
-            "unit": "%",
-            "value": 50.0
+            "unit": "%"
           },
           "max_rss_kb": {
             "better": "lower",
             "median": 8280,
             "stddev": 163.1,
-            "unit": "kb",
-            "value": 8280
+            "unit": "kb"
           },
           "sys_s": {
             "better": "lower",
             "median": 0.0,
-            "stddev": 0.0,
-            "unit": "s",
-            "value": 0.0
+            "unit": "s"
           },
           "user_s": {
             "better": "lower",
             "median": 0.005,
             "stddev": 0.005,
-            "unit": "s",
-            "value": 0.005
+            "unit": "s"
           },
           "wall_s": {
             "better": "lower",
             "median": 0.01,
-            "stddev": 0.0,
-            "unit": "s",
-            "value": 0.01
+            "unit": "s"
           }
         }
       }
