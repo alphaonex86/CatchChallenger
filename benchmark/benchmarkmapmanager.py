@@ -69,6 +69,38 @@ RUN_REPEATS   = 3        # warmup + 3 measured wall passes per cell
 # timed to completion. Per-player-count budget in ms; total binary wall =
 # MAP_BENCH_MS * len(PLAYER_COUNTS).
 MAP_BENCH_MS  = 2000
+
+# ---- Diagnostic axes (local host only, recorded as sub-benchmarks) --------
+# These do NOT feed the candidate/champion metric set: the main sweep above
+# keeps its exact historical workload so champion.json stays comparable.
+# The axes answer questions the single mixed sweep cannot:
+#   phase  -- insrem-pct 0 isolates the pure timer tick; 100 makes every
+#             tick process a joining player (PATH1 full insert + everyone
+#             else's PATH2 diff), so the new-player cost is measured
+#             directly instead of being averaged in at 5% and lost in the
+#             median. "mix" reproduces the main sweep's 5%.
+#   move   -- the diff cost depends on how many slots actually differ;
+#             sweeping it proves a change is not a win at one lucky point.
+# Both axes are cheap because one binary invocation covers every player
+# count: 3 phases * 4 move ratios = 12 invocations.
+PHASE_RUNS      = [("steady", 0), ("mix", INSREM_PCT), ("join", 100)]
+MOVE_PCT_SWEEP  = [0, 5, 40, 100]
+MAP_AXES_MS     = 600
+
+# ---- Lag axis -------------------------------------------------------------
+# "Lag" = the server has NOT received a client's 0xE3 reply by the time the
+# tick timer runs, i.e. the link's round trip exceeds the tick. That is the
+# normal state on the 2G / ADSL / TOR home servers min_network targets, and it
+# decides how much of a tick is SHARED work (cheap) versus per-client work (a
+# private baseline plus its own coalesced diff). Sweeping it answers three
+# questions one no-lag run cannot:
+#   - how many bytes the hold-back actually saves (the whole point);
+#   - where the CPU worst case is (short lag rounds make many clients catch up
+#     on the SAME tick, which is per-client work and the old quadratic);
+#   - how much memory the private baselines cost at high lag.
+LAG_PCT_SWEEP    = [0, 5, 25, 50, 100]
+LAG_ROUNDS_SWEEP = [1, 2, 5, 20]
+LAG_PLAYERS      = [10, 50, 254]
 # Callgrind's metric is a DETERMINISTIC instruction count, which a wall
 # budget would make vary run-to-run, so callgrind alone stays fixed-
 # iteration with a small tick count.
@@ -133,31 +165,17 @@ def measure_esp32(node, progress, per_tool, per_subbench, all_metrics):
         import benchmark_esp32 as esp
     except Exception as ex:
         return "SKIP", f"benchmark_esp32 import failed: {ex}"
-    tc_ok, tc_detail = esp.toolchain_status()
-    if not tc_ok:
-        return "SKIP", "esp-idf absent: " + tc_detail
-    # Detect the board BEFORE building so a missing board self-skips fast.
-    dev, how = esp.detect_esp32_serial(verbose=True)
-    if dev is None:
-        return "SKIP", "board not detected: " + how
-    print(_color(bh.C_CYAN, f"[esp32] target serial {dev} ({how})"))
-    project = os.path.join(REPO_ROOT, ESP32_FW_PROJECT_REL)
-    build_dir = os.path.join(esp.ESP32_PREFIX, "build-mapmanager")
-    ok, detail = esp.build_benchmark_firmware(project, build_dir, verbose=True)
-    if not ok:
-        bh.print_node_error("benchmarkmapmanager", label, "SKIP",
-                            "firmware build failed: " + detail)
-        return "SKIP", "firmware build failed"
-    print(_color(bh.C_GREEN, f"[esp32] firmware built: {detail} "
-                             f"({bh.binary_size(detail)} bytes)"))
-    ok, fdetail = esp.flash_firmware(project, build_dir, dev, verbose=True)
-    if not ok:
-        bh.print_node_error("benchmarkmapmanager", label, "SKIP",
-                            "flash failed: " + fdetail)
-        return "SKIP", "flash failed"
-    # Reset + read serial; the firmware runs the sweep on boot and prints BENCH.
-    print(_color(bh.C_CYAN, f"[esp32] reading serial for ~{ESP32_READ_SECS}s ..."))
-    text = esp.read_with_reset(dev, secs=ESP32_READ_SECS)
+    # Device-side half (toolchain check -> board detect -> build -> flash ->
+    # reset -> read serial) is identical for every on-device benchmark and
+    # lives in benchmark_esp32.run_ondevice_benchmark(). Only the metric
+    # mapping below is specific to this benchmark.
+    status, reason, text = esp.run_ondevice_benchmark(
+        os.path.join(REPO_ROOT, ESP32_FW_PROJECT_REL),
+        os.path.join(esp.ESP32_PREFIX, "build-mapmanager"),
+        read_secs=ESP32_READ_SECS, verbose=True)
+    if status != "PASS":
+        bh.print_node_error("benchmarkmapmanager", label, "SKIP", reason)
+        return "SKIP", reason
     bench = parse_bench_lines(text)
     if not bench:
         bh.print_node_error("benchmarkmapmanager", label, "SKIP",
@@ -358,6 +376,213 @@ def probe_cpu_percent_per_player(bin_path):
         # binary briefly spawned a worker (or scheduler jitter); clamp.
         out[p] = min(100.0, pct)
     return out
+
+
+def _fit_exponent(points):
+    """Least-squares slope of ln(y) against ln(x) over (player_count,
+    cost) points -- the empirical scaling exponent of the algorithm.
+
+    ~2.0 means the cost grows with the SQUARE of the player count (every
+    recipient paying for every slot); ~1.0 means it grows linearly. This
+    is the number that says whether a change actually removed a
+    quadratic term or merely shaved a constant off one, which a single
+    player-count cell cannot distinguish. Returns None if there are
+    fewer than 2 usable points."""
+    pts = []
+    for x, y in points:
+        if x and y and x > 0 and y > 0:
+            pts.append((x, y))
+    if len(pts) < 2:
+        return None
+    import math
+    lx = [math.log(float(x)) for x, _ in pts]
+    ly = [math.log(float(y)) for _, y in pts]
+    n = len(pts)
+    mx = sum(lx) / n
+    my = sum(ly) / n
+    num = 0.0
+    den = 0.0
+    for i in range(n):
+        num += (lx[i] - mx) * (ly[i] - my)
+        den += (lx[i] - mx) ** 2
+    if den == 0:
+        return None
+    return num / den
+
+
+def probe_axes(bin_path):
+    """Run the phase x move-ratio matrix and derive the per-axis metrics.
+
+    Returns (slices, table_rows):
+      slices     -- {slice_label: {metric: metric_block}} for per_subbench
+      table_rows -- list of tuples for the human-readable stdout summary
+
+    Recorded as sub-benchmarks only, never in the candidate metric set,
+    so the champion comparison keeps measuring exactly what it always
+    measured."""
+    slices = {}
+    table_rows = []
+    run_cwd = os.path.dirname(bin_path)
+    for phase, insrem in PHASE_RUNS:
+        for mv in MOVE_PCT_SWEEP:
+            cmd = [bin_path, "--ms", str(MAP_AXES_MS), "--seed", str(SEED),
+                   "--insrem-pct", str(insrem), "--move-pct", str(mv)]
+            rc, sout, serr, _ = bh.run_capture(cmd, timeout=RUN_TIMEOUT,
+                                               cwd=run_cwd)
+            if rc != 0:
+                print(_color(bh.C_YELLOW,
+                             f"[axes] {phase}/move{mv}: binary rc={rc}, skipped"))
+                continue
+            bench = parse_bench_lines(sout)
+            if not bench:
+                print(_color(bh.C_YELLOW,
+                             f"[axes] {phase}/move{mv}: no BENCH line, skipped"))
+                continue
+            fit_points = []
+            for p in sorted(bench):
+                f = bench[p]
+                med = f.get("median_tick_ns")
+                ticks = f.get("ticks")
+                bytes_sent = f.get("bytes_sent")
+                sm = {}
+                if med is not None:
+                    sm["median_tick_ns"] = {"value": med, "median": med,
+                                            "stddev": 0.0, "unit": "ns",
+                                            "better": "lower", "samples": [med]}
+                    # Per-player cost: flat across player counts means the
+                    # algorithm scales linearly, rising means quadratic.
+                    nspp = float(med) / float(p)
+                    sm["ns_per_player"] = {"value": nspp, "median": nspp,
+                                           "stddev": 0.0, "unit": "ns",
+                                           "better": "lower", "samples": [nspp]}
+                    fit_points.append((p, med))
+                if f.get("ticks_per_s") is not None:
+                    sm["ticks_per_s"] = {"value": f["ticks_per_s"],
+                                         "median": f["ticks_per_s"],
+                                         "stddev": 0.0, "unit": "ticks/s",
+                                         "better": "higher",
+                                         "samples": [f["ticks_per_s"]]}
+                # BYTES are what min_network exists to minimise, so carry
+                # them normalised per tick per player -- the number that
+                # matters on a 2G/ADSL uplink.
+                if bytes_sent is not None and ticks:
+                    bpp = float(bytes_sent) / float(ticks) / float(p)
+                    sm["bytes_per_tick_per_player"] = {
+                        "value": bpp, "median": bpp, "stddev": 0.0,
+                        "unit": "bytes", "better": "lower", "samples": [bpp]}
+                if f.get("visibility_state_bytes") is not None:
+                    v = f["visibility_state_bytes"]
+                    sm["visibility_state_bytes"] = {
+                        "value": v, "median": v, "stddev": 0.0,
+                        "unit": "bytes", "better": "lower", "samples": [v]}
+                if sm:
+                    slices[f"{phase}-move{mv}-{p}players"] = sm
+                table_rows.append((phase, mv, p, med, f.get("ticks_per_s"),
+                                   bytes_sent, ticks,
+                                   f.get("visibility_state_bytes")))
+            exp = _fit_exponent(fit_points)
+            if exp is not None:
+                slices[f"{phase}-move{mv}-scaling"] = {
+                    "scaling_exponent": {"value": exp, "median": exp,
+                                         "stddev": 0.0, "unit": "count",
+                                         "better": "lower", "samples": [exp]}}
+    return slices, table_rows
+
+
+def probe_lag(bin_path):
+    """Sweep lag share x lag rounds at a few player counts.
+
+    Returns (slices, table_rows). Recorded as sub-benchmarks only, like the
+    other axes -- the champion decision keeps comparing the historical
+    no-lag workload."""
+    slices = {}
+    table_rows = []
+    run_cwd = os.path.dirname(bin_path)
+    for n in LAG_PLAYERS:
+        for lp in LAG_PCT_SWEEP:
+            rounds = LAG_ROUNDS_SWEEP if lp > 0 else [1]
+            for lr in rounds:
+                cmd = [bin_path, "--ms", str(MAP_AXES_MS), "--seed", str(SEED),
+                       "--insrem-pct", "0", "--move-pct", str(MOVE_PCT),
+                       "--lag-pct", str(lp), "--lag-rounds", str(lr),
+                       "--players", str(n)]
+                rc, sout, serr, _ = bh.run_capture(cmd, timeout=RUN_TIMEOUT,
+                                                   cwd=run_cwd)
+                if rc != 0:
+                    print(_color(bh.C_YELLOW,
+                                 f"[lag] n={n} lag={lp}%/{lr}: rc={rc}, skipped"))
+                    continue
+                bench = parse_bench_lines(sout)
+                f = bench.get(n)
+                if not f:
+                    continue
+                ticks = f.get("ticks") or 0
+                bpt = (float(f["bytes_sent"]) / float(ticks) / float(n)
+                       if (f.get("bytes_sent") is not None and ticks) else None)
+                sm = {}
+                if f.get("ticks_per_s") is not None:
+                    sm["ticks_per_s"] = {"value": f["ticks_per_s"],
+                                         "median": f["ticks_per_s"], "stddev": 0.0,
+                                         "unit": "ticks/s", "better": "higher",
+                                         "samples": [f["ticks_per_s"]]}
+                if f.get("median_tick_ns") is not None:
+                    sm["median_tick_ns"] = {"value": f["median_tick_ns"],
+                                            "median": f["median_tick_ns"],
+                                            "stddev": 0.0, "unit": "ns",
+                                            "better": "lower",
+                                            "samples": [f["median_tick_ns"]]}
+                if bpt is not None:
+                    sm["bytes_per_tick_per_player"] = {
+                        "value": bpt, "median": bpt, "stddev": 0.0,
+                        "unit": "bytes", "better": "lower", "samples": [bpt]}
+                if f.get("visibility_state_bytes") is not None:
+                    v = f["visibility_state_bytes"]
+                    sm["visibility_state_bytes"] = {
+                        "value": v, "median": v, "stddev": 0.0, "unit": "bytes",
+                        "better": "lower", "samples": [v]}
+                if sm:
+                    slices[f"lag{lp}-rounds{lr}-{n}players"] = sm
+                table_rows.append((n, lp, lr, f.get("ticks_per_s"),
+                                   f.get("median_tick_ns"), bpt,
+                                   f.get("visibility_state_bytes")))
+    return slices, table_rows
+
+
+def print_lag_table(table_rows):
+    """Human-readable lag matrix on stdout."""
+    if not table_rows:
+        return
+    print(_color(bh.C_CYAN, "[lag] lag-share x lag-rounds "
+                            "(ticks/s, bytes/tick/player, state bytes)"))
+    print("  players  lag%  rounds      ticks/s   median_ns   B/tick/player     state_B")
+    for (n, lp, lr, tps, med, bpt, vsb) in table_rows:
+        print(f"  {n:>7} {lp:>5} {lr:>7} {tps if tps is not None else 0:>12.0f}"
+              f"   {med if med is not None else '-':>9}"
+              f"   {bpt if bpt is not None else float('nan'):>13.2f}"
+              f"   {vsb if vsb is not None else '-':>9}")
+
+
+def print_axes_table(table_rows, slices):
+    """Human-readable matrix on stdout. The recorded metrics go to
+    history; this is what an operator actually reads after a run."""
+    if not table_rows:
+        return
+    print(_color(bh.C_CYAN, "[axes] phase x move-ratio matrix "
+                            "(median tick, bytes/tick/player, state bytes)"))
+    print("  phase   move  players   median_ns   ticks/s   B/tick/player   state_B")
+    for (phase, mv, p, med, tps, bsent, ticks, vsb) in table_rows:
+        bpp = (float(bsent) / float(ticks) / float(p)
+               if (bsent is not None and ticks) else float("nan"))
+        print(f"  {phase:<7} {mv:>4}  {p:>7}   {med if med is not None else '-':>9}"
+              f"   {tps if tps is not None else '-':>7.1f}   {bpp:>13.2f}"
+              f"   {vsb if vsb is not None else '-':>7}")
+    for label in sorted(slices):
+        if label.endswith("-scaling"):
+            exp = slices[label]["scaling_exponent"]["value"]
+            print(_color(bh.C_CYAN,
+                         f"  scaling exponent {label[:-len('-scaling')]:<14} "
+                         f"= {exp:.2f}  (2.0 = quadratic in players, "
+                         f"1.0 = linear)"))
 
 
 def _metric_unit_better(metric_name):
@@ -732,6 +957,17 @@ def main():
                     }
                 if slice_metrics:
                     slices[f"{p}-players"] = slice_metrics
+            # Diagnostic axes: phase (steady / mix / join) x move ratio,
+            # plus the derived per-player cost and scaling exponent. Merged
+            # into the same sub-benchmark block; deliberately NOT added to
+            # all_metrics so the champion decision keeps comparing the
+            # historical workload only.
+            axis_slices, axis_rows = probe_axes(bin_path)
+            slices.update(axis_slices)
+            print_axes_table(axis_rows, axis_slices)
+            lag_slices, lag_rows = probe_lag(bin_path)
+            slices.update(lag_slices)
+            print_lag_table(lag_rows)
             per_subbench[label]["rusage"] = slices
 
     # Remote fleet, in PARALLEL: phase 1 builds every unique compile node

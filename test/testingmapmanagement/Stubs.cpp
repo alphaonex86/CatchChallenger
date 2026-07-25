@@ -40,11 +40,23 @@ bool Client::sendRawBlock(const char * const data, const unsigned int &size)
 // 0xE3 ping packet shape used in production: code(1) + query_num(1).
 // sendPing returns total bytes written. We bump pingQueryCounter on
 // every send so each ping carries a fresh, deterministic id.
+//
+// The id MUST stay inside the protocol's query-number space: the real
+// parser rejects anything above CATCHCHALLENGER_MAXPROTOCOLQUERY-1
+// (ProtocolParsingBase::parseQueryNumber). A free-running counter walked
+// out of that range after 16 pings, which no scenario was long enough to
+// reach until the byte oracle ran 40 ticks.
 size_t Client::sendPing(char * output)
 {
+    // Production increments pingInProgress on send (Client.cpp:894) and
+    // decrements it on the client's 0xE3 reply. min_network uses that count
+    // as its flow-control signal, so the stub MUST increment too or the
+    // held-back path is never exercised.
+    if(ping_in_progress_ < 255)
+        ping_in_progress_++;
     output[0] = static_cast<char>(0xE3);
-    output[1] = static_cast<char>(pingQueryCounter & 0xff);
-    pingQueryCounter = static_cast<uint16_t>(pingQueryCounter + 1);
+    output[1] = static_cast<char>(pingQueryCounter % CATCHCHALLENGER_MAXPROTOCOLQUERY);
+    pingQueryCounter = static_cast<uint16_t>((pingQueryCounter + 1) % CATCHCHALLENGER_MAXPROTOCOLQUERY);
     return 2;
 }
 

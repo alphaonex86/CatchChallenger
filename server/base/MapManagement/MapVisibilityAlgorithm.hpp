@@ -32,9 +32,23 @@ public:
     void min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     // filter if already send, then consume CPU
     void min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+    // Emit ONE delta between a recipient's PRIVATE baseline
+    // (ClientWithMap::sendedStatus, what it last actually received) and the
+    // current snapshot. Only used for a client that has just caught up
+    // after lagging -- see the flow-control note in min_network().
+    void sendCoalescedDelta(ClientWithMap &clientWithMap,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,
+                            const unsigned int index_client,const size_t dense_size);
     //to prevent allocate memory
+    //Layout [code][size:4][count:1][entries...]. The code byte is written
+    //ONCE in the constructor and never touched again, so the hot path
+    //never re-emits a constant; min_network() fills size+count after its
+    //diff and then copies the whole pre-composed packet with one memcpy.
     static char tempBigBufferForChanges[1+4+1+255*(1+1+1+1)];
     static char tempBigBufferForRemove[1+4+1+255];
+    //Slots needing a full re-insert this tick. Only the SLOT is shared:
+    //the entries themselves stay per-recipient because their bytes are
+    //variable length and one recipient must have its own entry removed.
+    static uint8_t tempInsertSlots[255];
     // Dense buffer of pre-composed player slots (layout — full 8-byte db
     // id, or one uint32_t per slot with
     // CATCHCHALLENGER_VISIBILITY_TRUNCATED_DB_ID — in DensePlayerState.hpp).
@@ -42,6 +56,22 @@ public:
     // diff is one isEqual() per slot and the sent-state refresh is a flat
     // memcpy of this snapshot.
     static DensePlayerState tempDenseBuffer[255];
+
+    /* Last state broadcast for THIS map, one entry per slot.
+     *
+     * Replaces the former per-recipient ClientWithMap::sendedStatus. Every
+     * recipient on a map was diffing against a copy of the SAME snapshot
+     * (each copy refreshed by memcpy from tempDenseBuffer), so the diff
+     * result was identical for all of them apart from each one's own slot
+     * -- which is the one slot it never compares. Keeping it once per map
+     * makes the diff O(slots) instead of O(recipients*slots) and the state
+     * O(slots) instead of O(recipients*slots) bytes.
+     *
+     * Grows to the map's slot high-water mark and stops allocating:
+     * map_clients_id never shrinks and removeOnMap/insertOnMap recycle
+     * slots through the free lists, so this reaches its final size and
+     * stays there -- no per-tick allocation. */
+    std::vector<DensePlayerState> previousDenseBuffer;
 
     /* WHY HERE?
      * Server use ServerMap, Client use Common Map

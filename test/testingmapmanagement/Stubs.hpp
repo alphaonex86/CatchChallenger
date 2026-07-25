@@ -147,6 +147,10 @@ public:
     void setPlayerId(uint32_t id) { player_id_ = id; }
     void setMapIndex(CATCHCHALLENGER_TYPE_MAPID m) { mapIndex = m; }
     void setPing(uint8_t p) { ping_in_progress_ = p; }
+    // One 0xE3 reply arrived. Production does this in
+    // ClientNetworkRead.cpp:451 when the client answers the ping; the test
+    // driver calls it to model a link whose round trip fits in a tick.
+    void ackPing() { if(ping_in_progress_ > 0) ping_in_progress_--; }
 
     // Production-style write surface: MVA emits packets through these.
     bool sendRawBlock(const char * const data, const unsigned int &size);
