@@ -141,6 +141,11 @@ run_loop() {
     # git-tracked performance timeline from going stale behind the untracked
     # per-run JSONs.
     python3 history_last.py
+    # Keep only the newest candidate chart per folder. They accumulate at
+    # ~10 MB/run and are reconstructible from the candidate/history JSONs that
+    # stay on disk; without this results/ reached 700 MB, 652 MB of it obsolete
+    # SVG. Never touches champion*.svg or any .json.
+    python3 prune_charts.py --apply
 }
 
 if [ "$BUDGET_S" -le 0 ] 2>/dev/null; then

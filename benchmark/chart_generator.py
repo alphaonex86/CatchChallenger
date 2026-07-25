@@ -241,14 +241,41 @@ def _decision_glyph(cx, cy, decision, size=5):
         return ""
     shape, fill = style
     s = size
+    # 2 decimals is already sub-pixel: these are SVG user units rendered at
+    # ~1 px. Unrounded they came out as "1.798056900968163" -- 16 significant
+    # digits of float noise, ~150k of them per chart, which both bloated the
+    # file and made every regeneration differ in digits no one can see (so a
+    # rerun with identical data still produced a new git blob).
+    def _p(v):
+        return f"{v:.2f}".rstrip("0").rstrip(".")
     if shape == "triangle-up":
-        pts = f"{cx},{cy-s} {cx-s},{cy+s} {cx+s},{cy+s}"
+        pts = f"{_p(cx)},{_p(cy-s)} {_p(cx-s)},{_p(cy+s)} {_p(cx+s)},{_p(cy+s)}"
     elif shape == "triangle-down":
-        pts = f"{cx},{cy+s} {cx-s},{cy-s} {cx+s},{cy-s}"
+        pts = f"{_p(cx)},{_p(cy+s)} {_p(cx-s)},{_p(cy-s)} {_p(cx+s)},{_p(cy-s)}"
     else:  # diamond
-        pts = f"{cx},{cy-s} {cx+s},{cy} {cx},{cy+s} {cx-s},{cy}"
+        pts = (f"{_p(cx)},{_p(cy-s)} {_p(cx+s)},{_p(cy)} "
+               f"{_p(cx)},{_p(cy+s)} {_p(cx-s)},{_p(cy)}")
     return (f'<polygon points="{pts}" fill="{fill}" stroke="black" '
             f'stroke-width="0.5"/>')
+
+
+def _write_if_changed(path, text):
+    """Write only when the bytes actually differ.
+
+    Charts are regenerated wholesale on every run, so an unconditional write
+    gave git a brand-new ~7 MB blob per chart even when nothing measurable had
+    changed. Combined with rounding the emitted coordinates (see
+    _decision_glyph), a rerun over identical history now produces byte-identical
+    SVG and costs the repo nothing. Returns True when the file was written."""
+    try:
+        with open(path) as handle:
+            if handle.read() == text:
+                return False
+    except (OSError, ValueError):
+        pass
+    with open(path, "w") as handle:
+        handle.write(text)
+    return True
 
 
 CPU_SATURATION_THRESHOLD = 90.0
@@ -1008,8 +1035,7 @@ def regenerate(benchmark, stamp=None):
         outdir = os.path.join(bh.RESULTS, benchmark, comp, exe)
         os.makedirs(outdir, exist_ok=True)
         champ_p = os.path.join(outdir, "champion.svg")
-        with open(champ_p, "w") as f:
-            f.write(svg)
+        _write_if_changed(champ_p, svg)
         written.append(champ_p)
         if stamp:
             cand_p = os.path.join(outdir, f"candidate-{stamp}.svg")
@@ -1026,8 +1052,7 @@ def regenerate(benchmark, stamp=None):
     champ_p = os.path.join(outdir, "champion.svg")
     if svg:
         os.makedirs(outdir, exist_ok=True)
-        with open(champ_p, "w") as f:
-            f.write(svg)
+        _write_if_changed(champ_p, svg)
         written.append(champ_p)
         if stamp:
             cand_p = os.path.join(outdir, f"candidate-{stamp}.svg")
@@ -1045,8 +1070,7 @@ def regenerate(benchmark, stamp=None):
     bynode_p = os.path.join(outdir, "champion-by-execution-node.svg")
     if svg:
         os.makedirs(outdir, exist_ok=True)
-        with open(bynode_p, "w") as f:
-            f.write(svg)
+        _write_if_changed(bynode_p, svg)
         written.append(bynode_p)
     elif os.path.isfile(bynode_p):
         os.remove(bynode_p)

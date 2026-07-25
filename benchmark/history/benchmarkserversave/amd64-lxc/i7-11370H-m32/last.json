@@ -1,13 +1,5 @@
 {
-  "arch": "i686",
-  "arch_emulated": false,
   "benchmark": "benchmarkserversave",
-  "bitness": "32",
-  "cc_storage_disk_kind": "nvme",
-  "cc_storage_disk_root": "INTEL SSDPEKNU512GZ",
-  "cc_storage_fs": "ext4",
-  "cc_storage_path": "/home/catchchallenger/run-m32",
-  "cc_storage_source": "/dev/nvme0n1p2",
   "commit": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
   "commit_short": "5462b5b",
   "compile_flags": [
@@ -20,57 +12,10 @@
     "-m32",
     "-m32"
   ],
-  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
-  "cpu_cache": [
-    {
-      "level": 1,
-      "line_size_bytes": 64,
-      "size": "48K",
-      "type": "Data"
-    },
-    {
-      "level": 1,
-      "line_size_bytes": 64,
-      "size": "32K",
-      "type": "Instruction"
-    },
-    {
-      "level": 2,
-      "line_size_bytes": 64,
-      "size": "1280K",
-      "type": "Unified"
-    },
-    {
-      "level": 3,
-      "line_size_bytes": 64,
-      "size": "12288K",
-      "type": "Unified"
-    }
-  ],
-  "cpu_cores": 8,
-  "cpu_governor": "powersave",
-  "cpu_metrics_reliable": false,
-  "cpu_mhz": 1262.993,
-  "cpu_model": "11th Gen Intel(R) Core(TM) i7-11370H @ 3.30GHz",
-  "datapack_storage_disk_kind": "nvme",
-  "datapack_storage_disk_root": "INTEL SSDPEKNU512GZ",
-  "datapack_storage_fs": "ext4",
-  "datapack_storage_path": "/home/catchchallenger/run-m32/datapack",
-  "datapack_storage_source": "/dev/nvme0n1p2",
   "decision": "DISCARD",
-  "disk_kind": "nvme",
-  "disk_root": "INTEL SSDPEKNU512GZ",
   "ended_utc": "2026-07-25T18:06:26Z",
   "harness_version": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
-  "kernel": "6.12.88+deb13-amd64",
-  "libc": "glibc 2.41",
-  "net_card": "Advanced Micro Devices, Inc. [AMD] FCH LPC Bridge",
-  "net_family": "ipv4+ipv6",
-  "net_link": "wifi",
-  "net_link_detail": "wlo1",
   "node": "i7-11370H-m32",
-  "ram_total_mb": 15691,
-  "ram_type": "DDR4-3200MT/s",
   "results": {
     "binary-size": {
       "status": "FAIL"
@@ -85,11 +30,5 @@
       "status": "FAIL"
     }
   },
-  "simd_tier": "generic",
-  "virt_kind": "bare-metal",
-  "virt_type": "none",
-  "wifi_band": "2.4GHz",
-  "wifi_link_mbps": 286,
-  "wifi_ssid": "Confiared",
-  "wifi_standard": "wifi-6"
+  "simd_tier": "generic"
 }

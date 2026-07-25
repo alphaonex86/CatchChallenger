@@ -1,12 +1,5 @@
 {
-  "arch": "amd64",
-  "arch_emulated": false,
   "benchmark": "benchmarkserversave",
-  "cc_storage_disk_kind": "tmpfs",
-  "cc_storage_disk_root": "tmpfs",
-  "cc_storage_fs": "tmpfs",
-  "cc_storage_path": "/mnt/data/perso/tmpfs/cc-bench-serversave",
-  "cc_storage_source": "none",
   "commit": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
   "commit_short": "5462b5b",
   "compile_flags": [
@@ -15,87 +8,19 @@
     "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
     "-DCATCHCHALLENGER_CACHE_HPS=ON"
   ],
-  "compiler": "cc (Gentoo 15.3.0 p8) 15.3.0",
-  "cpu_cache": [
-    {
-      "level": 1,
-      "line_size_bytes": 64,
-      "size": "32K",
-      "type": "Data"
-    },
-    {
-      "level": 1,
-      "line_size_bytes": 64,
-      "size": "32K",
-      "type": "Instruction"
-    },
-    {
-      "level": 2,
-      "line_size_bytes": 64,
-      "size": "1024K",
-      "type": "Unified"
-    },
-    {
-      "level": 3,
-      "line_size_bytes": 64,
-      "size": "98304K",
-      "type": "Unified"
-    }
-  ],
-  "cpu_cores": 32,
-  "cpu_governor": "powersave",
-  "cpu_metrics_reliable": true,
-  "cpu_mhz": 4166.712,
-  "cpu_model": "AMD Ryzen 9 7950X3D 16-Core Processor",
-  "datapack_storage_disk_kind": "ssd-sata",
-  "datapack_storage_disk_root": "/dev/dm-0",
-  "datapack_storage_fs": "ext4",
-  "datapack_storage_path": "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack",
-  "datapack_storage_source": "/dev/mapper/ssd[/home]",
   "decision": "DISCARD",
-  "disk_kind": "nvme",
-  "disk_root": "Samsung SSD 980 PRO 2TB",
   "ended_utc": "2026-07-25T18:06:26Z",
   "harness_version": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
-  "kernel": "7.1.4-gentoo-dist-bin",
-  "libc": "ldd (Gentoo 2.43-r2 (patchset 3)) 2.43",
-  "libs": {
-    "blake3": {
-      "source": "system",
-      "version": "1.8.5"
-    },
-    "tinyxml2": {
-      "source": "system",
-      "version": "11.0.0"
-    },
-    "xxhash": {
-      "source": "system",
-      "version": "0.8.3"
-    },
-    "zlib": {
-      "source": "system",
-      "version": "1.3.2"
-    },
-    "zstd": {
-      "source": "system",
-      "version": "1.5.7"
-    }
-  },
-  "net_card": "br0",
-  "net_family": "ipv4+ipv6",
-  "net_link": "virtual",
-  "net_link_detail": "bridge",
   "node": "local",
-  "ram_total_mb": 128394,
   "results": {
     "binary-size": {
       "metrics": {
         "binary_size_bytes": {
           "better": "lower",
-          "median": 2885440,
+          "median": 2885000,
           "stddev": 0.0,
           "unit": "bytes",
-          "value": 2885440
+          "value": 2885000
         }
       },
       "status": "PASS"
@@ -107,31 +32,31 @@
       "metrics": {
         "perf_branch-misses:u": {
           "better": "lower",
-          "median": 159086,
+          "median": 159100,
           "stddev": 0.0,
           "unit": "count",
-          "value": 159086
+          "value": 159100
         },
         "perf_cache-misses:u": {
           "better": "lower",
-          "median": 95436,
+          "median": 95440,
           "stddev": 0.0,
           "unit": "count",
-          "value": 95436
+          "value": 95440
         },
         "perf_cycles:u": {
           "better": "lower",
-          "median": 32890288,
+          "median": 32890000,
           "stddev": 0.0,
           "unit": "count",
-          "value": 32890288
+          "value": 32890000
         },
         "perf_instructions:u": {
           "better": "lower",
-          "median": 49318871,
+          "median": 49320000,
           "stddev": 0.0,
           "unit": "count",
-          "value": 49318871
+          "value": 49320000
         }
       },
       "status": "PASS"
@@ -140,10 +65,10 @@
       "metrics": {
         "cache_bytes": {
           "better": "lower",
-          "median": 51324,
+          "median": 51320,
           "stddev": 0.0,
           "unit": "bytes",
-          "value": 51324
+          "value": 51320
         },
         "cpu_percent": {
           "better": "lower",
@@ -154,10 +79,10 @@
         },
         "max_rss_kb": {
           "better": "lower",
-          "median": 8280.0,
-          "stddev": 163.05520537535745,
+          "median": 8280,
+          "stddev": 163.1,
           "unit": "kb",
-          "value": 8280.0
+          "value": 8280
         },
         "sys_s": {
           "better": "lower",
@@ -186,10 +111,10 @@
         "default": {
           "cache_bytes": {
             "better": "lower",
-            "median": 51324,
+            "median": 51320,
             "stddev": 0.0,
             "unit": "bytes",
-            "value": 51324
+            "value": 51320
           },
           "cpu_percent": {
             "better": "lower",
@@ -200,10 +125,10 @@
           },
           "max_rss_kb": {
             "better": "lower",
-            "median": 8280.0,
-            "stddev": 163.05520537535745,
+            "median": 8280,
+            "stddev": 163.1,
             "unit": "kb",
-            "value": 8280.0
+            "value": 8280
           },
           "sys_s": {
             "better": "lower",
@@ -230,7 +155,5 @@
       }
     }
   },
-  "simd_tier": "generic",
-  "virt_kind": "bare-metal",
-  "virt_type": "none"
+  "simd_tier": "generic"
 }

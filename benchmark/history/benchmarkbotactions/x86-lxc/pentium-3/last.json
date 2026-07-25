@@ -1,12 +1,5 @@
 {
-  "arch": "i686",
-  "arch_emulated": false,
   "benchmark": "benchmarkbotactions",
-  "cc_storage_disk_kind": "ssd-sata",
-  "cc_storage_disk_root": "ATA Samsung SSD 870",
-  "cc_storage_fs": "ext4",
-  "cc_storage_path": "/home/catchchallenger/run",
-  "cc_storage_source": "/dev/sda3",
   "commit": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
   "commit_short": "5462b5b",
   "compile_flags": [
@@ -15,39 +8,19 @@
     "-march=pentium3 -mtune=pentium3",
     "-march=pentium3 -mtune=pentium3"
   ],
-  "compiler": "cc (Debian 12.2.0-14+deb12u1) 12.2.0",
-  "cpu_cores": 1,
-  "cpu_metrics_reliable": true,
-  "cpu_mhz": 1102.521,
-  "cpu_model": "Intel(R) Celeron(TM) CPU                1100MHz",
-  "datapack_storage_disk_kind": "ssd-sata",
-  "datapack_storage_disk_root": "ATA Samsung SSD 870",
-  "datapack_storage_fs": "ext4",
-  "datapack_storage_path": "/home/catchchallenger/run/datapack",
-  "datapack_storage_source": "/dev/sda3",
   "decision": "ESCALATE",
-  "disk_kind": "ssd-sata",
-  "disk_root": "ATA Samsung SSD 870",
   "ended_utc": "2026-07-25T18:51:40Z",
-  "eth_link_mbps": 100,
   "harness_version": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
-  "kernel": "6.1.0-40-686-pae",
-  "libc": "glibc 2.36",
-  "net_card": "eth0",
-  "net_family": "ipv4",
-  "net_link": "wired",
   "node": "pentium-3",
-  "ram_total_mb": 229,
-  "ram_type": "DIMM SDRAM",
   "results": {
     "binary-size": {
       "metrics": {
         "binary_size_bytes": {
           "better": "lower",
-          "median": 7542072,
+          "median": 7542000,
           "stddev": 0.0,
           "unit": "bytes",
-          "value": 7542072
+          "value": 7542000
         }
       },
       "status": "PASS"
@@ -59,7 +32,5 @@
       "status": "SKIP"
     }
   },
-  "simd_tier": "generic",
-  "virt_kind": "bare-metal",
-  "virt_type": "none"
+  "simd_tier": "generic"
 }
