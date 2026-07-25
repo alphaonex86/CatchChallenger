@@ -606,6 +606,57 @@ def flash_firmware(project_dir, build_dir, tty, verbose=True, timeout=600):
     return True, "flashed"
 
 
+def run_ondevice_benchmark(project_dir, build_dir, read_secs=30, serial=None,
+                           verbose=True):
+    """Build -> flash -> reset -> read serial for an ON-DEVICE benchmark firmware.
+
+    This is the whole device-side half of an on-device benchmark: an ESP-IDF
+    image that runs the SAME harness the native fleet runs and prints the SAME
+    `BENCH ...` lines to UART. Every benchmark*.py wanting on-device numbers
+    calls this and then parses `text` with its own parse_bench_lines() -- the
+    metric MAPPING is benchmark-specific, everything before it is not, so it
+    lives here instead of being copied per benchmark (benchmark/CLAUDE.md:
+    "put in common the code it will mostly be used by the majority").
+
+    Returns (status, detail, text):
+      ("PASS", None, serial_output)
+      ("SKIP", reason, "")   -- toolchain absent, board absent, build or flash
+                                failed
+
+    NEVER raises and never returns FAIL: an unmeasured special target is
+    'unknown', not a regression. The caller decides how loudly to report the
+    reason (e.g. benchmark_helpers.print_node_error) and whether an empty
+    parse is also a SKIP."""
+    tc_ok, tc_detail = toolchain_status()
+    if not tc_ok:
+        return "SKIP", "esp-idf absent: " + tc_detail, ""
+    # Detect the board BEFORE building so a missing board self-skips fast
+    # instead of after a multi-minute compile.
+    dev, how = detect_esp32_serial(override=serial, verbose=verbose)
+    if dev is None:
+        return "SKIP", "board not detected: " + how, ""
+    if verbose:
+        print(f"[esp32] target serial {dev} ({how})")
+    ok, detail = build_benchmark_firmware(project_dir, build_dir, verbose=verbose)
+    if not ok:
+        return "SKIP", "firmware build failed: " + detail, ""
+    if verbose:
+        try:
+            size = os.path.getsize(detail)
+        except OSError:
+            size = -1
+        print(f"[esp32] firmware built: {detail} ({size} bytes)")
+    ok, fdetail = flash_firmware(project_dir, build_dir, dev, verbose=verbose)
+    if not ok:
+        return "SKIP", "flash failed: " + fdetail, ""
+    # Reset + read; the firmware runs its sweep on boot and prints BENCH lines.
+    # The board idles afterwards (no reboot), so over-reading is harmless while
+    # under-reading would truncate the block.
+    if verbose:
+        print(f"[esp32] reading serial for ~{read_secs}s ...")
+    return "PASS", None, read_with_reset(dev, secs=read_secs)
+
+
 def esp32_platform_fields():
     """Synthesized platform metadata for an ESP32 history JSON. The board has no
     shell, so history_recorder.PlatformRecord.collect() (which shells out) can't

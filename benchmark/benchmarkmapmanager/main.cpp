@@ -6,9 +6,20 @@
 // Metrics emitted (one stdout line per scenario):
 //   BENCH players=N ticks=T total_ns=X median_tick_ns=Y p95_tick_ns=Z
 //                bytes_sent=B inserts=I removes=R
+//                move_pct=M insrem_pct=P visibility_state_bytes=V
 //   total_ns / median_tick_ns / p95_tick_ns are lower-is-better.
 //   bytes_sent is the cumulative output volume produced by the
-//   algorithm (sanity-check; should be deterministic).
+//   algorithm. min_network exists to make this number small (the
+//   target is an ADSL / 2G / TOR home server), so it is a FIRST-CLASS
+//   metric here, not a sanity-check: any CPU work that costs bytes is
+//   a regression regardless of what it does to the tick time.
+//   move_pct / insrem_pct label the workload the line was measured
+//   under, so the harness can sweep them and keep the rows apart.
+//   insrem_pct=0 is a pure timer tick; insrem_pct=100 makes every tick
+//   process a joining player, which isolates the new-player cost from
+//   the steady broadcast cost instead of averaging a rare event in.
+//   visibility_state_bytes is the resident per-tick state the
+//   algorithm keeps between ticks (lower-is-better).
 // Determinism: seeded LCG; no rand(), no clock, no time. Per-scenario
 //              warmup tick is excluded from timing.
 // All wall-clock readings come from std::chrono::steady_clock and are
@@ -110,6 +121,30 @@ struct Bench
         }
         return total;
     }
+
+    // Resident bytes of visibility state -- what the algorithm keeps
+    // between ticks to know what was last broadcast. One shared snapshot
+    // per MAP, plus a private baseline for each recipient currently held
+    // back (only those get one). Counted over the clients CURRENTLY ON THE
+    // MAP: the harness keeps departed players in owned[] (it never frees
+    // mid-run) and production clears their state on slot reuse
+    // (ClientWithMapEventLoop::reset), so summing owned[] would report
+    // state the server does not actually hold.
+    uint64_t visibilityStateBytes()
+    {
+        uint64_t total = static_cast<uint64_t>(mva.previousDenseBuffer.capacity())
+                         * sizeof(DensePlayerState);
+        unsigned int slot = 0;
+        while(slot < mva.map_clients_id.size())
+        {
+            const PLAYER_INDEX_FOR_CONNECTED gid = mva.map_clients_id[slot];
+            if(gid != PLAYER_INDEX_FOR_CONNECTED_MAX)
+                total += static_cast<uint64_t>(cl.rwWithMap(gid).sendedStatus.capacity())
+                         * sizeof(DensePlayerState);
+            slot++;
+        }
+        return total;
+    }
 };
 
 static Direction dir_of(uint32_t r)
@@ -135,14 +170,45 @@ static Direction dir_of(uint32_t r)
 // sampled) and untimed (throughput) paths share it without a lambda
 // (CLAUDE.md: no lambdas). min_network() is timed by the caller, NOT
 // here, so the latency window stays exactly around min_network.
+// LAG MODEL. "Lagging" means the server has NOT received this client's 0xE3
+// reply by the time the tick timer runs, which is the normal state of a 2G /
+// TOR / satellite link whose round trip exceeds the 150ms tick. min_network
+// holds such a recipient back and hands it one coalesced delta on the next
+// ACK, so lag is what decides how much of the work is shared (cheap) versus
+// per-client (a private baseline plus its own diff).
+//   lag_pct    -- share of players on a slow link (0 = everyone keeps up)
+//   lag_rounds -- how many ticks pass between that client's ACKs
+//                 (1 = answers every tick; 20 = answers once per 20 ticks)
+// The lagging SET is a deterministic function of the client index, and the
+// ACK phase is staggered by index so the catch-ups do not all land on the
+// same tick (which would measure a burst, not a steady state).
+static bool client_is_laggy(unsigned int i, unsigned int lag_pct)
+{
+    if(lag_pct == 0) return false;
+    if(lag_pct >= 100) return true;
+    // fixed integer hash: same set on every arch, no rand, no float
+    return ((i * 2654435761u) >> 16) % 100u < lag_pct;
+}
+
 static void prepare_tick(Bench &b, Lcg &rng, unsigned int insrem_pct,
                          unsigned int move_pct,
+                         unsigned int lag_pct, unsigned int lag_rounds,
+                         uint64_t tick_no,
                          uint64_t &inserts_total, uint64_t &removes_total)
 {
     for(unsigned int i = 0; i < b.owned.size(); i++)
     {
         ClientWithMap *c = b.owned[i];
         if(!c) continue;
+        // Deliver the 0xE3 reply, exactly as production does in
+        // ClientNetworkRead.cpp. A healthy client answers every tick; a
+        // lagging one only every lag_rounds-th tick, and is held back by
+        // min_network in between. WITHOUT any ack the whole fleet would look
+        // permanently lagging after the first tick and the benchmark would
+        // measure a server sending nothing.
+        if(!client_is_laggy(i, lag_pct) || lag_rounds <= 1
+           || ((tick_no + i) % lag_rounds) == 0)
+            c->ackPing();
         if(move_pct >= 100 || rng.mod(100) < move_pct)
             c->setDirection(dir_of(rng.next()));
     }
@@ -182,11 +248,13 @@ static void prepare_tick(Bench &b, Lcg &rng, unsigned int insrem_pct,
 #ifdef CC_TARGET_ESP32
 int run_scenario(unsigned int players, unsigned int ticks,
                         unsigned int seed, unsigned int insrem_pct,
-                        unsigned int move_pct, uint64_t budget_ms)
+                        unsigned int move_pct, uint64_t budget_ms,
+                        unsigned int lag_pct, unsigned int lag_rounds)
 #else
 static int run_scenario(unsigned int players, unsigned int ticks,
                         unsigned int seed, unsigned int insrem_pct,
-                        unsigned int move_pct, uint64_t budget_ms)
+                        unsigned int move_pct, uint64_t budget_ms,
+                        unsigned int lag_pct, unsigned int lag_rounds)
 #endif
 {
     Bench b;
@@ -238,7 +306,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
         // (header-free; no source markers needed).
         while(t < ticks)
         {
-            prepare_tick(b, rng, insrem_pct, move_pct, inserts_total, removes_total);
+            prepare_tick(b, rng, insrem_pct, move_pct, lag_pct, lag_rounds, t, inserts_total, removes_total);
             auto t0 = std::chrono::steady_clock::now();
             b.mva.min_network(1);
             auto t1 = std::chrono::steady_clock::now();
@@ -269,7 +337,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
         const unsigned int CALIB = 4;                    // tiny calib burst
         for(unsigned int k = 0; k < CALIB; k++)
         {
-            prepare_tick(b, rng, insrem_pct, move_pct, inserts_total, removes_total);
+            prepare_tick(b, rng, insrem_pct, move_pct, lag_pct, lag_rounds, t, inserts_total, removes_total);
             b.mva.min_network(1);
             bytes_total += b.totalBytesAndClear();
             t++;
@@ -287,7 +355,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
         while(std::chrono::steady_clock::now() - loop_start < budget)
         {
             // ONE latency-sampled tick (t0..t1 brackets only min_network).
-            prepare_tick(b, rng, insrem_pct, move_pct, inserts_total, removes_total);
+            prepare_tick(b, rng, insrem_pct, move_pct, lag_pct, lag_rounds, t, inserts_total, removes_total);
             auto t0 = std::chrono::steady_clock::now();
             b.mva.min_network(1);
             auto t1 = std::chrono::steady_clock::now();
@@ -297,7 +365,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
             // (check_every - 1) UNTIMED ticks -- zero clock reads.
             for(unsigned int k = 1; k < check_every; k++)
             {
-                prepare_tick(b, rng, insrem_pct, move_pct, inserts_total, removes_total);
+                prepare_tick(b, rng, insrem_pct, move_pct, lag_pct, lag_rounds, t, inserts_total, removes_total);
                 b.mva.min_network(1);
                 bytes_total += b.totalBytesAndClear();
                 t++;
@@ -329,6 +397,15 @@ static int run_scenario(unsigned int players, unsigned int ticks,
               << " duration_ms=" << elapsed_ms
               << " ticks_per_s=" << ticks_per_s
               << " move_pct=" << move_pct
+              // insrem_pct labels the tick TYPE being measured, so the
+              // harness can profile the two costs separately without
+              // bucketing a rare event: 0 = pure timer tick (nobody joins
+              // or leaves), 100 = every tick processes a joining player
+              // (one PATH1 full-insert plus everyone else's PATH2 diff).
+              << " insrem_pct=" << insrem_pct
+              << " lag_pct=" << lag_pct
+              << " lag_rounds=" << lag_rounds
+              << " visibility_state_bytes=" << b.visibilityStateBytes()
               << " warm_ns=" << warm_ns
               << " bytes_warm=" << bytes_warm
               << " total_ns=" << total
@@ -349,13 +426,14 @@ static int run_scenario(unsigned int players, unsigned int ticks,
 static int run_all_scenarios(const std::vector<unsigned int> &players_list,
                              unsigned int ticks, unsigned int seed,
                              unsigned int insrem_pct, unsigned int move_pct,
-                             uint64_t budget_ms)
+                             uint64_t budget_ms,
+                             unsigned int lag_pct, unsigned int lag_rounds)
 {
     int rc = 0;
     for(unsigned int p : players_list)
     {
         if(p == 0) continue;
-        rc |= run_scenario(p, ticks, seed, insrem_pct, move_pct, budget_ms);
+        rc |= run_scenario(p, ticks, seed, insrem_pct, move_pct, budget_ms, lag_pct, lag_rounds);
     }
     return rc;
 }
@@ -364,6 +442,8 @@ static void usage()
 {
     std::cerr << "usage: benchmark_min_network [--players N]... "
                  "[--ms BUDGET_MS | --ticks T] [--seed S] [--insrem-pct P] [--move-pct M]\n"
+                 "  [--lag-pct L]   %% of players whose ACK has not arrived by tick time\n"
+                 "  [--lag-rounds R] ticks between a lagging client's ACKs\n"
                  "  --ms BUDGET_MS  fixed-time: run each player-count for "
                  "BUDGET_MS wall-ms, report ticks completed (default)\n"
                  "  --ticks T       fixed-iteration: run exactly T ticks "
@@ -390,6 +470,8 @@ int main(int argc, char **argv)
     unsigned int seed       = 0x5EEDu;
     unsigned int insrem_pct = 5;          // 5% of ticks insert+remove
     unsigned int move_pct   = 100;        // % of players changing direction per tick
+    unsigned int lag_pct    = 0;          // % of players on a slow link (no ACK in time)
+    unsigned int lag_rounds = 1;          // ticks between a lagging client's ACKs
     std::vector<unsigned int> overridden;
 
     for(int i = 1; i < argc; i++)
@@ -401,6 +483,8 @@ int main(int argc, char **argv)
         else if(a == "--seed"  && i+1 < argc)      { seed  = static_cast<unsigned int>(std::strtoul(argv[++i], nullptr, 0)); }
         else if(a == "--insrem-pct" && i+1 < argc) { insrem_pct = static_cast<unsigned int>(std::atoi(argv[++i])); }
         else if(a == "--move-pct" && i+1 < argc)   { move_pct = static_cast<unsigned int>(std::atoi(argv[++i])); }
+        else if(a == "--lag-pct" && i+1 < argc)    { lag_pct = static_cast<unsigned int>(std::atoi(argv[++i])); }
+        else if(a == "--lag-rounds" && i+1 < argc) { lag_rounds = static_cast<unsigned int>(std::atoi(argv[++i])); }
         else if(a == "-h" || a == "--help")        { usage(); return 0; }
         else                                       { usage(); return 2; }
     }
@@ -410,6 +494,6 @@ int main(int argc, char **argv)
     // honours the fixed-time model (benchmark/CLAUDE.md).
     if(budget_ms == 0 && ticks == 0) budget_ms = 2000;
 
-    return run_all_scenarios(players_list, ticks, seed, insrem_pct, move_pct, budget_ms);
+    return run_all_scenarios(players_list, ticks, seed, insrem_pct, move_pct, budget_ms, lag_pct, lag_rounds);
 }
 #endif // !CC_TARGET_ESP32

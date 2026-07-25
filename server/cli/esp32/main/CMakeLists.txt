@@ -22,69 +22,18 @@ if(NOT CATCHCHALLENGER_DATAPACK_CPP_DIR)
     set(CATCHCHALLENGER_DATAPACK_CPP_DIR "/mnt/data/perso/tmpfs/datapack-cpp")
 endif()
 
-# --- shared + server game-logic sources (globbed, then filtered) -------------
-file(GLOB_RECURSE _cc_general    "${CC_REPO}/general/base/*.cpp")
-# blake3: only the portable C path. The x86 SSE/AVX (blake3_*_x86*.c / .S) and
-# NEON files don't build for xtensa; general.cmake's vendored fallback lists
-# exactly these three, so mirror that.
-set(_cc_blake3
-    ${CC_REPO}/general/blake3/blake3.c
-    ${CC_REPO}/general/blake3/blake3_dispatch.c
-    ${CC_REPO}/general/blake3/blake3_portable.c
-)
-# xxhash: one TU (XXH_INLINE_ALL is set as a define below), mirrors general.cmake.
-set(_cc_xxhash ${CC_REPO}/general/libxxhash/xxhash.c)
+# Shared ESP-IDF sources + flags (NOXML-filtered general/base, vendored
+# blake3 / xxhash / zlib / zstd, -Werror relaxations). Same include the
+# benchmark firmware uses, so a source move is mirrored in one place.
+include(${CC_REPO}/general/esp32-idf-common.cmake)
 
-# zlib: vendored fallback (no system zlib in the xtensa sysroot). Mirrors the
-# vendored branch of general/libzlib.cmake. The gz* file API is fine on newlib,
-# but CatchChallenger only uses the in-memory inflate/uncompress path, so the
-# minimal set is enough; include gz* too for parity with the host build.
-set(_cc_zlib_dir ${CC_REPO}/general/libzlib)
-set(_cc_zlib
-    ${_cc_zlib_dir}/adler32.c
-    ${_cc_zlib_dir}/compress.c
-    ${_cc_zlib_dir}/crc32.c
-    ${_cc_zlib_dir}/deflate.c
-    ${_cc_zlib_dir}/infback.c
-    ${_cc_zlib_dir}/inffast.c
-    ${_cc_zlib_dir}/inflate.c
-    ${_cc_zlib_dir}/inftrees.c
-    ${_cc_zlib_dir}/trees.c
-    ${_cc_zlib_dir}/uncompr.c
-    ${_cc_zlib_dir}/zutil.c
-)
-
-# zstd: vendored static fallback. Mirrors general/libzstd/build/cmake/lib —
-# common + compress + decompress C sources, no amd64 .S (xtensa), no dictBuilder
-# / deprecated (CompressionProtocol.cpp only calls ZSTD_compress/decompress/
-# isError/getErrorName). ZSTD_DISABLE_ASM is set on these TUs below.
-set(_cc_zstd_dir ${CC_REPO}/general/libzstd/lib)
-file(GLOB _cc_zstd_common     "${_cc_zstd_dir}/common/*.c")
-file(GLOB _cc_zstd_compress   "${_cc_zstd_dir}/compress/*.c")
-file(GLOB _cc_zstd_decompress "${_cc_zstd_dir}/decompress/*.c")
-set(_cc_zstd ${_cc_zstd_common} ${_cc_zstd_compress} ${_cc_zstd_decompress})
+# --- server-only sources ------------------------------------------------------
 # server/base including its subdirs server/base/fight + server/base/crafting:
 # those two define the Client fight/crafting method overrides (Client::tryEscape,
 # tryCapture, takeAnObjectOnMap, …) that server/base/ calls UNCONDITIONALLY, so
 # omitting them is an undefined-reference link error. (catchchallenger-server.cmake
 # lists all three in catchchallenger_server_base.)
 file(GLOB_RECURSE _cc_serverbase "${CC_REPO}/server/base/*.cpp")
-# Drop what this profile genuinely excludes, MIRRORING the host NOXML build's
-# source set (general/general.cmake NOXML branch + catchchallenger-server.cmake).
-# Under CATCHCHALLENGER_NOXML the host build compiles only CommonDatapack.cpp for
-# datapack loading; the XML *loaders* are NOT compiled at all — their headers
-# guard the whole class body with #ifndef CATCHCHALLENGER_NOXML, so their .cpp
-# definitions ("no declaration matches" / "tinyxml2 does not name a type") must
-# be excluded here too. Specifically drop:
-#   - tinyXML2 + any Qt TU (no Qt, no XML),
-#   - the XML datapack loaders: Map_loader.cpp / Map_loaderMain.cpp,
-#     general/base/DatapackGeneralLoader/*.cpp, and the XML FightLoaders
-#     (FightLoaderBuff/Monster/Skill.cpp). NB: FightLoader.cpp (no suffix) IS
-#     compiled under NOXML (it carries #ifdef stubs) — keep it,
-#   - GUI-only helpers (CCGuiLog/CCGuiStats — server-gui only) and
-#     ConnectedSocket.cpp (not in the CLI server source set).
-list(FILTER _cc_general EXCLUDE REGEX
-    "/tinyXML2/|/Qt|Qt\\.cpp$|/Map_loader(Main)?\\.cpp$|/DatapackGeneralLoader/|/FightLoader(Buff|Monster|Skill)\\.cpp$|/CCGui(Log|Stats)\\.cpp$|/ConnectedSocket\\.cpp$")
 # The SQL backend (PreparedDBQuery*/SqlFunction/EventLoop{Postgresql,MySQL,
 # Database}) is unused: DB_INTERNAL_VARS reuses the FileDB record path, no SQL.
 # TinyXMLSettings.cpp is the XML server-properties reader — catchchallenger-
@@ -121,12 +70,11 @@ set(_cc_datapack_cpp "${CATCHCHALLENGER_DATAPACK_CPP_DIR}/datapack_cpp.cpp")
 
 idf_component_register(
     SRCS "app_main.cpp"
-         ${_cc_cli} ${_cc_general} ${_cc_blake3} ${_cc_xxhash}
-         ${_cc_zlib} ${_cc_zstd} ${_cc_serverbase}
+         ${_cc_cli} ${CC_ESP32_GENERAL_SRCS} ${CC_ESP32_VENDOR_SRCS}
+         ${_cc_serverbase}
          "${_cc_datapack_cpp}"
     INCLUDE_DIRS "." "${CC_REPO}" "${CC_REPO}/server/cli" "${CC_REPO}/server/base"
-                 "${CC_REPO}/general/blake3" "${CC_REPO}/general/libxxhash"
-                 "${_cc_zlib_dir}" "${_cc_zstd_dir}"
+                 ${CC_ESP32_VENDOR_INCLUDE_DIRS}
                  "${CATCHCHALLENGER_DATAPACK_CPP_DIR}"
     # esp_timer: BenchProbe.hpp wall clock (only used when the firmware is
     # built with CATCHCHALLENGER_BENCHMARK; harmless otherwise)
@@ -161,37 +109,13 @@ target_compile_definitions(${COMPONENT_LIB} PRIVATE
     CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     CC_TARGET_ESP32
 )
-# vendored blake3/xxhash/zstd/tinyxml2: the cross sysroot has no system copy.
-# -fno-exceptions / -fno-rtti are C++-only flags; gating them to CXX avoids the
-# "valid for C++ but not C" warning (→ error under -Werror) on the vendored .c
-# sources (blake3 / xxhash / zlib / zstd).
+# Shared flags: -Os, the -Werror relaxations, XXH_INLINE_ALL, ZSTD_DISABLE_ASM.
+cc_esp32_common_component_flags(${COMPONENT_LIB})
+
+# Specific to THIS firmware: no C++ exceptions / RTTI (root CLAUDE.md — not
+# supported on all platforms). They are C++-only flags, so gate them to CXX or
+# the vendored .c sources warn "valid for C++ but not C" (→ error under -Werror).
 target_compile_options(${COMPONENT_LIB} PRIVATE
-    -Os
     $<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>
     $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
 )
-
-# ESP-IDF forces -Werror=all (the host CatchChallenger build does not), which
-# turns two long-standing, host-tolerated warnings in shared code into hard
-# errors here. Relax them to plain warnings for THIS component only — this is
-# the ESP32-only "main" component, so it changes no other target's build, and
-# we must not edit the shared sources just to satisfy a stricter cross flag:
-#   - overloaded-virtual: ClientWithMapEventLoop::reset(int) intentionally
-#     shadows ProtocolParsingBase::reset() (different signature, different role).
-#   - maybe-uninitialized: a false positive in CommonFightEngineTurn.cpp
-#     (gcc 13 xtensa can't prove 'quantity' is always assigned before use).
-target_compile_options(${COMPONENT_LIB} PRIVATE
-    $<$<COMPILE_LANGUAGE:CXX>:-Wno-error=overloaded-virtual>
-    -Wno-error=maybe-uninitialized
-)
-
-# XXH_INLINE_ALL: required by the vendored xxhash.c TU so call sites resolve the
-# xxh symbols inline (same as general.cmake's vendored branch). Applied to the
-# whole component is harmless — only xxhash.c reacts to it.
-target_compile_definitions(${COMPONENT_LIB} PRIVATE XXH_INLINE_ALL)
-
-# ZSTD_DISABLE_ASM: xtensa has no amd64 huf_decompress_amd64.S; the C fallback
-# is selected by this define (mirrors the non-amd64 branch of zstd's cmake).
-set_source_files_properties(${_cc_zstd}
-    PROPERTIES COMPILE_DEFINITIONS "ZSTD_DISABLE_ASM"
-    DIRECTORY "${CMAKE_CURRENT_LIST_DIR}")

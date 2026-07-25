@@ -145,6 +145,129 @@ public:
     using MapVisibilityAlgorithm::map_removed_index;
 };
 
+// Map slot (index into map_clients_id) currently holding this global id,
+// -1 if absent. Needed once a scenario reuses a freed slot, because then
+// the wire slot no longer equals the client's creation order.
+static int slot_of_gid(const HarnessMVA &mva, PLAYER_INDEX_FOR_CONNECTED gid)
+{
+    size_t i = 0;
+    while(i < mva.map_clients_id.size())
+    {
+        if(mva.map_clients_id[i] == gid)
+            return static_cast<int>(i);
+        i++;
+    }
+    return -1;
+}
+
+// n-th live slot strictly above slot 0 (slot 0 is the focus and never
+// leaves), -1 when there are fewer than n+1 of them.
+static int oracle_live_slot(const HarnessMVA &mva, unsigned int n)
+{
+    size_t i = 1;
+    while(i < mva.map_clients_id.size())
+    {
+        if(mva.map_clients_id[i] != PLAYER_INDEX_FOR_CONNECTED_MAX)
+        {
+            if(n == 0)
+                return static_cast<int>(i);
+            n--;
+        }
+        i++;
+    }
+    return -1;
+}
+
+// ---- HARD RULE: min_network must never tell a client about ITSELF ----
+//
+// min_CPU broadcasts every player to everyone and relies on the CLIENT to
+// drop its own entry, which it can do because min_CPU sends 0x6C carrying
+// "you are slot N" (Api_protocol::playerExcludeIndex).
+//
+// min_network does NOT send 0x6C. playerExcludeIndex therefore stays at its
+// 255 default for the whole session, so the client filters nothing: if the
+// server ever emitted a recipient's own slot, that client would insert a
+// second copy of itself standing on its own head, and every later 0x66 for
+// that slot would move the ghost instead of being ignored. The server is
+// the ONLY thing preventing it.
+//
+// So this walks every packet of every block and rejects any 0x6B / 0x69 /
+// 0x66 entry carrying the recipient's own slot. It is wired into
+// runMinNetwork(), so it holds for EVERY client in EVERY scenario, not just
+// a dedicated one -- that is what makes it a rule rather than a test.
+static std::string selfEntryViolation(const std::vector<char> &b, uint8_t ownSlot)
+{
+    size_t pos = 0;
+    while(pos < b.size())
+    {
+        const uint8_t code = static_cast<uint8_t>(b[pos]);
+        if(code == 0x65)        // drop all: code only
+            pos += 1;
+        else if(code == 0xE3)   // ping: code + query number
+            pos += 2;
+        else if(code == 0x6C)   // "you are slot N" -- carries self BY DESIGN
+            pos += 2;
+        else if(code == 0x69)   // remove: [code][size4][count1][slots...]
+        {
+            if(pos + 6 > b.size()) return "truncated_0x69";
+            const uint8_t count = static_cast<uint8_t>(b[pos + 5]);
+            size_t e = pos + 6;
+            unsigned int i = 0;
+            while(i < count)
+            {
+                if(e >= b.size()) return "truncated_0x69_entry";
+                if(static_cast<uint8_t>(b[e]) == ownSlot) return "self_in_0x69_remove";
+                e += 1;
+                i++;
+            }
+            pos = e;
+        }
+        else if(code == 0x66)   // changes: [code][size4][count1][slot,x,y,dir]*
+        {
+            if(pos + 6 > b.size()) return "truncated_0x66";
+            const uint8_t count = static_cast<uint8_t>(b[pos + 5]);
+            size_t e = pos + 6;
+            unsigned int i = 0;
+            while(i < count)
+            {
+                if(e + 4 > b.size()) return "truncated_0x66_entry";
+                if(static_cast<uint8_t>(b[e]) == ownSlot) return "self_in_0x66_change";
+                e += 4;
+                i++;
+            }
+            pos = e;
+        }
+        else if(code == 0x6B)   // insert: [code][size4][maps1][mapid2][count1][entries]
+        {
+            if(pos + 9 > b.size()) return "truncated_0x6B";
+            if(static_cast<uint8_t>(b[pos + 5]) != 0x01) return "unexpected_map_count";
+            const uint8_t count = static_cast<uint8_t>(b[pos + 8]);
+            size_t e = pos + 9;
+            unsigned int i = 0;
+            while(i < count)
+            {
+                if(e >= b.size()) return "truncated_0x6B_entry";
+                if(static_cast<uint8_t>(b[e]) == ownSlot) return "self_in_0x6B_insert";
+                e += 1;                 // slot
+                e += 3;                 // x, y, direction|type
+                if(!dontSendPseudo())   // pseudo is length-prefixed when sent
+                {
+                    if(e >= b.size()) return "truncated_pseudo_len";
+                    e += 1 + static_cast<uint8_t>(b[e]);
+                }
+                e += 1;                 // skin
+                e += 2;                 // followed monster
+                i++;
+            }
+            pos = e;
+        }
+        else
+            return "unknown_packet_code";
+    }
+    return std::string();
+}
+
+
 class Fixture
 {
 public:
@@ -158,7 +281,14 @@ public:
     // different focus client.
     MapControllerMpStub observer;
     TestApiProtocol api;
+    // focus_slot indexes map_clients_id (the wire slot); focus_owned
+    // indexes owned[] (creation order). They are the same number only
+    // while the map has never reused a freed slot -- insertOnMap pops
+    // the LIFO free list, so after any leave+join the joiner's wire slot
+    // is BELOW its creation order. Scenarios that provoke that must set
+    // both (setFocus(slot,ownedIndex)).
     uint8_t focus_slot = 0;
+    uint8_t focus_owned = 0;
     // Last sync-check result (filled by runMinCpu/runMinNetwork). "" =
     // observer matches server. "skip_ping" = focus has pingCountInProgress()>0
     // so the diff was intentionally skipped per the brief. Any other
@@ -187,7 +317,8 @@ public:
         ClientList::list = nullptr;
     }
 
-    void setFocus(uint8_t slot) { focus_slot = slot; }
+    void setFocus(uint8_t slot) { focus_slot = slot; focus_owned = slot; }
+    void setFocus(uint8_t slot, uint8_t ownedIndex) { focus_slot = slot; focus_owned = ownedIndex; }
 
     // Create one stub client. Returns its slot index in MVA's
     // map_clients_id (the same as its ClientList global id, since the
@@ -218,18 +349,121 @@ public:
         return static_cast<uint8_t>(gid);
     }
 
+    // Model a link whose round trip fits inside one tick: every client
+    // answers the ping it was sent last tick, exactly as production does on
+    // the 0xE3 reply. A scenario wanting a SLOW client raises that client's
+    // counter with setPing(n), so it stays held back for n ticks despite
+    // this. Set ackEachTick=false to model a link that never answers.
+    bool ackEachTick = true;
+    void ackAllPings()
+    {
+        for(ClientWithMap *c : owned) c->ackPing();
+    }
+
     void runMinCpu(CATCHCHALLENGER_TYPE_MAPID mapId)
     {
+        if(ackEachTick) ackAllPings();
         for(ClientWithMap *c : owned) c->sentBlocks.clear();
         mva.min_CPU(mapId);
         last_sync_status = syncCheckFocus();
     }
 
+    // Enforce the "never tell a client about itself" rule over EVERY client
+    // on the map, not just the focus observer. Returns "" when clean.
+    // min_CPU is deliberately exempt (it broadcasts self and pairs that with
+    // the 0x6C the client filters on) -- see selfEntryViolation().
+    std::string checkNoSelfSend()
+    {
+        size_t gid = 0;
+        while(gid < owned.size())
+        {
+            const int slot = slot_of_gid(mva, static_cast<PLAYER_INDEX_FOR_CONNECTED>(gid));
+            // slots >= 255 are not expressible in the 8-bit wire index, so
+            // the rule cannot be stated for them
+            if(slot >= 0 && slot < 255 && owned[gid] != NULL)
+            {
+                size_t bi = 0;
+                while(bi < owned[gid]->sentBlocks.size())
+                {
+                    const std::string v = selfEntryViolation(owned[gid]->sentBlocks[bi].bytes,
+                                                             static_cast<uint8_t>(slot));
+                    if(!v.empty())
+                    {
+                        std::ostringstream oss;
+                        oss << "selfrule:" << v << " client=" << gid << " slot=" << slot;
+                        return oss.str();
+                    }
+                    bi++;
+                }
+            }
+            gid++;
+        }
+        return std::string();
+    }
+
+    // Pre-tick snapshot, taken AFTER the ACKs are delivered so it is exactly
+    // the state min_network() will see. uint8_t rather than vector<bool> to
+    // avoid the bitset specialisation.
+    std::vector<uint8_t> preTickPing;
+    std::vector<uint8_t> preTickPath2;
+    void snapshotPreTick()
+    {
+        preTickPing.resize(owned.size());
+        preTickPath2.resize(owned.size());
+        size_t i = 0;
+        while(i < owned.size())
+        {
+            preTickPing[i] = owned[i]->pingCountInProgress();
+            preTickPath2[i] = (owned[i]->sendedMap == owned[i]->mapIndex) ? 1 : 0;
+            i++;
+        }
+    }
+
+    // ---- HARD RULE: no new map state to a client that has not replied ----
+    //
+    // If the previous ping is still outstanding when the tick timer runs,
+    // the link has not drained what it was already given. Pushing more at it
+    // buys nothing -- the bytes queue behind the undelivered ones and are
+    // stale by the time they arrive -- and on a 2G / TOR uplink that is how
+    // a client falls permanently behind. Such a recipient must receive
+    // NOTHING and be served one coalesced delta when it answers.
+    //
+    // A client changing map (PATH 1) is exempt: its whole view is invalid
+    // and the full reload has to go out regardless.
+    std::string checkNoSendWhileUnacked()
+    {
+        size_t i = 0;
+        while(i < owned.size())
+        {
+            if(i < preTickPing.size() && preTickPing[i] > 0 && preTickPath2[i] != 0
+               && owned[i] != NULL && !owned[i]->sentBlocks.empty())
+            {
+                std::ostringstream oss;
+                oss << "ackrule:sent_while_unacked client=" << i
+                    << " ping=" << static_cast<unsigned>(preTickPing[i])
+                    << " blocks=" << owned[i]->sentBlocks.size();
+                return oss.str();
+            }
+            i++;
+        }
+        return std::string();
+    }
+
     void runMinNetwork(CATCHCHALLENGER_TYPE_MAPID mapId)
     {
+        if(ackEachTick) ackAllPings();
         for(ClientWithMap *c : owned) c->sentBlocks.clear();
+        snapshotPreTick();
         mva.min_network(mapId);
         last_sync_status = syncCheckFocus();
+        // A rule breach outranks whatever the sync diff said: report it
+        // through the same channel so every existing scenario enforces both
+        // rules without needing its own assertion.
+        std::string rule = checkNoSelfSend();
+        if(rule.empty())
+            rule = checkNoSendWhileUnacked();
+        if(!rule.empty())
+            last_sync_status = rule;
     }
 
     // Feed the focus client's newly captured bytes through the REAL
@@ -249,9 +483,9 @@ public:
     //   other string   — diff failure or parse error (real bug).
     std::string syncCheckFocus()
     {
-        if(focus_slot >= owned.size())
+        if(focus_owned >= owned.size())
             return std::string();
-        ClientWithMap *fc = owned[focus_slot];
+        ClientWithMap *fc = owned[focus_owned];
         // Re-target the test's Api_protocol at our (single) observer so
         // insert_player / reinsert_player / remove_player /
         // dropAllPlayerOnTheMap callbacks land here.
@@ -469,32 +703,150 @@ static void scenario_min_network_path2_no_change_no_send()
     pass_line(name);
 }
 
+// Flow control: a recipient that has not answered the previous ping is
+// HELD BACK — it receives nothing at all, not merely a ping-less diff.
+// Putting more bytes on a link that has not drained the last ones is the
+// thing min_network exists to avoid, and they would be stale on arrival.
 static void scenario_min_network_ping_inflight_blocks_state()
 {
     const char *name = "min_network_ping_inflight_blocks_state";
     Fixture f;
     f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
-    uint8_t s1 = f.addClient("bob", 6, 6, Direction_look_at_right, 101, 1);
+    f.addClient("bob", 6, 6, Direction_look_at_right, 101, 1);
+    f.addClient("carol", 7, 7, Direction_look_at_right, 102, 1);
     // first tick: PATH1 — focus (alice = slot 0) has no ping in
     // flight, observer catches up, sync diff must succeed.
     f.runMinNetwork(1);
     if(!sync_ok(f)) { fail_line(name, "sync_t1:" + f.last_sync_status); return; }
-    // Saturate alice's buffer: pingCountInProgress > 0 — diff is
-    // skipped per the brief on the next tick.
+    // alice's link has not answered: 5 outstanding pings keep her held back
+    // for the next ticks even though the driver ACKs one round per tick.
+    // bob keeps answering and must keep being served normally. carol is the
+    // one who moves, so bob has something to receive that is not himself.
     f.owned[0]->setPing(5);
-    f.owned[1]->setX(8); f.owned[1]->setY(8); // move bob
+    f.owned[2]->setX(8); f.owned[2]->setY(8); // move carol
     f.runMinNetwork(1);
     if(f.last_sync_status != "skip_ping") {
         fail_line(name, "expected_skip_ping_got:" + f.last_sync_status); return;
     }
-    // Even though we skipped the diff, the observer still parsed the
-    // PATH2 bytes — bob's view should advance to (8,8) because
-    // production keeps sending diffs while only the ping byte is
-    // omitted.
-    auto it = f.observer.otherPlayerList.find(static_cast<uint8_t>(s1));
+    // alice must have received NOTHING: not a diff, not a ping.
+    if(!f.owned[0]->sentBlocks.empty()) { fail_line(name, "held_client_got_bytes"); return; }
+    // bob keeps up and must still be served normally.
+    if(f.owned[1]->sentBlocks.empty()) { fail_line(name, "healthy_client_starved"); return; }
+    pass_line(name);
+}
+
+// The two hard rules, stressed together over a busy map: no client is ever
+// told about itself, and no client with an unanswered ping is given new map
+// state. Both are enforced by runMinNetwork() on EVERY tick for EVERY
+// client; this scenario exists so a regression names itself in the test
+// list instead of only surfacing as a side effect somewhere else.
+static void scenario_min_network_hard_rules_under_mixed_lag()
+{
+    const char *name = "min_network_hard_rules_under_mixed_lag";
+    Fixture f;
+    GlobalServerData::serverSettings.mapVisibility.simple.max = 1000;
+    unsigned int i = 0;
+    while(i < 12)
+    {
+        char buf[16];
+        std::snprintf(buf, sizeof(buf), "p%u", i);
+        f.addClient(buf, static_cast<COORD_TYPE>(1 + i),
+                    static_cast<COORD_TYPE>(2 + i),
+                    Direction_look_at_bottom, 400 + i, 1);
+        i++;
+    }
+    f.runMinNetwork(1);   // PATH1 for everyone
+    if(!sync_ok(f)) { fail_line(name, "sync_t1:" + f.last_sync_status); return; }
+
+    // Every third client is on a slow link and stays held for several ticks;
+    // the rest keep answering. Movement, a join and a leave run underneath.
+    unsigned int tick = 0;
+    while(tick < 8)
+    {
+        unsigned int k = 0;
+        while(k < f.owned.size())
+        {
+            if((k % 3) == 0)
+                f.owned[k]->setPing(3);            // slow link
+            if(((k + tick) % 2) == 0)
+                f.owned[k]->setX(static_cast<COORD_TYPE>(1 + ((k + tick) % 40)));
+            k++;
+        }
+        if(tick == 3)
+        {
+            const int victim = oracle_live_slot(f.mva, 2);
+            if(victim > 0)
+                f.mva.removeOnMap(static_cast<PLAYER_INDEX_FOR_CONNECTED>(victim));
+        }
+        if(tick == 5)
+            f.addClient("late", 9, 9, Direction_look_at_top, 999, 1);
+        f.runMinNetwork(1);
+        // sync_ok covers BOTH hard rules: runMinNetwork folds a breach of
+        // either into last_sync_status.
+        if(!sync_ok(f))
+        {
+            std::ostringstream oss;
+            oss << "tick" << tick << ":" << f.last_sync_status;
+            fail_line(name, oss.str()); return;
+        }
+        tick++;
+    }
+    pass_line(name);
+}
+
+// ...and when it finally answers, it gets ONE delta carrying everything it
+// missed, not one delta per tick it was away. This is the byte win of the
+// hold-back: K ticks of movement collapse into a single packet whose
+// entries hold the FINAL position, and a slot that appeared and vanished
+// while the client was away costs nothing at all.
+static void scenario_min_network_coalesced_delta_on_ack()
+{
+    const char *name = "min_network_coalesced_delta_on_ack";
+    Fixture f;
+    f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
+    uint8_t s1 = f.addClient("bob", 6, 6, Direction_look_at_right, 101, 1);
+    f.addClient("carol", 7, 7, Direction_look_at_right, 102, 1);
+    f.runMinNetwork(1);   // PATH1 for everyone
+    if(!sync_ok(f)) { fail_line(name, "sync_t1:" + f.last_sync_status); return; }
+
+    // alice stops answering (enough outstanding pings to stay held for the
+    // whole window below); bob walks for 4 ticks.
+    f.owned[0]->setPing(10);
+    unsigned int t = 0;
+    while(t < 4)
+    {
+        f.owned[1]->setX(static_cast<COORD_TYPE>(10 + t));
+        f.runMinNetwork(1);
+        if(!f.owned[0]->sentBlocks.empty()) { fail_line(name, "held_client_got_bytes"); return; }
+        t++;
+    }
+    // A player joins and leaves entirely within the held window: alice
+    // never needs to hear about him at all.
+    f.addClient("ghost", 9, 9, Direction_look_at_top, 103, 1);
+    f.runMinNetwork(1);
+    const int ghost_slot = slot_of_gid(f.mva, 3);
+    if(ghost_slot < 0) { fail_line(name, "setup_ghost"); return; }
+    f.mva.removeOnMap(static_cast<PLAYER_INDEX_FOR_CONNECTED>(ghost_slot));
+    f.runMinNetwork(1);
+    if(!f.owned[0]->sentBlocks.empty()) { fail_line(name, "held_client_got_bytes_2"); return; }
+
+    // alice answers: exactly one tick's worth of bytes, carrying bob's
+    // FINAL position, and no mention of the ghost.
+    f.owned[0]->setPing(0);
+    f.runMinNetwork(1);
+    if(f.owned[0]->sentBlocks.empty()) { fail_line(name, "no_catchup_delta"); return; }
+    if(!sync_ok(f)) { fail_line(name, "sync_after_ack:" + f.last_sync_status); return; }
+    std::unordered_map<uint8_t, OtherPlayerView>::const_iterator it =
+        f.observer.otherPlayerList.find(static_cast<uint8_t>(s1));
     if(it == f.observer.otherPlayerList.end()) { fail_line(name, "bob_missing"); return; }
-    if(it->second.x != 8 || it->second.y != 8) { fail_line(name, "bob_pos_wrong"); return; }
-    if(f.observer.pingsObserved.size() != 1) { fail_line(name, "extra_ping_emitted"); return; }
+    if(it->second.x != 13) {
+        std::ostringstream oss;
+        oss << "bob_not_at_final_x got=" << static_cast<unsigned>(it->second.x);
+        fail_line(name, oss.str()); return;
+    }
+    if(f.observer.otherPlayerList.find(static_cast<uint8_t>(ghost_slot))
+       != f.observer.otherPlayerList.end())
+    { fail_line(name, "ghost_leaked_to_held_client"); return; }
     pass_line(name);
 }
 
@@ -626,14 +978,12 @@ static void scenario_clamp_and_count_ge254()
 // same fixture so PATH1 still fires (min_CPU sets sendedMap which
 // would then force PATH2 on the next min_network tick).
 //
-// NOTE: a sparse middle (slot 0 valid, slot 1 MAX, slot 2 valid) is
-// an artificial layout. Production's insertOnMap always backfills
-// removed slots first, so the high end ends up MAX, not the middle.
-// With a middle gap, send_reinsertAllWithFilter uses clients_size=2
-// as its upper loop bound and therefore never reaches slot 2 — the
-// observer ends up short one player vs the server. We skip the sync
-// diff here; the scenario's purpose is branch coverage, not state
-// equivalence.
+// NOTE: a sparse middle (slot 0 valid, slot 1 MAX, slot 2 valid) is NOT
+// artificial -- it is the ordinary state between a player leaving and the
+// next one joining, and insertOnMap's LIFO refill can leave it standing
+// (see scenario_min_network_path1_hole_keeps_live_top_slot). So this
+// scenario asserts state equivalence too: carol at slot 2 must reach the
+// observer even though slot 1 is a hole.
 static void scenario_empty_slot_in_map()
 {
     const char *name = "empty_slot_in_map";
@@ -643,6 +993,15 @@ static void scenario_empty_slot_in_map()
     f.addClient("carol", 3, 3, Direction_look_at_bottom, 102, 1);
     f.mva.removeOnMap(1); // bob's slot now PLAYER_INDEX_FOR_CONNECTED_MAX
     f.runMinNetwork(1);   // PATH1 hits status_empty for slot 1
+    if(!sync_ok(f)) { fail_line(name, "sync_min_network:" + f.last_sync_status); return; }
+    // No sync check after min_CPU here: min_network already set sendedMap,
+    // so min_CPU takes its "same map as last tick" branch and skips the
+    // 0x6C that carries the recipient's own slot. min_CPU relies on the
+    // client filtering itself via playerExcludeIndex, which without that
+    // 0x6C is still 255 -- so the observer legitimately keeps its own
+    // entry. That is an artifact of driving BOTH algorithms over one
+    // fixture (production picks one for the server's lifetime); the call
+    // is kept only for branch coverage of send_reinsertAll's empty slot.
     f.runMinCpu(1);       // hits min_cpu_slot_empty + send_reinsertAll_loop_empty
     pass_line(name);
 }
@@ -698,6 +1057,186 @@ static void scenario_min_network_path2_removal_sequence()
     if(!sync_ok(f)) { fail_line(name, "sync_t2_remove:" + f.last_sync_status); return; }
     f.runMinNetwork(1); // tick3: bob still gone; empty_already
     if(!sync_ok(f)) { fail_line(name, "sync_t3:" + f.last_sync_status); return; }
+    pass_line(name);
+}
+
+// ---- Byte-exactness oracle -----------------------------------------
+//
+// min_network exists to keep the WIRE small (ADSL / 2G / TOR home
+// servers), so a change to it has to be judged on the exact bytes it
+// emits, not merely on whether the client view converges. This folds the
+// entire output byte stream of a deterministic mixed workload into one
+// digest: build the binary before a change, note the line, build it after,
+// compare. Any difference in packet order, header, count, entry layout or
+// volume moves the digest.
+static uint64_t fnv1a_fold(uint64_t h, const char *d, size_t n)
+{
+    size_t i = 0;
+    while(i < n)
+    {
+        h ^= static_cast<unsigned char>(d[i]);
+        h *= 1099511628211ULL;
+        i++;
+    }
+    return h;
+}
+
+static Direction oracle_dir(uint32_t r)
+{
+    switch(r & 0x3)
+    {
+        case 0:  return Direction_look_at_top;
+        case 1:  return Direction_look_at_right;
+        case 2:  return Direction_look_at_bottom;
+        default: return Direction_look_at_left;
+    }
+}
+
+static void scenario_min_network_byte_oracle()
+{
+    const char *name = "min_network_byte_oracle";
+    Fixture f;
+    GlobalServerData::serverSettings.mapVisibility.simple.max = 1000;
+    uint32_t rng = 0x5EEDu;
+    unsigned int i = 0;
+    while(i < 24)
+    {
+        char buf[16];
+        std::snprintf(buf, sizeof(buf), "p%u", i);
+        f.addClient(buf, static_cast<COORD_TYPE>(1 + i % 40),
+                    static_cast<COORD_TYPE>(1 + (i * 7) % 40),
+                    Direction_look_at_bottom, 2000 + i, 1);
+        i++;
+    }
+    uint64_t digest = 1469598103934665603ULL;
+    uint64_t total = 0;
+    unsigned int tick = 0;
+    while(tick < 40)
+    {
+        // ~40% of players change position/direction each tick.
+        unsigned int k = 0;
+        while(k < f.owned.size())
+        {
+            rng = rng * 1664525u + 1013904223u;
+            if(((rng >> 16) % 100) < 40)
+            {
+                f.owned[k]->setX(static_cast<COORD_TYPE>(1 + ((rng >> 8) % 40)));
+                f.owned[k]->setDirection(oracle_dir(rng));
+            }
+            k++;
+        }
+        // Every 7th tick two players leave and one joins: exercises remove,
+        // LIFO slot reuse, a surviving hole, and a live slot above it.
+        if((tick % 7) == 6)
+        {
+            const int a = oracle_live_slot(f.mva, 1);
+            const int b = oracle_live_slot(f.mva, 3);
+            if(a > 0 && b > 0 && a != b)
+            {
+                f.mva.removeOnMap(static_cast<PLAYER_INDEX_FOR_CONNECTED>(a));
+                f.mva.removeOnMap(static_cast<PLAYER_INDEX_FOR_CONNECTED>(b));
+                char buf[16];
+                std::snprintf(buf, sizeof(buf), "j%u", tick);
+                f.addClient(buf, static_cast<COORD_TYPE>(2 + (tick % 30)),
+                            static_cast<COORD_TYPE>(3 + (tick % 20)),
+                            Direction_look_at_top, 9000 + tick, 1);
+            }
+        }
+        // Saturate one client's ping every 11th tick so the "ping already in
+        // flight" branch is part of the measured byte stream too.
+        if((tick % 11) == 5 && f.owned.size() > 2)
+            f.owned[2]->setPing(2);
+
+        f.runMinNetwork(1);
+        if(!sync_ok(f)) { fail_line(name, "sync_tick:" + f.last_sync_status); return; }
+
+        // Fold every client's output, in slot order, into the digest.
+        k = 0;
+        while(k < f.owned.size())
+        {
+            const ClientWithMap *c = f.owned[k];
+            size_t bi = 0;
+            while(bi < c->sentBlocks.size())
+            {
+                const std::vector<char> &by = c->sentBlocks[bi].bytes;
+                digest = fnv1a_fold(digest, reinterpret_cast<const char *>(&k), sizeof(k));
+                digest = fnv1a_fold(digest, by.data(), by.size());
+                total += by.size();
+                bi++;
+            }
+            k++;
+        }
+        tick++;
+    }
+    std::cout << "[ORACLE] min_network bytes=" << total
+              << " digest=" << std::hex << digest << std::dec << std::endl;
+    pass_line(name);
+}
+
+// A LIVE player sitting ABOVE a hole must survive another player's PATH1.
+//
+// Reached with the production API only -- insertOnMap / removeOnMap are
+// exactly what a map change does. Four players; two walk off; one walks
+// in. insertOnMap pops the LIFO free list, so the joiner takes the HIGHER
+// freed slot and leaves the LOWER one as the hole:
+//
+//     slot 0     slot 1     slot 2       slot 3
+//     [alice]    [ hole ]   [erin new]   [dave]   <- dave still live
+//
+// clients_size = map_clients_id.size()(4) - map_removed_index.size()(1)
+// = 3, and send_reinsertAllWithFilter's bound is `index<clients_size`, so
+// the loop stops at slot 2 and never reaches dave at slot 3. Erin's 0x6B
+// is short one player.
+//
+// This cannot self-heal. 0x66 carries only [slot][x][y][direction] -- no
+// pseudo, skin or monster -- so the client cannot materialise a player it
+// was never inserted, and reinsert_player_final() drops the entry outright
+// ("Other player (%1) not exists", MapControllerMPAPI.cpp:954). PATH2's
+// diff then sees dense[3]==previous[3] and never re-sends. dave stays
+// invisible to erin for as long as erin stays on this map.
+static void scenario_min_network_path1_hole_keeps_live_top_slot()
+{
+    const char *name = "min_network_path1_hole_keeps_live_top_slot";
+    Fixture f;
+    f.addClient("alice", 1, 1, Direction_look_at_bottom, 100, 1);
+    uint8_t bob_g   = f.addClient("bob",   2, 2, Direction_look_at_bottom, 101, 1);
+    uint8_t carol_g = f.addClient("carol", 3, 3, Direction_look_at_bottom, 102, 1);
+    uint8_t dave_g  = f.addClient("dave",  4, 4, Direction_look_at_bottom, 103, 1);
+    f.runMinNetwork(1);   // tick1: everybody PATH1, no hole yet
+    if(!sync_ok(f)) { fail_line(name, "sync_t1:" + f.last_sync_status); return; }
+
+    // bob and carol walk off the map.
+    const int bob_slot   = slot_of_gid(f.mva, bob_g);
+    const int carol_slot = slot_of_gid(f.mva, carol_g);
+    if(bob_slot < 0 || carol_slot < 0) { fail_line(name, "setup_slot_lookup"); return; }
+    f.mva.removeOnMap(static_cast<PLAYER_INDEX_FOR_CONNECTED>(bob_slot));
+    f.mva.removeOnMap(static_cast<PLAYER_INDEX_FOR_CONNECTED>(carol_slot));
+
+    // erin walks in and reuses carol's slot, leaving bob's as the hole.
+    uint8_t erin_g = f.addClient("erin", 5, 5, Direction_look_at_bottom, 104, 1);
+    const int erin_slot = slot_of_gid(f.mva, erin_g);
+    const int dave_slot = slot_of_gid(f.mva, dave_g);
+    if(erin_slot < 0 || dave_slot < 0) { fail_line(name, "setup_slot_lookup2"); return; }
+    // The whole point is a live slot ABOVE the hole; assert the setup got there.
+    if(dave_slot <= erin_slot) { fail_line(name, "setup_dave_not_above_hole"); return; }
+
+    // Focus the observer on erin (owned[] index 4, wire slot 2). Her PATH1
+    // block opens with 0x65 drop-all, which resets the shared observer to
+    // erin's own view.
+    f.setFocus(static_cast<uint8_t>(erin_slot), 4);
+    f.runMinNetwork(1);   // tick2: erin PATH1, the others PATH2
+    if(!sync_ok(f)) { fail_line(name, "sync_t2_join:" + f.last_sync_status); return; }
+    if(f.observer.otherPlayerList.find(static_cast<uint8_t>(dave_slot))
+       == f.observer.otherPlayerList.end())
+    { fail_line(name, "dave_missing_from_joiner_view"); return; }
+
+    // dave moves: PATH2 emits a 0x66 for his slot, which the client drops
+    // when it never received the matching insert. Proves it is permanent,
+    // not merely one tick late.
+    f.owned[3]->setX(6);
+    f.owned[3]->setDirection(Direction_move_at_right);
+    f.runMinNetwork(1);   // tick3
+    if(!sync_ok(f)) { fail_line(name, "sync_t3_after_move:" + f.last_sync_status); return; }
     pass_line(name);
 }
 
@@ -930,6 +1469,8 @@ int main()
     scenario_min_network_path2_movement();
     scenario_min_network_path2_no_change_no_send();
     scenario_min_network_ping_inflight_blocks_state();
+    scenario_min_network_coalesced_delta_on_ack();
+    scenario_min_network_hard_rules_under_mixed_lag();
     scenario_min_network_path2_replaced_remove_newslot();
     scenario_send_helpers_guards();
     scenario_clamp_and_count_ge254();
@@ -937,6 +1478,8 @@ int main()
     scenario_min_network_skip_ge_max();
     scenario_min_network_path1_ping_skip();
     scenario_min_network_path2_removal_sequence();
+    scenario_min_network_path1_hole_keeps_live_top_slot();
+    scenario_min_network_byte_oracle();
     scenario_min_network_path2_beyond_slots();
     scenario_min_network_path2_no_diff_ping_inflight();
     scenario_min_network_path2_insert_ge254();

@@ -37,7 +37,8 @@
 // name matches on every ABI (uint64_t != unsigned long long on some hosts).
 int run_scenario(unsigned int players, unsigned int ticks, unsigned int seed,
                  unsigned int insrem_pct, unsigned int move_pct,
-                 uint64_t budget_ms);
+                 uint64_t budget_ms,
+                 unsigned int lag_pct, unsigned int lag_rounds);
 
 // SAME constants as benchmark/benchmarkmapmanager.py so the on-device BENCH
 // lines line up with the fleet champion for this benchmark.
@@ -103,7 +104,8 @@ extern "C" void app_main(void)
             {
                 run_scenario(players, 0 /*ticks: fixed-time*/, BENCH_SEED,
                              BENCH_INSREM_PCT, BENCH_MOVE_PCT,
-                             (uint64_t)BENCH_MS);
+                             (uint64_t)BENCH_MS,
+                             0 /*lag_pct: healthy link*/, 1 /*lag_rounds*/);
             }
             catch(const std::bad_alloc &)
             {
