@@ -59,6 +59,8 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--apply", action="store_true",
                     help="actually delete (default: dry run)")
+    ap.add_argument("--champions", action="store_true",
+                    help="also remove champion*.svg (regenerable via svg.py)")
     ap.add_argument("--keep", type=int, default=1,
                     help="how many newest candidate charts to keep per folder")
     args = ap.parse_args()
@@ -72,6 +74,16 @@ def main():
 
     doomed = []
     freed = 0
+    if args.champions:
+        for dirpath, _dirnames, filenames in os.walk(RESULTS):
+            for name in sorted(filenames):
+                if name.startswith("champion") and name.endswith(SUFFIX):
+                    path = os.path.join(dirpath, name)
+                    try:
+                        freed += os.path.getsize(path)
+                    except OSError:
+                        pass
+                    doomed.append(path)
     for dirpath, names in sorted(candidates_by_dir(RESULTS).items()):
         for name in newest_first(dirpath, names)[args.keep:]:
             path = os.path.join(dirpath, name)

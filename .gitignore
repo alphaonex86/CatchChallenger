@@ -209,19 +209,13 @@ core.*
 #    Tracked, so the project's performance evolution and the hardware
 #    comparison live in git without the bulk:
 #      results/**/champion.json                   the current best per benchmark
-#      results/**/champion*.svg                   the champion charts (cross-node
-#                                                 + per-execution-node), 102
-#                                                 files / ~44 MB, REGENERATED in
-#                                                 full by every suite run. The
-#                                                 two cross-node charts are
-#                                                 ~17 MB of that and grow with
-#                                                 batches x series -- if the repo
-#                                                 gets heavy, they are the lever.
-#                                                 Candidate charts stay untracked.
 #      history/<benchmark>/<platform>/<node>/last.json
 #                                                 latest run per node, stripped
 #                                                 of nulls and raw sample arrays
 #                                                 (benchmark/history_last.py)
+#    NO chart is tracked, and none is even written by default: a chart is a
+#    VIEW of these JSONs, so `python3 benchmark/svg.py` renders any of them on
+#    demand and opens it (CC_BENCH_WRITE_CHARTS=1 restores writing to disk).
 #    Git itself is the time series: each commit of a last.json is one datapoint.
 #    NB: these must be `dir/**` + a `!dir/**/` directory re-include, NOT `dir/`
 #    — git never descends into an excluded DIRECTORY, so a bare `benchmark/
@@ -233,7 +227,6 @@ benchmark/history/**
 benchmark/results/**
 !benchmark/results/**/
 !benchmark/results/**/champion.json
-!benchmark/results/**/champion*.svg
 
 # ── bot-actions QSettings sidecar (created in cwd by DatabaseBot::init())
 benchmark/config.db

@@ -259,6 +259,14 @@ def _decision_glyph(cx, cy, decision, size=5):
             f'stroke-width="0.5"/>')
 
 
+# Charts are a VIEW of the history JSONs, not data: svg.py renders any of them
+# on demand in well under a second and opens it, so persisting 100+ SVGs (and
+# the candidate copy beside each) spends tens of MB storing something
+# regenerable. Writing is therefore OPT-IN; set CC_BENCH_WRITE_CHARTS=1 to get
+# the old behaviour back.
+WRITE_CHARTS = os.environ.get("CC_BENCH_WRITE_CHARTS", "") not in ("", "0")
+
+
 def _write_if_changed(path, text):
     """Write only when the bytes actually differ.
 
@@ -1139,7 +1147,7 @@ def regenerate(benchmark, stamp=None):
         champ_p = os.path.join(outdir, "champion.svg")
         _write_if_changed(champ_p, svg)
         written.append(champ_p)
-        if stamp:
+        if stamp and WRITE_CHARTS:
             cand_p = os.path.join(outdir, f"candidate-{stamp}.svg")
             with open(cand_p, "w") as f:
                 f.write(svg)
@@ -1156,7 +1164,7 @@ def regenerate(benchmark, stamp=None):
         os.makedirs(outdir, exist_ok=True)
         _write_if_changed(champ_p, svg)
         written.append(champ_p)
-        if stamp:
+        if stamp and WRITE_CHARTS:
             cand_p = os.path.join(outdir, f"candidate-{stamp}.svg")
             with open(cand_p, "w") as f:
                 f.write(svg)
