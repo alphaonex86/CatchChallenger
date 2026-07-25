@@ -1,10 +1,1 @@
-{
-  "arch": "i686",
-  "arch_emulated": false,
-  "cc_storage_path": "/home/catchchallenger/run",
-  "cpu_metrics_reliable": true,
-  "datapack_storage_path": "/home/catchchallenger/run/datapack",
-  "net_family": "ipv4",
-  "virt_kind": "bare-metal",
-  "virt_type": "none"
-}
+{"arch":"i686","arch_emulated":false,"cc_storage_path":"/home/catchchallenger/run","cpu_metrics_reliable":true,"datapack_storage_path":"/home/catchchallenger/run/datapack","net_family":"ipv4","virt_kind":"bare-metal","virt_type":"none"}

@@ -136,11 +136,10 @@ run_loop() {
         fi
     done
     python3 chart_generator.py "${NODE_ARGS[@]}"
-    # Distil the per-run history into the one tracked file per node
-    # (history/<benchmark>/<platform>/<node>/last.json). Cheap, and keeps the
-    # git-tracked performance timeline from going stale behind the untracked
-    # per-run JSONs.
-    python3 history_last.py
+    # Distil the per-run history into the tracked series.json + platform.json
+    # per node. Cheap, and keeps the git-tracked performance timeline from
+    # going stale behind the untracked per-run JSONs.
+    python3 history_series.py
     # Keep only the newest candidate chart per folder. They accumulate at
     # ~10 MB/run and are reconstructible from the candidate/history JSONs that
     # stay on disk; without this results/ reached 700 MB, 652 MB of it obsolete

@@ -209,20 +209,25 @@ core.*
 #    Tracked, so the project's performance evolution and the hardware
 #    comparison live in git without the bulk:
 #      results/**/champion.json                   the current best per benchmark
-#      history/<benchmark>/<platform>/<node>/last.json
-#                                                 latest run per node, stripped
-#                                                 of nulls and raw sample arrays
-#                                                 (benchmark/history_last.py)
+#      history/<benchmark>/<platform>/<node>/series.json
+#                                                 that node's WHOLE measurement
+#                                                 history as parallel arrays
+#                                                 (runs axis + per-metric column)
+#      history/<benchmark>/<platform>/<node>/platform.json
+#                                                 its machine description,
+#                                                 rewritten only when it changes
+#                                                 (benchmark/history_series.py)
 #    NO chart is tracked, and none is even written by default: a chart is a
 #    VIEW of these JSONs, so `python3 benchmark/svg.py` renders any of them on
 #    demand and opens it (CC_BENCH_WRITE_CHARTS=1 restores writing to disk).
-#    Git itself is the time series: each commit of a last.json is one datapoint.
+#    series.json carries the timeline in-file (machine-readable, ~2.3 bytes per
+#    datapoint), so reading the evolution needs no `git log -p` archaeology.
 #    NB: these must be `dir/**` + a `!dir/**/` directory re-include, NOT `dir/`
 #    — git never descends into an excluded DIRECTORY, so a bare `benchmark/
 #    history/` would make the negations below unreachable.
 benchmark/history/**
 !benchmark/history/**/
-!benchmark/history/**/last.json
+!benchmark/history/**/series.json
 !benchmark/history/**/platform.json
 benchmark/results/**
 !benchmark/results/**/
