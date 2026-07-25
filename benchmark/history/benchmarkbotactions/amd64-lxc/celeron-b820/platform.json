@@ -1,0 +1,54 @@
+{
+  "arch": "x86_64",
+  "arch_emulated": false,
+  "cc_storage_disk_kind": "hdd",
+  "cc_storage_disk_root": "ATA Hitachi HTS54755",
+  "cc_storage_fs": "ext4",
+  "cc_storage_path": "/home/user/run",
+  "cc_storage_source": "/dev/sda1",
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "cpu_cache": [
+    {
+      "level": 1,
+      "line_size_bytes": 64,
+      "size": "32K",
+      "type": "Data"
+    },
+    {
+      "level": 1,
+      "line_size_bytes": 64,
+      "size": "32K",
+      "type": "Instruction"
+    },
+    {
+      "level": 2,
+      "line_size_bytes": 64,
+      "size": "256K",
+      "type": "Unified"
+    },
+    {
+      "level": 3,
+      "line_size_bytes": 64,
+      "size": "2048K",
+      "type": "Unified"
+    }
+  ],
+  "cpu_cores": 2,
+  "cpu_governor": "ondemand",
+  "cpu_metrics_reliable": true,
+  "cpu_mhz": 1277,
+  "cpu_model": "Intel(R) Celeron(R) CPU B820 @ 1.70GHz",
+  "datapack_storage_disk_kind": "hdd",
+  "datapack_storage_disk_root": "ATA Hitachi HTS54755",
+  "datapack_storage_fs": "ext4",
+  "datapack_storage_path": "/home/user/run/datapack",
+  "datapack_storage_source": "/dev/sda1",
+  "disk_kind": "hdd",
+  "disk_root": "ATA Hitachi HTS54755",
+  "kernel": "6.12.90+deb13.1-amd64",
+  "libc": "glibc 2.41",
+  "net_family": "ipv4+ipv6",
+  "ram_total_mb": 1686,
+  "virt_kind": "bare-metal",
+  "virt_type": "none"
+}

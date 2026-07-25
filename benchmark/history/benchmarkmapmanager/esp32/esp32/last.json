@@ -1,6 +1,4 @@
 {
-  "arch": "xtensa-lx6",
-  "arch_emulated": false,
   "benchmark": "benchmarkmapmanager",
   "commit": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
   "commit_short": "5462b5b",
@@ -9,29 +7,19 @@
     "-DCATCHCHALLENGER_NOXML",
     "-DCC_TARGET_ESP32"
   ],
-  "compiler": "xtensa-esp32-elf-gcc",
-  "cpu_cores": 2,
-  "cpu_mhz": 240.0,
-  "cpu_model": "Espressif ESP32 (Xtensa LX6 dual-core)",
   "decision": "DISCARD",
-  "disk_kind": "flash",
   "ended_utc": "2026-07-25T17:52:37Z",
   "harness_version": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
-  "libc": "newlib",
-  "net_card": "ESP32 WiFi (802.11 b/g/n)",
-  "net_link": "serial",
-  "net_link_detail": "uart0",
   "node": "esp32",
-  "ram_type": "SRAM ~520KiB (no DRAM)",
   "results": {
     "rusage": {
       "metrics": {
         "p10_bytes_sent": {
           "better": "lower",
-          "median": 1071118,
+          "median": 1071000,
           "stddev": 0.0,
           "unit": "bytes",
-          "value": 1071118
+          "value": 1071000
         },
         "p10_median_tick_ns": {
           "better": "lower",
@@ -56,17 +44,17 @@
         },
         "p10_ticks_per_s": {
           "better": "higher",
-          "median": 2684.92,
+          "median": 2685,
           "stddev": 0.0,
           "unit": "ticks/s",
-          "value": 2684.92
+          "value": 2685
         },
         "p20_bytes_sent": {
           "better": "lower",
-          "median": 2123200,
+          "median": 2123000,
           "stddev": 0.0,
           "unit": "bytes",
-          "value": 2123200
+          "value": 2123000
         },
         "p20_median_tick_ns": {
           "better": "lower",
@@ -91,17 +79,17 @@
         },
         "p20_ticks_per_s": {
           "better": "higher",
-          "median": 1621.19,
+          "median": 1621,
           "stddev": 0.0,
           "unit": "ticks/s",
-          "value": 1621.19
+          "value": 1621
         },
         "p50_bytes_sent": {
           "better": "lower",
-          "median": 5397219,
+          "median": 5397000,
           "stddev": 0.0,
           "unit": "bytes",
-          "value": 5397219
+          "value": 5397000
         },
         "p50_median_tick_ns": {
           "better": "lower",
@@ -133,10 +121,10 @@
         },
         "p5_bytes_sent": {
           "better": "lower",
-          "median": 470844,
+          "median": 470800,
           "stddev": 0.0,
           "unit": "bytes",
-          "value": 470844
+          "value": 470800
         },
         "p5_median_tick_ns": {
           "better": "lower",
@@ -161,10 +149,10 @@
         },
         "p5_ticks_per_s": {
           "better": "higher",
-          "median": 3832.67,
+          "median": 3833,
           "stddev": 0.0,
           "unit": "ticks/s",
-          "value": 3832.67
+          "value": 3833
         }
       },
       "status": "PASS",
@@ -172,10 +160,10 @@
         "10-players": {
           "bytes_sent": {
             "better": "lower",
-            "median": 1071118,
+            "median": 1071000,
             "stddev": 0.0,
             "unit": "bytes",
-            "value": 1071118
+            "value": 1071000
           },
           "median_tick_ns": {
             "better": "lower",
@@ -200,19 +188,19 @@
           },
           "ticks_per_s": {
             "better": "higher",
-            "median": 2684.92,
+            "median": 2685,
             "stddev": 0.0,
             "unit": "ticks/s",
-            "value": 2684.92
+            "value": 2685
           }
         },
         "20-players": {
           "bytes_sent": {
             "better": "lower",
-            "median": 2123200,
+            "median": 2123000,
             "stddev": 0.0,
             "unit": "bytes",
-            "value": 2123200
+            "value": 2123000
           },
           "median_tick_ns": {
             "better": "lower",
@@ -237,19 +225,19 @@
           },
           "ticks_per_s": {
             "better": "higher",
-            "median": 1621.19,
+            "median": 1621,
             "stddev": 0.0,
             "unit": "ticks/s",
-            "value": 1621.19
+            "value": 1621
           }
         },
         "5-players": {
           "bytes_sent": {
             "better": "lower",
-            "median": 470844,
+            "median": 470800,
             "stddev": 0.0,
             "unit": "bytes",
-            "value": 470844
+            "value": 470800
           },
           "median_tick_ns": {
             "better": "lower",
@@ -274,19 +262,19 @@
           },
           "ticks_per_s": {
             "better": "higher",
-            "median": 3832.67,
+            "median": 3833,
             "stddev": 0.0,
             "unit": "ticks/s",
-            "value": 3832.67
+            "value": 3833
           }
         },
         "50-players": {
           "bytes_sent": {
             "better": "lower",
-            "median": 5397219,
+            "median": 5397000,
             "stddev": 0.0,
             "unit": "bytes",
-            "value": 5397219
+            "value": 5397000
           },
           "median_tick_ns": {
             "better": "lower",
@@ -320,7 +308,5 @@
       }
     }
   },
-  "simd_tier": "generic",
-  "virt_kind": "bare-metal",
-  "virt_type": "none"
+  "simd_tier": "generic"
 }

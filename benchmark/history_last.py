@@ -33,10 +33,52 @@ HISTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "history")
 #                       noise, meaningless once the run is over
 #   batch_id / started_utc -- run bookkeeping; ended_utc + commit locate the run
 #   cpu_flags        -- very long and superseded by simd_tier for comparison
+# Files this script itself writes into a node dir -- they are NOT runs and must
+# never be mistaken for one. "platform.json" sorts AFTER any 2026-... stamp, so
+# missing it here silently made the generator read its own output as the newest
+# run and emit an empty last.json.
+GENERATED = frozenset(("last.json", "platform.json"))
+
 DROP_KEYS = frozenset((
     "kernel_config_gz", "sensors", "noise_services", "loadavg_1min_at_start",
     "batch_id", "started_utc", "cpu_flags",
 ))
+
+
+SIG_DIGITS = 4
+
+# Run-specific keys: everything else describes the MACHINE and goes to
+# platform.json, which is rewritten only when the machine description actually
+# changes. Splitting them keeps a rerun from rewriting a kilobyte of unchanged
+# cpu_model / kernel / net_card text on every node, every run.
+RUN_KEYS = frozenset((
+    "benchmark", "node", "commit", "commit_short", "ended_utc", "decision",
+    "comment", "harness_version", "compile_flags", "simd_tier", "results",
+))
+
+
+def round_sig(value, digits=SIG_DIGITS):
+    """Round a measurement to `digits` significant figures.
+
+    A raw score like 5646546513248 carries ~9 digits of run-to-run noise that
+    no one reads and that guarantees a fresh git blob every run. 4 significant
+    figures still resolves ~0.02%, far finer than the noise floor of any of
+    these benchmarks, and makes an unchanged machine produce a byte-identical
+    file. Booleans are left alone (bool is an int subclass), as are integers
+    that are already short enough to be exact."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return value
+    if value == 0 or value != value or value in (float("inf"), float("-inf")):
+        return value
+    import math
+    exp = math.floor(math.log10(abs(value)))
+    quant = digits - 1 - exp
+    rounded = round(value, quant)
+    if quant <= 0:
+        rounded = int(rounded)
+    elif float(rounded).is_integer() and isinstance(value, int):
+        rounded = int(rounded)
+    return rounded
 
 
 def strip_metrics(node):
@@ -57,7 +99,7 @@ def strip_metrics(node):
         return out
     if isinstance(node, list):
         return [strip_metrics(v) for v in node]
-    return node
+    return round_sig(node)
 
 
 def compact(record):
@@ -83,7 +125,7 @@ def newest_run(node_dir):
     best = None
     best_key = None
     for name in os.listdir(node_dir):
-        if not name.endswith(".json") or name == "last.json":
+        if not name.endswith(".json") or name in GENERATED:
             continue
         path = os.path.join(node_dir, name)
         try:
@@ -119,32 +161,43 @@ def node_dirs():
     return found
 
 
+def write_if_changed(path, payload):
+    """Write JSON only when the bytes differ. sort_keys makes an unchanged run
+    byte-identical, so git records nothing. Returns True when written."""
+    text = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    try:
+        with open(path) as handle:
+            if handle.read() == text:
+                return False, len(text)
+    except (OSError, ValueError):
+        pass
+    with open(path, "w") as handle:
+        handle.write(text)
+    return True, len(text)
+
+
 def main():
-    written = 0
+    dirs = node_dirs()
+    wrote_run = 0
+    wrote_platform = 0
     total = 0
-    for ndir in node_dirs():
+    for ndir in dirs:
         record = newest_run(ndir)
         if record is None:
             continue
         small = compact(record)
-        out = os.path.join(ndir, "last.json")
-        # sort_keys so an unchanged run produces a byte-identical file and git
-        # records no churn.
-        text = json.dumps(small, indent=2, sort_keys=True) + "\n"
-        previous = None
-        if os.path.isfile(out):
-            try:
-                with open(out) as handle:
-                    previous = handle.read()
-            except OSError:
-                previous = None
-        if previous != text:
-            with open(out, "w") as handle:
-                handle.write(text)
-            written += 1
-        total += len(text)
-    print(f"[history-last] {len(node_dirs())} node dirs, {written} last.json "
-          f"updated, {total} bytes total")
+        run = {k: v for k, v in small.items() if k in RUN_KEYS}
+        platform = {k: v for k, v in small.items() if k not in RUN_KEYS}
+        changed, size = write_if_changed(os.path.join(ndir, "last.json"), run)
+        wrote_run += 1 if changed else 0
+        total += size
+        if platform:
+            changed, size = write_if_changed(
+                os.path.join(ndir, "platform.json"), platform)
+            wrote_platform += 1 if changed else 0
+            total += size
+    print(f"[history-last] {len(dirs)} node dirs, {wrote_run} last.json + "
+          f"{wrote_platform} platform.json updated, {total} bytes total")
     return 0
 
 

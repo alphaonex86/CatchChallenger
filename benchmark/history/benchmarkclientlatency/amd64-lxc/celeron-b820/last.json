@@ -1,12 +1,5 @@
 {
-  "arch": "x86_64",
-  "arch_emulated": false,
   "benchmark": "benchmarkclientlatency",
-  "cc_storage_disk_kind": "hdd",
-  "cc_storage_disk_root": "ATA Hitachi HTS54755",
-  "cc_storage_fs": "ext4",
-  "cc_storage_path": "/home/user/run",
-  "cc_storage_source": "/dev/sda1",
   "comment": "celeron-b820 onboarding (generic, no march)",
   "commit": "c8de489c4292f4d2483834e7c86a96f88697b3ae",
   "commit_short": "c8de489",
@@ -15,88 +8,46 @@
     "-DCMAKE_BUILD_TYPE=Release",
     "-DCATCHCHALLENGER_BENCHMARK"
   ],
-  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
-  "cpu_cache": [
-    {
-      "level": 1,
-      "line_size_bytes": 64,
-      "size": "32K",
-      "type": "Data"
-    },
-    {
-      "level": 1,
-      "line_size_bytes": 64,
-      "size": "32K",
-      "type": "Instruction"
-    },
-    {
-      "level": 2,
-      "line_size_bytes": 64,
-      "size": "256K",
-      "type": "Unified"
-    },
-    {
-      "level": 3,
-      "line_size_bytes": 64,
-      "size": "2048K",
-      "type": "Unified"
-    }
-  ],
-  "cpu_cores": 2,
-  "cpu_metrics_reliable": true,
-  "cpu_mhz": 1623.579,
-  "cpu_model": "Intel(R) Celeron(R) CPU B820 @ 1.70GHz",
-  "datapack_storage_disk_kind": "hdd",
-  "datapack_storage_disk_root": "ATA Hitachi HTS54755",
-  "datapack_storage_fs": "ext4",
-  "datapack_storage_path": "/home/user/run/datapack",
-  "datapack_storage_source": "/dev/sda1",
-  "disk_kind": "hdd",
-  "disk_root": "ATA Hitachi HTS54755",
   "ended_utc": "2026-06-12T07:57:28Z",
   "harness_version": "3dec90ad045dd940ec7772b772ae269cb9bcd2e2",
-  "kernel": "6.12.90+deb13.1-amd64",
-  "libc": "glibc 2.41",
-  "net_family": "ipv4+ipv6",
   "node": "celeron-b820",
-  "ram_total_mb": 1686,
   "results": {
     "latency": {
       "metrics": {
         "chat_p50_ns": {
           "better": "lower",
-          "median": 759250124.9940125,
+          "median": 759300000,
           "stddev": 0.0,
           "unit": "ns",
-          "value": 759250124.9940125
+          "value": 759300000
         },
         "chat_p99_ns": {
           "better": "lower",
-          "median": 759250124.9940125,
+          "median": 759300000,
           "stddev": 0.0,
           "unit": "ns",
-          "value": 759250124.9940125
+          "value": 759300000
         },
         "join_p99_ns": {
           "better": "lower",
-          "median": 1518500249.988025,
+          "median": 1519000000,
           "stddev": 0.0,
           "unit": "ns",
-          "value": 1518500249.988025
+          "value": 1519000000
         },
         "rtt_p50_ns": {
           "better": "lower",
-          "median": 759250124.9940125,
+          "median": 759300000,
           "stddev": 0.0,
           "unit": "ns",
-          "value": 759250124.9940125
+          "value": 759300000
         },
         "rtt_p99_ns": {
           "better": "lower",
-          "median": 759250124.9940125,
+          "median": 759300000,
           "stddev": 0.0,
           "unit": "ns",
-          "value": 759250124.9940125
+          "value": 759300000
         }
       },
       "status": "PASS",
@@ -111,38 +62,38 @@
           },
           "chat_jitter_ns": {
             "better": "lower",
-            "median": 243251552.43162012,
+            "median": 243300000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 243251552.43162012
+            "value": 243300000
           },
           "chat_p50_ns": {
             "better": "lower",
-            "median": 759250124.9940125,
+            "median": 759300000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 759250124.9940125
+            "value": 759300000
           },
           "chat_p95_ns": {
             "better": "lower",
-            "median": 759250124.9940125,
+            "median": 759300000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 759250124.9940125
+            "value": 759300000
           },
           "chat_p999_ns": {
             "better": "lower",
-            "median": 759250124.9940125,
+            "median": 759300000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 759250124.9940125
+            "value": 759300000
           },
           "chat_p99_ns": {
             "better": "lower",
-            "median": 759250124.9940125,
+            "median": 759300000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 759250124.9940125
+            "value": 759300000
           },
           "cpu_percent": {
             "better": "lower",
@@ -160,38 +111,38 @@
           },
           "join_jitter_ns": {
             "better": "lower",
-            "median": 422547649.63262033,
-            "stddev": 7184499.428663105,
+            "median": 422500000,
+            "stddev": 7184000,
             "unit": "ns",
-            "value": 422547649.63262033
+            "value": 422500000
           },
           "join_p50_ns": {
             "better": "lower",
-            "median": 189812531.24850312,
+            "median": 189800000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 189812531.24850312
+            "value": 189800000
           },
           "join_p95_ns": {
             "better": "lower",
-            "median": 1518500249.988025,
+            "median": 1519000000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 1518500249.988025
+            "value": 1519000000
           },
           "join_p999_ns": {
             "better": "lower",
-            "median": 1518500249.988025,
+            "median": 1519000000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 1518500249.988025
+            "value": 1519000000
           },
           "join_p99_ns": {
             "better": "lower",
-            "median": 1518500249.988025,
+            "median": 1519000000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 1518500249.988025
+            "value": 1519000000
           },
           "rtt_count": {
             "better": "higher",
@@ -202,50 +153,50 @@
           },
           "rtt_jitter_ns": {
             "better": "lower",
-            "median": 243251552.43162012,
+            "median": 243300000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 243251552.43162012
+            "value": 243300000
           },
           "rtt_p50_ns": {
             "better": "lower",
-            "median": 759250124.9940125,
+            "median": 759300000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 759250124.9940125
+            "value": 759300000
           },
           "rtt_p95_ns": {
             "better": "lower",
-            "median": 759250124.9940125,
+            "median": 759300000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 759250124.9940125
+            "value": 759300000
           },
           "rtt_p999_ns": {
             "better": "lower",
-            "median": 759250124.9940125,
+            "median": 759300000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 759250124.9940125
+            "value": 759300000
           },
           "rtt_p99_ns": {
             "better": "lower",
-            "median": 759250124.9940125,
+            "median": 759300000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 759250124.9940125
+            "value": 759300000
           },
           "server_jitter_ns": {
             "better": "lower",
-            "median": 11224295.786854763,
+            "median": 11220000,
             "unit": "ns",
-            "value": 11224295.786854763
+            "value": 11220000
           },
           "server_p99_ns": {
             "better": "lower",
-            "median": 185363.80004736633,
+            "median": 185400,
             "unit": "ns",
-            "value": 185363.80004736633
+            "value": 185400
           },
           "server_reqs": {
             "better": "higher",
@@ -271,50 +222,50 @@
           },
           "join_jitter_ns": {
             "better": "lower",
-            "median": 129658137.41496132,
-            "stddev": 5994146.204519466,
+            "median": 129700000,
+            "stddev": 5994000,
             "unit": "ns",
-            "value": 129658137.41496132
+            "value": 129700000
           },
           "join_p50_ns": {
             "better": "lower",
-            "median": 142359398.43637735,
-            "stddev": 47453132.81212578,
+            "median": 142400000,
+            "stddev": 47450000,
             "unit": "ns",
-            "value": 142359398.43637735
+            "value": 142400000
           },
           "join_p95_ns": {
             "better": "lower",
-            "median": 379625062.49700624,
+            "median": 379600000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 379625062.49700624
+            "value": 379600000
           },
           "join_p999_ns": {
             "better": "lower",
-            "median": 379625062.49700624,
+            "median": 379600000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 379625062.49700624
+            "value": 379600000
           },
           "join_p99_ns": {
             "better": "lower",
-            "median": 379625062.49700624,
+            "median": 379600000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 379625062.49700624
+            "value": 379600000
           },
           "server_jitter_ns": {
             "better": "lower",
-            "median": 11224295.786854763,
+            "median": 11220000,
             "unit": "ns",
-            "value": 11224295.786854763
+            "value": 11220000
           },
           "server_p99_ns": {
             "better": "lower",
-            "median": 185363.80004736633,
+            "median": 185400,
             "unit": "ns",
-            "value": 185363.80004736633
+            "value": 185400
           },
           "server_reqs": {
             "better": "higher",
@@ -340,31 +291,31 @@
           },
           "chat_p50_ns": {
             "better": "lower",
-            "median": 189812531.24850312,
+            "median": 189800000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 189812531.24850312
+            "value": 189800000
           },
           "chat_p95_ns": {
             "better": "lower",
-            "median": 189812531.24850312,
+            "median": 189800000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 189812531.24850312
+            "value": 189800000
           },
           "chat_p999_ns": {
             "better": "lower",
-            "median": 189812531.24850312,
+            "median": 189800000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 189812531.24850312
+            "value": 189800000
           },
           "chat_p99_ns": {
             "better": "lower",
-            "median": 189812531.24850312,
+            "median": 189800000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 189812531.24850312
+            "value": 189800000
           },
           "cpu_percent": {
             "better": "lower",
@@ -375,45 +326,45 @@
           },
           "join_count": {
             "better": "higher",
-            "median": 2303.0,
+            "median": 2303,
             "stddev": 49.0,
             "unit": "samples",
-            "value": 2303.0
+            "value": 2303
           },
           "join_jitter_ns": {
             "better": "lower",
-            "median": 1176761427.471098,
-            "stddev": 14918910.073997498,
+            "median": 1177000000,
+            "stddev": 14920000,
             "unit": "ns",
-            "value": 1176761427.471098
+            "value": 1177000000
           },
           "join_p50_ns": {
             "better": "lower",
-            "median": 189812531.24850312,
+            "median": 189800000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 189812531.24850312
+            "value": 189800000
           },
           "join_p95_ns": {
             "better": "lower",
-            "median": 3037000499.97605,
+            "median": 3037000000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 3037000499.97605
+            "value": 3037000000
           },
           "join_p999_ns": {
             "better": "lower",
-            "median": 6074000999.9521,
+            "median": 6074000000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 6074000999.9521
+            "value": 6074000000
           },
           "join_p99_ns": {
             "better": "lower",
-            "median": 3037000499.97605,
+            "median": 3037000000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 3037000499.97605
+            "value": 3037000000
           },
           "rtt_count": {
             "better": "higher",
@@ -424,50 +375,50 @@
           },
           "rtt_jitter_ns": {
             "better": "lower",
-            "median": 31387297.087950982,
+            "median": 31390000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 31387297.087950982
+            "value": 31390000
           },
           "rtt_p50_ns": {
             "better": "lower",
-            "median": 189812531.24850312,
+            "median": 189800000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 189812531.24850312
+            "value": 189800000
           },
           "rtt_p95_ns": {
             "better": "lower",
-            "median": 189812531.24850312,
+            "median": 189800000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 189812531.24850312
+            "value": 189800000
           },
           "rtt_p999_ns": {
             "better": "lower",
-            "median": 189812531.24850312,
+            "median": 189800000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 189812531.24850312
+            "value": 189800000
           },
           "rtt_p99_ns": {
             "better": "lower",
-            "median": 189812531.24850312,
+            "median": 189800000,
             "stddev": 0.0,
             "unit": "ns",
-            "value": 189812531.24850312
+            "value": 189800000
           },
           "server_jitter_ns": {
             "better": "lower",
-            "median": 11224295.786854763,
+            "median": 11220000,
             "unit": "ns",
-            "value": 11224295.786854763
+            "value": 11220000
           },
           "server_p99_ns": {
             "better": "lower",
-            "median": 185363.80004736633,
+            "median": 185400,
             "unit": "ns",
-            "value": 185363.80004736633
+            "value": 185400
           },
           "server_reqs": {
             "better": "higher",
@@ -479,7 +430,5 @@
       }
     }
   },
-  "simd_tier": "generic",
-  "virt_kind": "bare-metal",
-  "virt_type": "none"
+  "simd_tier": "generic"
 }

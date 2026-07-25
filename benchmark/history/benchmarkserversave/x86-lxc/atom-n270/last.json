@@ -1,12 +1,5 @@
 {
-  "arch": "i686",
-  "arch_emulated": false,
   "benchmark": "benchmarkserversave",
-  "cc_storage_disk_kind": "tmpfs",
-  "cc_storage_disk_root": "tmpfs",
-  "cc_storage_fs": "tmpfs",
-  "cc_storage_path": "/home/user/run",
-  "cc_storage_source": "tmpfs",
   "commit": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
   "commit_short": "5462b5b",
   "compile_flags": [
@@ -17,46 +10,10 @@
     "-march=bonnell -mtune=bonnell",
     "-march=bonnell -mtune=bonnell"
   ],
-  "compiler": "cc (Debian 12.2.0-14+deb12u1) 12.2.0",
-  "cpu_cache": [
-    {
-      "level": 1,
-      "line_size_bytes": 64,
-      "size": "24K",
-      "type": "Data"
-    },
-    {
-      "level": 1,
-      "line_size_bytes": 64,
-      "size": "32K",
-      "type": "Instruction"
-    },
-    {
-      "level": 2,
-      "line_size_bytes": 64,
-      "size": "512K",
-      "type": "Unified"
-    }
-  ],
-  "cpu_cores": 2,
-  "cpu_governor": "ondemand",
-  "cpu_metrics_reliable": false,
-  "cpu_mhz": 1330.077,
-  "cpu_model": "Intel(R) Atom(TM) CPU N270   @ 1.60GHz",
-  "datapack_storage_path": "/home/user/run/datapack",
   "decision": "DISCARD",
-  "disk_kind": "ssd-sata",
-  "disk_root": "ATA CT480BX500SSD1",
   "ended_utc": "2026-07-25T18:06:26Z",
   "harness_version": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
-  "kernel": "6.1.0-49-686-pae",
-  "libc": "glibc 2.36",
-  "net_card": "wlp3s0",
-  "net_family": "ipv4+ipv6",
-  "net_link": "wifi",
-  "net_link_detail": "wlp3s0",
   "node": "atom-n270",
-  "ram_total_mb": 986,
   "results": {
     "binary-size": {
       "status": "FAIL"
@@ -71,9 +28,5 @@
       "status": "FAIL"
     }
   },
-  "simd_tier": "generic",
-  "virt_kind": "bare-metal",
-  "virt_type": "none",
-  "wifi_band": "2.4GHz",
-  "wifi_ssid": "Confiared"
+  "simd_tier": "generic"
 }
