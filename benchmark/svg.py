@@ -83,6 +83,80 @@ def open_file(path):
     return False
 
 
+# Sentinel returned by _prompt() when the user asks to step back a level.
+_BACK = object()
+SESSION_LABEL = "[cross-node session]"
+
+
+def _prompt(title, options):
+    """Numbered menu. Returns the chosen option, _BACK, or None to quit.
+
+    A level with a single option auto-selects: there is nothing to decide, and
+    several platforms hold exactly one node."""
+    if len(options) == 1:
+        print(f"{title}: {options[0]}   (only choice)")
+        return options[0]
+    print(f"\n{title}:")
+    for i, option in enumerate(options, 1):
+        print(f"{i:3d}) {option}")
+    try:
+        raw = input(f"[1-{len(options)}, b=back, q=quit]: ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return None
+    if raw in ("q", "quit"):
+        return None
+    if raw in ("b", "back", ""):
+        return _BACK
+    if raw.isdigit() and 1 <= int(raw) <= len(options):
+        return options[int(raw) - 1]
+    print("[svg] not a valid choice")
+    return _BACK
+
+
+def interactive(entries):
+    """Drill down benchmark -> platform -> node.
+
+    86 charts in one flat list is unreadable; this asks the three questions
+    that actually narrow it. The cross-node session chart sits at the platform
+    level because that is what it is: the whole benchmark rather than one
+    platform."""
+    benches = sorted({e[2] for e in entries})
+    while True:
+        bench = _prompt("benchmark", benches)
+        if bench is None:
+            return None
+        if bench is _BACK:
+            if len(benches) == 1:
+                return None      # nowhere to go back to
+            continue
+        has_session = any(e[2] == bench and e[1] == "session" for e in entries)
+        platforms = sorted({e[3] for e in entries
+                            if e[2] == bench and e[1] == "node"})
+        options = ([SESSION_LABEL] if has_session else []) + platforms
+        if not options:
+            print(f"[svg] nothing recorded for {bench}")
+            continue
+        while True:
+            platform = _prompt(f"{bench}  ->  platform", options)
+            if platform is None:
+                return None
+            if platform is _BACK:
+                break
+            if platform == SESSION_LABEL:
+                return next(e for e in entries
+                            if e[2] == bench and e[1] == "session")
+            nodes = sorted({e[4] for e in entries
+                            if e[2] == bench and e[3] == platform})
+            node = _prompt(f"{bench} / {platform}  ->  node", nodes)
+            if node is None:
+                return None
+            if node is _BACK:
+                continue
+            return next(e for e in entries if e[2] == bench
+                        and e[3] == platform and e[4] == node)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -118,17 +192,9 @@ def main():
             print("[svg] no pattern and no terminal to prompt on; "
                   "use --list or pass a pattern", file=sys.stderr)
             return 2
-        for i, (label, _k, _b, _c, _e) in enumerate(entries, 1):
-            print(f"{i:3d}) {label}")
-        try:
-            raw = input(f"chart [1-{len(entries)}]: ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print()
+        chosen = interactive(entries)
+        if chosen is None:
             return 130
-        if not raw.isdigit() or not 1 <= int(raw) <= len(entries):
-            print("[svg] not a valid choice", file=sys.stderr)
-            return 2
-        chosen = entries[int(raw) - 1]
 
     label, kind, bench, comp, exe = chosen
     svg = render(kind, bench, comp, exe)
