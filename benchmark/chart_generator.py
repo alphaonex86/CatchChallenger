@@ -62,6 +62,12 @@ def _load_history(benchmark):
         for name in files:
             if not name.endswith(".json"):
                 continue
+            # series.json / platform.json are DISTILLED views written by
+            # history_series.py into the same dirs. They are not run records:
+            # loaded as one, series.json contributes a doc with a "node" but no
+            # "results", which lands an empty extra point on every axis.
+            if name in ("series.json", "platform.json", "last.json"):
+                continue
             p = os.path.join(root, name)
             try:
                 with open(p) as f:
