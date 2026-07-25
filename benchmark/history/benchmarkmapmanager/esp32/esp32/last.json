@@ -1,0 +1,326 @@
+{
+  "arch": "xtensa-lx6",
+  "arch_emulated": false,
+  "benchmark": "benchmarkmapmanager",
+  "commit": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
+  "commit_short": "5462b5b",
+  "compile_flags": [
+    "-Os",
+    "-DCATCHCHALLENGER_NOXML",
+    "-DCC_TARGET_ESP32"
+  ],
+  "compiler": "xtensa-esp32-elf-gcc",
+  "cpu_cores": 2,
+  "cpu_mhz": 240.0,
+  "cpu_model": "Espressif ESP32 (Xtensa LX6 dual-core)",
+  "decision": "DISCARD",
+  "disk_kind": "flash",
+  "ended_utc": "2026-07-25T17:52:37Z",
+  "harness_version": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
+  "libc": "newlib",
+  "net_card": "ESP32 WiFi (802.11 b/g/n)",
+  "net_link": "serial",
+  "net_link_detail": "uart0",
+  "node": "esp32",
+  "ram_type": "SRAM ~520KiB (no DRAM)",
+  "results": {
+    "rusage": {
+      "metrics": {
+        "p10_bytes_sent": {
+          "better": "lower",
+          "median": 1071118,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 1071118
+        },
+        "p10_median_tick_ns": {
+          "better": "lower",
+          "median": 217000,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 217000
+        },
+        "p10_p95_tick_ns": {
+          "better": "lower",
+          "median": 289000,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 289000
+        },
+        "p10_ticks": {
+          "better": "higher",
+          "median": 5394,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 5394
+        },
+        "p10_ticks_per_s": {
+          "better": "higher",
+          "median": 2684.92,
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 2684.92
+        },
+        "p20_bytes_sent": {
+          "better": "lower",
+          "median": 2123200,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 2123200
+        },
+        "p20_median_tick_ns": {
+          "better": "lower",
+          "median": 370000,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 370000
+        },
+        "p20_p95_tick_ns": {
+          "better": "lower",
+          "median": 545000,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 545000
+        },
+        "p20_ticks": {
+          "better": "higher",
+          "median": 3244,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 3244
+        },
+        "p20_ticks_per_s": {
+          "better": "higher",
+          "median": 1621.19,
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 1621.19
+        },
+        "p50_bytes_sent": {
+          "better": "lower",
+          "median": 5397219,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 5397219
+        },
+        "p50_median_tick_ns": {
+          "better": "lower",
+          "median": 912000,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 912000
+        },
+        "p50_p95_tick_ns": {
+          "better": "lower",
+          "median": 1130000,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 1130000
+        },
+        "p50_ticks": {
+          "better": "higher",
+          "median": 1567,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 1567
+        },
+        "p50_ticks_per_s": {
+          "better": "higher",
+          "median": 783.5,
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 783.5
+        },
+        "p5_bytes_sent": {
+          "better": "lower",
+          "median": 470844,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 470844
+        },
+        "p5_median_tick_ns": {
+          "better": "lower",
+          "median": 111000,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 111000
+        },
+        "p5_p95_tick_ns": {
+          "better": "lower",
+          "median": 186000,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 186000
+        },
+        "p5_ticks": {
+          "better": "higher",
+          "median": 7742,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 7742
+        },
+        "p5_ticks_per_s": {
+          "better": "higher",
+          "median": 3832.67,
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 3832.67
+        }
+      },
+      "status": "PASS",
+      "subbenchmarks": {
+        "10-players": {
+          "bytes_sent": {
+            "better": "lower",
+            "median": 1071118,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1071118
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 217000,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 217000
+          },
+          "p95_tick_ns": {
+            "better": "lower",
+            "median": 289000,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 289000
+          },
+          "ticks": {
+            "better": "higher",
+            "median": 5394,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 5394
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2684.92,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2684.92
+          }
+        },
+        "20-players": {
+          "bytes_sent": {
+            "better": "lower",
+            "median": 2123200,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2123200
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 370000,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 370000
+          },
+          "p95_tick_ns": {
+            "better": "lower",
+            "median": 545000,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 545000
+          },
+          "ticks": {
+            "better": "higher",
+            "median": 3244,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 3244
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 1621.19,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 1621.19
+          }
+        },
+        "5-players": {
+          "bytes_sent": {
+            "better": "lower",
+            "median": 470844,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 470844
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 111000,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 111000
+          },
+          "p95_tick_ns": {
+            "better": "lower",
+            "median": 186000,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 186000
+          },
+          "ticks": {
+            "better": "higher",
+            "median": 7742,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 7742
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 3832.67,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 3832.67
+          }
+        },
+        "50-players": {
+          "bytes_sent": {
+            "better": "lower",
+            "median": 5397219,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 5397219
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 912000,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 912000
+          },
+          "p95_tick_ns": {
+            "better": "lower",
+            "median": 1130000,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1130000
+          },
+          "ticks": {
+            "better": "higher",
+            "median": 1567,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 1567
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 783.5,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 783.5
+          }
+        }
+      }
+    }
+  },
+  "simd_tier": "generic",
+  "virt_kind": "bare-metal",
+  "virt_type": "none"
+}

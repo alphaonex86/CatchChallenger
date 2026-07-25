@@ -1,0 +1,72 @@
+{
+  "arch": "armv7",
+  "arch_emulated": false,
+  "benchmark": "benchmarkbotactions",
+  "cc_storage_disk_kind": "tmpfs",
+  "cc_storage_disk_root": "tmpfs",
+  "cc_storage_fs": "tmpfs",
+  "cc_storage_path": "/home/catchchallenger/run",
+  "cc_storage_source": "tmpfs",
+  "commit": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
+  "commit_short": "5462b5b",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "cpu_cache": [
+    {
+      "level": 1,
+      "type": "Data"
+    },
+    {
+      "level": 1,
+      "type": "Instruction"
+    },
+    {
+      "level": 2,
+      "type": "Unified"
+    }
+  ],
+  "cpu_cores": 2,
+  "cpu_governor": "ondemand",
+  "cpu_metrics_reliable": true,
+  "cpu_model": "ARMv7 Processor rev 4 (v7l)",
+  "datapack_storage_path": "/home/catchchallenger/run/datapack",
+  "decision": "ESCALATE",
+  "disk_kind": "emmc",
+  "disk_root": "/dev/mmcblk0p1",
+  "ended_utc": "2026-07-25T18:51:40Z",
+  "eth_link_mbps": 100,
+  "harness_version": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
+  "kernel": "6.18.29-current-sunxi",
+  "libc": "glibc 2.41",
+  "net_card": "end0",
+  "net_family": "ipv4+ipv6",
+  "net_link": "wired",
+  "node": "cubieboard-2",
+  "ram_total_mb": 991,
+  "results": {
+    "binary-size": {
+      "metrics": {
+        "binary_size_bytes": {
+          "better": "lower",
+          "median": 7542072,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 7542072
+        }
+      },
+      "status": "PASS"
+    },
+    "perf-stat": {
+      "status": "SKIP"
+    },
+    "rusage": {
+      "status": "SKIP"
+    }
+  },
+  "simd_tier": "generic",
+  "virt_kind": "bare-metal",
+  "virt_type": "none"
+}

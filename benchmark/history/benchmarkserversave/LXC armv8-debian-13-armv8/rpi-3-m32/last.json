@@ -1,0 +1,75 @@
+{
+  "arch": "armv7",
+  "arch_emulated": false,
+  "benchmark": "benchmarkserversave",
+  "bitness": "32",
+  "cc_storage_disk_kind": "emmc",
+  "cc_storage_disk_root": "/dev/mmcblk0p2",
+  "cc_storage_fs": "ext4",
+  "cc_storage_path": "/home/catchchallenger/run-m32",
+  "cc_storage_source": "/dev/mmcblk0p2",
+  "commit": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
+  "commit_short": "5462b5b",
+  "compile_flags": [
+    "-O2",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
+    "-DCATCHCHALLENGER_CACHE_HPS=ON"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "cpu_cache": [
+    {
+      "level": 1,
+      "line_size_bytes": 64,
+      "size": "32K",
+      "type": "Data"
+    },
+    {
+      "level": 1,
+      "line_size_bytes": 64,
+      "size": "32K",
+      "type": "Instruction"
+    },
+    {
+      "level": 2,
+      "line_size_bytes": 64,
+      "size": "512K",
+      "type": "Unified"
+    }
+  ],
+  "cpu_cores": 4,
+  "cpu_governor": "ondemand",
+  "cpu_metrics_reliable": true,
+  "datapack_storage_disk_kind": "emmc",
+  "datapack_storage_disk_root": "/dev/mmcblk0p2",
+  "datapack_storage_fs": "ext4",
+  "datapack_storage_path": "/home/catchchallenger/run-m32/datapack",
+  "datapack_storage_source": "/dev/mmcblk0p2",
+  "decision": "DISCARD",
+  "disk_kind": "emmc",
+  "disk_root": "/dev/mmcblk0p2",
+  "ended_utc": "2026-07-25T18:06:26Z",
+  "harness_version": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
+  "kernel": "6.18.33+rpt-rpi-v8",
+  "libc": "glibc 2.41",
+  "net_family": "ipv4+ipv6",
+  "node": "rpi-3-m32",
+  "ram_total_mb": 905,
+  "results": {
+    "binary-size": {
+      "status": "FAIL"
+    },
+    "callgrind": {
+      "status": "FAIL"
+    },
+    "perf-stat": {
+      "status": "FAIL"
+    },
+    "rusage": {
+      "status": "FAIL"
+    }
+  },
+  "simd_tier": "generic",
+  "virt_kind": "bare-metal",
+  "virt_type": "none"
+}

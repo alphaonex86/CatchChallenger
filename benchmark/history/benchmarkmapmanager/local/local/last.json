@@ -1,0 +1,5456 @@
+{
+  "arch": "amd64",
+  "arch_emulated": false,
+  "benchmark": "benchmarkmapmanager",
+  "cc_storage_disk_kind": "tmpfs",
+  "cc_storage_disk_root": "tmpfs",
+  "cc_storage_fs": "tmpfs",
+  "cc_storage_path": "/mnt/data/perso/tmpfs/cc-build/benchmark/benchmarkmapmanager",
+  "cc_storage_source": "none",
+  "commit": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
+  "commit_short": "5462b5b",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release"
+  ],
+  "compiler": "cc (Gentoo 15.3.0 p8) 15.3.0",
+  "cpu_cache": [
+    {
+      "level": 1,
+      "line_size_bytes": 64,
+      "size": "32K",
+      "type": "Data"
+    },
+    {
+      "level": 1,
+      "line_size_bytes": 64,
+      "size": "32K",
+      "type": "Instruction"
+    },
+    {
+      "level": 2,
+      "line_size_bytes": 64,
+      "size": "1024K",
+      "type": "Unified"
+    },
+    {
+      "level": 3,
+      "line_size_bytes": 64,
+      "size": "98304K",
+      "type": "Unified"
+    }
+  ],
+  "cpu_cores": 32,
+  "cpu_governor": "powersave",
+  "cpu_metrics_reliable": true,
+  "cpu_mhz": 4166.993,
+  "cpu_model": "AMD Ryzen 9 7950X3D 16-Core Processor",
+  "decision": "DISCARD",
+  "disk_kind": "nvme",
+  "disk_root": "Samsung SSD 980 PRO 2TB",
+  "ended_utc": "2026-07-25T17:52:37Z",
+  "harness_version": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
+  "kernel": "7.1.4-gentoo-dist-bin",
+  "libc": "ldd (Gentoo 2.43-r2 (patchset 3)) 2.43",
+  "libs": {
+    "blake3": {
+      "source": "system",
+      "version": "1.8.5"
+    },
+    "tinyxml2": {
+      "source": "system",
+      "version": "11.0.0"
+    },
+    "xxhash": {
+      "source": "system",
+      "version": "0.8.3"
+    },
+    "zlib": {
+      "source": "vendored",
+      "version": "1.3.2"
+    },
+    "zstd": {
+      "source": "system",
+      "version": "1.5.7"
+    }
+  },
+  "net_card": "br0",
+  "net_family": "ipv4+ipv6",
+  "net_link": "virtual",
+  "net_link_detail": "bridge",
+  "node": "local",
+  "ram_total_mb": 128394,
+  "results": {
+    "binary-size": {
+      "metrics": {
+        "binary_size_bytes": {
+          "better": "lower",
+          "median": 1284552,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 1284552
+        }
+      },
+      "status": "PASS"
+    },
+    "callgrind": {
+      "status": "SKIP"
+    },
+    "perf-stat": {
+      "metrics": {
+        "perf_branch-misses:u": {
+          "better": "lower",
+          "median": 971222472,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 971222472
+        },
+        "perf_cache-misses:u": {
+          "better": "lower",
+          "median": 115278225,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 115278225
+        },
+        "perf_cycles:u": {
+          "better": "lower",
+          "median": 60454358046,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 60454358046
+        },
+        "perf_instructions:u": {
+          "better": "lower",
+          "median": 134237244080,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 134237244080
+        }
+      },
+      "status": "PASS"
+    },
+    "rusage": {
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 6948,
+          "stddev": 0.0,
+          "unit": "kb",
+          "value": 6948
+        },
+        "p100_bytes_sent": {
+          "better": "lower",
+          "median": 1144677698,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 1144677698
+        },
+        "p100_median_tick_ns": {
+          "better": "lower",
+          "median": 3807,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 3807
+        },
+        "p100_p95_tick_ns": {
+          "better": "lower",
+          "median": 11372,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 11372
+        },
+        "p100_ticks": {
+          "better": "higher",
+          "median": 89104,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 89104
+        },
+        "p100_ticks_per_s": {
+          "better": "higher",
+          "median": 44002,
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 44002
+        },
+        "p10_bytes_sent": {
+          "better": "lower",
+          "median": 21942493,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 21942493
+        },
+        "p10_median_tick_ns": {
+          "better": "lower",
+          "median": 380,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 380
+        },
+        "p10_p95_tick_ns": {
+          "better": "lower",
+          "median": 1352,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 1352
+        },
+        "p10_ticks": {
+          "better": "higher",
+          "median": 109492,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 109492
+        },
+        "p10_ticks_per_s": {
+          "better": "higher",
+          "median": 50364.3,
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 50364.3
+        },
+        "p200_bytes_sent": {
+          "better": "lower",
+          "median": 3362446489,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 3362446489
+        },
+        "p200_median_tick_ns": {
+          "better": "lower",
+          "median": 9748,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 9748
+        },
+        "p200_p95_tick_ns": {
+          "better": "lower",
+          "median": 21020,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 21020
+        },
+        "p200_ticks": {
+          "better": "higher",
+          "median": 67664,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 67664
+        },
+        "p200_ticks_per_s": {
+          "better": "higher",
+          "median": 33747.6,
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 33747.6
+        },
+        "p20_bytes_sent": {
+          "better": "lower",
+          "median": 70420335,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 70420335
+        },
+        "p20_median_tick_ns": {
+          "better": "lower",
+          "median": 691,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 691
+        },
+        "p20_p95_tick_ns": {
+          "better": "lower",
+          "median": 1493,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 1493
+        },
+        "p20_ticks": {
+          "better": "higher",
+          "median": 108587,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 108587
+        },
+        "p20_ticks_per_s": {
+          "better": "higher",
+          "median": 50017,
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 50017
+        },
+        "p300_bytes_sent": {
+          "better": "lower",
+          "median": 4956724444,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 4956724444
+        },
+        "p300_median_tick_ns": {
+          "better": "lower",
+          "median": 15259,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 15259
+        },
+        "p300_p95_tick_ns": {
+          "better": "lower",
+          "median": 29386,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 29386
+        },
+        "p300_ticks": {
+          "better": "higher",
+          "median": 52550,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 52550
+        },
+        "p300_ticks_per_s": {
+          "better": "higher",
+          "median": 26235.6,
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 26235.6
+        },
+        "p50_bytes_sent": {
+          "better": "lower",
+          "median": 344022398,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 344022398
+        },
+        "p50_median_tick_ns": {
+          "better": "lower",
+          "median": 1763,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 1763
+        },
+        "p50_p95_tick_ns": {
+          "better": "lower",
+          "median": 2705,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 2705
+        },
+        "p50_ticks": {
+          "better": "higher",
+          "median": 100400,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 100400
+        },
+        "p50_ticks_per_s": {
+          "better": "higher",
+          "median": 48951.7,
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 48951.7
+        },
+        "p5_bytes_sent": {
+          "better": "lower",
+          "median": 6659404,
+          "stddev": 0.0,
+          "unit": "bytes",
+          "value": 6659404
+        },
+        "p5_median_tick_ns": {
+          "better": "lower",
+          "median": 181,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 181
+        },
+        "p5_p95_tick_ns": {
+          "better": "lower",
+          "median": 511,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 511
+        },
+        "p5_ticks": {
+          "better": "higher",
+          "median": 108958,
+          "stddev": 0.0,
+          "unit": "count",
+          "value": 108958
+        },
+        "p5_ticks_per_s": {
+          "better": "higher",
+          "median": 53410.8,
+          "stddev": 0.0,
+          "unit": "ticks/s",
+          "value": 53410.8
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 14.41,
+          "stddev": 0.0,
+          "unit": "s",
+          "value": 14.41
+        }
+      },
+      "status": "PASS",
+      "subbenchmarks": {
+        "10-players": {
+          "bytes_sent": {
+            "better": "lower",
+            "median": 21942493,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 21942493
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 100.0,
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 100.0
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 380,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 380
+          },
+          "p95_tick_ns": {
+            "better": "lower",
+            "median": 1352,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1352
+          },
+          "ticks": {
+            "better": "higher",
+            "median": 109492,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 109492
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 50364.3,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 50364.3
+          }
+        },
+        "100-players": {
+          "bytes_sent": {
+            "better": "lower",
+            "median": 1144677698,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1144677698
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 100.0,
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 100.0
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 3807,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 3807
+          },
+          "p95_tick_ns": {
+            "better": "lower",
+            "median": 11372,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 11372
+          },
+          "ticks": {
+            "better": "higher",
+            "median": 89104,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 89104
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 44002,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 44002
+          }
+        },
+        "20-players": {
+          "bytes_sent": {
+            "better": "lower",
+            "median": 70420335,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 70420335
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 100.0,
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 100.0
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 691,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 691
+          },
+          "p95_tick_ns": {
+            "better": "lower",
+            "median": 1493,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1493
+          },
+          "ticks": {
+            "better": "higher",
+            "median": 108587,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 108587
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 50017,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 50017
+          }
+        },
+        "200-players": {
+          "bytes_sent": {
+            "better": "lower",
+            "median": 3362446489,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 3362446489
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 99.5,
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 99.5
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 9748,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 9748
+          },
+          "p95_tick_ns": {
+            "better": "lower",
+            "median": 21020,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 21020
+          },
+          "ticks": {
+            "better": "higher",
+            "median": 67664,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 67664
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 33747.6,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 33747.6
+          }
+        },
+        "300-players": {
+          "bytes_sent": {
+            "better": "lower",
+            "median": 4956724444,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 4956724444
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 99.5,
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 99.5
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 15259,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 15259
+          },
+          "p95_tick_ns": {
+            "better": "lower",
+            "median": 29386,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 29386
+          },
+          "ticks": {
+            "better": "higher",
+            "median": 52550,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 52550
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 26235.6,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 26235.6
+          }
+        },
+        "5-players": {
+          "bytes_sent": {
+            "better": "lower",
+            "median": 6659404,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 6659404
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 99.56331877729257,
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 99.56331877729257
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 181,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 181
+          },
+          "p95_tick_ns": {
+            "better": "lower",
+            "median": 511,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 511
+          },
+          "ticks": {
+            "better": "higher",
+            "median": 108958,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 108958
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 53410.8,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 53410.8
+          }
+        },
+        "50-players": {
+          "bytes_sent": {
+            "better": "lower",
+            "median": 344022398,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 344022398
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 99.5049504950495,
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 99.5049504950495
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1763,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1763
+          },
+          "p95_tick_ns": {
+            "better": "lower",
+            "median": 2705,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2705
+          },
+          "ticks": {
+            "better": "higher",
+            "median": 100400,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 100400
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 48951.7,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 48951.7
+          }
+        },
+        "join-move0-100players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 38.72290108191654,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 38.72290108191654
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 7404,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 7404
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 74.04,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 74.04
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 21318,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 21318
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 800,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 800
+          }
+        },
+        "join-move0-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 36.29967652495379,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 36.29967652495379
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 732,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 732
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 73.2,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 73.2
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 18495.7,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 18495.7
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "join-move0-200players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 38.84706160520607,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 38.84706160520607
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 14067,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 14067
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 70.335,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 70.335
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 18709.4,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 18709.4
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "join-move0-20players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 37.64893777498428,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 37.64893777498428
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1422,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1422
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 71.1,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 71.1
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 22793.7,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 22793.7
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 160
+          }
+        },
+        "join-move0-300players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 34.164896929419726,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 34.164896929419726
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 18946,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 18946
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 63.153333333333336,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 63.153333333333336
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 17848.4,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 17848.4
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2040,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2040
+          }
+        },
+        "join-move0-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 38.45656288239293,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 38.45656288239293
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 3377,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 3377
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 67.54,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 67.54
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 23092.6,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 23092.6
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "join-move0-5players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 33.12917156978112,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 33.12917156978112
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 401,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 401
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 80.2,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 80.2
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 21817.7,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 21817.7
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 40,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 40
+          }
+        },
+        "join-move0-scaling": {
+          "scaling_exponent": {
+            "better": "lower",
+            "median": 0.9632635070747539,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 0.9632635070747539
+          }
+        },
+        "join-move100-100players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 335.0337615275479,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 335.0337615275479
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 4759,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 4759
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 47.59,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 47.59
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 27461,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 27461
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 800,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 800
+          }
+        },
+        "join-move100-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 61.94901222537207,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 61.94901222537207
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 681,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 681
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 68.1,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 68.1
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 25112.3,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 25112.3
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "join-move100-200players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 636.3616790299573,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 636.3616790299573
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 9248,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 9248
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 46.24,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 46.24
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 23366.7,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 23366.7
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "join-move100-20players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 93.22530350665053,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 93.22530350665053
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1162,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1162
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 58.1,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 58.1
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 27977,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 27977
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 160
+          }
+        },
+        "join-move100-300players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 796.8300688200688,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 796.8300688200688
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 22272,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 22272
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 74.24,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 74.24
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 19887.4,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 19887.4
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2040,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2040
+          }
+        },
+        "join-move100-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 183.98475920679888,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 183.98475920679888
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 2835,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2835
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 56.7,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 56.7
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 28347,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 28347
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "join-move100-5players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 44.05017064846417,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 44.05017064846417
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 531,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 531
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 106.2,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 106.2
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 24006.3,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 24006.3
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 40,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 40
+          }
+        },
+        "join-move100-scaling": {
+          "scaling_exponent": {
+            "better": "lower",
+            "median": 0.8885459737901088,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 0.8885459737901088
+          }
+        },
+        "join-move40-100players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 161.2069717577406,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 161.2069717577406
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 6312,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6312
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 63.12,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 63.12
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 20591.4,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 20591.4
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 800,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 800
+          }
+        },
+        "join-move40-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 49.990623857682465,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 49.990623857682465
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 651,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 651
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 65.1,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 65.1
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 18997.7,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 18997.7
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "join-move40-200players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 281.2551764130821,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 281.2551764130821
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 13506,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 13506
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 67.53,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 67.53
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 18295.9,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 18295.9
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "join-move40-20players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 63.88660642300457,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 63.88660642300457
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1273,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1273
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 63.65,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 63.65
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 21022.6,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 21022.6
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 160
+          }
+        },
+        "join-move40-300players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 342.2457657386002,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 342.2457657386002
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 20208,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 20208
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 67.36,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 67.36
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 16499.2,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 16499.2
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2040,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2040
+          }
+        },
+        "join-move40-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 100.62459486447932,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 100.62459486447932
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 2936,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2936
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 58.72,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 58.72
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 21146.3,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 21146.3
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "join-move40-5players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 39.18397269945869,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 39.18397269945869
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 421,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 421
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 84.2,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 84.2
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 18354.2,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 18354.2
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 40,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 40
+          }
+        },
+        "join-move40-scaling": {
+          "scaling_exponent": {
+            "better": "lower",
+            "median": 0.9677943424181119,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 0.9677943424181119
+          }
+        },
+        "join-move5-100players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 58.61422097011269,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 58.61422097011269
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 5069,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5069
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 50.69,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 50.69
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 25354,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 25354
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 800,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 800
+          }
+        },
+        "join-move5-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 38.78453410182517,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 38.78453410182517
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 642,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 642
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 64.2,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 64.2
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 25422.9,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 25422.9
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "join-move5-200players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 74.81467184862127,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 74.81467184862127
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 10229,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 10229
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 51.145,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 51.145
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 23228.8,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 23228.8
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "join-move5-20players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 42.92086742606556,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 42.92086742606556
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1122,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1122
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 56.1,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 56.1
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 27825.9,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 27825.9
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 160
+          }
+        },
+        "join-move5-300players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 77.29209828595101,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 77.29209828595101
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 14027,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 14027
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 46.75666666666667,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 46.75666666666667
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 21070.4,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 21070.4
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2040,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2040
+          }
+        },
+        "join-move5-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 50.23459169569304,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 50.23459169569304
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 2796,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2796
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 55.92,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 55.92
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 27076.3,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 27076.3
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "join-move5-5players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 34.01674223532079,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 34.01674223532079
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 531,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 531
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 106.2,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 106.2
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 19474.6,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 19474.6
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 40,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 40
+          }
+        },
+        "join-move5-scaling": {
+          "scaling_exponent": {
+            "better": "lower",
+            "median": 0.8482011821851339,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 0.8482011821851339
+          }
+        },
+        "lag0-rounds1-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 18.545722947356897,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 18.545722947356897
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 281,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 281
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2912860.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2912860.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "lag0-rounds1-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 311.58580736587794,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 311.58580736587794
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 11202,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 11202
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 64380,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 64380
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2032,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2032
+          }
+        },
+        "lag0-rounds1-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 66.79037538363427,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 66.79037538363427
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1714,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1714
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 416070,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 416070
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "lag100-rounds1-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 18.544145189240233,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 18.544145189240233
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 290,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 290
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2781470.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2781470.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "lag100-rounds1-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 311.58086915168957,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 311.58086915168957
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 11322,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 11322
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 64033.2,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 64033.2
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2032,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2032
+          }
+        },
+        "lag100-rounds1-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 66.79091822852479,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 66.79091822852479
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1723,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1723
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 415143,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 415143
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "lag100-rounds2-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 12.68462026587277,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 12.68462026587277
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 440,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 440
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 1967230.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 1967230.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 880,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 880
+          }
+        },
+        "lag100-rounds2-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 246.7526342370469,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 246.7526342370469
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 59102,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 59102
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 15927,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 15927
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 518160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 518160
+          }
+        },
+        "lag100-rounds2-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 51.04756910283439,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 51.04756910283439
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 3907,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 3907
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 227680,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 227680
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 20400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 20400
+          }
+        },
+        "lag100-rounds20-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 1.7502869944161474,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1.7502869944161474
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 140,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 140
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 5067410.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 5067410.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 880,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 880
+          }
+        },
+        "lag100-rounds20-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 38.35236546726368,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 38.35236546726368
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 8837,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 8837
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 93056.4,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 93056.4
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 518160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 518160
+          }
+        },
+        "lag100-rounds20-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 7.74937899646105,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 7.74937899646105
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 882,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 882
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 769191,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 769191
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 20400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 20400
+          }
+        },
+        "lag100-rounds5-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 6.582696437252861,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 6.582696437252861
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 231,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 231
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 3387090.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 3387090.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 880,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 880
+          }
+        },
+        "lag100-rounds5-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 141.63865590279974,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 141.63865590279974
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 24907,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 24907
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 36111.1,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 36111.1
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 518160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 518160
+          }
+        },
+        "lag100-rounds5-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 28.720886477697345,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 28.720886477697345
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1964,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1964
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 426407,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 426407
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 20400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 20400
+          }
+        },
+        "lag25-rounds1-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 18.54599995250829,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 18.54599995250829
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 290,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 290
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2877700.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2877700.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "lag25-rounds1-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 311.56528227540247,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 311.56528227540247
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 11241,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 11241
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 62195.7,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 62195.7
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2032,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2032
+          }
+        },
+        "lag25-rounds1-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 66.79615174708819,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 66.79615174708819
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1753,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1753
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 400000,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 400000
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "lag25-rounds2-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 16.200801515002347,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 16.200801515002347
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 371,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 371
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2302310.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2302310.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "lag25-rounds2-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 294.93586121317554,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 294.93586121317554
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 26951,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 26951
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 31264.9,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 31264.9
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 134112,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 134112
+          }
+        },
+        "lag25-rounds2-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 62.370591879606444,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 62.370591879606444
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 2856,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2856
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 280389,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 280389
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 6000,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 6000
+          }
+        },
+        "lag25-rounds20-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 11.82753182376888,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 11.82753182376888
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 231,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 231
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 3297590.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 3297590.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "lag25-rounds20-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 241.61933646038838,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 241.61933646038838
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 13145,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 13145
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 56359.9,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 56359.9
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 134112,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 134112
+          }
+        },
+        "lag25-rounds20-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 50.26230503838145,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 50.26230503838145
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1673,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1673
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 432362,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 432362
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 6000,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 6000
+          }
+        },
+        "lag25-rounds5-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 13.75897270308882,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 13.75897270308882
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 361,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 361
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2833720.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2833720.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "lag25-rounds5-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 268.05405343128535,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 268.05405343128535
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 18415,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 18415
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 44129.1,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 44129.1
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 134112,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 134112
+          }
+        },
+        "lag25-rounds5-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 56.13944357669197,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 56.13944357669197
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 2164,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2164
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 362190,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 362190
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 6000,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 6000
+          }
+        },
+        "lag5-rounds1-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 18.545578856935474,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 18.545578856935474
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 281,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 281
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2888640.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2888640.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "lag5-rounds1-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 311.57158905389804,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 311.57158905389804
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 11422,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 11422
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 63036.5,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 63036.5
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2032,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2032
+          }
+        },
+        "lag5-rounds1-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 66.79290668340336,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 66.79290668340336
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1733,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1733
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 407590,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 407590
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "lag5-rounds2-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 17.37346837577505,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 17.37346837577505
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 341,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 341
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2458850.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2458850.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 240,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 240
+          }
+        },
+        "lag5-rounds2-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 307.97013439202215,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 307.97013439202215
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 15780,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 15780
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 48920.1,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 48920.1
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 30480,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 30480
+          }
+        },
+        "lag5-rounds2-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 65.86136292759929,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 65.86136292759929
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 2174,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2174
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 345737,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 345737
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "lag5-rounds20-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 15.186258207949795,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 15.186258207949795
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 251,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 251
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 3097610.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 3097610.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 240,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 240
+          }
+        },
+        "lag5-rounds20-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 296.4870674612791,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 296.4870674612791
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 12274,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 12274
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 60543.3,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 60543.3
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 30480,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 30480
+          }
+        },
+        "lag5-rounds20-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 63.255637279596975,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 63.255637279596975
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1723,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1723
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 397000,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 397000
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "lag5-rounds5-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 16.15206085328244,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 16.15206085328244
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 291,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 291
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2764230.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2764230.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 240,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 240
+          }
+        },
+        "lag5-rounds5-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 302.10799027137097,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 302.10799027137097
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 14237,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 14237
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 52367.5,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 52367.5
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 30480,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 30480
+          }
+        },
+        "lag5-rounds5-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 64.5129326209051,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 64.5129326209051
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1894,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1894
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 389877,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 389877
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "lag50-rounds1-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 18.54445786408504,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 18.54445786408504
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 290,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 290
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2626960.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2626960.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "lag50-rounds1-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 311.55898391724014,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 311.55898391724014
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 11271,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 11271
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 61988.4,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 61988.4
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2032,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2032
+          }
+        },
+        "lag50-rounds1-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 66.795911021334,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 66.795911021334
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1733,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1733
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 401306,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 401306
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "lag50-rounds2-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 15.615790751439585,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 15.615790751439585
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 420,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 420
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2093740.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2093740.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 480,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 480
+          }
+        },
+        "lag50-rounds2-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 278.8065275124633,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 278.8065275124633
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 39605,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 39605
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 22347.1,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 22347.1
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 262128,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 262128
+          }
+        },
+        "lag50-rounds2-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 58.907926669118034,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 58.907926669118034
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 3356,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 3356
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 252983,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 252983
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 10400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 10400
+          }
+        },
+        "lag50-rounds20-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 10.148129218178378,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 10.148129218178378
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 241,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 241
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 3376560.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 3376560.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 480,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 480
+          }
+        },
+        "lag50-rounds20-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 173.87661854023946,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 173.87661854023946
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 12885,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 12885
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 58682.2,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 58682.2
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 262128,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 262128
+          }
+        },
+        "lag50-rounds20-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 37.272616799343915,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 37.272616799343915
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1473,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1473
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 506032,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 506032
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 10400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 10400
+          }
+        },
+        "lag50-rounds5-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 12.562734436938683,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 12.562734436938683
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 360,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 360
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2656750.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2656750.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 480,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 480
+          }
+        },
+        "lag50-rounds5-254players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 225.91100534283296,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 225.91100534283296
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 21812,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 21812
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 37370.9,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 37370.9
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 262128,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 262128
+          }
+        },
+        "lag50-rounds5-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 47.760668531760246,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 47.760668531760246
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 2235,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2235
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 367572,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 367572
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 10400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 10400
+          }
+        },
+        "mix-move0-100players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 1.9170166658568581,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1.9170166658568581
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 661,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 661
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 6.61,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6.61
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 130881,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 130881
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 800,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 800
+          }
+        },
+        "mix-move0-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 1.8191312316329433,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1.8191312316329433
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 90,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 90
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 9.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 9.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 137195,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 137195
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "mix-move0-200players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 1.9735578435093808,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1.9735578435093808
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1313,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1313
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 6.565,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6.565
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 122335,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 122335
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "mix-move0-20players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 1.8710035794524198,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1.8710035794524198
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 160
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 8.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 8.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 123002,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 123002
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 160
+          }
+        },
+        "mix-move0-300players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 1.6865692805390453,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1.6865692805390453
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1803,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1803
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 6.01,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6.01
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 115704,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 115704
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2040,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2040
+          }
+        },
+        "mix-move0-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 1.9635694997234543,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1.9635694997234543
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 351,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 351
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 7.02,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 7.02
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 130055,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 130055
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "mix-move0-5players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 1.5827523690993013,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1.5827523690993013
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 70,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 70
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 14.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 14.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 130157,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 130157
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 40,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 40
+          }
+        },
+        "mix-move0-scaling": {
+          "scaling_exponent": {
+            "better": "lower",
+            "median": 0.830132242246902,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 0.830132242246902
+          }
+        },
+        "mix-move100-100players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 296.6573736684183,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 296.6573736684183
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 4919,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 4919
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 49.19,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 49.19
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 104286,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 104286
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 800,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 800
+          }
+        },
+        "mix-move100-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 34.123483146067414,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 34.123483146067414
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 300,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 300
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 30.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 30.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 142723,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 142723
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "mix-move100-200players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 597.0278801206019,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 597.0278801206019
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 11562,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 11562
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 57.81,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 57.81
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 66553.9,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 66553.9
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "mix-move100-20players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 64.16048432822281,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 64.16048432822281
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 611,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 611
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 30.55,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 30.55
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 146000,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 146000
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 160
+          }
+        },
+        "mix-move100-300players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 788.2364924615831,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 788.2364924615831
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 18435,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 18435
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 61.45,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 61.45
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 45757.9,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 45757.9
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2040,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2040
+          }
+        },
+        "mix-move100-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 154.9943347028072,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 154.9943347028072
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1814,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1814
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 36.28,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 36.28
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 128884,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 128884
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "mix-move100-5players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 19.045522026787154,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 19.045522026787154
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 180,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 180
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 36.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 36.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 140841,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 140841
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 40,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 40
+          }
+        },
+        "mix-move100-scaling": {
+          "scaling_exponent": {
+            "better": "lower",
+            "median": 1.1694957188877602,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 1.1694957188877602
+          }
+        },
+        "mix-move40-100players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 128.5615702891326,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 128.5615702891326
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 3607,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 3607
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 36.07,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 36.07
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 76387.4,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 76387.4
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 800,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 800
+          }
+        },
+        "mix-move40-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 20.00690505739994,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 20.00690505739994
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 370,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 370
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 37.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 37.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 98262.2,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 98262.2
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "mix-move40-200players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 248.4815530264881,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 248.4815530264881
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 8756,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 8756
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 43.78,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 43.78
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 49480.1,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 49480.1
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "mix-move40-20players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 32.43305627020252,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 32.43305627020252
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 691,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 691
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 34.55,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 34.55
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 98116.5,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 98116.5
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 160
+          }
+        },
+        "mix-move40-300players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 314.5208298517624,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 314.5208298517624
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 14387,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 14387
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 47.95666666666666,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 47.95666666666666
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 35784.1,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 35784.1
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2040,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2040
+          }
+        },
+        "mix-move40-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 68.52622162495915,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 68.52622162495915
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1693,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1693
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 33.86,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 33.86
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 89684,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 89684
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "mix-move40-5players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 12.225265629922387,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 12.225265629922387
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 140,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 140
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 28.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 28.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 95794.2,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 95794.2
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 40,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 40
+          }
+        },
+        "mix-move40-scaling": {
+          "scaling_exponent": {
+            "better": "lower",
+            "median": 1.0971102201426275,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 1.0971102201426275
+          }
+        },
+        "mix-move5-100players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 23.883543472139664,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 23.883543472139664
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 2655,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2655
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 26.55,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 26.55
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 104284,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 104284
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 800,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 800
+          }
+        },
+        "mix-move5-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 5.281486030774728,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 5.281486030774728
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 241,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 241
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 24.1,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 24.1
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 139059,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 139059
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "mix-move5-200players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 38.45644735054348,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 38.45644735054348
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 5460,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5460
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 27.3,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 27.3
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 73477.5,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 73477.5
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "mix-move5-20players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 8.578727789779993,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 8.578727789779993
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 491,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 491
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 24.55,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 24.55
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 128504,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 128504
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 160
+          }
+        },
+        "mix-move5-300players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 46.141595122404134,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 46.141595122404134
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 8687,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 8687
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 28.956666666666667,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 28.956666666666667
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 53762.1,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 53762.1
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2040,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2040
+          }
+        },
+        "mix-move5-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 15.560156879372482,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 15.560156879372482
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1333,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1333
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 26.66,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 26.66
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 125161,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 125161
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "mix-move5-5players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 3.227853547210605,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 3.227853547210605
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 80
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 16.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 16.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 138128,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 138128
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 40,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 40
+          }
+        },
+        "mix-move5-scaling": {
+          "scaling_exponent": {
+            "better": "lower",
+            "median": 1.1062958436004495,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 1.1062958436004495
+          }
+        },
+        "steady-move0-100players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 0.0,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 0.0
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 611,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 611
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 6.11,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6.11
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 1203850.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 1203850.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 800,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 800
+          }
+        },
+        "steady-move0-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 0.0,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 0.0
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 80
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 8.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 8.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 11666700.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 11666700.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "steady-move0-200players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 0.0,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 0.0
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1212,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1212
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 6.06,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6.06
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 584002,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 584002
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "steady-move0-20players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 0.0,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 0.0
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 131,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 131
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 6.55,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6.55
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 5992750.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 5992750.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 160
+          }
+        },
+        "steady-move0-300players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 0.0,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 0.0
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1643,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1643
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 5.476666666666667,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5.476666666666667
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 417182,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 417182
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2040,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2040
+          }
+        },
+        "steady-move0-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 0.0,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 0.0
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 320,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 320
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 6.4,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6.4
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2359410.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2359410.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "steady-move0-5players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 0.0,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 0.0
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 50,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 50
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 10.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 10.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 21684300.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 21684300.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 40,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 40
+          }
+        },
+        "steady-move0-scaling": {
+          "scaling_exponent": {
+            "better": "lower",
+            "median": 0.8779082045313763,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 0.8779082045313763
+          }
+        },
+        "steady-move100-100players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 0.00028494284544478747,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 0.00028494284544478747
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 611,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 611
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 6.11,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6.11
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 1204920.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 1204920.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 800,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 800
+          }
+        },
+        "steady-move100-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 43.99999076380747,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 43.99999076380747
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 270,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 270
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 27.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 27.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 3242690.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 3242690.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "steady-move100-200players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 0.0011448455163507064,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 0.0011448455163507064
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1222,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1222
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 6.11,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6.11
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 591055,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 591055
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "steady-move100-20players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 1.2770952413210274e-05,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1.2770952413210274e-05
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 140,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 140
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 7.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 7.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 5993220.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 5993220.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 160
+          }
+        },
+        "steady-move100-300players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 0.0020699938228214794,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 0.0020699938228214794
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1653,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1653
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 5.51,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5.51
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 417307,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 417307
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2040,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2040
+          }
+        },
+        "steady-move100-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 203.9996439134637,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 203.9996439134637
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1653,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1653
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 33.06,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 33.06
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 457927,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 457927
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "steady-move100-5players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 24.0,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 24.0
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 140,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 140
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 28.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 28.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 6408230.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 6408230.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 40,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 40
+          }
+        },
+        "steady-move100-scaling": {
+          "scaling_exponent": {
+            "better": "lower",
+            "median": 0.6088368250264574,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 0.6088368250264574
+          }
+        },
+        "steady-move40-100players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 126.84571584085403,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 126.84571584085403
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 3627,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 3627
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 36.27,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 36.27
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 189531,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 189531
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 800,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 800
+          }
+        },
+        "steady-move40-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 18.545640491247323,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 18.545640491247323
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 281,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 281
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 28.1,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 28.1
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2886880.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2886880.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "steady-move40-200players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 246.78775555866312,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 246.78775555866312
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 6963,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6963
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 34.815,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 34.815
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 94715.2,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 94715.2
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "steady-move40-20players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 30.775084640255933,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 30.775084640255933
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 601,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 601
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 30.05,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 30.05
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 1269100.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 1269100.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 160
+          }
+        },
+        "steady-move40-300players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 313.0173714717266,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 313.0173714717266
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 12143,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 12143
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 40.47666666666667,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 40.47666666666667
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 58557.2,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 58557.2
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2040,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2040
+          }
+        },
+        "steady-move40-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 66.7937696134711,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 66.7937696134711
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1643,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1643
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 32.86,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 32.86
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 426080,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 426080
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "steady-move40-5players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 10.536174256434183,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 10.536174256434183
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 121,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 121
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 24.2,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 24.2
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 7017940.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 7017940.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 40,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 40
+          }
+        },
+        "steady-move40-scaling": {
+          "scaling_exponent": {
+            "better": "lower",
+            "median": 1.1079726185844978,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 1.1079726185844978
+          }
+        },
+        "steady-move5-100players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 22.03596840442338,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 22.03596840442338
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 2505,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 2505
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 25.05,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 25.05
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 273389,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 273389
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 800,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 800
+          }
+        },
+        "steady-move5-10players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 3.573559873779498,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 3.573559873779498
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 80
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 8.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 8.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 7081790.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 7081790.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 80,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 80
+          }
+        },
+        "steady-move5-200players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 36.671401137980084,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 36.671401137980084
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 5239,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 5239
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 26.195,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 26.195
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 125702,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 125702
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 1600,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1600
+          }
+        },
+        "steady-move5-20players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 6.863301618323922,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 6.863301618323922
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 431,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 431
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 21.55,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 21.55
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 2582200.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 2582200.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 160,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 160
+          }
+        },
+        "steady-move5-300players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 44.609930661254865,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 44.609930661254865
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 7344,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 7344
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 24.48,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 24.48
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 88400.3,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 88400.3
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 2040,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 2040
+          }
+        },
+        "steady-move5-50players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 13.700858487436768,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 13.700858487436768
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 1232,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1232
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 24.64,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 24.64
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 643147,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 643147
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 400,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 400
+          }
+        },
+        "steady-move5-5players": {
+          "bytes_per_tick_per_player": {
+            "better": "lower",
+            "median": 1.6792460270193128,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 1.6792460270193128
+          },
+          "median_tick_ns": {
+            "better": "lower",
+            "median": 50,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 50
+          },
+          "ns_per_player": {
+            "better": "lower",
+            "median": 10.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 10.0
+          },
+          "ticks_per_s": {
+            "better": "higher",
+            "median": 16315000.0,
+            "stddev": 0.0,
+            "unit": "ticks/s",
+            "value": 16315000.0
+          },
+          "visibility_state_bytes": {
+            "better": "lower",
+            "median": 40,
+            "stddev": 0.0,
+            "unit": "bytes",
+            "value": 40
+          }
+        },
+        "steady-move5-scaling": {
+          "scaling_exponent": {
+            "better": "lower",
+            "median": 1.267956751774875,
+            "stddev": 0.0,
+            "unit": "count",
+            "value": 1.267956751774875
+          }
+        }
+      }
+    }
+  },
+  "simd_tier": "generic",
+  "virt_kind": "bare-metal",
+  "virt_type": "none"
+}

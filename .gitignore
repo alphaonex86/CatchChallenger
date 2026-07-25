@@ -201,12 +201,38 @@ test/remote_build.py.local
 core
 core.*
 
-# ── Benchmark history + results are LOCAL-only (too noisy for git): the
-#    append-only per-run JSON timeline and every regenerated champion/
-#    candidate chart live on disk but are not tracked. Charts + decisions
-#    are reproducible from the local history JSONs.
-benchmark/history/
-benchmark/results/
+# ── Benchmark history + results are LOCAL-only apart from two distilled
+#    files per location. Untracked: the append-only per-run JSON timeline
+#    (1300+ files, 25 MB and growing) and every regenerated chart (the SVGs
+#    alone are ~700 MB). Charts + decisions stay reproducible from the local
+#    history JSONs.
+#    Tracked, so the project's performance evolution and the hardware
+#    comparison live in git without the bulk:
+#      results/**/champion.json                   the current best per benchmark
+#      results/**/champion*.svg                   the champion charts (cross-node
+#                                                 + per-execution-node), 102
+#                                                 files / ~44 MB, REGENERATED in
+#                                                 full by every suite run. The
+#                                                 two cross-node charts are
+#                                                 ~17 MB of that and grow with
+#                                                 batches x series -- if the repo
+#                                                 gets heavy, they are the lever.
+#                                                 Candidate charts stay untracked.
+#      history/<benchmark>/<platform>/<node>/last.json
+#                                                 latest run per node, stripped
+#                                                 of nulls and raw sample arrays
+#                                                 (benchmark/history_last.py)
+#    Git itself is the time series: each commit of a last.json is one datapoint.
+#    NB: these must be `dir/**` + a `!dir/**/` directory re-include, NOT `dir/`
+#    — git never descends into an excluded DIRECTORY, so a bare `benchmark/
+#    history/` would make the negations below unreachable.
+benchmark/history/**
+!benchmark/history/**/
+!benchmark/history/**/last.json
+benchmark/results/**
+!benchmark/results/**/
+!benchmark/results/**/champion.json
+!benchmark/results/**/champion*.svg
 
 # ── bot-actions QSettings sidecar (created in cwd by DatabaseBot::init())
 benchmark/config.db
