@@ -153,6 +153,7 @@
   "setDatapackPath#0": "setDatapackPath(const std::string &datapackPath)",
   "setEvents#0": "setEvents(const std::vector<std::pair<uint8_t,uint8_t> > &events)",
   "setMapNumber#0": "setMapNumber(const CATCHCHALLENGER_TYPE_MAPID number_of_map)",
+  "shopItemsFromStepXml#0": "shopItemsFromStepXml(const tinyxml2::XMLElement *stepXml)",
   "socketDestroyed#0": "socketDestroyed()",
   "socketDisconnectedForReconnect#0": "socketDisconnectedForReconnect()",
   "sslHandcheckIsFinished#0": "sslHandcheckIsFinished()",
