@@ -1,0 +1,484 @@
+{
+  "arch": "x86_64",
+  "arch_emulated": false,
+  "benchmark": "benchmarkclientlatency",
+  "cc_storage_disk_kind": "ssd-sata",
+  "cc_storage_disk_root": "ATA KINGSTON SMS200S",
+  "cc_storage_fs": "ext4",
+  "cc_storage_path": "/home/user/run",
+  "cc_storage_source": "/dev/sda2",
+  "comment": "fleet refresh with atom-n270",
+  "commit": "7f9a6e4e7c530812782eb15f53c1296a211fa35d",
+  "commit_short": "7f9a6e4",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCATCHCHALLENGER_BENCHMARK"
+  ],
+  "compiler": "cc (Debian 14.2.0-19) 14.2.0",
+  "cpu_cache": [
+    {
+      "level": 1,
+      "line_size_bytes": 64,
+      "size": "32K",
+      "type": "Data"
+    },
+    {
+      "level": 1,
+      "line_size_bytes": 64,
+      "size": "32K",
+      "type": "Instruction"
+    },
+    {
+      "level": 2,
+      "line_size_bytes": 64,
+      "size": "2048K",
+      "type": "Unified"
+    }
+  ],
+  "cpu_cores": 4,
+  "cpu_metrics_reliable": true,
+  "cpu_mhz": 800.0,
+  "cpu_model": "AMD A4 Micro-6400T APU + AMD Radeon R3 Graphics",
+  "datapack_storage_disk_kind": "ssd-sata",
+  "datapack_storage_disk_root": "ATA KINGSTON SMS200S",
+  "datapack_storage_fs": "ext4",
+  "datapack_storage_path": "/home/user/run/datapack",
+  "datapack_storage_source": "/dev/sda2",
+  "decision": "DISCARD",
+  "disk_kind": "ssd-sata",
+  "disk_root": "ATA KINGSTON SMS200S",
+  "ended_utc": "2026-06-10T22:43:00Z",
+  "eth_link_mbps": 1000,
+  "harness_version": "3dec90ad045dd940ec7772b772ae269cb9bcd2e2",
+  "kernel": "6.12.43+deb13-amd64",
+  "libc": "glibc 2.41",
+  "net_card": "eth3",
+  "net_family": "ipv4+ipv6",
+  "net_link": "wired",
+  "node": "fitxlan",
+  "ram_total_mb": 7843,
+  "ram_type": "DDR3-800MT/s",
+  "results": {
+    "latency": {
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 94906265.62425156
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 94906265.62425156
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 1518500249.988025
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 94906265.62425156
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns",
+          "value": 94906265.62425156
+        }
+      },
+      "status": "PASS",
+      "subbenchmarks": {
+        "16-bots": {
+          "chat_count": {
+            "better": "higher",
+            "median": 120,
+            "stddev": 0.0,
+            "unit": "samples",
+            "value": 120
+          },
+          "chat_jitter_ns": {
+            "better": "lower",
+            "median": 6470657.059813176,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6470657.059813176
+          },
+          "chat_p50_ns": {
+            "better": "lower",
+            "median": 94906265.62425156,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 94906265.62425156
+          },
+          "chat_p95_ns": {
+            "better": "lower",
+            "median": 94906265.62425156,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 94906265.62425156
+          },
+          "chat_p999_ns": {
+            "better": "lower",
+            "median": 94906265.62425156,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 94906265.62425156
+          },
+          "chat_p99_ns": {
+            "better": "lower",
+            "median": 94906265.62425156,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 94906265.62425156
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 2.0,
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 2.0
+          },
+          "join_count": {
+            "better": "higher",
+            "median": 234.0,
+            "stddev": 5.0,
+            "unit": "samples",
+            "value": 234.0
+          },
+          "join_jitter_ns": {
+            "better": "lower",
+            "median": 424683610.1441169,
+            "stddev": 1139668.5166439712,
+            "unit": "ns",
+            "value": 424683610.1441169
+          },
+          "join_p50_ns": {
+            "better": "lower",
+            "median": 142359398.43637735,
+            "stddev": 47453132.81212578,
+            "unit": "ns",
+            "value": 142359398.43637735
+          },
+          "join_p95_ns": {
+            "better": "lower",
+            "median": 1518500249.988025,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1518500249.988025
+          },
+          "join_p999_ns": {
+            "better": "lower",
+            "median": 1518500249.988025,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1518500249.988025
+          },
+          "join_p99_ns": {
+            "better": "lower",
+            "median": 1518500249.988025,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 1518500249.988025
+          },
+          "rtt_count": {
+            "better": "higher",
+            "median": 8,
+            "stddev": 0.0,
+            "unit": "samples",
+            "value": 8
+          },
+          "rtt_jitter_ns": {
+            "better": "lower",
+            "median": 0.0,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 0.0
+          },
+          "rtt_p50_ns": {
+            "better": "lower",
+            "median": 94906265.62425156,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 94906265.62425156
+          },
+          "rtt_p95_ns": {
+            "better": "lower",
+            "median": 94906265.62425156,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 94906265.62425156
+          },
+          "rtt_p999_ns": {
+            "better": "lower",
+            "median": 94906265.62425156,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 94906265.62425156
+          },
+          "rtt_p99_ns": {
+            "better": "lower",
+            "median": 94906265.62425156,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 94906265.62425156
+          },
+          "server_jitter_ns": {
+            "better": "lower",
+            "median": 210061.09530065855,
+            "unit": "ns",
+            "value": 210061.09530065855
+          },
+          "server_p99_ns": {
+            "better": "lower",
+            "median": 741455.2001894653,
+            "unit": "ns",
+            "value": 741455.2001894653
+          },
+          "server_reqs": {
+            "better": "higher",
+            "median": 4893,
+            "unit": "events",
+            "value": 4893
+          }
+        },
+        "4-bots": {
+          "cpu_percent": {
+            "better": "lower",
+            "median": 2.0,
+            "stddev": 0.0,
+            "unit": "%",
+            "value": 2.0
+          },
+          "join_count": {
+            "better": "higher",
+            "median": 12.0,
+            "stddev": 0.0,
+            "unit": "samples",
+            "value": 12.0
+          },
+          "join_jitter_ns": {
+            "better": "lower",
+            "median": 139771642.13262397,
+            "stddev": 7925042.6476236805,
+            "unit": "ns",
+            "value": 139771642.13262397
+          },
+          "join_p50_ns": {
+            "better": "lower",
+            "median": 94906265.62425156,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 94906265.62425156
+          },
+          "join_p95_ns": {
+            "better": "lower",
+            "median": 379625062.49700624,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 379625062.49700624
+          },
+          "join_p999_ns": {
+            "better": "lower",
+            "median": 379625062.49700624,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 379625062.49700624
+          },
+          "join_p99_ns": {
+            "better": "lower",
+            "median": 379625062.49700624,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 379625062.49700624
+          },
+          "server_jitter_ns": {
+            "better": "lower",
+            "median": 210061.09530065855,
+            "unit": "ns",
+            "value": 210061.09530065855
+          },
+          "server_p99_ns": {
+            "better": "lower",
+            "median": 741455.2001894653,
+            "unit": "ns",
+            "value": 741455.2001894653
+          },
+          "server_reqs": {
+            "better": "higher",
+            "median": 4893,
+            "unit": "events",
+            "value": 4893
+          }
+        },
+        "50-bots": {
+          "chat_count": {
+            "better": "higher",
+            "median": 392,
+            "stddev": 0.0,
+            "unit": "samples",
+            "value": 392
+          },
+          "chat_jitter_ns": {
+            "better": "lower",
+            "median": 54036708.26615777,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 54036708.26615777
+          },
+          "chat_p50_ns": {
+            "better": "lower",
+            "median": 47453132.81212578,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 47453132.81212578
+          },
+          "chat_p95_ns": {
+            "better": "lower",
+            "median": 189812531.24850312,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 189812531.24850312
+          },
+          "chat_p999_ns": {
+            "better": "lower",
+            "median": 189812531.24850312,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 189812531.24850312
+          },
+          "chat_p99_ns": {
+            "better": "lower",
+            "median": 189812531.24850312,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 189812531.24850312
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 2.5,
+            "stddev": 0.5,
+            "unit": "%",
+            "value": 2.5
+          },
+          "join_count": {
+            "better": "higher",
+            "median": 2205.5,
+            "stddev": 88.5,
+            "unit": "samples",
+            "value": 2205.5
+          },
+          "join_jitter_ns": {
+            "better": "lower",
+            "median": 1200120796.8618522,
+            "stddev": 8123351.40699625,
+            "unit": "ns",
+            "value": 1200120796.8618522
+          },
+          "join_p50_ns": {
+            "better": "lower",
+            "median": 142359398.43637735,
+            "stddev": 47453132.81212578,
+            "unit": "ns",
+            "value": 142359398.43637735
+          },
+          "join_p95_ns": {
+            "better": "lower",
+            "median": 3037000499.97605,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 3037000499.97605
+          },
+          "join_p999_ns": {
+            "better": "lower",
+            "median": 6074000999.9521,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 6074000999.9521
+          },
+          "join_p99_ns": {
+            "better": "lower",
+            "median": 4555500749.964075,
+            "stddev": 1518500249.988025,
+            "unit": "ns",
+            "value": 4555500749.964075
+          },
+          "rtt_count": {
+            "better": "higher",
+            "median": 8,
+            "stddev": 0.0,
+            "unit": "samples",
+            "value": 8
+          },
+          "rtt_jitter_ns": {
+            "better": "lower",
+            "median": 48823572.268099844,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 48823572.268099844
+          },
+          "rtt_p50_ns": {
+            "better": "lower",
+            "median": 47453132.81212578,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 47453132.81212578
+          },
+          "rtt_p95_ns": {
+            "better": "lower",
+            "median": 189812531.24850312,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 189812531.24850312
+          },
+          "rtt_p999_ns": {
+            "better": "lower",
+            "median": 189812531.24850312,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 189812531.24850312
+          },
+          "rtt_p99_ns": {
+            "better": "lower",
+            "median": 189812531.24850312,
+            "stddev": 0.0,
+            "unit": "ns",
+            "value": 189812531.24850312
+          },
+          "server_jitter_ns": {
+            "better": "lower",
+            "median": 210061.09530065855,
+            "unit": "ns",
+            "value": 210061.09530065855
+          },
+          "server_p99_ns": {
+            "better": "lower",
+            "median": 741455.2001894653,
+            "unit": "ns",
+            "value": 741455.2001894653
+          },
+          "server_reqs": {
+            "better": "higher",
+            "median": 4893,
+            "unit": "events",
+            "value": 4893
+          }
+        }
+      }
+    }
+  },
+  "simd_tier": "generic",
+  "virt_kind": "bare-metal",
+  "virt_type": "none"
+}

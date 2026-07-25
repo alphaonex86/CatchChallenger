@@ -1,0 +1,261 @@
+{
+  "arch": "xtensa-lx6",
+  "arch_emulated": false,
+  "benchmark": "benchmarkclientlatency",
+  "comment": "ESP32 ceiling 4/16/24",
+  "commit": "efc9c3737aceae9fa641725342cecfa37ab7a280",
+  "commit_short": "efc9c37",
+  "compile_flags": [
+    "-O3",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCATCHCHALLENGER_BENCHMARK"
+  ],
+  "compiler": "xtensa-esp32-elf-gcc",
+  "cpu_cores": 2,
+  "cpu_mhz": 240.0,
+  "cpu_model": "Espressif ESP32 (Xtensa LX6 dual-core)",
+  "disk_kind": "flash",
+  "ended_utc": "2026-06-16T14:32:51Z",
+  "harness_version": "44db402dbc7daf64eddff1a4e1eccb5993f0abbc",
+  "libc": "newlib",
+  "net_card": "ESP32 WiFi (802.11 b/g/n)",
+  "net_family": "ipv4",
+  "net_link": "wifi",
+  "node": "esp32",
+  "ram_type": "SRAM ~520KiB (no DRAM)",
+  "results": {
+    "latency": {
+      "metrics": {
+        "connect_jitter_ms": {
+          "better": "lower",
+          "median": 150.67143536438675,
+          "stddev": 0.0,
+          "unit": "ms",
+          "value": 150.67143536438675
+        },
+        "connect_p50_ms": {
+          "better": "lower",
+          "median": 6.755086942575872,
+          "stddev": 0.0,
+          "unit": "ms",
+          "value": 6.755086942575872
+        },
+        "connect_p99_ms": {
+          "better": "lower",
+          "median": 604.803959920534,
+          "stddev": 0.0,
+          "unit": "ms",
+          "value": 604.803959920534
+        },
+        "connects_per_s": {
+          "better": "higher",
+          "median": 4.354516840813586,
+          "stddev": 0.0,
+          "unit": "conn/s",
+          "value": 4.354516840813586
+        },
+        "max_concurrent": {
+          "better": "higher",
+          "median": 20,
+          "stddev": 0.0,
+          "unit": "conns",
+          "value": 20
+        }
+      },
+      "status": "PASS",
+      "subbenchmarks": {
+        "hold-0": {
+          "bg_held": {
+            "better": "higher",
+            "median": 0,
+            "unit": "conns",
+            "value": 0
+          },
+          "connect_count": {
+            "better": "higher",
+            "median": 48,
+            "unit": "samples",
+            "value": 48
+          },
+          "connect_fail": {
+            "better": "lower",
+            "median": 2,
+            "unit": "count",
+            "value": 2
+          },
+          "connect_jitter_ms": {
+            "better": "lower",
+            "median": 160.93982651381506,
+            "unit": "ms",
+            "value": 160.93982651381506
+          },
+          "connect_p50_ms": {
+            "better": "lower",
+            "median": 6.189167965203524,
+            "unit": "ms",
+            "value": 6.189167965203524
+          },
+          "connect_p95_ms": {
+            "better": "lower",
+            "median": 70.70528741460294,
+            "unit": "ms",
+            "value": 70.70528741460294
+          },
+          "connect_p99_ms": {
+            "better": "lower",
+            "median": 634.7846342227434,
+            "unit": "ms",
+            "value": 634.7846342227434
+          },
+          "connects_per_s": {
+            "better": "higher",
+            "median": 4.512221066132304,
+            "unit": "conn/s",
+            "value": 4.512221066132304
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.0940046055444231,
+            "unit": "%",
+            "value": 0.0940046055444231
+          },
+          "max_concurrent": {
+            "better": "higher",
+            "median": 20,
+            "unit": "conns",
+            "value": 20
+          }
+        },
+        "hold-4": {
+          "bg_held": {
+            "better": "higher",
+            "median": 4,
+            "unit": "conns",
+            "value": 4
+          },
+          "connect_count": {
+            "better": "higher",
+            "median": 46,
+            "unit": "samples",
+            "value": 46
+          },
+          "connect_fail": {
+            "better": "lower",
+            "median": 2,
+            "unit": "count",
+            "value": 2
+          },
+          "connect_jitter_ms": {
+            "better": "lower",
+            "median": 150.67143536438675,
+            "unit": "ms",
+            "value": 150.67143536438675
+          },
+          "connect_p50_ms": {
+            "better": "lower",
+            "median": 6.755086942575872,
+            "unit": "ms",
+            "value": 6.755086942575872
+          },
+          "connect_p95_ms": {
+            "better": "lower",
+            "median": 70.52491075592116,
+            "unit": "ms",
+            "value": 70.52491075592116
+          },
+          "connect_p99_ms": {
+            "better": "lower",
+            "median": 604.803959920534,
+            "unit": "ms",
+            "value": 604.803959920534
+          },
+          "connects_per_s": {
+            "better": "higher",
+            "median": 4.354516840813586,
+            "unit": "conn/s",
+            "value": 4.354516840813586
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.09466340958290412,
+            "unit": "%",
+            "value": 0.09466340958290412
+          },
+          "max_concurrent": {
+            "better": "higher",
+            "median": 20,
+            "unit": "conns",
+            "value": 20
+          }
+        },
+        "hold-8": {
+          "bg_held": {
+            "better": "higher",
+            "median": 8,
+            "unit": "conns",
+            "value": 8
+          },
+          "connect_count": {
+            "better": "higher",
+            "median": 42,
+            "unit": "samples",
+            "value": 42
+          },
+          "connect_fail": {
+            "better": "lower",
+            "median": 2,
+            "unit": "count",
+            "value": 2
+          },
+          "connect_jitter_ms": {
+            "better": "lower",
+            "median": 155.86684160661332,
+            "unit": "ms",
+            "value": 155.86684160661332
+          },
+          "connect_p50_ms": {
+            "better": "lower",
+            "median": 6.60235749091953,
+            "unit": "ms",
+            "value": 6.60235749091953
+          },
+          "connect_p95_ms": {
+            "better": "lower",
+            "median": 68.52121019037439,
+            "unit": "ms",
+            "value": 68.52121019037439
+          },
+          "connect_p99_ms": {
+            "better": "lower",
+            "median": 641.404685042795,
+            "unit": "ms",
+            "value": 641.404685042795
+          },
+          "connects_per_s": {
+            "better": "higher",
+            "median": 4.025535926545135,
+            "unit": "conn/s",
+            "value": 4.025535926545135
+          },
+          "cpu_percent": {
+            "better": "lower",
+            "median": 0.0,
+            "unit": "%",
+            "value": 0.0
+          },
+          "max_concurrent": {
+            "better": "higher",
+            "median": 20,
+            "unit": "conns",
+            "value": 20
+          }
+        }
+      }
+    }
+  },
+  "simd_tier": "generic",
+  "virt_kind": "bare-metal",
+  "virt_type": "none",
+  "wifi_band": "2.4GHz",
+  "wifi_standard": "wifi-4 (802.11n)"
+}

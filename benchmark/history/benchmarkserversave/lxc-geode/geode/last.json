@@ -1,0 +1,38 @@
+{
+  "arch": "i686",
+  "arch_emulated": false,
+  "benchmark": "benchmarkserversave",
+  "cc_storage_path": "/home/catchchallenger/run",
+  "commit": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
+  "commit_short": "5462b5b",
+  "compile_flags": [
+    "-O2",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
+    "-DCATCHCHALLENGER_CACHE_HPS=ON"
+  ],
+  "cpu_metrics_reliable": true,
+  "datapack_storage_path": "/home/catchchallenger/run/datapack",
+  "decision": "DISCARD",
+  "ended_utc": "2026-07-25T18:06:26Z",
+  "harness_version": "5462b5b9b101f9bc3d5da8aa73cd619d253ea4e3",
+  "net_family": "ipv4",
+  "node": "geode",
+  "results": {
+    "binary-size": {
+      "status": "FAIL"
+    },
+    "callgrind": {
+      "status": "SKIP"
+    },
+    "perf-stat": {
+      "status": "SKIP"
+    },
+    "rusage": {
+      "status": "FAIL"
+    }
+  },
+  "simd_tier": "generic",
+  "virt_kind": "bare-metal",
+  "virt_type": "none"
+}

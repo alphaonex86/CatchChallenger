@@ -136,6 +136,11 @@ run_loop() {
         fi
     done
     python3 chart_generator.py "${NODE_ARGS[@]}"
+    # Distil the per-run history into the one tracked file per node
+    # (history/<benchmark>/<platform>/<node>/last.json). Cheap, and keeps the
+    # git-tracked performance timeline from going stale behind the untracked
+    # per-run JSONs.
+    python3 history_last.py
 }
 
 if [ "$BUDGET_S" -le 0 ] 2>/dev/null; then
