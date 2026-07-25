@@ -669,12 +669,113 @@ TOP_MARGIN = 28
 X_AXIS_H = 50
 
 
+# Adjacent batches whose numbers agree to within this (median relative delta
+# across the series they share) are treated as "the same result measured
+# again" and collapsed into one plotted point. 2% is well above the noise
+# floor of a quiet node and well below any change worth seeing.
+COMPACT_REL_DELTA = 0.02
+# Never collapse more than this many batches into one point, so a long flat
+# stretch still shows the passage of time rather than becoming a single dot.
+COMPACT_MAX_GROUP = 8
+
+
+def _compact_index_axis(series, commits, champion_idx,
+                        max_rel_delta=COMPACT_REL_DELTA,
+                        max_group=COMPACT_MAX_GROUP):
+    """Collapse runs of near-identical adjacent batches into one averaged point.
+
+    Rather than capping how much history a chart shows (which throws the old
+    data away), this keeps every batch but spends detail where something
+    actually MOVED: a run of batches that measured the same thing becomes a
+    single point carrying their average, labelled "<first>..<last>". A stretch
+    where nothing changed costs one point instead of twenty; a regression still
+    gets its own point because it is not similar to its neighbour.
+
+    Returns (series, commits, champion_idx) with the index axis renumbered.
+    The champion batch is always kept as its own point -- it is the reference
+    the whole chart is read against, so it must stay individually identifiable.
+    """
+    n = len(commits)
+    if n < 3:
+        return series, commits, champion_idx
+
+    values = [{} for _ in range(n)]
+    for label, pts in series.items():
+        for point in pts:
+            idx, value = point[0], point[1]
+            if 0 <= idx < n:
+                values[idx][label] = value
+
+    def similar(a, b):
+        common = set(values[a]) & set(values[b])
+        if not common:
+            return False
+        deltas = []
+        for key in common:
+            x, y = values[a][key], values[b][key]
+            scale = max(abs(x), abs(y))
+            deltas.append(0.0 if scale == 0 else abs(x - y) / scale)
+        deltas.sort()
+        # median, so a handful of noisy metrics can't block a merge and a
+        # handful of quiet ones can't force one
+        return deltas[len(deltas) // 2] <= max_rel_delta
+
+    groups = []
+    current = [0]
+    for i in range(1, n):
+        if (i == champion_idx or current[0] == champion_idx
+                or len(current) >= max_group or not similar(current[-1], i)):
+            groups.append(current)
+            current = [i]
+        else:
+            current.append(i)
+    groups.append(current)
+    if len(groups) == n:
+        return series, commits, champion_idx
+
+    new_commits = []
+    for group in groups:
+        if len(group) == 1:
+            new_commits.append(commits[group[0]])
+        else:
+            new_commits.append(f"{commits[group[0]]}..{commits[group[-1]]}")
+    index_of = {}
+    new_champion = champion_idx
+    for gi, group in enumerate(groups):
+        for i in group:
+            index_of[i] = gi
+            if i == champion_idx:
+                new_champion = gi
+
+    new_series = {}
+    for label, pts in series.items():
+        buckets = {}
+        for point in pts:
+            gi = index_of.get(point[0])
+            if gi is None:
+                continue
+            buckets.setdefault(gi, []).append(point)
+        collapsed = []
+        for gi in sorted(buckets):
+            group_pts = buckets[gi]
+            avg = sum(pt[1] for pt in group_pts) / len(group_pts)
+            # keep the LAST decision of the run: it is the most recent verdict
+            # for a stretch that measured the same thing
+            decision = group_pts[-1][3] if len(group_pts[-1]) > 3 else None
+            collapsed.append((gi, avg, new_commits[gi], decision))
+        new_series[label] = collapsed
+    return new_series, new_commits, new_champion
+
+
 def _render_group(benchmark, comp, exe, records):
     series, commits, better_map = _extract_series(records)
     if not series:
         return None
     cpu_slug = cpu_model_slug(records[0].get("cpu_model")) if records else "unknown"
     node = records[0].get("node") or exe
+    champion_idx = _find_champion_idx(records, node)
+    series, commits, champion_idx = _compact_index_axis(series, commits,
+                                                        champion_idx)
 
     # group series by bare metric name (so one panel = one metric, all
     # tools and all sub-bench slices). For "<tool>.<metric>" the bare
@@ -687,7 +788,6 @@ def _render_group(benchmark, comp, exe, records):
         panels.setdefault(bare, {})[label] = pts
 
     arch = records[0].get("arch") or "unknown"
-    champion_idx = _find_champion_idx(records, node)
 
     npanels = len(panels)
     max_series = max((len(p) for p in panels.values()), default=1)
@@ -751,13 +851,6 @@ def _render_session_chart(benchmark, batches):
     if not series:
         return None
 
-    # Group series by bare metric name (last segment) so related metrics
-    # share a panel.
-    panels = {}
-    for label, pts in series.items():
-        bare = label.rsplit(".", 1)[1] if "." in label else label
-        panels.setdefault(bare, {})[label] = pts
-
     # champion index: which batch has the champion commit
     champion_idx = -1
     if champ_short:
@@ -765,8 +858,17 @@ def _render_session_chart(benchmark, batches):
             if c == champ_short:
                 champion_idx = i
                 break
+    series, commits, champion_idx = _compact_index_axis(series, commits,
+                                                        champion_idx)
 
-    nbatches = len(batches)
+    # Group series by bare metric name (last segment) so related metrics
+    # share a panel.
+    panels = {}
+    for label, pts in series.items():
+        bare = label.rsplit(".", 1)[1] if "." in label else label
+        panels.setdefault(bare, {})[label] = pts
+
+    nbatches = len(commits)
     npanels = len(panels)
     max_series = max((len(p) for p in panels.values()), default=1)
     panel_h = _panel_h(max_series)
