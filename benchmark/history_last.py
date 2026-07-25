@@ -89,9 +89,20 @@ def strip_metrics(node):
     on its own, and it says nothing about evolution or hardware that median +
     stddev do not already say. Everything else is kept verbatim."""
     if isinstance(node, dict):
+        # A metric block is {value, median, stddev, unit, better, samples}.
+        # `value` and `median` are the same number in the overwhelming majority
+        # of blocks, and a stddev that rounds to 0 says only "no spread" --
+        # both are pure repetition in a file that is 72% key names already.
+        is_metric = "median" in node or "value" in node
+        drop_value = (is_metric and node.get("value") is not None
+                      and node.get("value") == node.get("median"))
         out = {}
         for key, value in node.items():
             if key == "samples":
+                continue
+            if key == "value" and drop_value:
+                continue
+            if key == "stddev" and is_metric and round_sig(value) in (0, 0.0):
                 continue
             if value is None or value == {} or value == []:
                 continue

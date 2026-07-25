@@ -17,37 +17,27 @@
         "connect_jitter_ms": {
           "better": "lower",
           "median": 150.7,
-          "stddev": 0.0,
-          "unit": "ms",
-          "value": 150.7
+          "unit": "ms"
         },
         "connect_p50_ms": {
           "better": "lower",
           "median": 6.755,
-          "stddev": 0.0,
-          "unit": "ms",
-          "value": 6.755
+          "unit": "ms"
         },
         "connect_p99_ms": {
           "better": "lower",
           "median": 604.8,
-          "stddev": 0.0,
-          "unit": "ms",
-          "value": 604.8
+          "unit": "ms"
         },
         "connects_per_s": {
           "better": "higher",
           "median": 4.355,
-          "stddev": 0.0,
-          "unit": "conn/s",
-          "value": 4.355
+          "unit": "conn/s"
         },
         "max_concurrent": {
           "better": "higher",
           "median": 20,
-          "stddev": 0.0,
-          "unit": "conns",
-          "value": 20
+          "unit": "conns"
         }
       },
       "status": "PASS",
@@ -56,186 +46,156 @@
           "bg_held": {
             "better": "higher",
             "median": 0,
-            "unit": "conns",
-            "value": 0
+            "unit": "conns"
           },
           "connect_count": {
             "better": "higher",
             "median": 48,
-            "unit": "samples",
-            "value": 48
+            "unit": "samples"
           },
           "connect_fail": {
             "better": "lower",
             "median": 2,
-            "unit": "count",
-            "value": 2
+            "unit": "count"
           },
           "connect_jitter_ms": {
             "better": "lower",
             "median": 160.9,
-            "unit": "ms",
-            "value": 160.9
+            "unit": "ms"
           },
           "connect_p50_ms": {
             "better": "lower",
             "median": 6.189,
-            "unit": "ms",
-            "value": 6.189
+            "unit": "ms"
           },
           "connect_p95_ms": {
             "better": "lower",
             "median": 70.71,
-            "unit": "ms",
-            "value": 70.71
+            "unit": "ms"
           },
           "connect_p99_ms": {
             "better": "lower",
             "median": 634.8,
-            "unit": "ms",
-            "value": 634.8
+            "unit": "ms"
           },
           "connects_per_s": {
             "better": "higher",
             "median": 4.512,
-            "unit": "conn/s",
-            "value": 4.512
+            "unit": "conn/s"
           },
           "cpu_percent": {
             "better": "lower",
             "median": 0.094,
-            "unit": "%",
-            "value": 0.094
+            "unit": "%"
           },
           "max_concurrent": {
             "better": "higher",
             "median": 20,
-            "unit": "conns",
-            "value": 20
+            "unit": "conns"
           }
         },
         "hold-4": {
           "bg_held": {
             "better": "higher",
             "median": 4,
-            "unit": "conns",
-            "value": 4
+            "unit": "conns"
           },
           "connect_count": {
             "better": "higher",
             "median": 46,
-            "unit": "samples",
-            "value": 46
+            "unit": "samples"
           },
           "connect_fail": {
             "better": "lower",
             "median": 2,
-            "unit": "count",
-            "value": 2
+            "unit": "count"
           },
           "connect_jitter_ms": {
             "better": "lower",
             "median": 150.7,
-            "unit": "ms",
-            "value": 150.7
+            "unit": "ms"
           },
           "connect_p50_ms": {
             "better": "lower",
             "median": 6.755,
-            "unit": "ms",
-            "value": 6.755
+            "unit": "ms"
           },
           "connect_p95_ms": {
             "better": "lower",
             "median": 70.52,
-            "unit": "ms",
-            "value": 70.52
+            "unit": "ms"
           },
           "connect_p99_ms": {
             "better": "lower",
             "median": 604.8,
-            "unit": "ms",
-            "value": 604.8
+            "unit": "ms"
           },
           "connects_per_s": {
             "better": "higher",
             "median": 4.355,
-            "unit": "conn/s",
-            "value": 4.355
+            "unit": "conn/s"
           },
           "cpu_percent": {
             "better": "lower",
             "median": 0.09466,
-            "unit": "%",
-            "value": 0.09466
+            "unit": "%"
           },
           "max_concurrent": {
             "better": "higher",
             "median": 20,
-            "unit": "conns",
-            "value": 20
+            "unit": "conns"
           }
         },
         "hold-8": {
           "bg_held": {
             "better": "higher",
             "median": 8,
-            "unit": "conns",
-            "value": 8
+            "unit": "conns"
           },
           "connect_count": {
             "better": "higher",
             "median": 42,
-            "unit": "samples",
-            "value": 42
+            "unit": "samples"
           },
           "connect_fail": {
             "better": "lower",
             "median": 2,
-            "unit": "count",
-            "value": 2
+            "unit": "count"
           },
           "connect_jitter_ms": {
             "better": "lower",
             "median": 155.9,
-            "unit": "ms",
-            "value": 155.9
+            "unit": "ms"
           },
           "connect_p50_ms": {
             "better": "lower",
             "median": 6.602,
-            "unit": "ms",
-            "value": 6.602
+            "unit": "ms"
           },
           "connect_p95_ms": {
             "better": "lower",
             "median": 68.52,
-            "unit": "ms",
-            "value": 68.52
+            "unit": "ms"
           },
           "connect_p99_ms": {
             "better": "lower",
             "median": 641.4,
-            "unit": "ms",
-            "value": 641.4
+            "unit": "ms"
           },
           "connects_per_s": {
             "better": "higher",
             "median": 4.026,
-            "unit": "conn/s",
-            "value": 4.026
+            "unit": "conn/s"
           },
           "cpu_percent": {
             "better": "lower",
             "median": 0.0,
-            "unit": "%",
-            "value": 0.0
+            "unit": "%"
           },
           "max_concurrent": {
             "better": "higher",
             "median": 20,
-            "unit": "conns",
-            "value": 20
+            "unit": "conns"
           }
         }
       }
