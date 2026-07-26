@@ -47,6 +47,10 @@ import codecheck
 # --- limits (sensible defaults; all env-overridable) -----------------------
 ROUNDS = int(os.environ.get("CC_AGENTIC_ROUNDS", "6"))       # tool turns / IA / fn
 FUNC_SECS = int(os.environ.get("CC_AGENTIC_FUNC_SECS", "180"))  # wall cap / function
+# Grace window for the ONE final "conclude now" turn when ROUNDS/FUNC_SECS run out
+# (see _agentic_review_run): without it a slow model's review is thrown away and
+# the function is reported clean.
+FINAL_GRACE_SECS = int(os.environ.get("CC_AGENTIC_FINAL_SECS", "120"))
 CONSENSUS_MIN = int(os.environ.get("CC_CONSENSUS_MIN", "2"))  # IAs to form a wg (QA)
 _TOOL_RESULT_CAP = 8000
 # Keep the agentic conversation inside the model's context so the prompt is NEVER
@@ -239,7 +243,24 @@ def _agentic_review_run(spec, views, fi, sysprompt, deadline):
             result = "(unknown tool)"
         convo.append({"role": "user",
                       "content": "TOOL RESULT:\n" + result[:_TOOL_RESULT_CAP]})
-    return None                         # ran out of rounds/time: inconclusive
+    # Rounds/time exhausted. Do NOT drop the review here: the caller turns None
+    # into "NO ISSUES", so every function whose review needed more than ROUNDS
+    # turns or FUNC_SECS seconds - the NORM for a big local model, which spends
+    # its first turns pulling BRANCH/READ data - was silently reported CLEAN.
+    # Ask ONCE, on a small extra grace window, for the findings it already has;
+    # only a failed/empty final turn stays inconclusive (and uncached).
+    convo.append({"role": "user", "content":
+        "TIME/STEP BUDGET REACHED - request no more data. Give your FINAL "
+        "findings now (file:line), or reply NO ISSUES."})
+    try:
+        ans = _chat(spec, convo, time.time() + FINAL_GRACE_SECS)
+    except Exception:
+        return None
+    if not ans:
+        return None
+    ans = codecheck.collapse_repetition(ans)
+    rest = "\n".join(l for l in ans.splitlines() if not _TOOL_RE.match(l)).strip()
+    return rest or None
 
 
 # ---------------------------------------------------------------------------

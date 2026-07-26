@@ -75,7 +75,13 @@ TIDY_CHECKS = os.environ.get(
     "-*,bugprone-*,performance-*,-performance-avoid-endl,"
     "readability-identifier-naming,readability-misleading-indentation,"
     "misc-redundant-expression")
-SECURITY_TIDY_CHECKS = "-*,clang-analyzer-*,bugprone-*,cert-*"
+# The two dropped bugprone checks fire on this project's DELIBERATE style (the
+# wire protocol assigns uint8_t<->char everywhere, and packet handlers take
+# adjacent x/y/map coords), so they flood the security scan with non-security
+# noise - and each such "finding" then costs the exploit phase an hour.
+SECURITY_TIDY_CHECKS = ("-*,clang-analyzer-*,bugprone-*,cert-*,"
+                        "-bugprone-narrowing-conversions,"
+                        "-bugprone-easily-swappable-parameters")
 # Comprehensive FILE-LEVEL sweep checks: HIGH-SIGNAL, tuned to THIS project's style.
 # Drops the deliberate style (std::endl, snake_case_, short names, no-auto) and the
 # noisy ones (include-cleaner, narrowing-conversions, swappable-params). Covers EVERY
@@ -181,31 +187,54 @@ def _cache_root():
                           "/mnt/data/perso/tmp/codecheck").rstrip("/")
 
 
+# One compile DB per server BINARY. Each binary compiles the SHARED sources with its
+# OWN -D set (CATCHCHALLENGER_CLASS_*, DB backend), so a TU that belongs to another
+# binary but is compiled with server/cli's flags fails ("no member named 'MasterLink'",
+# "unknown type name 'DatabaseBaseCallBack'") and its functions never enter the index.
+# With server/cli alone, 40 of 236 in-scope TUs failed - including ALL 16 of
+# server/login/, the pre-auth parser, i.e. the highest-value remote surface.
+# server/cli comes FIRST: _load_cdb() merges with setdefault, so its flags win for a
+# source shared by several binaries. cmake CONFIGURE only (no build), cached forever.
+_CDB_TARGETS = (
+    ("cdb", ("server", "cli")),              # primary target; legacy dir name (cached)
+    ("cdb-login", ("server", "login")),
+    ("cdb-gateway", ("server", "gateway")),
+    ("cdb-game-server-alone", ("server", "game-server-alone")),
+    ("cdb-master", ("server", "master")),
+)
+
+
 def _ensure_compile_db(root):
-    """Find or auto-generate a compile_commands.json so clang resolves REAL flags
-    (codetree's default /tmp path is absent on a fresh checkout). CC_COMPILE_DB
-    wins; else configure server/cli ONCE into <root>/cdb (its DB covers server/ +
-    general/base via the INTERFACE libs) and reuse it forever. Returns a path or
-    None (cmake unavailable)."""
+    """Find or auto-generate the compile_commands.json set so clang resolves REAL
+    flags (codetree's default /tmp path is absent on a fresh checkout). CC_COMPILE_DB
+    wins (single DB); else configure each _CDB_TARGETS binary ONCE into <root>/<dir>
+    and reuse forever. Returns the list of DB paths, primary target first; empty when
+    cmake is unavailable. A target that fails to configure is simply skipped."""
     db = os.environ.get("CC_COMPILE_DB", "").strip()
     if db and os.path.isfile(db):
-        return db
-    out = os.path.join(root, "cdb", "compile_commands.json")
-    if os.path.isfile(out):
-        return out
+        return [db]
     if shutil.which("cmake") is None:
-        return None
-    build = os.path.join(root, "cdb")
-    os.makedirs(build, exist_ok=True)
-    cmd = ["nice", "-n", "19", "ionice", "-c", "3", "cmake",
-           "-S", os.path.join(REPO_ROOT, "server", "cli"), "-B", build,
-           "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON", "-DCATCHCHALLENGER_DB_FILE=ON",
-           "-DCMAKE_BUILD_TYPE=RelWithDebInfo"]
-    try:
-        subprocess.run(cmd, capture_output=True, text=True, timeout=600)
-    except (OSError, subprocess.SubprocessError):
-        return None
-    return out if os.path.isfile(out) else None
+        return []
+    out = []
+    for name, parts in _CDB_TARGETS:
+        build = os.path.join(root, name)
+        js = os.path.join(build, "compile_commands.json")
+        if not os.path.isfile(js):
+            src = os.path.join(REPO_ROOT, *parts)
+            if os.path.isfile(os.path.join(src, "CMakeLists.txt")):
+                os.makedirs(build, exist_ok=True)
+                cmd = ["nice", "-n", "19", "ionice", "-c", "3", "cmake",
+                       "-S", src, "-B", build,
+                       "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+                       "-DCATCHCHALLENGER_DB_FILE=ON",
+                       "-DCMAKE_BUILD_TYPE=RelWithDebInfo"]
+                try:
+                    subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+                except (OSError, subprocess.SubprocessError):
+                    pass
+        if os.path.isfile(js):
+            out.append(js)
+    return out
 
 
 def setup_caches():
@@ -221,9 +250,12 @@ def setup_caches():
     _TYPE_CACHE_DIR = os.path.join(root, "types-cache")
     _TIDY_CACHE_DIR = os.path.join(root, "tidy-cache")
     _VERDICT_CACHE_DIR = os.path.join(root, "verdict-cache")
-    db = _ensure_compile_db(root)
-    if db and db not in codetree._CDB_PATHS:
-        codetree._CDB_PATHS.insert(0, db)
+    # Insert in REVERSE so the first DB returned (server/cli, the primary target)
+    # ends up first in _CDB_PATHS: _load_cdb() merges with setdefault, so the
+    # earliest path wins for a source shared by several binaries (general/base/*).
+    for db in reversed(_ensure_compile_db(root)):
+        if db not in codetree._CDB_PATHS:
+            codetree._CDB_PATHS.insert(0, db)
     return root
 
 
@@ -534,7 +566,10 @@ def prewarm_tidy(funcs, checks=None, workers=6):
 # per file, so a per-indexed-function scan misses most of the code).
 # ---------------------------------------------------------------------------
 def _scope_files(scope=None):
-    """Every non-vendor C/C++ source file under the scope roots (or a file root)."""
+    """Every non-vendor, non-GENERATED C/C++ source file under the scope roots (or
+    a file root). is_generated() drops the build trees (`*_autogen/`, `CMakeFiles/`,
+    moc_/qrc_/ui_): they are not source of truth and reviewing them is pure noise -
+    the index walk already skips them, this sweep must skip them too."""
     roots = list(scope) if scope else list(DEFAULT_SCOPE)
     out, seen = [], set()
     for root in roots:
@@ -548,14 +583,15 @@ def _scope_files(scope=None):
                         cand.append(os.path.join(dp, fn))
         for p in cand:
             rp = os.path.realpath(p)
-            if rp not in seen and not codetree.is_vendor(p):
+            if (rp not in seen and not codetree.is_vendor(p)
+                    and not codetree.is_generated(p)):
                 seen.add(rp)
                 out.append(p)
     out.sort()
     return out
 
 
-def file_sweep(scope=None, checks=None, workers=6):
+def file_sweep(scope=None, checks=None, workers=None):
     """Run clang-tidy over EVERY non-vendor C/C++ file in the scope (cached per file).
     Returns {rel_path: [(line, check, message), ...]} sorted by line — the
     comprehensive deterministic 'where + how' improvement list."""
@@ -563,7 +599,8 @@ def file_sweep(scope=None, checks=None, workers=6):
     checks = checks or SWEEP_CHECKS
     files = _scope_files(scope)
     from concurrent.futures import ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=workers) as pool:
+    # None -> every core: clang-tidy is one independent process per file.
+    with ThreadPoolExecutor(max_workers=workers or os.cpu_count() or 6) as pool:
         pairs = list(pool.map(lambda f: (f, _file_tidy(f, checks)), files))
     by_file = {}
     for f, items in pairs:

@@ -24,7 +24,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 REPO_ROOT = "/home/user/Desktop/CatchChallenger/git"
-OUTPUT_ROOT = "/mnt/data/perso/tmpfs/security/server"
+OUTPUT_ROOT = "/mnt/data/perso/tmp/security/server"
 CLANG = shutil.which("clang")
 
 SCOPE_DIRS = tuple(os.path.join(REPO_ROOT, p) for p in (
@@ -53,7 +53,7 @@ def set_cdb_only(yes=True):
     _BUILD_CDB_ONLY = yes
 VENDOR_DIRS = tuple(os.path.realpath(os.path.join(REPO_ROOT, p)) for p in (
     "general/blake3", "general/hps", "general/libxxhash", "general/libzstd",
-    "general/tinyXML2",
+    "general/tinyXML2", "general/libzlib",
     "client/libqtcatchchallenger/libogg",
     "client/libqtcatchchallenger/libopus",
     "client/libqtcatchchallenger/libopusfile",
@@ -64,6 +64,23 @@ VENDOR_DIRS = tuple(os.path.realpath(os.path.join(REPO_ROOT, p)) for p in (
 def is_vendor(path):
     rp = os.path.realpath(path)
     return any(rp == d or rp.startswith(d + os.sep) for d in VENDOR_DIRS)
+
+
+# Qt machine-generated sources: moc_*/qrc_*/ui_* and the *_autogen build trees
+# CMake's AUTOMOC/AUTOUIC emit. They are NOT source of truth (regenerated from
+# the real .hpp/.ui), often won't compile standalone (they #include headers from
+# a build-dir-relative autogen path), and add zero attack surface. Never index.
+_GEN_PREFIXES = ("moc_", "qrc_", "ui_", "mocs_compilation")
+
+
+def is_generated(path):
+    """True for a Qt-generated TU (moc_/qrc_/ui_ prefix) or any file inside a
+    build/autogen tree (`*_autogen/`, `mocs_compilation*`, a CMake build dir)."""
+    base = os.path.basename(path)
+    if base.startswith(_GEN_PREFIXES):
+        return True
+    parts = os.path.realpath(path).split(os.sep)
+    return any(seg.endswith("_autogen") or seg == "CMakeFiles" for seg in parts)
 
 
 def _ts():
@@ -181,6 +198,8 @@ def _ir_cached(path):
     """Return cached IR or compile fresh.  Uses file mtime as cache key.
     Returns (ir_text, '') or ('', err_msg)."""
     real = os.path.realpath(path)
+    if is_generated(real):
+        return ('', '')          # Qt-generated TU: skip silently, not an error
     try:
         mtime = os.path.getmtime(real)
     except OSError:
@@ -538,11 +557,15 @@ class Index:
         for d in SCOPE_DIRS:
             if not os.path.isdir(d):
                 continue
-            for root, _dirs, names in os.walk(os.path.realpath(d)):
+            for root, dirs, names in os.walk(os.path.realpath(d)):
                 if is_vendor(root):
                     continue
+                # Prune Qt-generated / build trees in place so os.walk never
+                # descends into *_autogen, CMakeFiles, etc.
+                dirs[:] = [x for x in dirs
+                           if not (x.endswith("_autogen") or x == "CMakeFiles")]
                 for n in sorted(names):
-                    if n.endswith((".cpp", ".cc", ".cxx")):
+                    if n.endswith((".cpp", ".cc", ".cxx")) and not is_generated(n):
                         fp = os.path.realpath(os.path.join(root, n))
                         if fp not in seen:
                             seen.add(fp)
@@ -552,7 +575,11 @@ class Index:
             return [f for f in sorted(seen) if f in cdb_files or True]
         return sorted(out)
 
-    def build(self, max_workers=8):
+    def build(self, max_workers=None):
+        # None -> every core: each TU is an independent clang -emit-llvm, so the
+        # index build scales with the machine (a 32-core box was doing 8 at a time).
+        if not max_workers:
+            max_workers = os.cpu_count() or 8
         if self._built:
             return
         with self._lock:
