@@ -153,6 +153,17 @@ IA_BACKEND = _resolve_ia_backend()
 CLAUDE_VIA_CLI = IA_BACKEND == "claude-cli"
 USE_CLAUDE = IA_BACKEND in ("claude", "claude-cli")
 CLAUDE_MODEL = os.environ.get("CC_CLAUDE_MODEL", "claude-opus-4-8")
+# Reasoning EFFORT of the official CLI (`claude --effort`), claude-cli backend only:
+# low | medium | high | xhigh | max. DEFAULT high - deeper reasoning per turn (slower,
+# more tokens) is what a security review needs: a shallow turn just answers "NO
+# ISSUES". Set CC_CLAUDE_EFFORT= (empty) to leave the CLI's own default in place.
+# Anything not in the list is ignored (with a warning).
+_CLAUDE_CLI_EFFORTS = ("low", "medium", "high", "xhigh", "max")
+CLAUDE_CLI_EFFORT = os.environ.get("CC_CLAUDE_EFFORT", "high").strip().lower()
+if CLAUDE_CLI_EFFORT and CLAUDE_CLI_EFFORT not in _CLAUDE_CLI_EFFORTS:
+    sys.stderr.write("[warn] CC_CLAUDE_EFFORT=%s is not one of %s - ignored\n"
+                     % (CLAUDE_CLI_EFFORT, "/".join(_CLAUDE_CLI_EFFORTS)))
+    CLAUDE_CLI_EFFORT = ""
 CLAUDE_API = "https://api.anthropic.com/v1/messages"
 CLAUDE_VERSION = "2023-06-01"
 # Hard ceiling per streamed reply. Adaptive thinking counts against this, so
@@ -414,9 +425,9 @@ def _ollama_num_predict():
 #     (catches a runaway model that never emits `done`).
 def _ollama_turn_timeout():
     try:
-        return max(60, int(os.environ.get("CC_OLLAMA_TURN_TIMEOUT", "1800")))
+        return max(60, int(os.environ.get("CC_OLLAMA_TURN_TIMEOUT", "3600")))
     except ValueError:
-        return 1800
+        return 3600
 
 
 def _ollama_turn_max():
@@ -1075,6 +1086,8 @@ def chat_claude_cli(messages, timeout=None, model=None):
     system, prompt = _router_split(messages)
     argv = [exe, "-p", "--output-format", "json", "--model", mdl,
             "--disallowed-tools", _CLAUDE_CLI_NO_TOOLS]
+    if CLAUDE_CLI_EFFORT:
+        argv += ["--effort", CLAUDE_CLI_EFFORT]
     if system:
         argv += ["--system-prompt", system]
     _set_truncated(False)

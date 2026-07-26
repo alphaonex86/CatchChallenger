@@ -8,7 +8,7 @@ PHASE 1  scan    : agentic security audit of server/cli + its repo-local
                    context before deciding.
 PHASE 2  exploit : for each memory/input-y candidate finding, an exploit-
                    engineer agent. The MODEL writes exploit.py (+ helpers)
-                   into /mnt/data/perso/tmpfs/security/server/<name>/ via
+                   into /mnt/data/perso/tmp/security/server/<name>/ via
                    WRITE, runs it under gdb/valgrind against the LIVE cli
                    server over TCP via a SANDBOXED RUN (bubblewrap: only the
                    exploit's own dir is writable), and emits a VERDICT. It
@@ -17,7 +17,7 @@ PHASE 2  exploit : for each memory/input-y candidate finding, an exploit-
                    stall; if the budget elapses without a confirmed crash/OOB
                    the whole exploit folder is dropped. Confirmed exploits kept.
 
-Everything under the temp dir /mnt/data/perso/tmpfs/security/server/ (build,
+Everything under the temp dir /mnt/data/perso/tmp/security/server/ (build,
 staged run, each exploit dir, REPORT.md) is produced by the model/script -
 it is all server-related, hence the `server/` subfolder.
 
@@ -71,6 +71,17 @@ SCAN_SEED_DIRS = tuple(os.path.join(REPO_ROOT, p) for p in (
                         # + base/fight (shared turn-based fight engine)
 ))
 
+# Default scope of the per-function SECURITY scan (`codecheck` mode). ONLY the
+# code a remote TCP client can reach: the server binaries + the shared engine /
+# wire protocol. client/ and tools/ are deliberately OUT - the exploit phase
+# boots the SERVER, so a finding in the Qt client or in an offline ROM/map tool
+# can never be proven there (past runs burned days attacking client UI widgets
+# and datapack converters). Vendored libs (codetree.is_vendor) and build trees
+# (codetree.is_generated: *_autogen/, CMakeFiles/, moc_/qrc_/ui_) are filtered
+# by the indexer + the tidy sweep. Override with CC_CODECHECK_SCOPE.
+CODECHECK_SCOPE_DIRS = tuple(os.path.join(REPO_ROOT, p) for p in (
+    "general", "server"))
+
 # IA backend transport (Ollama/Claude routing, num_ctx sizing, usage
 # accounting, chat() entry points) lives in common.py, imported above.
 _NOTES_LOCK = threading.Lock()   # serialises SECURITY-IA.md appends
@@ -79,7 +90,9 @@ HERE = os.path.dirname(os.path.realpath(__file__))
 
 
 # All server-related generated artifacts live under this temp subfolder.
-OUTPUT_ROOT = "/mnt/data/perso/tmpfs/security/server"
+# NOTE: persistent disk scratch (/mnt/data/perso/tmp), NOT a tmpfs - a reboot
+# must not wipe an in-progress audit's builds/exploits/verdict cache.
+OUTPUT_ROOT = "/mnt/data/perso/tmp/security/server"
 
 # Official bug-bounty scope/methodology doc. The IA (auditor + exploit engineer)
 # MUST read it: it defines the in-scope code, the rewarded vulnerability classes,
@@ -502,6 +515,18 @@ def is_vendor(path):
                for d in VENDOR_DIRS + EXCLUDED_DIRS)
 
 
+def is_generated(path):
+    """True for a Qt machine-generated source (moc_/qrc_/ui_ prefix) or a file
+    inside a `*_autogen`/`CMakeFiles` build tree. These are regenerated from the
+    real .hpp/.ui, add no attack surface, and often won't compile standalone -
+    never audit them nor pull them in as context (a scoped .cpp may end with a
+    `#include "moc_Foo.cpp"`, which must NOT drag the moc file into the scan)."""
+    if os.path.basename(path).startswith(("moc_", "qrc_", "ui_")):
+        return True
+    return any(seg.endswith("_autogen") or seg == "CMakeFiles"
+               for seg in os.path.realpath(path).split(os.sep))
+
+
 def is_hot_file(path):
     """True for the highest-value remote-surface files (packet handlers, the
     wire parser, the per-packet dispatchers, the pre-auth login parser). A clean
@@ -526,9 +551,11 @@ def collect_files():
     # handlers + wire parser are audited, not just the cli plumbing.
     for seed in SCAN_SEED_DIRS:
         if os.path.isdir(seed):
-            for root, _dirs, names in os.walk(seed):
+            for root, dirs, names in os.walk(seed):
+                dirs[:] = [x for x in dirs
+                           if not (x.endswith("_autogen") or x == "CMakeFiles")]
                 for name in sorted(names):
-                    if name.endswith(SOURCE_EXT):
+                    if name.endswith(SOURCE_EXT) and not is_generated(name):
                         pending.append(os.path.realpath(os.path.join(root, name)))
 
     pending.sort()
@@ -542,7 +569,7 @@ def collect_files():
             # Keep only files that live inside the repo, and never audit or
             # descend into vendored third-party code.
             if path.startswith(repo_root + os.sep) and os.path.isfile(path) \
-                    and not is_vendor(path):
+                    and not is_vendor(path) and not is_generated(path):
                 ordered.append(path)
                 try:
                     text = open(path, "r", errors="replace").read()
@@ -551,7 +578,8 @@ def collect_files():
                 base = os.path.dirname(path)
                 for inc in INCLUDE_RE.findall(text):
                     cand = os.path.realpath(os.path.join(base, inc))
-                    if cand not in seen and not is_vendor(cand):
+                    if cand not in seen and not is_vendor(cand) \
+                            and not is_generated(cand):
                         pending.append(cand)
 
     return ordered
@@ -592,9 +620,11 @@ def find_by_basename(name):
     if _basename_index is None:
         _basename_index = {}
         for d in SEARCH_DIRS:
-            for root, _dirs, names in os.walk(d):
+            for root, dirs, names in os.walk(d):
+                dirs[:] = [x for x in dirs
+                           if not (x.endswith("_autogen") or x == "CMakeFiles")]
                 for n in names:
-                    if n.endswith(SOURCE_EXT):
+                    if n.endswith(SOURCE_EXT) and not is_generated(n):
                         _basename_index.setdefault(n, os.path.join(root, n))
     return _basename_index.get(name)
 
@@ -625,8 +655,10 @@ def related_files(path, depth=2):
                 cand = os.path.realpath(os.path.join(base, inc))
                 if not (cand.startswith(repo_root + os.sep) and os.path.isfile(cand)):
                     cand = find_by_basename(os.path.basename(inc))
-                # Skip non-repo, missing, vendored (do-not-audit, huge) deps.
-                if not cand or cand in seen or is_vendor(cand):
+                # Skip non-repo, missing, vendored (do-not-audit, huge) deps,
+                # and Qt-generated files (a .cpp may #include "moc_X.cpp").
+                if not cand or cand in seen or is_vendor(cand) \
+                        or is_generated(cand):
                     continue
                 seen.add(cand)
                 out.append(cand)
@@ -697,9 +729,11 @@ def symbol_index():
                 def_map = {}
                 file_classes = {}   # keyed by realpath for O(1) lookup by callers
                 for d in SEARCH_DIRS:
-                    for root, _dirs, names in os.walk(d):
+                    for root, dirs, names in os.walk(d):
+                        dirs[:] = [x for x in dirs if not (
+                            x.endswith("_autogen") or x == "CMakeFiles")]
                         for n in sorted(names):
-                            if not n.endswith(SOURCE_EXT):
+                            if not n.endswith(SOURCE_EXT) or is_generated(n):
                                 continue
                             fp = os.path.realpath(os.path.join(root, n))
                             try:
@@ -2447,6 +2481,31 @@ def slugify(rel, idx):
     return "%02d-%s" % (idx, base[:60])
 
 
+# Exploit-order priority by path: how directly untrusted TCP bytes reach the code.
+# Lower rank = attacked first (see run_exploit).
+_REACH_RANK = (
+    ("server/login", 0),          # PRE-AUTH parser: reachable with no credentials
+    ("general/base/ProtocolParsing", 0),   # the wire framing itself
+    ("server/base/ClientNetworkRead", 1),  # per-packet dispatchers
+    ("server/base", 2),           # handlers, fight/crafting game logic
+    ("general/base", 2),          # shared engine + datapack parse
+    ("server/gateway", 3),        # proxies untrusted client TCP
+    ("server/game-server-alone", 3),
+    ("server/cli", 4),
+)
+
+
+def _reachability_rank(cand):
+    """Sort key for a (rel, body) finding: its _REACH_RANK bucket (unlisted paths
+    last). Anything outside the server tree ranks last - it cannot be proven by a
+    harness that boots the server."""
+    rel = cand[0]
+    for prefix, rank in _REACH_RANK:
+        if rel.startswith(prefix):
+            return rank
+    return len(_REACH_RANK)
+
+
 def parse_findings(path):
     """Split findings.txt into (rel, text) blocks."""
     try:
@@ -3635,15 +3694,25 @@ class LiveServer:
 _CURRENT_LIVE = None
 
 
-def _model_confirm_is_verifiable(live):
-    """A model-emitted 'VERDICT CONFIRMED' only stands if there was a REAL live
-    target to prove it against: a running server it could crash/hang (auto-
-    detected, cases a/b) or GDB-inspect for an unintended game-state (case c).
-    With NO live server the claim is pure speculation - reject it (no proof =>
-    no claim). Without this, a boot failure (e.g. the shared-tmpfs build/run kit
-    wiped mid-run) let the model self-declare CONFIRMED against a dead port."""
+def _model_confirm_is_verifiable(live, used_gdb=True):
+    """A model-emitted 'VERDICT CONFIRMED' only stands when the session actually
+    produced the EVIDENCE of one of the three documented proof cases:
+
+      (a) the server CRASHED   -> live.crashed
+      (b) the server HUNG      -> live.hung
+      (c) an unintended STATE  -> the model GDB-inspected the live server
+
+    A crash/hang is auto-detected and confirms on its own, so a model-DECLARED
+    CONFIRMED that reaches here is by construction case (c) - and case (c) is only
+    a proof if it actually looked at the live state. Without this gate a soft-cap
+    'give me your verdict' turn lets the model self-declare CONFIRMED from pure
+    code reading: both CONFIRMED verdicts of the first runs were produced that way
+    (one of them on a function whose alleged overflow is guarded three lines
+    above). And with no live server at all (e.g. the build/run kit wiped mid-run)
+    every claim is speculation. No evidence => no proof => no claim."""
     return bool(live is not None
-                and (live.alive or live.crashed or live.hung))
+                and (live.alive or live.crashed or live.hung)
+                and (live.crashed or live.hung or used_gdb))
 
 
 def exploit_reach_context(rel, src_path):
@@ -3744,7 +3813,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
     live = LiveServer(outdir, mode=mode_override or None)
     _CURRENT_LIVE = live
     boot = live.start()
-    # SELF-HEAL: the build/run kit lives on a SHARED scratch tmpfs that another
+    # SELF-HEAL: the build/run kit lives on a SHARED scratch dir that another
     # job (human or IA) can wipe mid-run. If the server did not come up because
     # the kit vanished, rebuild + re-stage it and retry the boot ONCE. Attacking
     # a dead port silently produces bogus verdicts - the model bluffs CONFIRMED
@@ -3826,6 +3895,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
     deadline = start + hard_budget                            # HARD cap (100%)
     soft_deadline = start + min(soft_budget, hard_budget)     # soft cap (~75%)
     ran_something = False   # did the model actually RUN a test yet?
+    used_gdb = False        # did it inspect the LIVE state? (proof case (c))
     nudged = False          # already nudged once on a premature give-up?
     soft_warned = False     # already demanded the wrap-up verdict at soft cap?
     last_answer = None      # previous reply, to detect verbatim repetition
@@ -3909,18 +3979,22 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
             # auto-confirmed above (we never reach here for those); a bare
             # model-declared CONFIRMED with no live target is speculation.
             if arg == "CONFIRMED":
-                if _model_confirm_is_verifiable(live):
+                if _model_confirm_is_verifiable(live, used_gdb):
                     verdict, reason = arg, block
                 else:
+                    why = ("no live server was running to prove it"
+                           if live is None or not (live.alive or live.crashed
+                                                   or live.hung)
+                           else "no crash, no hang, and it never GDB-inspected "
+                                "the live state (code-reading opinion, not a "
+                                "proof)")
                     sys.stderr.write("%s     [reject] model claimed CONFIRMED but "
-                                     "no live server was running to prove it - "
-                                     "downgrading to NOT-EXPLOITABLE (%s)\n"
-                                     % (_ts(), rel))
-                    transcript.append("### CONFIRMED REJECTED: no live server to "
-                                      "prove it against (unverifiable claim)")
+                                     "%s - downgrading to NOT-EXPLOITABLE (%s)\n"
+                                     % (_ts(), why, rel))
+                    transcript.append("### CONFIRMED REJECTED: %s "
+                                      "(unverifiable claim)" % why)
                     verdict = "NOT-EXPLOITABLE"
-                    reason = ("model declared CONFIRMED without a live server to "
-                              "prove it (no crash/hang/inspection possible): "
+                    reason = ("model declared CONFIRMED but %s: " % why
                               + (block or ""))
                 break
             # FALSEPOSITIVE = the model is SURE it can't be exploited -> END
@@ -3993,6 +4067,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
             sys.stderr.write("%s     [GDB] (step %d)\n" % (_ts(), step))
             result = live.gdb(block)
             ran_something = True
+            used_gdb = True     # live-state evidence: proof case (c) is now possible
         elif kind == "RESTARTSERVER":
             sys.stderr.write("%s     [RESTARTSERVER] (step %d)\n" % (_ts(), step))
             result = live.restart()
@@ -4084,15 +4159,21 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
             transcript.append("### assistant (final, soft budget)\n%s" % final)
             act = parse_action(final)
             if act and act[0] == "VERDICT":
-                if act[1] == "CONFIRMED" and _model_confirm_is_verifiable(live):
+                if (act[1] == "CONFIRMED"
+                        and _model_confirm_is_verifiable(live, used_gdb)):
                     verdict, reason = "CONFIRMED", act[2]
                 else:
                     if act[1] == "CONFIRMED":
-                        # Claimed CONFIRMED but nothing live to prove it against.
+                        # The soft cap asks for a verdict, which is exactly where a
+                        # model self-declares CONFIRMED from code reading. Keep it
+                        # only with evidence: a crash/hang, or a GDB look at the
+                        # live state (proof case (c)).
                         transcript.append("### CONFIRMED REJECTED (soft cap): no "
-                                          "live server to prove it against")
-                        reason = ("model declared CONFIRMED without a live server "
-                                  "to prove it: " + act[2])
+                                          "crash/hang and no GDB inspection of the "
+                                          "live state")
+                        reason = ("model declared CONFIRMED without evidence (no "
+                                  "crash/hang, no GDB live-state inspection): "
+                                  + act[2])
                     else:
                         reason = act[2]
                     verdict = "NOT-EXPLOITABLE"
@@ -4121,7 +4202,7 @@ def build_server():
     phase. Returns True on success. Best-effort ccache flush + one retry on a
     compile failure (a stale ccache entry can wedge a build); never fatal if
     ccache is absent. cmake build dir is OUT of the source tree (under the
-    tmpfs OUTPUT_ROOT), per the repo's separate-artifacts rule."""
+    scratch OUTPUT_ROOT), per the repo's separate-artifacts rule."""
     src = os.path.join(REPO_ROOT, "server", "cli")
     configure = ["cmake", "-S", src, "-B", BUILD_DIR,
                  "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
@@ -4244,7 +4325,7 @@ def stage_run():
 # relink. While the guard holds, each candidate is keyed by finding text (rel +
 # body); a cached candidate is SKIPPED and its stored verdict reused. Only
 # terminal verdicts (CONFIRMED / NOT-EXPLOITABLE) are cached; transient ERROR/
-# ABORT always retry. Cache lives under OUTPUT_ROOT (tmpfs scratch), not the repo.
+# ABORT always retry. Cache lives under OUTPUT_ROOT (disk scratch), not the repo.
 VERDICT_CACHE = os.path.join(OUTPUT_ROOT, "verdict-cache.json")
 
 
@@ -4414,6 +4495,12 @@ def run_exploit():
         candidates = matched
     else:
         candidates = matched + unmatched
+    # Attack the most REMOTE-REACHABLE code first. The exploit phase costs ~1h per
+    # candidate, so a run that is killed (or capped by SECSERVER_MAX) must have
+    # spent its hours on the pre-auth parser and the packet handlers, not on
+    # whatever sorts first alphabetically. Stable sort: same-rank findings keep
+    # their scan order.
+    candidates.sort(key=_reachability_rank)
     _cap = os.environ.get("SECSERVER_MAX")
     if _cap:
         candidates = candidates[:int(_cap)]
@@ -4767,6 +4854,16 @@ def _print_help(prog):
         "  SECSERVER_MEM         Sandbox RLIMIT_AS bytes (default 128M)\n"
         "  SECSERVER_DISK        Sandbox RLIMIT_FSIZE + /tmp tmpfs --size\n"
         "                        (default 16M)\n"
+        "  CC_CODECHECK_SCOPE    comma-separated repo-relative roots for the\n"
+        "                        per-function scan (default: general,server - the\n"
+        "                        server-reachable code; client/ and tools/ are out\n"
+        "                        of scope, the exploit phase boots the SERVER)\n"
+        "  CC_CODECHECK_LIMIT    max functions to review (bound a trial run)\n"
+        "  CC_CODECHECK_WORKERS  concurrent function reviews (default: CPU cores)\n"
+        "  CC_CODECHECK_ALL_TUS  1 = also index sources no server binary compiles\n"
+        "                        (default: skip them - no binary, no attack surface)\n"
+        "  CC_CLAUDE_EFFORT      claude-cli reasoning effort: low|medium|high|\n"
+        "                        xhigh|max (default: high; empty = the CLI's own)\n"
         "  SECSERVER_SCAN_MAX    Max files to scan (bound a cheap subset run)\n"
         "  SECSERVER_MAX         Max exploit candidates to attempt\n"
         "  CC_NO_ADVERSARIAL     Set to 1 to skip the adversarial re-audit of\n"
@@ -4797,6 +4894,22 @@ CODECHECK_SECURITY_SYSTEM = (
     "remote input triggers it.")
 
 
+def codecheck_workers():
+    """How many function reviews run CONCURRENTLY. A review is one LLM turn (an
+    HTTP call or a `claude -p` child), so it is I/O wait, not local CPU: running
+    them one at a time leaves the box idle. Defaults to the machine's core count
+    (detected at run time, so a 2-core VPS and a 32-core workstation both do the
+    right thing); CC_CODECHECK_WORKERS overrides (lower it if a shared backend
+    rate-limits, raise it if the model is remote and cheap)."""
+    try:
+        n = int(os.environ.get("CC_CODECHECK_WORKERS", "0"))
+    except ValueError:
+        n = 0
+    if n <= 0:
+        n = os.cpu_count() or 4
+    return max(1, n)
+
+
 def run_codecheck():
     """SECURITY scan via the multi-IA agentic WORKGROUP engine (agentic.py): each
     function is reviewed independently by every IA (agentic — one callee branch per
@@ -4822,10 +4935,21 @@ def run_codecheck():
     specs = agentic.resolve_llms() or [None]
     os.makedirs(OUTPUT_ROOT, exist_ok=True)
     # CC_CODECHECK_SCOPE / CC_CODECHECK_LIMIT bound the run (for a quick test or a
-    # focused audit); default is the whole C/C++ tree.
+    # focused audit); default is CODECHECK_SCOPE_DIRS (general/ + server/, i.e. the
+    # server-reachable code only - no client/, no tools/, no vendor, no build tree).
     _se = os.environ.get("CC_CODECHECK_SCOPE", "").strip()
-    _scope = [os.path.join(REPO_ROOT, s) for s in _se.split(",")] if _se else None
-    idx = codecheck.build_index(_scope)            # default: all C/C++ excl vendor
+    _scope = ([os.path.join(REPO_ROOT, s) for s in _se.split(",")] if _se
+              else list(CODECHECK_SCOPE_DIRS))   # server-reachable code only
+    # Audit only code that a server binary ACTUALLY COMPILES. A .cpp in no compile DB
+    # ships in no binary, so it carries zero remote attack surface - and here it is
+    # usually stale (server/cli's P2PCLUSTER/BOT-only UnixSocket*/EventLoopStdin, whose
+    # includes and enum values no longer exist under the game-server defines). Those
+    # were most of the "IR fail" noise. _CDB_TARGETS now generates one DB per server
+    # binary (cli/login/gateway/game-server-alone/master), so this keeps every shipped
+    # TU. CC_CODECHECK_ALL_TUS=1 indexes everything anyway.
+    if not os.environ.get("CC_CODECHECK_ALL_TUS"):
+        codecheck.codetree.set_cdb_only(True)
+    idx = codecheck.build_index(_scope)            # excl vendor + build/generated
     funcs = codecheck.leaves_first(idx)            # callees before callers
     try:
         _lim = int(os.environ.get("CC_CODECHECK_LIMIT", "0"))
@@ -4840,35 +4964,73 @@ def run_codecheck():
     sys.stderr.write("[codecheck] %d functions, %d IA(s); agentic per-function "
                      "security review (one branch at a time)\n"
                      % (len(funcs), len(specs)))
-    codecheck.prewarm_types(funcs)
-    codecheck.prewarm_tidy(funcs)
+    workers = codecheck_workers()
+    codecheck.prewarm_types(funcs, workers=workers)
+    codecheck.prewarm_tidy(funcs, workers=workers)
     codecheck.reset_cache_stats()
     by_file = {}
     total = len(funcs)
-    nfind = 0
-    i = 0
-    while i < total:
+    # Review the functions CONCURRENTLY: a review is one LLM turn, i.e. pure I/O
+    # wait (an ollama HTTP call or a `claude -p` child), so the box sits idle at
+    # 1/Nth of its capacity when they run one at a time. `workers` defaults to the
+    # core count. Each review is independent (its own conversation + its own cache
+    # entry), so the only shared state is the result slot + the counter.
+    results = [None] * total
+    done = [0]
+    nfind = [0]
+    lock = threading.Lock()
+
+    def review_one(i):
         fi = funcs[i]
-        i += 1
         blocks = agentic.audit_function(idx, fi, specs, role="security",
                                         sysprompt=CODECHECK_SECURITY_SYSTEM)
         if blocks:
             rel = os.path.relpath(fi.file, REPO_ROOT)
-            by_file.setdefault(rel, []).append(
-                "## %s (%s:%d)\n%s" % (fi.qual_name, rel, fi.line, "\n\n".join(blocks)))
-            nfind += 1
-        # Progress: each function is a slow LLM turn, so print often enough that a
-        # long run does not look hung (every 10, plus the last). Show the running
-        # finding count so the user sees candidates accruing.
-        if i % 10 == 0 or i == total:
-            sys.stderr.write("  %d/%d funcs, %d with finding(s)\n"
-                             % (i, total, nfind))
+            results[i] = (rel, "## %s (%s:%d)\n%s"
+                          % (fi.qual_name, rel, fi.line, "\n\n".join(blocks)))
+        with lock:
+            done[0] += 1
+            if blocks:
+                nfind[0] += 1
+            # Progress: print often enough that a long run does not look hung
+            # (every 10, plus the last). Show the running finding count so the
+            # user sees candidates accruing.
+            if done[0] % 10 == 0 or done[0] == total:
+                sys.stderr.write("  %d/%d funcs, %d with finding(s)\n"
+                                 % (done[0], total, nfind[0]))
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
+        for fut in [pool.submit(review_one, i) for i in range(total)]:
+            try:
+                fut.result()
+            except Exception as exc:   # one bad function must not kill the scan
+                sys.stderr.write("  [review error] %s\n" % exc)
+    # Merge in FUNCTION order, not completion order, so the report is identical
+    # whatever the thread scheduling was.
+    i = 0
+    while i < total:
+        if results[i] is not None:
+            rel, block = results[i]
+            by_file.setdefault(rel, []).append(block)
+        i += 1
     sys.stderr.write("[codecheck] %s\n" % codecheck.cache_summary())
     # Deterministic static-analyzer findings (whole-file, every function — not just
-    # the indexed ones) as extra security candidates for the exploit phase.
+    # the indexed ones). A file the IA already flagged gets them attached as CONTEXT
+    # for the exploit engineer. A file with NO IA finding only becomes a candidate on
+    # a path-sensitive clang-analyzer-* hit (a real analyzer trace: OOB, UAF, null
+    # deref, leak). Style-level bugprone/cert lint alone must NOT open an exploit
+    # session: those blocks were 564 of the 566 blocks of the first run and each cost
+    # an hour of exploit budget for zero yield.
     for rel, items in codecheck.file_sweep(_scope, codecheck.SECURITY_TIDY_CHECKS).items():
         det = "\n".join("L%d %s [%s]" % (ln, msg, chk) for ln, chk, msg in items)
-        by_file.setdefault(rel, []).append("## static analysis (%s)\n%s" % (rel, det))
+        if rel in by_file:
+            by_file[rel].append("## static analysis (%s)\n%s" % (rel, det))
+        else:
+            analyzer = [it for it in items if it[1].startswith("clang-analyzer-")]
+            if analyzer:
+                det = "\n".join("L%d %s [%s]" % (ln, msg, chk)
+                                for ln, chk, msg in analyzer)
+                by_file[rel] = ["## static analysis (%s)\n%s" % (rel, det)]
     if not by_file:
         # A clean security scan is SUCCESS, not a failure — don't fall into
         # run_exploit's "no findings -> exit 1" path with nothing to prove.

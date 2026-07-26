@@ -427,7 +427,10 @@ declare -A PER_TEST_TIMEOUT_MAP=(
     [testingcompilationgit.py]=20m
     [testingcompilationmac.py]=15m
     [testingcompilationmsdos.py]=20m
-    [testingcompilationwindows.py]=15m
+    # 15m was not enough: all 23 assertions (cross-compile, installer, signing,
+    # size) pass in ~8m, then the WiX MSI packaging runs UNDER WINE - heat.exe
+    # alone took ~5m and candle.exe was still going at the cap. 30m leaves room.
+    [testingcompilationwindows.py]=30m
     [testingfight.py]=15m
     [testinggateway.py]=15m
     [testinghttp.py]=15m

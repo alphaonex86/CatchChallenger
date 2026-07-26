@@ -66,7 +66,7 @@ NOT in scope
 import sys
 sys.dont_write_bytecode = True
 
-import argparse, atexit, ctypes, faulthandler, json, multiprocessing, os, resource, shutil, signal, socket
+import argparse, atexit, ctypes, faulthandler, glob, json, multiprocessing, os, resource, shutil, signal, socket
 import subprocess, threading, time
 
 
@@ -1435,16 +1435,50 @@ def port_open(port, host="127.0.0.1", timeout=1):
 # `MapVisualiserPlayer::mapDisplayedSlot()` line and exits 0 on success.
 CLIENT_BIN = build_paths.build_path(
     "client/qtopengl/build/testing-gl-c++23-clang-default/catchchallenger")
+# ...but that exact matrix variant is only built when testingclient.py's compiler
+# matrix happens to include it: the DEFAULT combination (gcc, no extra flags,
+# first C++ version) goes to .../build/testing-gl<diag-suffix>/ instead. Pinning
+# one variant name made every client case here FAIL with "client binary missing"
+# on any run whose matrix skipped it. Accept whichever qtopengl client the shared
+# tmpfs actually holds.
+CLIENT_BIN_GLOB = build_paths.build_path(
+    "client/qtopengl/build/testing-gl*/catchchallenger")
+# Last resort: ANY native qtopengl build (testingmap4client leaves
+# build/testing-screenshot/, others leave their own dirs). What this test needs
+# is a Linux qtopengl client understanding --autologin/--closewhenonmap, which
+# every such build is. Cross builds are excluded by name: a wine/windows stage
+# dir holds a .exe that cannot run here.
+CLIENT_BIN_ANY_GLOB = build_paths.build_path(
+    "client/qtopengl/build/*/catchchallenger")
+
+
+def _resolve_client_bin():
+    """Path of the qtopengl client to drive: the pinned variant when present,
+    else the most recently built testing-gl* one, else any other native qtopengl
+    build. '' when none exists (the caller reports that as a FAIL - a cluster run
+    without a client proves nothing, so this must never silently pass)."""
+    if os.path.exists(CLIENT_BIN):
+        return CLIENT_BIN
+    for pattern in (CLIENT_BIN_GLOB, CLIENT_BIN_ANY_GLOB):
+        found = [p for p in glob.glob(pattern)
+                 if os.path.isfile(p) and os.access(p, os.X_OK)
+                 and "wine" not in p and "windows" not in p]
+        if found:
+            found.sort(key=os.path.getmtime, reverse=True)
+            return found[0]
+    return ""
 
 
 def _run_one_client_attempt(login_port, login_name, pass_name, character,
                             timeout):
     """Single client connect attempt. Returns (ok, detail) — same
     semantics as client_connect_via(), see that helper for context."""
-    if not os.path.exists(CLIENT_BIN):
-        return False, f"client binary missing: {CLIENT_BIN}"
+    client_bin = _resolve_client_bin()
+    if not client_bin:
+        return False, (f"client binary missing: neither {CLIENT_BIN} nor any "
+                       f"{CLIENT_BIN_GLOB} — run testingclient.py first")
     cmd = [
-        CLIENT_BIN,
+        client_bin,
         "--host", "127.0.0.1",
         "--port", str(login_port),
         "--autologin",
