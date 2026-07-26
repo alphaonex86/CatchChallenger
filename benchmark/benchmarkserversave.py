@@ -578,7 +578,6 @@ def main():
                                      "metrics": _flat_to_metric_block(cell)}
 
     sha = bh.git_sha()
-    cand_stamp = started_utc.replace(":", "-")
 
     ended_utc = hr.iso_now()
     rec = {
@@ -612,9 +611,9 @@ def main():
                 rec["nodes"][label] = {"arch": node.get("arch", "?"),
                                         "libs": bh.LIBS_BY_NODE.get(label, {}),
                                         "metrics": m}
-    cand_p = bh.candidate_path("benchmarkserversave", cand_stamp)
-    bh.write_record(cand_p, rec)
-    print(_color(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
+    # No candidate-<stamp>.json: nothing reads it (bh.candidate_path had
+    # no reader), and every number in it is already in the per-platform
+    # history records below + champion.json on promotion.
 
     # Per-platform history -- one JSON per (benchmark, run, platform).
     for node in nodes:
@@ -674,9 +673,15 @@ def main():
             print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
         hr.attach_decision("benchmarkserversave", batch_id, decision)
-    import chart_generator
-    for cp in chart_generator.regenerate("benchmarkserversave", cand_stamp):
-        print(_color(bh.C_CYAN, f"[chart] {cp}"))
+    # No chart written here: a chart is a VIEW of the history JSONs.
+    # `python3 svg.py [benchmark] [node]` renders the one you ask for,
+    # on demand, through chart_generator's own functions.
+    # Distil the compact tracked form NOW rather than in a separate step, so
+    # series.json (one appended number per metric per run) + platform.json
+    # (machine description, rewritten only when it changes) are always in
+    # sync with the run that just finished.
+    import history_series
+    history_series.main()
 
     return 0
 

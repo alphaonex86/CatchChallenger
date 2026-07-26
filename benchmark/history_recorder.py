@@ -30,6 +30,7 @@ import shlex
 import shutil
 import sys
 import subprocess
+import history_series
 import sys
 import time
 import uuid
@@ -1697,54 +1698,24 @@ class PlatformRecord:
         stamp = started_utc.replace(":", "-")
         outdir = os.path.join(HISTORY_ROOT, self.benchmark, comp, exe)
         os.makedirs(outdir, exist_ok=True)
-        path = os.path.join(outdir, f"{stamp}.json")
-        # Never overwrite -- append a short suffix on the (unlikely)
-        # same-node/same-second collision.
-        n = 1
-        final = path
-        while os.path.exists(final):
-            final = os.path.join(outdir, f"{stamp}-{n}.json")
-            n += 1
-        with open(final, "w") as f:
-            json.dump(doc, f, indent=2, sort_keys=True)
-            f.write("\n")
-        return final
+        # No per-run <stamp>.json any more: the run is appended straight into the
+        # node's compact series.json (one number per metric) and its machine
+        # description into platform.json, rewritten only when it changes. One
+        # file per node instead of one per run, and nothing constant repeated.
+        import history_series
+        return history_series.append_run(doc)
 
 
 # ---- post-hoc decision tagging -------------------------------------------
 
 def attach_decision(benchmark, batch_id, decision):
-    """Stamp every history file from `batch_id` with the batch's decision.
+    """Stamp the batch's decision onto the runs just recorded.
 
-    Decision is computed AFTER all per-platform records are written (it
-    depends on the champion compare), so we update the JSONs in place.
-    Only files whose `decision` is still null are touched."""
-    outdir = os.path.join(HISTORY_ROOT, benchmark)
-    if not os.path.isdir(outdir):
-        return 0
-    n = 0
-    # Layout is now nested (<compile>/<exec>/), so walk the whole subtree
-    # instead of a single flat listdir.
-    for root, _dirs, files in os.walk(outdir):
-        for name in files:
-            if not name.endswith(".json"):
-                continue
-            p = os.path.join(root, name)
-            try:
-                with open(p) as f:
-                    doc = json.load(f)
-            except Exception:
-                continue
-            if doc.get("batch_id") != batch_id:
-                continue
-            if doc.get("decision") is not None:
-                continue
-            doc["decision"] = decision
-            with open(p, "w") as f:
-                json.dump(doc, f, indent=2, sort_keys=True)
-                f.write("\n")
-            n += 1
-    return n
+    The decision is computed AFTER every per-platform record is stored (it needs
+    the cross-node champion compare), so it is written in a second pass. With the
+    compact storage that pass is one field in each node's series.json - the
+    newest run entry, which is the one this batch just appended."""
+    return history_series.set_last_decision(benchmark, decision)
 
 
 # ---- module-level convenience --------------------------------------------

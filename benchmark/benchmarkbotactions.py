@@ -687,6 +687,14 @@ def _run_iouring_variants(bot_bin, iface):
             port = SERVER_PORT + 10 + port_seq
             port_seq += 1
             rdir = os.path.join(TMPFS_ROOT, f"cc-bench-botactions-{slabel}")
+            # Re-check per variant: the build tree lives on tmpfs, which another
+            # run's cleanup can wipe mid-sweep. The one check before the loop is
+            # then stale and the copy below dies with FileNotFoundError, killing
+            # the whole benchmark - this function's contract is to SKIP instead.
+            if not os.path.isfile(sbin):
+                print(_color(bh.C_YELLOW, f"[io_uring] {slabel}: server binary "
+                             f"vanished ({sbin}); stop the sweep"))
+                return flat, slices
             staged = _stage_variant_run_dir(sbin, rdir, port,
                                             visibility_minimize=mode)
             # pre-generate the cache so the variant server boots fast
@@ -829,6 +837,13 @@ def _run_compression_variants(bot_bin, iface):
             port = port_base + pidx
             pidx += 1
             rdir = os.path.join(TMPFS_ROOT, f"cc-bench-botactions-comp-{vlabel}-{size}")
+            # Re-check per variant: see the io_uring sweep - a concurrent tmpfs
+            # cleanup can delete the build tree between two variants, and an
+            # unguarded copy would abort the whole benchmark instead of skipping.
+            if not os.path.isfile(sbin):
+                print(_color(bh.C_YELLOW, f"[compression] {slabel}: server binary "
+                             f"vanished ({sbin}); stop the sweep"))
+                return flat, slices
             staged = _stage_variant_run_dir(sbin, rdir, port,
                                             compression=comp, compression_level=level)
             # warm the HPS cache so boot is fast and the run isn't polluted
@@ -1866,7 +1881,6 @@ def _run_with_server(bin_path, server_proc, comment,
 
     # Cross-platform candidate record.
     sha = bh.git_sha()
-    cand_stamp = started_utc.replace(":", "-")
     ended_utc = hr.iso_now()
     rec = {
         "commit":   sha,
@@ -1896,9 +1910,9 @@ def _run_with_server(bin_path, server_proc, comment,
                                     "libs": bh.LIBS_BY_NODE.get(label, {}),
                                     "metrics": m}
 
-    cand_p = bh.candidate_path("benchmarkbotactions", cand_stamp)
-    bh.write_record(cand_p, rec)
-    print(_color(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
+    # No candidate-<stamp>.json: nothing reads it (bh.candidate_path had
+    # no reader), and every number in it is already in the per-platform
+    # history records below + champion.json on promotion.
 
     # Cross-platform champion compare. SKIP on a --node run: decision +
     # champion promotion need the WHOLE fleet.
@@ -1954,9 +1968,15 @@ def _run_with_server(bin_path, server_proc, comment,
 
     if not partial_run:
         hr.attach_decision("benchmarkbotactions", batch_id, decision)
-    import chart_generator
-    for cp in chart_generator.regenerate("benchmarkbotactions", cand_stamp):
-        print(_color(bh.C_CYAN, f"[chart] {cp}"))
+    # No chart written here: a chart is a VIEW of the history JSONs.
+    # `python3 svg.py [benchmark] [node]` renders the one you ask for,
+    # on demand, through chart_generator's own functions.
+    # Distil the compact tracked form NOW rather than in a separate step, so
+    # series.json (one appended number per metric per run) + platform.json
+    # (machine description, rewritten only when it changes) are always in
+    # sync with the run that just finished.
+    import history_series
+    history_series.main()
 
     return 0
 
