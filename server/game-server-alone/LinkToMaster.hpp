@@ -42,6 +42,9 @@ public:
     //to unordered reply
     std::unordered_map<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
     unsigned int reconnectTime;
+    //Retry timer for the master link: tryReconnect() makes ONE attempt and arms this
+    //when it fails, so the event loop keeps serving players while the master is down.
+    TimerReconnectOnTheMaster reconnectTimer;
 
     static char protocolReplyNoMoreToken[7];
     static char protocolReplyAlreadyConnectedToken[7];

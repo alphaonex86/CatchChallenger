@@ -3,6 +3,7 @@
 
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../cli/EventLoopClient.hpp"
+#include "TimerReconnectOnTheMaster.hpp"
 #include <vector>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -39,6 +40,9 @@ public:
     //to unordered reply
     std::unordered_map<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
     unsigned int reconnectTime;
+    //Retry timer for the master link: tryReconnect() makes ONE attempt and arms this
+    //when it fails, so the login slave keeps answering clients while master is down.
+    TimerReconnectOnTheMaster reconnectTimer;
 
     static LinkToMaster *linkToMaster;
     static int linkToMasterSocketFd;

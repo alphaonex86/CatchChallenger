@@ -41,7 +41,10 @@ EventLoopClientLoginSlave::~EventLoopClientLoginSlave()
     vectorremoveOne(client_list,this);
     if(socketString!=NULL)
     {
-        delete socketString;
+        //allocated with new char[socketStringSize] (main-unix-gateway.cpp), so it
+        //MUST be freed with delete[]: a scalar delete on an array is UB and this
+        //runs on every remote disconnect. The login node already does it right.
+        delete[] socketString;
         socketString=NULL;
     }
     if(linkToGameServer!=NULL)

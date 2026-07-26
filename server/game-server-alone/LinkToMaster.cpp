@@ -574,30 +574,67 @@ void LinkToMaster::tryReconnect()
     else
     {
         std::cout << "Try reconnect to master..." << std::endl;
-        if(reconnectTime<=0)
-            reconnectTime=50;
-        std::this_thread::sleep_for(std::chrono::milliseconds(reconnectTime));
-        reconnectTime+=500;
-        if(reconnectTime>600*1000)
-            reconnectTime=600*1000;
         if(tryInterval<=0 || tryInterval>=60)
             this->tryInterval=5;
         if(considerDownAfterNumberOfTry<=0 || considerDownAfterNumberOfTry>=60)
             this->considerDownAfterNumberOfTry=3;
-        do
+        //ONE attempt, then hand the event loop back. Sleeping/looping here until the
+        //master answers froze every connected player for as long as the master was
+        //down (the backoff alone reached 600s per call), while the players' sockets
+        //sat unserved in epoll. On failure the retry timer re-enters this function.
+        stat=Stat::Connecting;
+        connectInternal();
+        if(stat!=Stat::Connected)
         {
-            stat=Stat::Connecting;
-            //start to connect
-            std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-            connectInternal();
-            std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double, std::milli> elapsed = end-start;
-            if(elapsed.count()<(uint32_t)tryInterval*1000 && stat!=Stat::Connected)
+            //STOP admitting new players while there is no master: this node cannot
+            //validate a connect token, lock a character or reserve monster/clan ids
+            //without it. Until now nothing closed the listener on master loss - it
+            //was the blocking loop below that kept accept() from ever running, so
+            //making the retry non-blocking without this would start accepting
+            //master-less sessions. Symmetric with the tryListen() at the end, which
+            //re-opens the door once the link is back.
             {
-                const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
-                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+                EventLoopServer *server=static_cast<EventLoopServer *>(baseServer);
+                if(server->isListening())
+                {
+                    std::cout << "No master link: stop accepting new players" << std::endl;
+                    server->close();
+                }
             }
-        } while(stat!=Stat::Connected);
+            if(reconnectTime<=0)
+                reconnectTime=50;
+            else
+            {
+                reconnectTime+=500;
+                if(reconnectTime>600*1000)
+                    reconnectTime=600*1000;
+            }
+            reconnectTimer.setSingleShot(true);
+            //stop() FIRST: a single-shot timerfd stays open after it fires (nothing
+            //disarms it), so start() would return false on every retry after the
+            //first and the node would sit master-less forever.
+            reconnectTimer.stop();
+            if(!reconnectTimer.start(reconnectTime))
+            {
+                //Last resort - the node has just closed its listener, so losing the
+                //retry means it never comes back. Fall back to the pre-timer
+                //behaviour: keep trying inline until the master answers. That blocks
+                //this loop (what the timer exists to avoid), but a frozen node that
+                //recovers beats a live one that stays master-less forever. This is
+                //also the boot case: a game server started before the master.
+                std::cerr << "master reconnect timer fail to start; retrying inline"
+                          << std::endl;
+                while(stat!=Stat::Connected)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(reconnectTime));
+                    stat=Stat::Connecting;
+                    connectInternal();
+                }
+            }
+            else
+                return;
+        }
+        reconnectTime=0;
         // Used to read a 1-byte SSL/cleartext preamble here before
         // proceeding; the protocol no longer includes that byte. Send
         // the protocol header straight away.
