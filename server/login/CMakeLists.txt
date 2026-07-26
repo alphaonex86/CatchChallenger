@@ -53,6 +53,7 @@ set(_login_sources
     LinkToGameServer.cpp
     TimerDdos.cpp
     TimerDetectTimeout.cpp
+    TimerReconnectOnTheMaster.cpp
     # unix/ files reused by all servers
     ../cli/EventLoop.cpp
     ../cli/EventLoopGenericServer.cpp

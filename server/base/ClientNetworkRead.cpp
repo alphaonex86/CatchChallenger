@@ -437,9 +437,20 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
         case 0xE1:
         {
             normalOutput("teleportValidatedTo() from protocol");
-            const PlayerOnMap lTeleportation=lastTeleportation.front();
-            teleportValidatedTo(lTeleportation.mapIndex,lTeleportation.x,lTeleportation.y,lTeleportation.orientation);
-            lastTeleportation.pop();
+            //The queue can be EMPTY here: setToDefault() drains it when the slot is
+            //reused/reset while outputQueryNumberToPacketCode still maps this query
+            //number to 0xE1 (ProtocolParsingBase::reset() does not clear that table),
+            //so the reply of a previous tenant lands on a fresh, empty queue.
+            //front()/pop() on an empty std::queue is undefined behaviour and would
+            //feed an attacker-influenced mapIndex/x/y into teleportValidatedTo().
+            if(lastTeleportation.empty())
+                errorOutput("teleportValidatedTo() reply with no teleportation in progress");
+            else
+            {
+                const PlayerOnMap lTeleportation=lastTeleportation.front();
+                lastTeleportation.pop();
+                teleportValidatedTo(lTeleportation.mapIndex,lTeleportation.x,lTeleportation.y,lTeleportation.orientation);
+            }
         }
         break;
         //Event change

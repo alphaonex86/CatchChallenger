@@ -811,9 +811,13 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster, const uint16_t &m
 {
     #ifdef CATCHCHALLENGER_HARDENED
     PlayerMonster * currentMonster=getCurrentMonster();
-    const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
     /// \note NO OTHER MONSTER because it's evolution on current monster
+    //getCurrentMonster() returns NULL when the monster list is empty or the selected
+    //index is invalid, both remotely reachable through the fight/evolution packets:
+    //the stat lookup must stay BEHIND the NULL test, not in front of it.
     if(currentMonster!=NULL)
+    {
+        const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster),currentMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
             errorOutput("confirmEvolutionTo() The hp "+std::to_string(currentMonster->hp)+
@@ -822,6 +826,7 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster, const uint16_t &m
                         );
             return;
         }
+    }
     #endif
     CommonFightEngine::confirmEvolutionTo(playerMonster,monster);
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)

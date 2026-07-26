@@ -321,27 +321,60 @@ void LinkToMaster::tryReconnect()
     else
     {
         std::cout << "Try reconnect to master..." << std::endl;
-        if(reconnectTime<=0)
-            reconnectTime=50;
-        std::this_thread::sleep_for(std::chrono::milliseconds(reconnectTime));
-        reconnectTime+=500;
-        if(reconnectTime>600*1000)
-            reconnectTime=600*1000;
-        do
+        //ONE attempt, then hand the event loop back. Sleeping/looping here until the
+        //master answers froze every logging-in client for as long as the master was
+        //down. On failure the retry timer re-enters this function with a backoff.
+        stat=Stat::Connecting;
+        connectInternal();
+        if(stat!=Stat::Connected)
         {
-            stat=Stat::Connecting;
-            //start to connect
-            std::chrono::high_resolution_clock::time_point start = std::chrono::high_resolution_clock::now();
-            connectInternal();
-            std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double, std::milli> elapsed = end-start;
-            if(elapsed.count()<5000 && stat!=Stat::Connected)
+            //STOP admitting new clients while there is no master: without it this
+            //slave can neither log an account in nor list/select a character, so a
+            //client accepted now would just hang mid-login. Until now nothing closed
+            //the listener on master loss - the blocking loop below kept accept() from
+            //running. Symmetric with the tryListen() done on the master login reply
+            //(LinkToMasterProtocolParsingReply.cpp).
+            if(EventLoopServerLoginSlave::unixServerLoginSlave->isListening())
             {
-                const unsigned int ms=5000-elapsed.count();
-                if(ms>5000)
-                    std::this_thread::sleep_for(std::chrono::seconds(ms));
+                std::cout << "No master link: stop accepting new clients" << std::endl;
+                //close() now only shuts the listening sockets: the `delete
+                //LinkToMaster::linkToMaster` it used to do was removed, because the
+                //master link is never destructed - only reconnected.
+                EventLoopServerLoginSlave::unixServerLoginSlave->close();
             }
-        } while(stat!=Stat::Connected);
+            if(reconnectTime<=0)
+                reconnectTime=50;
+            else
+            {
+                reconnectTime+=500;
+                if(reconnectTime>600*1000)
+                    reconnectTime=600*1000;
+            }
+            reconnectTimer.setSingleShot(true);
+            //stop() FIRST: a single-shot timerfd stays open after it fires (nothing
+            //disarms it), so start() would return false on every retry after the
+            //first and the slave would sit master-less forever.
+            reconnectTimer.stop();
+            if(!reconnectTimer.start(reconnectTime))
+            {
+                //Last resort - the slave has just closed its listener, so losing the
+                //retry means it never comes back. Fall back to the pre-timer
+                //behaviour: keep trying inline until the master answers (blocks this
+                //loop, but a frozen slave that recovers beats a live one that stays
+                //master-less). Also covers boot: slave started before the master.
+                std::cerr << "master reconnect timer fail to start; retrying inline"
+                          << std::endl;
+                while(stat!=Stat::Connected)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(reconnectTime));
+                    stat=Stat::Connecting;
+                    connectInternal();
+                }
+            }
+            else
+                return;
+        }
+        reconnectTime=0;
         // SSL preamble byte was removed; send the protocol header
         // immediately on (re)connect.
         sendProtocolHeader();

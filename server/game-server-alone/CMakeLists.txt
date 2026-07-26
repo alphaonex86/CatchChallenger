@@ -64,6 +64,7 @@ set(_extra_sources
     LinkToMasterProtocolParsing.cpp
     LinkToMasterStaticVar.cpp
     timer/PlayerUpdaterToMaster.cpp
+    TimerReconnectOnTheMaster.cpp
     ${CC_REPO_ROOT}/server/cli/timer/TimerPurgeTokenAuthList.cpp
     ${_db_source}
 )

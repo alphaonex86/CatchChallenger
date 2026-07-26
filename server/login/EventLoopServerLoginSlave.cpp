@@ -457,11 +457,12 @@ EventLoopServerLoginSlave::~EventLoopServerLoginSlave()
 void EventLoopServerLoginSlave::close()
 {
     std::cerr << "EventLoopServerLoginSlave::close()" << std::endl;
-    if(LinkToMaster::linkToMaster!=NULL)
-    {
-        delete LinkToMaster::linkToMaster;
-        LinkToMaster::linkToMaster=NULL;
-    }
+    //The master link is NEVER destructed - it is only ever reconnected (same rule
+    //the game-server node enforces with an abort() in ~LinkToMaster()). close()
+    //means "stop accepting clients", not "shut the node down": deleting the link
+    //here killed the object whose tryReconnect() was calling us (use-after-free on
+    //every member touched afterwards) and left nothing to re-establish the link.
+    //Process teardown still frees it, in ~EventLoopServerLoginSlave().
     EventLoopGenericServer::close();
 }
 
