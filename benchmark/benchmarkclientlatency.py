@@ -1185,7 +1185,6 @@ def main():
 
     # ---- candidate record + cross-fleet decision -------------------------
     sha = bh.git_sha()
-    cand_stamp = started_utc.replace(":", "-")
     ended_utc = hr.iso_now()
     rec = {
         "commit": sha, "comment": comment, "date": ended_utc,
@@ -1202,9 +1201,9 @@ def main():
             rec["nodes"][label] = {"arch": node.get("arch", "?"),
                                    "libs": bh.LIBS_BY_NODE.get(label, {}),
                                    "metrics": m}
-    cand_p = bh.candidate_path(BENCH, cand_stamp)
-    bh.write_record(cand_p, rec)
-    print(_c(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
+    # No candidate-<stamp>.json: nothing reads it (bh.candidate_path had
+    # no reader), and every number in it is already in the per-platform
+    # history records below + champion.json on promotion.
 
     decision = None
     # A partial run (node filter, or the 1h cap truncated the fleet) must NOT
@@ -1259,9 +1258,15 @@ def main():
 
     if not partial:
         hr.attach_decision(BENCH, batch_id, decision)
-    import chart_generator
-    for cp in chart_generator.regenerate(BENCH, cand_stamp):
-        print(_c(bh.C_CYAN, f"[chart] {cp}"))
+    # No chart written here: a chart is a VIEW of the history JSONs.
+    # `python3 svg.py [benchmark] [node]` renders the one you ask for,
+    # on demand, through chart_generator's own functions.
+    # Distil the compact tracked form NOW rather than in a separate step, so
+    # series.json (one appended number per metric per run) + platform.json
+    # (machine description, rewritten only when it changes) are always in
+    # sync with the run that just finished.
+    import history_series
+    history_series.main()
 
     del lock
     return 0

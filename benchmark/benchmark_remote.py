@@ -819,20 +819,52 @@ def rsync_datapack_to_exec(exec_node, local_datapack, remote_subdir="datapack",
     # it into work_dir/<remote_subdir> so the binary still finds it where it
     # expects. Mirrors test/datapack_stage.py's off-tmpfs rule + guard.
     cache = exec_node.get("datapack_cache")
-    disk_parent = (os.path.dirname(cache.rstrip("/")) if cache else ewd)
-    disk_dir = f"{disk_parent}/bench-datapack"
+    # Candidate parents, best first. On several nodes the work dir (and the
+    # datapack cache next to it) sits UNDER a tmpfs scratch mount - e.g.
+    # /home/<user>/run - so the preferred parent is RAM-backed and staging there
+    # would waste the little RAM these boards have. Rather than demand an fstab
+    # change on every such node (the datapack is read-only for the benchmark and
+    # any persistent dir will do), fall back to the home dir, then /var/tmp.
+    candidates = []
+    # os.path.dirname(work_dir) comes BEFORE $HOME on purpose: the tmpfs is
+    # mounted ON the work dir (/home/<user>/run), so its parent is the same
+    # user tree on real disk - better than /root or /var/tmp, which on these
+    # boards can be a small rootfs partition.
+    for c in (os.path.dirname(cache.rstrip("/")) if cache else None, ewd,
+              os.path.dirname(ewd.rstrip("/")), "$HOME", "/var/tmp"):
+        if c and c not in candidates:
+            candidates.append(c)
+    disk_dir = ""
+    tried = []
+    for parent in candidates:
+        cand = f"{parent}/bench-datapack"
+        # "$HOME" must reach the remote shell UNQUOTED to expand; every other
+        # candidate is a plain path and gets quoted as usual.
+        q = cand if "$" in cand else shlex.quote(cand)
+        # mkdir first: findmnt --target resolves to the nearest EXISTING parent,
+        # so probing a missing dir would report the wrong filesystem.
+        rc, fsout, _ = ssh_run(
+            eu, eh, ep,
+            f"mkdir -p {q} && findmnt -n -o FSTYPE --target {q}",
+            timeout=20)
+        fstype = (fsout or "").strip().splitlines()[-1].strip() if fsout else ""
+        if rc != 0:
+            tried.append(f"{cand} (mkdir/probe failed)")
+        elif fstype in ("tmpfs", "ramfs"):
+            tried.append(f"{cand} ({fstype})")
+        else:
+            disk_dir = cand
+            break
+    if not disk_dir:
+        return 1, (f"no persistent (non-tmpfs) place for the benchmark datapack on "
+                   f"{exec_node.get('label', eh)}; tried: {', '.join(tried)}. "
+                   f"Give the node a disk-backed work_dir/datapack_cache, or move "
+                   f"the tmpfs off $HOME (umount + fstab).")
+    if tried:
+        print(f"[bench] {exec_node.get('label', eh)}: datapack staged to {disk_dir} "
+              f"(skipped RAM-backed: {', '.join(tried)})")
     dst = f"{disk_dir}/{remote_subdir}"
-    ssh_run(eu, eh, ep,
-            f"mkdir -p {shlex.quote(disk_dir)} {shlex.quote(ewd)}", timeout=15)
-    # Guard: refuse to stage onto RAM (abort + report, like stage_datapacks.py).
-    rc, fsout, _ = ssh_run(eu, eh, ep,
-                           f"findmnt -n -o FSTYPE --target {shlex.quote(disk_dir)}",
-                           timeout=15)
-    fstype = (fsout or "").strip()
-    if fstype in ("tmpfs", "ramfs"):
-        return 1, (f"benchmark datapack dest {disk_dir} is on {fstype} (RAM) on "
-                   f"{exec_node.get('label', eh)} — the datapack must live on "
-                   f"persistent disk; move it off tmpfs (umount + fstab).")
+    ssh_run(eu, eh, ep, f"mkdir -p {shlex.quote(ewd)}", timeout=15)
     extra = (server_datapack_excludes(keep_skins=keep_skins)
              if server_mode else None)
     rc, msg = rsync_to(eu, eh, ep, local_datapack.rstrip("/") + "/", dst + "/",

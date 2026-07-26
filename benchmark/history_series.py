@@ -172,6 +172,97 @@ def platform_of(record):
     return out
 
 
+def append_run(record):
+    """Append ONE finished run into its node's series.json, and refresh
+    platform.json when the machine description changed. Returns the series path.
+
+    This IS the storage now - there is no per-run <stamp>.json any more. A run
+    costs one entry in `runs` (ended_utc, commit, decision, comment) plus ONE
+    number per metric in `series`; everything constant (unit, machine, libs)
+    lives once, outside the per-run loop. A metric seen for the first time is
+    back-filled with nulls so every column keeps the length of `runs`.
+    """
+    import benchmark_helpers as bh
+    benchmark = record.get("benchmark")
+    node = record.get("node")
+    if not benchmark or not node:
+        return None
+    comp, exe = bh.node_path_parts(node)
+    ndir = os.path.join(HISTORY, benchmark, comp, exe)
+    os.makedirs(ndir, exist_ok=True)
+    spath = os.path.join(ndir, "series.json")
+
+    payload = {"benchmark": benchmark, "node": node,
+               "runs": [], "meta": {}, "series": {}}
+    if os.path.isfile(spath):
+        try:
+            with open(spath) as handle:
+                loaded = json.load(handle)
+            if isinstance(loaded, dict) and isinstance(loaded.get("runs"), list):
+                payload = loaded
+        except (OSError, ValueError):
+            pass   # unreadable/corrupt: start a fresh series rather than lose the run
+
+    runs = payload.setdefault("runs", [])
+    meta = payload.setdefault("meta", {})
+    series = payload.setdefault("series", {})
+    n_before = len(runs)
+
+    runs.append([
+        record.get("ended_utc"),
+        record.get("commit_short") or (record.get("commit") or "")[:7] or None,
+        record.get("decision"),
+        record.get("comment") or None,
+        record.get("batch_id"),   # which session this run belongs to (cross-node chart)
+    ])
+
+    flat = flatten_metrics(record)
+    for key, (value, unit, _better) in flat.items():
+        # `better` is NOT stored: it is a property of the metric kind, resolved
+        # by the viewer (chart_generator.better_for). Keeping it here repeated
+        # the same word in every file for no reader.
+        if key not in series:
+            series[key] = [None] * n_before      # back-fill the runs before it existed
+            meta[key] = unit
+        elif key not in meta:
+            meta[key] = unit
+        series[key].append(value)
+    for key, column in series.items():
+        if key not in flat:
+            column.append(None)                  # not reported by this run
+
+    write_if_changed(spath, payload)
+    platform = platform_of(record)
+    if platform:
+        write_if_changed(os.path.join(ndir, "platform.json"), platform)
+    return spath
+
+
+def set_last_decision(benchmark, decision):
+    """Stamp `decision` on the newest run of every node of `benchmark` that has
+    none yet. The decision is only known after the cross-node champion compare,
+    i.e. after append_run() already stored the run."""
+    n = 0
+    for ndir in node_dirs():
+        spath = os.path.join(ndir, "series.json")
+        if not os.path.isfile(spath):
+            continue
+        try:
+            with open(spath) as handle:
+                payload = json.load(handle)
+        except (OSError, ValueError):
+            continue
+        if payload.get("benchmark") != benchmark:
+            continue
+        runs = payload.get("runs") or []
+        if not runs or runs[-1][2] is not None:
+            continue
+        runs[-1][2] = decision
+        write_if_changed(spath, payload)
+        n += 1
+    return n
+
+
 def node_dirs():
     """history/<benchmark>/<platform>/<node>/ -- exactly 3 levels down."""
     found = []

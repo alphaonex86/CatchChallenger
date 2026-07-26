@@ -50,32 +50,96 @@ def _slug(s):
 
 # ---- load history --------------------------------------------------------
 
+# Which direction is "better" for a metric. It is NOT stored per run any more:
+# it is a property of the metric KIND, so the viewer decides it here instead of
+# repeating the same word in every record. Anything unknown counts as lower-is-
+# better, which is what every timing/size/cpu metric in this harness wants.
+_HIGHER_IS_BETTER = ("requests_per_s", "per_s", "throughput", "ops", "rate",
+                     "fps", "mbps", "bandwidth", "score")
+
+
+def better_for(metric_key, unit=None):
+    """'higher' | 'lower' for a flattened metric key (\"<tool>.<name>\")."""
+    probe = (metric_key or "").lower()
+    for token in _HIGHER_IS_BETTER:
+        if token in probe:
+            return "higher"
+    if (unit or "").lower() in ("hz", "op/s", "req/s", "mb/s"):
+        return "higher"
+    return "lower"
+
+
+def _unflatten(key, value, unit, results):
+    """Rebuild the record shape the renderers expect from one series entry.
+    \"<tool>.<name>\" -> results[tool][metrics][name];
+    \"<tool>.<slice>.<name>\" -> results[tool][subbenchmarks][slice][name]."""
+    parts = key.split(".")
+    block = {"median": value, "unit": unit, "better": better_for(key, unit)}
+    if len(parts) == 2:
+        tool, name = parts
+        results.setdefault(tool, {}).setdefault("metrics", {})[name] = block
+    elif len(parts) >= 3:
+        tool, slice_label, name = parts[0], ".".join(parts[1:-1]), parts[-1]
+        (results.setdefault(tool, {}).setdefault("subbenchmarks", {})
+                .setdefault(slice_label, {}))[name] = block
+
+
 def _load_history(benchmark):
-    """Return list of (record_dict, path) sorted by started_utc."""
+    """Return list of (record_dict, path) sorted by time.
+
+    Storage is now ONE compact series.json per node (runs axis + one number per
+    metric per run) plus platform.json, instead of one verbose JSON per run. The
+    renderers still want per-run record dicts, so rebuild them here: the series
+    column supplies the values, `meta` the units, better_for() the direction, and
+    platform.json the machine fields. Charts come out identical."""
     bdir = os.path.join(HISTORY_ROOT, benchmark)
     if not os.path.isdir(bdir):
         return []
     out = []
-    # Layout is nested now: <bench>/<compile>/<exec>/<stamp>.json -- walk
-    # the whole subtree (was a flat listdir).
     for root, _dirs, files in os.walk(bdir):
-        for name in files:
-            if not name.endswith(".json"):
-                continue
-            # series.json / platform.json are DISTILLED views written by
-            # history_series.py into the same dirs. They are not run records:
-            # loaded as one, series.json contributes a doc with a "node" but no
-            # "results", which lands an empty extra point on every axis.
-            if name in ("series.json", "platform.json", "last.json"):
-                continue
-            p = os.path.join(root, name)
+        if "series.json" not in files:
+            continue
+        spath = os.path.join(root, "series.json")
+        try:
+            with open(spath) as f:
+                payload = json.load(f)
+        except (OSError, ValueError):
+            continue
+        platform = {}
+        ppath = os.path.join(root, "platform.json")
+        if os.path.isfile(ppath):
             try:
-                with open(p) as f:
-                    doc = json.load(f)
-            except Exception:
-                continue
-            out.append((doc, p))
-    out.sort(key=lambda r: r[0].get("started_utc", ""))
+                with open(ppath) as f:
+                    platform = json.load(f)
+            except (OSError, ValueError):
+                platform = {}
+        runs = payload.get("runs") or []
+        meta = payload.get("meta") or {}
+        series = payload.get("series") or {}
+        for i, entry in enumerate(runs):
+            ended = entry[0] if len(entry) > 0 else None
+            doc = dict(platform)
+            doc.update({
+                "benchmark": payload.get("benchmark", benchmark),
+                "node": payload.get("node"),
+                "ended_utc": ended,
+                "started_utc": ended,          # the series keeps one stamp per run
+                "commit_short": entry[1] if len(entry) > 1 else None,
+                "decision": entry[2] if len(entry) > 2 else None,
+                "comment": entry[3] if len(entry) > 3 else None,
+                "batch_id": entry[4] if len(entry) > 4 else None,
+                "results": {},
+            })
+            for key, column in series.items():
+                if i >= len(column) or column[i] is None:
+                    continue
+                unit = meta.get(key)
+                if isinstance(unit, list):     # legacy [unit, better] pairs
+                    unit = unit[0] if unit else None
+                _unflatten(key, column[i], unit, doc["results"])
+            if doc["results"]:
+                out.append((doc, spath))
+    out.sort(key=lambda r: r[0].get("started_utc") or "")
     return out
 
 

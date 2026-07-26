@@ -1005,7 +1005,6 @@ def main():
             all_metrics.setdefault(label, aggregate_metrics({}))
 
     sha = bh.git_sha()
-    cand_stamp = started_utc.replace(":", "-")
 
     # Cross-platform candidate record — metrics from every node that
     # produced data, so the decision reflects the whole fleet.
@@ -1029,9 +1028,9 @@ def main():
                 "libs": bh.LIBS_BY_NODE.get(label, {}),
                 "metrics": all_metrics[label],
             }
-    cand_p = bh.candidate_path("benchmarkmapmanager", cand_stamp)
-    bh.write_record(cand_p, rec)
-    print(_color(bh.C_CYAN, f"[record] candidate -> {cand_p}"))
+    # No candidate-<stamp>.json: nothing reads it (bh.candidate_path had
+    # no reader), and every number in it is already in the per-platform
+    # history records below + champion.json on promotion.
 
     # Per-platform history -- one JSON per (benchmark, run, platform).
     # Per benchmark/CLAUDE.md the file is append-only; never overwritten.
@@ -1111,9 +1110,15 @@ def main():
             print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
         hr.attach_decision("benchmarkmapmanager", batch_id, decision)
-    import chart_generator
-    for cp in chart_generator.regenerate("benchmarkmapmanager", cand_stamp):
-        print(_color(bh.C_CYAN, f"[chart] {cp}"))
+    # No chart written here: a chart is a VIEW of the history JSONs.
+    # `python3 svg.py [benchmark] [node]` renders the one you ask for,
+    # on demand, through chart_generator's own functions.
+    # Distil the compact tracked form NOW rather than in a separate step, so
+    # series.json (one appended number per metric per run) + platform.json
+    # (machine description, rewritten only when it changes) are always in
+    # sync with the run that just finished.
+    import history_series
+    history_series.main()
 
     return 0
 
