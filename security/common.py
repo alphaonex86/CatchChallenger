@@ -394,9 +394,14 @@ def _ollama_think():
 
 def _ollama_num_predict():
     """Max output tokens for the router. Configurable (CC_OLLAMA_NUM_PREDICT /
-    settings 'ollama_num_predict'); defaults much higher when thinking is ON so
-    the reasoning tokens don't crowd out the answer (a reasoning model can else
-    fill num_predict with thought and return an empty answer)."""
+    settings 'ollama_num_predict'); defaults much higher UNLESS thinking is
+    explicitly OFF, so reasoning tokens don't crowd out the answer (a reasoning
+    model can else fill num_predict with thought and return an empty - or cut -
+    answer). The tight 2048 applies only when we KNOW the model won't think: with
+    `think` omitted a qwen3/gemma-class model still reasons by default, and the
+    2048 cap then chops every reply at the same byte, which the agent loop sees as
+    a stuck model ([TRUNCATED REPEAT] -> the finding was skipped). num_predict is a
+    CAP, not a target: a terse model is unaffected by a high one."""
     v = os.environ.get("CC_OLLAMA_NUM_PREDICT")
     if not v:
         cfg = load_settings().get("ollama_num_predict")
@@ -407,7 +412,7 @@ def _ollama_num_predict():
             return int(v)
         except ValueError:
             pass
-    return 16384 if _ollama_think() is True else 2048
+    return 2048 if _ollama_think() is False else 16384
 
 
 # Per-turn timing for SLOW local models. A 122B model on CPU can emit a token
@@ -609,15 +614,19 @@ def fit_ctx(*texts):
 
     DYNAMIC: a small per-function view gets a SMALL context — a model loads and runs
     a smaller KV cache far faster — while a big payload scales up. The estimate is
-    deliberately generous: chars/3 (~33% over real tokens) + the 2048 reply cap
-    (chat_ollama bounds num_predict at 2048, so the answer — thought included — never
-    needs more) + a 1024 slab, so an under-count truncates neither the prompt nor the
+    deliberately generous: chars/3 (~33% over real tokens) + the reply cap
+    (_ollama_num_predict, so the answer — thought included — always fits) + a 1024
+    slab, so an under-count truncates neither the prompt nor the
     answer (the 'margin of error just in case'). Only chat_ollama uses this; the
     router path manages its own num_ctx."""
     chars = 0
     for t in texts:
         chars += len(t)
-    tokens = chars // 3 + 2048 + 1024              # payload + reply cap + safety slab
+    # payload + the ACTUAL reply cap (_ollama_num_predict, which is high unless
+    # thinking is explicitly off) + safety slab. Reserving less than the reply cap
+    # makes the model run out of window mid-answer -> a reply cut at the same byte
+    # every turn, which the agent loop reads as a stuck model.
+    tokens = chars // 3 + _ollama_num_predict() + 1024
     tokens = ((tokens + 2047) // 2048) * 2048      # round up to a 2048 multiple
     ceiling = MAX_CTX if MODEL_CTX is None else min(MAX_CTX, MODEL_CTX)
     return max(MIN_CTX, min(tokens, ceiling))
@@ -1207,8 +1216,11 @@ def chat_ollama(messages, timeout=None, model=None):
             "temperature": 0.1,
             "num_ctx": fit_ctx(body),
             # Bound a single reply and discourage the 33B's repetition loops
-            # (it sometimes spews the same line thousands of times).
-            "num_predict": 2048,
+            # (it sometimes spews the same line thousands of times). Same knob as
+            # the router path: 2048 only when thinking is explicitly OFF, else a
+            # reasoning model spends the whole cap on thought and its answer comes
+            # back empty or chopped (-> [TRUNCATED REPEAT], finding skipped).
+            "num_predict": _ollama_num_predict(),
             "repeat_penalty": 1.3,
         },
     }
@@ -1254,7 +1266,7 @@ def chat_ollama(messages, timeout=None, model=None):
                             if piece:
                                 chunks.append(piece)
                             # Final stream object carries the stop reason; "length"
-                            # means the 2048 num_predict cap chopped the reply.
+                            # means the num_predict cap chopped the reply.
                             if obj.get("done_reason") == "length":
                                 _set_truncated(True)
             return "".join(chunks).strip()

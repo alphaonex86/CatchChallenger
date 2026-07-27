@@ -2244,6 +2244,23 @@ def _adversarial_model():
     return req                          # a specific validator model
 
 
+# The PROVE loop can run on a DIFFERENT model than the AUDIT. Detecting a bug and
+# writing the C that triggers it are different skills: a big reasoning model often
+# spots the bug but cannot drive the socket/compile/gdb loop to a formal proof (and
+# a good coder model is often a poor auditor). SECSERVER_EXPLOIT_MODEL (or
+# --exploit-model=) points the exploit phase at a coder model while --model keeps
+# doing the detection; unset / 'same' -> one model does both.
+EXPLOIT_MODEL_REQUEST = os.environ.get("SECSERVER_EXPLOIT_MODEL", "").strip()
+
+
+def _exploit_model():
+    """Resolved exploit-phase model spec, or '' to use the configured primary."""
+    req = EXPLOIT_MODEL_REQUEST
+    if not req or req.lower() in _ADVERSARIAL_SAME_TOKENS:
+        return ""
+    return req
+
+
 def _adversarial_budgets(primary_hard, adv_model):
     """(hard, soft) seconds for the adversarial-validation pass - SEPARATE from
     the primary exploit budget. SECSERVER_ADVERSARIAL_BUDGET / _SOFT_BUDGET win;
@@ -2311,6 +2328,33 @@ CANDIDATE_RE = re.compile(
     r"collision|ledge|teleport|walkthrough|world.?rule|"
     # §3.7 persisted-state corruption
     r"corrupt|persist|cross.?player|phantom", re.I)
+
+# ---------------------------------------------------------------------------
+# Verdicts
+# ---------------------------------------------------------------------------
+# CONFIRMED        a PROOF exists: crash / hang / valgrind memory error, or a GDB
+#                  look at the live state showing the illegal change.
+# NOT-EXPLOITABLE  the model REFUTED the finding: it traced the untrusted input to
+#                  the sink and named the guard that makes it safe. Only this one
+#                  means "safe".
+# UNPROVEN         neither proven nor refuted - the budget ran out, the model
+#                  looped/truncated, it stalled, or it claimed CONFIRMED with no
+#                  evidence. THE BUG REPORT STANDS: the exploit is only the FORMAL
+#                  PROOF, and many models detect a bug but cannot write the C that
+#                  triggers it. Never reported as safe - this is the "to fix /
+#                  proof pending" list.
+VERDICT_CONFIRMED = "CONFIRMED"
+VERDICT_REFUTED = "NOT-EXPLOITABLE"
+VERDICT_UNPROVEN = "UNPROVEN"
+# Terminal for the resume-cache. UNPROVEN is cached too (re-attacking with the
+# SAME model and the same binary would reproduce it); the cache key carries the
+# model spec, so switching model re-attacks every UNPROVEN finding.
+TERMINAL_VERDICTS = (VERDICT_CONFIRMED, VERDICT_REFUTED, VERDICT_UNPROVEN)
+# Marker carried by the reason of a verdict that came from the model LOOPING or
+# TRUNCATING (not from reasoning). Re-attacking such a finding with the SAME model
+# reproduces the same loop (temperature 0.1 -> deterministic), so run_exploit skips
+# the same-model adversarial pass for it; a DIFFERENT validator model still runs.
+STUCK_SKIP_MARK = "finding skipped"
 
 EXPLOIT_SYSTEM = (
     "You are an exploit engineer doing AUTHORIZED security testing of the "
@@ -2521,6 +2565,96 @@ def parse_findings(path):
         out.append((rel, body.strip()))
         i += 2
     return out
+
+
+# clang-tidy / clang-analyzer checks that cannot be a remote exploit BY THEMSELVES:
+# they describe a construction-order, style or dead-code defect - not an
+# attacker-reachable memory/state corruption. Such a finding is still worth FIXING,
+# but the exploit loop can never prove it, so queueing it burns a full per-finding
+# budget for a guaranteed no-proof (VirtualCall + DeadStores took 5 of 12 slots -
+# ~15h - in one run, all via keyword collisions: "bypasses virtual dispatch" hit
+# 'bypass', "new_map_index" hit 'index'). They stay in findings.txt/REPORT.md as
+# report-only items. CC_EXPLOIT_DROP_NOISE=0 queues them anyway.
+STATIC_NOISE_CHECKS = (
+    "clang-analyzer-optin.cplusplus.VirtualCall",
+    "clang-analyzer-deadcode.DeadStores",
+    "clang-analyzer-optin.core.EnumCastOutOfRange",
+    "bugprone-unintended-char-ostream-output",
+    "bugprone-unhandled-self-assignment",
+    "cert-oop54-cpp",
+    "cert-msc30-c",
+    "cert-msc50-cpp",
+)
+_STATIC_SECTION_RE = re.compile(r"^##\s+static analysis\b", re.I)
+_STATIC_CHECK_RE = re.compile(r"\[([A-Za-z0-9_.,-]+)\]\s*$")
+
+
+def _noise_only_finding(body):
+    """True when EVERY claim in this finding body is a static-analysis line whose
+    check(s) are all in STATIC_NOISE_CHECKS. One IA-written finding line, or one
+    line from any other check, makes it False (the finding is then queued)."""
+    saw_noise = False
+    for line in (body or "").splitlines():
+        s = line.strip()
+        if s and not _STATIC_SECTION_RE.match(s):
+            m = _STATIC_CHECK_RE.search(s)
+            if m is None:
+                return False            # prose / IA finding -> real candidate
+            for check in m.group(1).split(","):
+                if check and check not in STATIC_NOISE_CHECKS:
+                    return False        # at least one non-noise check
+            saw_noise = True
+    return saw_noise
+
+
+def _exploit_target_objects():
+    """Source paths COMPILED INTO the exploit target, harvested from the object
+    files CMake left in BUILD_DIR (CMake mirrors each source path under
+    CMakeFiles/<target>.dir/, so an object path ends with '<source>.o').
+
+    The AUDIT indexes the TUs of every server binary (cli/login/gateway/master/
+    game-server-alone), but the exploit loop only ever boots server/cli built with
+    CATCHCHALLENGER_DB_INTERNAL_VARS. Code that binary does not contain -
+    server/login/*, server/master/*, the XML datapack loaders dropped by
+    CATCHCHALLENGER_NOXML, ... - can NEVER be proven here, whatever the budget.
+    Empty result = unknown layout -> the caller disables the gate."""
+    out = []
+    for root, dirs, files in os.walk(BUILD_DIR):
+        for fn in files:
+            if fn.endswith(".o"):
+                out.append(os.path.join(root, fn)[:-len(".o")])
+                # A source living in the CMakeLists' OWN directory gets a FLAT
+                # object name (main-unix.cpp.o) instead of the absolute-path
+                # mirror, so the object path alone cannot identify it. Its depfile
+                # names the real source - without this, server/cli/main-unix.cpp
+                # (the target's own main) looks absent and gets gated out.
+                src = _depfile_source(os.path.join(root, fn + ".d"))
+                if src:
+                    out.append(src)
+    return out
+
+
+def _depfile_source(path):
+    """The compiled source path read from a GCC depfile ('<obj>: <src> <headers>'),
+    or '' when there is none / it is unreadable."""
+    try:
+        with open(path, errors="replace") as fh:
+            head = fh.read(4096)
+    except OSError:
+        return ""
+    rest = head.partition(":")[2].replace("\\\n", " ")
+    for tok in rest.split():
+        if tok.endswith((".cpp", ".cc", ".cxx", ".c")):
+            return tok
+    return ""
+
+
+def _in_exploit_target(rel, objects):
+    """True if `rel` (a repo-relative .cpp) is compiled into the exploit target."""
+    for obj in objects:
+        if obj.endswith(rel):
+            return True
+    return False
 
 
 def first_codeblock(answer):
@@ -3890,7 +4024,8 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
         {"role": "user", "content": user},
     ]
     transcript = []
-    verdict, reason = "NOT-EXPLOITABLE", "budget exhausted without a confirmed proof"
+    verdict, reason = (VERDICT_UNPROVEN,
+                       "budget exhausted without a confirmed proof")
     start = time.time()
     deadline = start + hard_budget                            # HARD cap (100%)
     soft_deadline = start + min(soft_budget, hard_budget)     # soft cap (~75%)
@@ -3909,7 +4044,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
             sys.stderr.write("%s     [HARD STOP] %s budget reached -> dropping "
                              "exploit %02d (%s)\n"
                              % (_ts(), _human_dur(hard_budget), idx, rel))
-            verdict, reason = ("NOT-EXPLOITABLE",
+            verdict, reason = (VERDICT_UNPROVEN,
                                "hard %s budget reached without a confirmed proof"
                                % _human_dur(hard_budget))
             transcript.append("### HARD STOP (%s budget reached)"
@@ -3941,9 +4076,9 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
                                  % (_ts(), idx, rel))
                 transcript.append("### TRUNCATED REPEAT (output-token cap; "
                                   "finding skipped, run continues)")
-                verdict, reason = ("NOT-EXPLOITABLE",
+                verdict, reason = (VERDICT_UNPROVEN,
                                    "reply truncated at the output-token cap "
-                                   "(num_predict); finding skipped")
+                                   "(num_predict); " + STUCK_SKIP_MARK)
                 break
             # Genuine stuck-model loop on THIS finding (the 33B sometimes
             # apologises in a tight loop). That is a per-finding signal, not a
@@ -3958,9 +4093,9 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
                              % (_ts(), idx, rel))
             transcript.append("### REPEAT SKIP (identical reply twice; "
                               "finding skipped, run continues)")
-            verdict, reason = ("NOT-EXPLOITABLE",
+            verdict, reason = (VERDICT_UNPROVEN,
                                "model repeated the same reply twice (stuck); "
-                               "finding skipped without a confirmed proof")
+                               + STUCK_SKIP_MARK + " without a confirmed proof")
             break
         last_answer = answer
         act = parse_action(answer)
@@ -3988,12 +4123,15 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
                            else "no crash, no hang, and it never GDB-inspected "
                                 "the live state (code-reading opinion, not a "
                                 "proof)")
+                    # NOT a refutation: the model still believes the bug is real,
+                    # it just has no proof. UNPROVEN keeps the finding on the
+                    # to-fix list instead of declaring the code safe.
                     sys.stderr.write("%s     [reject] model claimed CONFIRMED but "
-                                     "%s - downgrading to NOT-EXPLOITABLE (%s)\n"
-                                     % (_ts(), why, rel))
+                                     "%s - downgrading to %s (%s)\n"
+                                     % (_ts(), why, VERDICT_UNPROVEN, rel))
                     transcript.append("### CONFIRMED REJECTED: %s "
                                       "(unverifiable claim)" % why)
-                    verdict = "NOT-EXPLOITABLE"
+                    verdict = VERDICT_UNPROVEN
                     reason = ("model declared CONFIRMED but %s: " % why
                               + (block or ""))
                 break
@@ -4015,7 +4153,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
                     "FALSEPOSITIVE <that explanation>'. We end as soon as you "
                     "are certain - you need not use the remaining time."})
                 continue
-            verdict, reason = "NOT-EXPLOITABLE", block
+            verdict, reason = VERDICT_REFUTED, block
             break
         if kind == "READ":
             result = tool_read(arg)
@@ -4117,7 +4255,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
                              % (_ts(), compile_runs, idx, rel))
             transcript.append("### STALL STOP (%d runs, no crash/hang/memerr)"
                               % compile_runs)
-            verdict, reason = ("NOT-EXPLOITABLE",
+            verdict, reason = (VERDICT_UNPROVEN,
                                "%d compile+run cycles produced no crash/hang/"
                                "memerr; model stalled without a proof"
                                % compile_runs)
@@ -4167,16 +4305,18 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
                         # The soft cap asks for a verdict, which is exactly where a
                         # model self-declares CONFIRMED from code reading. Keep it
                         # only with evidence: a crash/hang, or a GDB look at the
-                        # live state (proof case (c)).
+                        # live state (proof case (c)). Without evidence it is
+                        # UNPROVEN (bug still suspected), never "safe".
                         transcript.append("### CONFIRMED REJECTED (soft cap): no "
                                           "crash/hang and no GDB inspection of the "
                                           "live state")
                         reason = ("model declared CONFIRMED without evidence (no "
                                   "crash/hang, no GDB live-state inspection): "
                                   + act[2])
+                        verdict = VERDICT_UNPROVEN
                     else:
                         reason = act[2]
-                    verdict = "NOT-EXPLOITABLE"
+                        verdict = VERDICT_REFUTED
                 break
             # Model didn't give a verdict; let the loop continue - the hard cap
             # will force-stop it.
@@ -4324,8 +4464,8 @@ def stage_run():
 # commit incl. Python-only ones). ccache makes the per-run rebuild a few-seconds
 # relink. While the guard holds, each candidate is keyed by finding text (rel +
 # body); a cached candidate is SKIPPED and its stored verdict reused. Only
-# terminal verdicts (CONFIRMED / NOT-EXPLOITABLE) are cached; transient ERROR/
-# ABORT always retry. Cache lives under OUTPUT_ROOT (disk scratch), not the repo.
+# terminal verdicts (TERMINAL_VERDICTS) are cached; transient ERROR/ABORT always
+# retry. Cache lives under OUTPUT_ROOT (disk scratch), not the repo.
 VERDICT_CACHE = os.path.join(OUTPUT_ROOT, "verdict-cache.json")
 
 
@@ -4375,10 +4515,10 @@ def _load_verdict_cache(codehash, models):
 
 
 def _read_transcript_verdict(dirpath):
-    """(verdict, reason) parsed from an exploit dir's transcript.md / fail.md;
-    (None, '') if absent or it holds no terminal verdict."""
+    """(verdict, reason) parsed from an exploit dir's transcript.md / fail.md /
+    unproven.md; (None, '') if absent or it holds no terminal verdict."""
     fn = 0
-    for name in ("transcript.md", "fail.md"):
+    for name in ("transcript.md", "fail.md", "unproven.md"):
         fn += 1
         try:
             with open(os.path.join(dirpath, name), errors="replace") as f:
@@ -4407,12 +4547,14 @@ def _backfill_verdict_cache(candidates):
         verdict, reason = None, ""
         for suffix in ("", "-vg", "-adv"):
             v, r = _read_transcript_verdict(base + suffix)
-            if v == "CONFIRMED":
+            if v == VERDICT_CONFIRMED:
                 verdict, reason = v, r
                 break
-            if v == "NOT-EXPLOITABLE" and verdict is None:
+            # UNPROVEN never masks a refutation: a pass that REASONED its way to
+            # NOT-EXPLOITABLE is the stronger statement, so keep looking.
+            if v in (VERDICT_REFUTED, VERDICT_UNPROVEN) and verdict != VERDICT_REFUTED:
                 verdict, reason = v, r
-        if verdict in ("CONFIRMED", "NOT-EXPLOITABLE"):
+        if verdict in TERMINAL_VERDICTS:
             out[_exploit_sig(rel, body)] = {"verdict": verdict, "reason": reason,
                                             "kept": os.path.basename(base),
                                             "rel": rel}
@@ -4495,6 +4637,43 @@ def run_exploit():
         candidates = matched
     else:
         candidates = matched + unmatched
+    # Findings the PROVE loop CANNOT confirm, whatever the budget, are not queued:
+    # each would cost a full per-finding budget for a guaranteed no-proof. They are
+    # NOT lost - every one is reported UNPROVEN with the reason, so it stays on the
+    # to-fix list. The exploit is the FORMAL PROOF, not the bug report.
+    #   (1) static-analysis noise: a check that is never remotely exploitable.
+    #   (2) code the exploit target binary does not even contain.
+    report_only = []
+    if os.environ.get("CC_EXPLOIT_DROP_NOISE", "1") != "0":
+        keep = []
+        for rel, body in candidates:
+            if _noise_only_finding(body):
+                report_only.append((rel, "static-analysis-only finding (construction"
+                                    "-order / dead-store / style check): a real "
+                                    "cleanup but not remotely exploitable by "
+                                    "itself, so no proof was attempted"))
+            else:
+                keep.append((rel, body))
+        candidates = keep
+    target_objects = _exploit_target_objects()
+    if target_objects and not os.environ.get("CC_EXPLOIT_ANY_FILE"):
+        keep = []
+        for rel, body in candidates:
+            if rel.endswith(".cpp") and not _in_exploit_target(rel, target_objects):
+                report_only.append((rel, "not compiled into the exploit target "
+                                    "(server/cli + CATCHCHALLENGER_DB_INTERNAL_VARS): "
+                                    "unreachable in the attacked binary, so no proof "
+                                    "is possible here - fix it and prove it against "
+                                    "the binary that does ship it"))
+            else:
+                keep.append((rel, body))
+        candidates = keep
+    if report_only:
+        sys.stderr.write("%s [INIT] %d finding(s) NOT queued for a proof "
+                         "(reported UNPROVEN - still to fix):\n" % (_ts(),
+                                                                   len(report_only)))
+        for rel, why in report_only:
+            sys.stderr.write("    - %s: %s\n" % (rel, why))
     # Attack the most REMOTE-REACHABLE code first. The exploit phase costs ~1h per
     # candidate, so a run that is killed (or capped by SECSERVER_MAX) must have
     # spent its hours on the pre-auth parser and the packet handlers, not on
@@ -4508,9 +4687,21 @@ def run_exploit():
     _EXPLOIT_TOTAL = len(candidates)
     os.makedirs(OUTPUT_ROOT, exist_ok=True)
     hard_budget, soft_budget = _effective_budgets()
+    # A dedicated exploit-writer model: size its budget from ITS parameter count,
+    # not the detector's (a 119B detector + a fast coder must not inherit 2h/finding).
+    exploit_model = _exploit_model()
+    if exploit_model:
+        if not os.environ.get("SECSERVER_BUDGET"):
+            suggested = _auto_budget_for_spec(exploit_model)
+            if suggested:
+                hard_budget, soft_budget = suggested, int(suggested * 0.75)
+        sys.stderr.write("%s [INIT] exploit-writer model: %s (the audit ran on %s) "
+                         "- detection and proof are separate skills\n"
+                         % (_ts(), exploit_model, common.IA_LABEL))
     sys.stderr.write("%s [INIT] %d findings, %d look exploitable; generating "
                      "exploits via %s (budget per exploit: hard %s / soft %s)\n"
-                     % (_ts(), len(findings), len(candidates), common.IA_LABEL,
+                     % (_ts(), len(findings), len(candidates),
+                        exploit_model or common.IA_LABEL,
                         _human_dur(hard_budget), _human_dur(soft_budget)))
     adv_model = _adversarial_model()
     if adv_model:
@@ -4537,7 +4728,10 @@ def run_exploit():
     # candidate so a mid-way kill still resumes. On first run after the cache was
     # added (no cache file yet) it BACKFILLS from any prior run's on-disk dirs.
     cache_code = _server_bin_fingerprint()
-    cache_models = "%s|%s" % (common.IA_LABEL, adv_model or "")
+    # Every model that can change a verdict is part of the cache key: switching the
+    # exploit-writer re-attacks every UNPROVEN finding (that is the point of the knob).
+    cache_models = "%s|%s|%s" % (common.IA_LABEL, exploit_model or "",
+                                 adv_model or "")
     verdict_cache = _load_verdict_cache(cache_code, cache_models)
     if not verdict_cache and not os.environ.get("CC_EXPLOIT_NO_CACHE"):
         verdict_cache = _backfill_verdict_cache(candidates)
@@ -4566,7 +4760,8 @@ def run_exploit():
             continue
         try:
             verdict, reason, outdir = exploit_one(rel, body, idx,
-                                                  hard_budget, soft_budget)
+                                                  hard_budget, soft_budget,
+                                                  model_spec=exploit_model or None)
         except Exception as e:  # noqa - one bad exploit shouldn't abort the run
             sys.stderr.write("    [error] %s\n" % e)
             verdict, reason, outdir = "ERROR", str(e), "-"
@@ -4596,7 +4791,8 @@ def run_exploit():
             try:
                 vg_verdict, vg_reason, vg_outdir = exploit_one(
                     rel, body, idx, hard_budget, soft_budget,
-                    mode_override="valgrind")
+                    mode_override="valgrind",
+                    model_spec=exploit_model or None)
             except Exception as e:  # noqa
                 sys.stderr.write("    [valgrind-retry error] %s\n" % e)
                 vg_verdict, vg_reason, vg_outdir = "ERROR", str(e), "-"
@@ -4618,7 +4814,20 @@ def run_exploit():
         # brief also covers game-LOGIC exploits (object dup / illicit acquisition /
         # impossible action) proven via GDB state inspection, not just crashes.
         # Opt-in via SECSERVER_ADVERSARIAL_MODEL; a CONFIRMED here wins.
-        if verdict != "CONFIRMED" and adv_model:
+        # A verdict that came from the model LOOPING or TRUNCATING is an
+        # infrastructure outcome, not an analysis: re-running the SAME model on the
+        # SAME finding reproduces the same loop for another full budget (an hour per
+        # finding, three times in one observed run). Only a DIFFERENT validator model
+        # can add information there.
+        adv_same_model = adv_model == (exploit_model or _primary_model_spec())
+        if (verdict != VERDICT_CONFIRMED and adv_model and adv_same_model
+                and STUCK_SKIP_MARK in (reason or "")):
+            sys.stderr.write("%s     [adversarial-validation] skipped: the primary "
+                             "verdict came from a stuck/truncated reply and the "
+                             "validator is the SAME model (%s) - set "
+                             "SECSERVER_ADVERSARIAL_MODEL=<other model> for an "
+                             "independent re-attack\n" % (_ts(), adv_model))
+        elif verdict != VERDICT_CONFIRMED and adv_model:
             adv_hard, adv_soft = _adversarial_budgets(hard_budget, adv_model)
             sys.stderr.write("%s     [adversarial-validation] primary was %s -> "
                              "re-attacking with %s (separate budget: hard %s / "
@@ -4644,29 +4853,56 @@ def run_exploit():
             else:
                 sys.stderr.write("%s     [adversarial-validation] also %s; primary "
                                  "verdict stands\n" % (_ts(), adv_verdict))
-        # Keep EVERY exploit folder (confirmed or not). A non-confirmed one is
-        # not deleted - we just drop a fail.md marker into it recording the
-        # verdict and the logic-path explanation of WHY it is not exploitable.
-        # The aggregate not-exploitable.md is still appended for a quick index.
+        # Keep EVERY exploit folder (confirmed or not) and drop a marker into it.
+        # TWO different outcomes, never conflated:
+        #   NOT-EXPLOITABLE -> fail.md: the model REFUTED the finding and gave the
+        #                      logic path (the guard that makes it safe).
+        #   UNPROVEN        -> unproven.md: NO proof and NO refutation. The finding
+        #                      STANDS as a bug to fix; only the formal proof is
+        #                      missing (budget/loop/weak exploit-writer). Everything
+        #                      a human or a stronger model needs to continue is in
+        #                      the folder (transcript.md + the exploit sources).
         kept = os.path.basename(outdir)
-        if verdict != "CONFIRMED" and outdir != "-" and os.path.isdir(outdir):
-            with open(os.path.join(OUTPUT_ROOT, "not-exploitable.md"), "a") as fh:
-                fh.write("## %s\n**%s.** logic path why it cannot be "
-                         "exploited:\n\n%s\n\n---\n\n"
-                         % (rel, verdict, reason or "(no explanation given)"))
-            with open(os.path.join(outdir, "fail.md"), "w") as fh:
-                fh.write("# FAIL: %s\n\nVERDICT: %s\n\nlogic path why it cannot "
-                         "be exploited:\n\n%s\n"
-                         % (rel, verdict, reason or "(no explanation given)"))
-            kept = "%s (fail.md)" % os.path.basename(outdir)
-            sys.stderr.write("    [fail] %s -> not exploitable; marked with "
-                             "%s/fail.md\n" % (rel, os.path.basename(outdir)))
+        if verdict != VERDICT_CONFIRMED and outdir != "-" and os.path.isdir(outdir):
+            if verdict == VERDICT_UNPROVEN:
+                with open(os.path.join(OUTPUT_ROOT, "unproven.md"), "a") as fh:
+                    fh.write("## %s\n**UNPROVEN - still to fix.** no formal proof "
+                             "was produced, and the finding was NOT refuted:\n\n%s"
+                             "\n\nexploit workspace: `%s`\n\n---\n\n"
+                             % (rel, reason or "(no explanation given)",
+                                os.path.basename(outdir)))
+                with open(os.path.join(outdir, "unproven.md"), "w") as fh:
+                    fh.write("# UNPROVEN: %s\n\nVERDICT: %s\n\nThe bug report "
+                             "STANDS - this is NOT a clean bill of health. The "
+                             "exploit loop produced no formal proof and no "
+                             "refutation:\n\n%s\n\nTo finish it: re-run with a "
+                             "stronger exploit writer (SECSERVER_EXPLOIT_MODEL=..."
+                             ") or review by hand - transcript.md has how far the "
+                             "model got.\n"
+                             % (rel, verdict, reason or "(no explanation given)"))
+                kept = "%s (unproven.md)" % os.path.basename(outdir)
+                sys.stderr.write("    [unproven] %s -> no proof, NOT refuted; still "
+                                 "to fix (%s/unproven.md)\n"
+                                 % (rel, os.path.basename(outdir)))
+            else:
+                with open(os.path.join(OUTPUT_ROOT, "not-exploitable.md"), "a") as fh:
+                    fh.write("## %s\n**%s.** logic path why it cannot be "
+                             "exploited:\n\n%s\n\n---\n\n"
+                             % (rel, verdict, reason or "(no explanation given)"))
+                with open(os.path.join(outdir, "fail.md"), "w") as fh:
+                    fh.write("# FAIL: %s\n\nVERDICT: %s\n\nlogic path why it cannot "
+                             "be exploited:\n\n%s\n"
+                             % (rel, verdict, reason or "(no explanation given)"))
+                kept = "%s (fail.md)" % os.path.basename(outdir)
+                sys.stderr.write("    [fail] %s -> refuted (not exploitable); marked "
+                                 "with %s/fail.md\n"
+                                 % (rel, os.path.basename(outdir)))
         results.append((rel, verdict, reason, kept))
         # Cache only TERMINAL verdicts so this candidate is skipped on a re-run
         # (unless its code/finding/model changes). ERROR/ABORT are transient and
         # never cached -> they always retry. Persist immediately so a run killed
         # mid-way still resumes from the last completed candidate.
-        if verdict in ("CONFIRMED", "NOT-EXPLOITABLE"):
+        if verdict in TERMINAL_VERDICTS:
             verdict_cache[sig] = {"verdict": verdict, "reason": reason,
                                   "kept": kept, "rel": rel}
             _save_verdict_cache(verdict_cache, cache_code, cache_models)
@@ -4675,13 +4911,42 @@ def run_exploit():
         append_notes(rel, "<<<NOTES\n- exploit verdict: %s (%s) [%s]\nNOTES>>>"
                      % (verdict, short, kept))
 
+    # The findings no proof was ATTEMPTED for (the report-only gates above) belong
+    # in the report too, as UNPROVEN - the to-fix list must be complete.
+    for rel, why in report_only:
+        results.append((rel, VERDICT_UNPROVEN, why, "-"))
+    confirmed = [r for r in results if r[1] == VERDICT_CONFIRMED]
+    unproven = [r for r in results if r[1] == VERDICT_UNPROVEN]
+    refuted = [r for r in results if r[1] == VERDICT_REFUTED]
+    other = [r for r in results if r[1] not in TERMINAL_VERDICTS]
     lines = ["# security-server.py exploit run\n",
-             "Model: %s  |  candidates: %d\n" % (common.IA_LABEL, len(candidates)),
-             "\n| # | finding | verdict | reason | dir |",
-             "|---|---|---|---|---|"]
-    for i, (rel, verdict, reason, kept) in enumerate(results, 1):
-        lines.append("| %d | %s | %s | %s | %s |"
-                     % (i, rel, verdict, (reason or "")[:80], kept))
+             "Audit model: %s  |  exploit writer: %s  |  candidates: %d\n"
+             % (common.IA_LABEL, exploit_model or common.IA_LABEL, len(candidates)),
+             "\n**%d proven** | **%d unproven (still to fix)** | **%d refuted** | "
+             "%d error/aborted\n"
+             % (len(confirmed), len(unproven), len(refuted), len(other)),
+             "\n> The exploit is the FORMAL PROOF, not the bug report. UNPROVEN "
+             "means nobody showed the code is safe either - fix those, and re-run "
+             "the proof with a stronger exploit writer "
+             "(SECSERVER_EXPLOIT_MODEL=...) if a formal PoC is needed.\n",
+             "\n## To fix (proven + unproven)\n"]
+    if confirmed or unproven:
+        lines.append("\n| # | finding | verdict | reason | dir |")
+        lines.append("|---|---|---|---|---|")
+        for i, (rel, verdict, reason, kept) in enumerate(confirmed + unproven, 1):
+            lines.append("| %d | %s | %s | %s | %s |"
+                         % (i, rel, verdict, (reason or "")[:80], kept))
+    else:
+        lines.append("\n(nothing: every finding was refuted with a logic path)\n")
+    lines.append("\n## Refuted - a guard makes it safe\n")
+    if refuted or other:
+        lines.append("\n| # | finding | verdict | reason | dir |")
+        lines.append("|---|---|---|---|---|")
+        for i, (rel, verdict, reason, kept) in enumerate(refuted + other, 1):
+            lines.append("| %d | %s | %s | %s | %s |"
+                         % (i, rel, verdict, (reason or "")[:80], kept))
+    else:
+        lines.append("\n(none)\n")
     lines.append("")
     # Per-finding DETAIL: verdict + reason, the model's exploit C/C++ source,
     # the gdb backtrace / valgrind report (if any), the server's last log lines.
@@ -4694,8 +4959,10 @@ def run_exploit():
         lines.append("## %d. %s — %s\n" % (i, rel, verdict))
         lines.append("**reason:** %s\n" % (reason or "(no explanation given)"))
         lines.append("**dir:** `%s`\n" % kept)
-        outdir_p = os.path.join(OUTPUT_ROOT, kept.split()[0]
-                                if kept != "-" else "")
+        # kept == "-" means no exploit workspace (no proof attempted / ERROR):
+        # join(OUTPUT_ROOT, "") would point at OUTPUT_ROOT itself and scan it.
+        outdir_p = ("" if kept == "-"
+                    else os.path.join(OUTPUT_ROOT, kept.split()[0]))
         if outdir_p and os.path.isdir(outdir_p):
             # The exploit source(s) the model wrote.
             srcs = sorted(
@@ -4728,6 +4995,10 @@ def run_exploit():
     # may be redirected to in the default `all` pipeline.
     for rel, verdict, reason, _ in results:
         sys.stderr.write("%-14s %s  (%s)\n" % (verdict, rel, reason))
+    sys.stderr.write("%s [SUMMARY] %d proven / %d UNPROVEN (no proof, NOT refuted - "
+                     "still to fix) / %d refuted; to-fix index: %s\n"
+                     % (_ts(), len(confirmed), len(unproven), len(refuted),
+                        os.path.join(OUTPUT_ROOT, "unproven.md")))
     summary = claude_usage_summary()
     if summary:
         sys.stderr.write(summary)
@@ -4758,6 +5029,17 @@ def _print_help(prog):
         "                 e.g. --model=gemma4:26b or --model=qwen2.5-coder:32b\n"
         "                 append '@host:port' to pin a specific Ollama backend,\n"
         "                 e.g. --model=qwen3:30b-a3b@gpu1:11434\n"
+        "  --exploit-model=NAME  model that WRITES the exploits (proof phase);\n"
+        "                 --model keeps doing the detection. Detecting a bug and\n"
+        "                 writing the C that triggers it are different skills: a\n"
+        "                 big reasoning model often finds the bug but cannot drive\n"
+        "                 the socket/compile/gdb loop. A finding the writer cannot\n"
+        "                 prove is reported UNPROVEN (still to fix), never 'safe'.\n"
+        "                 Same as SECSERVER_EXPLOIT_MODEL; '@host:port' pins the\n"
+        "                 backend. Unset = one model does both.\n"
+        "  --adversarial-model=NAME  independent validator that re-attacks what the\n"
+        "                 primary could not prove ('off' disables the pass). Same\n"
+        "                 as SECSERVER_ADVERSARIAL_MODEL; default = reuse --model.\n"
         "  --collaborate=A,B,C   collaborative panel of models (or 'auto' for the\n"
         "                 installed Ollama set <35B); they discuss up to 10 rounds,\n"
         "                 form work groups, and converge on a consensus diagnosis.\n"
@@ -4834,6 +5116,19 @@ def _print_help(prog):
         "                        the exploit model switches at runtime (see --mode)\n"
         "  SECSERVER_BUDGET      Hard per-exploit budget in seconds\n"
         "  SECSERVER_SOFT_BUDGET Soft per-exploit budget in seconds (default 75%%)\n"
+        "  SECSERVER_EXPLOIT_MODEL       model that WRITES the exploits (the proof\n"
+        "                        phase); --model keeps doing the detection. Use it\n"
+        "                        when the auditor model finds bugs but cannot build\n"
+        "                        a PoC. A finding it cannot prove is reported\n"
+        "                        UNPROVEN (still to fix), never as safe. See\n"
+        "                        --exploit-model.\n"
+        "  CC_EXPLOIT_DROP_NOISE=0   also queue static-analysis-only findings whose\n"
+        "                        check can never be remotely exploitable (virtual\n"
+        "                        call in ctor, dead store, ...). Default 1 = report\n"
+        "                        them UNPROVEN without spending a budget on them.\n"
+        "  CC_EXPLOIT_ANY_FILE=1     also queue findings in files the exploit target\n"
+        "                        binary does not compile (server/login, master, the\n"
+        "                        NOXML datapack loaders): no proof is possible there.\n"
         "  SECSERVER_ADVERSARIAL_MODEL   the adversarial-validation model. A\n"
         "                        SECOND pass RE-ATTACKS every finding the primary\n"
         "                        model could not confirm, on its OWN budget\n"
@@ -4888,7 +5183,16 @@ CODECHECK_SECURITY_SYSTEM = (
     "overflow/underflow or signed/unsigned confusion driving a read/write/alloc, "
     "use-after-free / double-free, or a NULL deref on attacker-controlled input. Use "
     "the CALLER tree to confirm remote reachability - if untrusted input cannot reach "
-    "the bad value it is NOT a finding. Be terse. If nothing exploitable, reply "
+    "the bad value it is NOT a finding.\n"
+    "GUARDS ON THE PATH: before claiming an id/index/length/size is UNVALIDATED, "
+    "check the guards that protect the sink - READ/GREP every caller in the CALLER "
+    "tree, and check what sets any success flag the sink sits behind. A validating "
+    "guard ANYWHERE on the path (has_x(id), a range check, an early return, an 'ok' "
+    "flag a lookup sets false) makes it NOT a finding, even when the audited "
+    "function itself has no check. In your finding, name the callers you checked and "
+    "state that none of them validates it; if you did not check them, do not report "
+    "it.\n"
+    "Be terse. If nothing exploitable, reply "
     "exactly: NO ISSUES. Otherwise one line per finding: "
     "SEVERITY(low|medium|high|critical) | function:line | the exploitable bug + how "
     "remote input triggers it.")
@@ -5051,7 +5355,7 @@ def run_codecheck():
 
 
 def main(argv):
-    global RUN_UNDER, CC_IA_PANEL
+    global RUN_UNDER, CC_IA_PANEL, EXPLOIT_MODEL_REQUEST, ADVERSARIAL_MODEL_REQUEST
 
     # scan always writes FINDINGS to disk (tee), so the exploit phase works
     # regardless of whether stdout was redirected.
@@ -5069,6 +5373,19 @@ def main(argv):
                 # An optional '@host:port' suffix pins which Ollama backend
                 # serves this model; keep the bare name as MODEL_NAME.
                 common.MODEL_NAME = _register_model_spec(a[len("--model="):])
+        elif a.startswith("--exploit-model="):
+            # The exploit WRITER (proof phase) - detection stays on --model. Same
+            # as SECSERVER_EXPLOIT_MODEL; '@host:port' pins the backend.
+            EXPLOIT_MODEL_REQUEST = _register_model_spec(
+                a[len("--exploit-model="):].strip())
+        elif a.startswith("--adversarial-model="):
+            # The independent validator that re-attacks what the primary could not
+            # prove. Same as SECSERVER_ADVERSARIAL_MODEL ('off' disables it).
+            _v = a[len("--adversarial-model="):].strip()
+            ADVERSARIAL_MODEL_REQUEST = (
+                _v if _v.lower() in _ADVERSARIAL_OFF_TOKENS
+                or _v.lower() in _ADVERSARIAL_SAME_TOKENS
+                else _register_model_spec(_v))
         elif a.startswith("--collaborate="):
             # Collaborative panel: comma-separated model specs, or 'auto' for the
             # installed Ollama models under CC_PANEL_MAX_B. Same as CC_IA_PANEL.
