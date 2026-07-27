@@ -381,6 +381,11 @@ def parse_function_defs(ir_text, src_file):
     # Cache demangled lookups
     demangled_cache = {}
     for start, end, mname, demangled, dbg_id in defs:
+        # EVERY definition feeds the demangle cache, including the ones skipped
+        # below: the call-edge pass looks a CALLER up by its mangled name and a
+        # miss raises KeyError inside the worker thread, losing that whole TU's
+        # functions and edges ("worker error: _ZNK8tinyxml2...").
+        demangled_cache[mname] = demangled
         line = line_map.get(dbg_id, 0) if dbg_id else 0
         qname = FuncInfo(mname, demangled, "", 0, 0).qual_name
         cls = ""
@@ -402,7 +407,6 @@ def parse_function_defs(ir_text, src_file):
             continue
         fi = FuncInfo(mname, demangled, def_file, line, 0, class_name=cls)
         funcs.append(fi)
-        demangled_cache[mname] = demangled
 
     # Build a list of definition start positions for bisect lookup
     def_starts = [d[0] for d in defs]
@@ -435,7 +439,11 @@ def parse_function_defs(ir_text, src_file):
         if caller_name == callee:
             continue
 
-        qcaller = FuncInfo(caller_name, demangled_cache[caller_name], "", 0, 0).qual_name
+        # .get(): a miss must degrade to the mangled name (an edge that matches
+        # nothing), never raise inside the worker and drop the whole TU.
+        qcaller = FuncInfo(caller_name,
+                           demangled_cache.get(caller_name, caller_name),
+                           "", 0, 0).qual_name
         qcallee = FuncInfo(callee, callee_dm, "", 0, 0).qual_name
         if qcaller == qcallee:
             continue
