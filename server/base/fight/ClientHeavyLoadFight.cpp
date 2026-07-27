@@ -505,6 +505,13 @@ uint8_t Client::getOneSeed(const uint8_t &max)
     #endif
     const uint8_t &number=GlobalServerData::serverPrivateVariables.randomData.at(randomIndex);
     randomIndex++;
+    //randomData is a RING of CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE bytes -
+    //generateRandomNumber() already restarts at offset 0 when the next block would
+    //not fit - but this cursor never returned, so a client that consumed that many
+    //seeds (fight actions) reached at(4096) on a 4096-byte vector: out_of_range
+    //with no handler = the whole server aborts, every player dropped.
+    if(randomIndex>=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
+        randomIndex=0;
     randomSize--;
     if(randomSize<CATCHCHALLENGER_SERVER_MIN_RANDOM_LIST_SIZE)
         generateRandomNumber();
