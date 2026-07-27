@@ -1,4 +1,5 @@
 #include "MapController.hpp"
+#include "MonsterSheet.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
 #include <QtMath>
@@ -123,7 +124,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             //start move
             //moveTimer.stop();
             //the stopped step depends on the direction and on the sheet layout
-            const int baseTile=monsterBaseTile(otherPlayer.monsterTileset.data(),otherPlayer.pendingMonsterMoves.front());
+            const int baseTile=MonsterSheet::baseTile(otherPlayer.monsterTileset.data(),otherPlayer.pendingMonsterMoves.front());
             //move the player for intermediate step
             switch(otherPlayer.pendingMonsterMoves.front())
             {
@@ -194,7 +195,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 case 2:
                 {
                     Tiled::Cell cell=otherPlayer.monsterMapObject->cell();
-                    cell.setTile(otherPlayer.monsterTileset->tileAt(monsterWalkTile(otherPlayer.monsterTileset.data(),baseTile,otherPlayer.monsterStepAlternance)));
+                    cell.setTile(otherPlayer.monsterTileset->tileAt(MonsterSheet::walkTile(otherPlayer.monsterTileset.data(),baseTile,otherPlayer.monsterStepAlternance)));
                     otherPlayer.monsterMapObject->setCell(cell);
                     otherPlayer.monsterStepAlternance=!otherPlayer.monsterStepAlternance;
                 }
@@ -360,7 +361,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
 
             if(otherPlayer.monsterMapObject!=NULL)
             {
-                otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.monster_x+monsterXOffset(otherPlayer.monsterTileset.data()),(float)otherPlayer.monster_y+1));
+                otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.monster_x+MonsterSheet::xOffset(otherPlayer.monsterTileset.data()),(float)otherPlayer.monster_y+1));
                 MapObjectItem::setZValueIfLinked(otherPlayer.monsterMapObject,otherPlayer.monster_y);
             }
             else

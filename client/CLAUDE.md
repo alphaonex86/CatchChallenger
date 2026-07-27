@@ -67,9 +67,10 @@ shortest-path; the four-direction bookkeeping is the whole point.
 
 ## `monsters/<id>/overworld.png` has TWO accepted sheet layouts
 
-Told apart by image size in `maprender/MapVisualiserPlayer.cpp`; the five
-`monster*()` statics there hold ALL the format knowledge — never re-hardcode a
-tile index or the `-0.5` x correction at a call site.
+Told apart by image size in `maprender/MonsterSheet.cpp`, which holds ALL the
+format knowledge — never re-hardcode a tile index or the `-0.5` x correction at a
+call site. Guarded by `test/testingoverworld.py` (frame coverage + a pixel
+comparison against `test/overworld-test.png`).
 
 * **skin layout** 48x96 (3 cols x 4 rows of 16x24) — the very same sheet as
   `skin/<x>/trainer.png`, so a `trainer.png` can be copied over as-is. Rows

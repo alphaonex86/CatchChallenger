@@ -11,7 +11,6 @@
 #include <QTimer>
 #include <QTime>
 #include <QElapsedTimer>
-#include <QImage>
 
 class DLL_PUBLIC MapVisualiserPlayer : public MapVisualiser
 {
@@ -38,26 +37,6 @@ public:
     CatchChallenger::Direction getDirection();
     void updatePlayerMonsterTile(const uint16_t &monster);
     void setClip(const bool &clip);
-
-    //monsters/<id>/overworld.png is accepted in two sheet layouts, told apart by the
-    //image size alone. Everything the renderer needs afterwards is read back from the
-    //loaded tileset, so these five helpers hold all the format knowledge:
-    // - skin layout, 3 columns x 4 rows of 2:3 tiles (48x96 of 16x24). Exactly the
-    //   sheet of skin/<x>/trainer.png, so a trainer.png can be copied over as-is: rows
-    //   are top/right/bottom/left, columns are walk/idle/walk, and BOTH walk frames
-    //   are kept.
-    // - monster layout, 2 columns x 4 rows of square tiles (64x128 of 32x32), read
-    //   top-walk/left-walk, top-idle/left-idle, bottom-walk/right-walk,
-    //   bottom-idle/right-idle. Only one walk frame per direction exists here.
-    static Tiled::SharedTileset monsterTilesetCreate(const QString &name,const QImage &image);
-    static bool monsterTilesetIsSkinLayout(const Tiled::Tileset * const tileset);
-    //index of the standing frame for a direction, -1 when the direction is not a facing one
-    static int monsterBaseTile(const Tiled::Tileset * const tileset,const CatchChallenger::Direction &direction);
-    //index of the walking frame to show next to that standing frame
-    static int monsterWalkTile(const Tiled::Tileset * const tileset,const int &baseTile,const bool &stepAlternance);
-    //object x correction, in tiles: the object is anchored on its left edge, so a sheet
-    //wider than the map cell has to be pulled back by half the excess to stay centred
-    static qreal monsterXOffset(const Tiled::Tileset * const tileset);
     enum BlockedOn
     {
         BlockedOn_ZoneItem,

@@ -75,6 +75,7 @@ if(NOT TARGET catchchallenger_qt_lib)
         ${_libqtcc_dir}/maprender/MapVisualiser.cpp
         ${_libqtcc_dir}/maprender/MapVisualiser-map.cpp
         ${_libqtcc_dir}/maprender/MapVisualiserOrder.cpp
+        ${_libqtcc_dir}/maprender/MonsterSheet.cpp
         ${_libqtcc_dir}/maprender/MapVisualiserPlayer.cpp
         ${_libqtcc_dir}/maprender/MapVisualiserThread.cpp
         ${_libqtcc_dir}/maprender/ObjectGroupItem.cpp
