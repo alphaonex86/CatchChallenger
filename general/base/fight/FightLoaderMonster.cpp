@@ -785,11 +785,16 @@ void FightLoader::loadMonsterName(catchchallenger_datapack_map<std::string,CATCH
                 else
                 {
                     const tinyxml2::XMLElement * name = monsterNode->FirstChildElement("name");
-                    while(monsterNode!=NULL)
+                    //loop on name, NOT on monsterNode: a <monster> without <name>, or a
+                    //<name> chain with no lang="en", leaves name at NULL and the old
+                    //condition kept dereferencing it. GetText() is NULL on <name></name>
+                    //and str_tolower() takes a std::string (NULL would be UB).
+                    while(name!=NULL)
                     {
                         if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                         {
-                            tempNameToMonsterId[str_tolower(name->GetText())]=id;
+                            if(name->GetText()!=NULL)
+                                tempNameToMonsterId[str_tolower(name->GetText())]=id;
                             break;
                         }
                         name = name->NextSiblingElement("name");

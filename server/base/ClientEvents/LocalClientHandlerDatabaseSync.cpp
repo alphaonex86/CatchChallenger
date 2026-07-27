@@ -180,9 +180,17 @@ void Client::syncDatabaseAllow()
 
 void Client::syncDatabaseReputation()
 {
+    //The shared static buffer covers the common case; only a player with more
+    //reputations than it can hold allocates. std::vector releases itself on every
+    //exit path - the old code freed a malloc()ed pointer with `delete`, which is
+    //undefined behaviour (mismatched deallocator).
+    std::vector<char> bigBuffer;
     char *buffer=NULL;
     if(public_and_private_informations.reputation.size()*(4+1+1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
-        buffer=(char *)malloc(public_and_private_informations.reputation.size()*(4+1+1));
+    {
+        bigBuffer.resize(public_and_private_informations.reputation.size()*(4+1+1));
+        buffer=bigBuffer.data();
+    }
     else
         buffer=ProtocolParsingBase::tempBigBufferForOutput;
 
@@ -222,9 +230,6 @@ void Client::syncDatabaseReputation()
     #else
     #error Define what do here
     #endif
-
-    if(public_and_private_informations.reputation.size()*(4+1+1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
-        delete buffer;
 }
 
 void Client::syncBotAlreadyBeaten(const CATCHCHALLENGER_TYPE_MAPID &mapId)
