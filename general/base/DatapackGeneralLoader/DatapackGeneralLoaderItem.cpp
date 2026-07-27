@@ -84,11 +84,16 @@ void DatapackGeneralLoader::loadItems(catchchallenger_datapack_map<std::string,C
                 if(ok)
                 {
                     const tinyxml2::XMLElement * name = item->FirstChildElement("name");
-                    while(item!=NULL)
+                    //loop on name, NOT on item: an item without <name>, or a <name> chain
+                    //with no lang="en", leaves name at NULL and the old condition kept
+                    //dereferencing it. GetText() is NULL on <name></name> and
+                    //str_tolower() takes a std::string (NULL would be UB).
+                    while(name!=NULL)
                     {
                         if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                         {
-                            tempNameToItemId[str_tolower(name->GetText())]=id;
+                            if(name->GetText()!=NULL)
+                                tempNameToItemId[str_tolower(name->GetText())]=id;
                             break;
                         }
                         name = name->NextSiblingElement("name");
