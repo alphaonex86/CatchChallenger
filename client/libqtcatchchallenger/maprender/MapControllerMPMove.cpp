@@ -122,12 +122,12 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         {
             //start move
             //moveTimer.stop();
-            int baseTile=1;
-            //move the player for intermediate step and define the base tile (define the stopped step with direction)
+            //the stopped step depends on the direction and on the sheet layout
+            const int baseTile=monsterBaseTile(otherPlayer.monsterTileset.data(),otherPlayer.pendingMonsterMoves.front());
+            //move the player for intermediate step
             switch(otherPlayer.pendingMonsterMoves.front())
             {
                 case CatchChallenger::Direction_move_at_left:
-                baseTile=3;
                 switch(otherPlayer.moveStep)
                 {
                     case 1:
@@ -139,7 +139,6 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 }
                 break;
                 case CatchChallenger::Direction_move_at_right:
-                baseTile=7;
                 switch(otherPlayer.moveStep)
                 {
                     case 1:
@@ -151,7 +150,6 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 }
                 break;
                 case CatchChallenger::Direction_move_at_top:
-                baseTile=2;
                 switch(otherPlayer.moveStep)
                 {
                     case 1:
@@ -163,7 +161,6 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 }
                 break;
                 case CatchChallenger::Direction_move_at_bottom:
-                baseTile=6;
                 switch(otherPlayer.moveStep)
                 {
                     case 1:
@@ -197,8 +194,9 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 case 2:
                 {
                     Tiled::Cell cell=otherPlayer.monsterMapObject->cell();
-                    cell.setTile(otherPlayer.monsterTileset->tileAt(baseTile-2));
+                    cell.setTile(otherPlayer.monsterTileset->tileAt(monsterWalkTile(otherPlayer.monsterTileset.data(),baseTile,otherPlayer.monsterStepAlternance)));
                     otherPlayer.monsterMapObject->setCell(cell);
+                    otherPlayer.monsterStepAlternance=!otherPlayer.monsterStepAlternance;
                 }
                 break;
                 //stopped step
@@ -362,7 +360,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
 
             if(otherPlayer.monsterMapObject!=NULL)
             {
-                otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.monster_x-0.5,(float)otherPlayer.monster_y+1));
+                otherPlayer.monsterMapObject->setPosition(QPointF((float)otherPlayer.monster_x+monsterXOffset(otherPlayer.monsterTileset.data()),(float)otherPlayer.monster_y+1));
                 MapObjectItem::setZValueIfLinked(otherPlayer.monsterMapObject,otherPlayer.monster_y);
             }
             else

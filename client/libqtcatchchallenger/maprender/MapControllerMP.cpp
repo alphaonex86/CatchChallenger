@@ -277,7 +277,7 @@ void MapControllerMP::updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const
             // crashes inside the freed Tileset's mTilesById tree.
             if(tempPlayer.monsterTileset)
                 MapItem::validTilesets_.erase(tempPlayer.monsterTileset.data());
-            tempPlayer.monsterTileset=Tiled::Tileset::create(QString::fromStdString(lastTileset),32,32);
+            tempPlayer.monsterTileset=monsterTilesetCreate(QString::fromStdString(lastTileset),image);
             MapItem::validTilesets_.emplace(tempPlayer.monsterTileset.data(), tempPlayer.monsterTileset);  // see MapObjectItem.cpp cellTilesetIsValid
             if(!tempPlayer.monsterTileset->loadFromImage(image,QString::fromStdString(imagePath)))
                 abort();
@@ -292,28 +292,12 @@ void MapControllerMP::updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const
         tempPlayer.monsterMapObject->setName("Other player monster");
 
         Tiled::Cell cell=tempPlayer.monsterMapObject->cell();
-        switch(tempPlayer.direction)
+        const int baseTile=monsterBaseTile(tempPlayer.monsterTileset.data(),tempPlayer.direction);
+        if(baseTile>=0)
         {
-            case CatchChallenger::Direction_look_at_top:
-            case CatchChallenger::Direction_move_at_top:
-                cell.setTile(tempPlayer.monsterTileset->tileAt(2));
-            break;
-            case CatchChallenger::Direction_look_at_right:
-            case CatchChallenger::Direction_move_at_right:
-                cell.setTile(tempPlayer.monsterTileset->tileAt(7));
-            break;
-            case CatchChallenger::Direction_look_at_bottom:
-            case CatchChallenger::Direction_move_at_bottom:
-                cell.setTile(tempPlayer.monsterTileset->tileAt(6));
-            break;
-            case CatchChallenger::Direction_look_at_left:
-            case CatchChallenger::Direction_move_at_left:
-                cell.setTile(tempPlayer.monsterTileset->tileAt(3));
-            break;
-            default:
-            break;
+            cell.setTile(tempPlayer.monsterTileset->tileAt(baseTile));
+            tempPlayer.monsterMapObject->setCell(cell);
         }
-        tempPlayer.monsterMapObject->setCell(cell);
     }
     if(resetMonster)
         loadOtherMonsterFromCurrentMap(tempPlayer);
@@ -436,7 +420,7 @@ void MapControllerMP::loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlay
         else
             qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-        tempPlayer.monsterMapObject->setPosition(QPointF(tempPlayer.monster_x-0.5,tempPlayer.monster_y+1));
+        tempPlayer.monsterMapObject->setPosition(QPointF(tempPlayer.monster_x+monsterXOffset(tempPlayer.monsterTileset.data()),tempPlayer.monster_y+1));
         MapObjectItem::setZValueIfLinked(tempPlayer.monsterMapObject,tempPlayer.monster_y);
     }
 }

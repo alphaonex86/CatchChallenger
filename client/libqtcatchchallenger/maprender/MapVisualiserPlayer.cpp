@@ -80,6 +80,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
     stepAlternance=false;
+    monsterStepAlternance=false;
     animationTileset=Tiled::Tileset::create(QStringLiteral("animation"),16,16);
     MapItem::validTilesets_.emplace(animationTileset.data(), animationTileset);  // see MapObjectItem.cpp cellTilesetIsValid
     nextCurrentObject=new Tiled::MapObject();
@@ -464,12 +465,12 @@ void MapVisualiserPlayer::moveStepSlot()
         if(pendingMonsterMoves.size()>1)
         {
             //start move
-            int baseTile=1;
-            //move the player for intermediate step and define the base tile (define the stopped step with direction)
+            //the stopped step depends on the direction and on the sheet layout
+            const int baseTile=monsterBaseTile(monsterTileset.data(),pendingMonsterMoves.front());
+            //move the player for intermediate step
             switch(pendingMonsterMoves.front())
             {
                 case CatchChallenger::Direction_move_at_left:
-                baseTile=3;
                 switch(moveStep)
                 {
                     case 1:
@@ -481,7 +482,6 @@ void MapVisualiserPlayer::moveStepSlot()
                 }
                 break;
                 case CatchChallenger::Direction_move_at_right:
-                baseTile=7;
                 switch(moveStep)
                 {
                     case 1:
@@ -493,7 +493,6 @@ void MapVisualiserPlayer::moveStepSlot()
                 }
                 break;
                 case CatchChallenger::Direction_move_at_top:
-                baseTile=2;
                 switch(moveStep)
                 {
                     case 1:
@@ -505,7 +504,6 @@ void MapVisualiserPlayer::moveStepSlot()
                 }
                 break;
                 case CatchChallenger::Direction_move_at_bottom:
-                baseTile=6;
                 switch(moveStep)
                 {
                     case 1:
@@ -539,8 +537,9 @@ void MapVisualiserPlayer::moveStepSlot()
                 case 2:
                 {
                     Tiled::Cell cell=monsterMapObject->cell();
-                    cell.setTile(monsterTileset->tileAt(baseTile-2));
+                    cell.setTile(monsterTileset->tileAt(monsterWalkTile(monsterTileset.data(),baseTile,monsterStepAlternance)));
                     monsterMapObject->setCell(cell);
+                    monsterStepAlternance=!monsterStepAlternance;
                 }
                 break;
                 //stopped step
@@ -692,7 +691,7 @@ void MapVisualiserPlayer::moveStepSlot()
                     loadMonsterFromCurrentMap();
                 }
 
-                monsterMapObject->setPosition(QPointF(monster_x-0.5,monster_y+1));
+                monsterMapObject->setPosition(QPointF(monster_x+monsterXOffset(monsterTileset.data()),monster_y+1));
                 MapObjectItem::objectLink.at(monsterMapObject)->setZValue(monster_y);
             }
         animationDisplayed=false;
@@ -1930,7 +1929,7 @@ void MapVisualiserPlayer::loadMonsterFromCurrentMap()
         else
             qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_monster_map->objectGroup");
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-        monsterMapObject->setPosition(QPointF(monster_x-0.5,monster_y+1));
+        monsterMapObject->setPosition(QPointF(monster_x+monsterXOffset(monsterTileset.data()),monster_y+1));
         MapObjectItem::objectLink.at(monsterMapObject)->setZValue(monster_y);
     }
 }
@@ -2105,6 +2104,110 @@ void MapVisualiserPlayer::resetMonsterTile()
     monsterMapObject->setVisible(false);
 }
 
+//see MapVisualiserPlayer.hpp for the two sheet layouts. Only this one function looks at
+//the image: the skin layout is the one whose tiles are 2:3 (16x24), which no square
+//monster sheet can be. Anything else keeps the historic 32x32 grid untouched.
+Tiled::SharedTileset MapVisualiserPlayer::monsterTilesetCreate(const QString &name,const QImage &image)
+{
+    if(image.width()%3==0 && image.height()%4==0)
+    {
+        const int tileWidth=image.width()/3;
+        const int tileHeight=image.height()/4;
+        if(tileHeight*2==tileWidth*3)
+            return Tiled::Tileset::create(name,tileWidth,tileHeight);
+    }
+    return Tiled::Tileset::create(name,32,32);
+}
+
+bool MapVisualiserPlayer::monsterTilesetIsSkinLayout(const Tiled::Tileset * const tileset)
+{
+    bool isSkinLayout=false;
+    if(tileset!=NULL)
+    {
+        if(tileset->columnCount()==3)
+            isSkinLayout=true;
+    }
+    return isSkinLayout;
+}
+
+int MapVisualiserPlayer::monsterBaseTile(const Tiled::Tileset * const tileset,const CatchChallenger::Direction &direction)
+{
+    int baseTile=-1;
+    if(monsterTilesetIsSkinLayout(tileset))
+    {
+        //one direction per row, the idle frame is the middle column: same indexes as a player skin
+        switch(direction)
+        {
+            case CatchChallenger::Direction_look_at_top:
+            case CatchChallenger::Direction_move_at_top:
+                baseTile=1;
+            break;
+            case CatchChallenger::Direction_look_at_right:
+            case CatchChallenger::Direction_move_at_right:
+                baseTile=4;
+            break;
+            case CatchChallenger::Direction_look_at_bottom:
+            case CatchChallenger::Direction_move_at_bottom:
+                baseTile=7;
+            break;
+            case CatchChallenger::Direction_look_at_left:
+            case CatchChallenger::Direction_move_at_left:
+                baseTile=10;
+            break;
+            default:
+            break;
+        }
+    }
+    else
+    {
+        //two directions per row pair, the idle frame is the second row of the pair
+        switch(direction)
+        {
+            case CatchChallenger::Direction_look_at_top:
+            case CatchChallenger::Direction_move_at_top:
+                baseTile=2;
+            break;
+            case CatchChallenger::Direction_look_at_right:
+            case CatchChallenger::Direction_move_at_right:
+                baseTile=7;
+            break;
+            case CatchChallenger::Direction_look_at_bottom:
+            case CatchChallenger::Direction_move_at_bottom:
+                baseTile=6;
+            break;
+            case CatchChallenger::Direction_look_at_left:
+            case CatchChallenger::Direction_move_at_left:
+                baseTile=3;
+            break;
+            default:
+            break;
+        }
+    }
+    return baseTile;
+}
+
+int MapVisualiserPlayer::monsterWalkTile(const Tiled::Tileset * const tileset,const int &baseTile,const bool &stepAlternance)
+{
+    int walkTile=baseTile-2;
+    if(monsterTilesetIsSkinLayout(tileset))
+    {
+        //a walk frame sits on each side of the idle one, alternate them like the player does
+        if(stepAlternance)
+            walkTile=baseTile-1;
+        else
+            walkTile=baseTile+1;
+    }
+    return walkTile;
+}
+
+qreal MapVisualiserPlayer::monsterXOffset(const Tiled::Tileset * const tileset)
+{
+    qreal offset=0;
+    if(tileset!=NULL)
+        offset=(qreal)(CLIENT_BASE_TILE_SIZE-tileset->tileWidth())/(CLIENT_BASE_TILE_SIZE*2);
+    return offset;
+}
+
 void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
 {
     std::cerr << "MapVisualiserPlayer::updatePlayerMonsterTile() monster=" << monster << std::endl;
@@ -2127,7 +2230,7 @@ void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
         {
             if(monsterTileset)
                 MapItem::validTilesets_.erase(monsterTileset.data());
-            monsterTileset=Tiled::Tileset::create(QString::fromStdString(lastTileset),32,32);
+            monsterTileset=monsterTilesetCreate(QString::fromStdString(lastTileset),image);
             MapItem::validTilesets_.emplace(monsterTileset.data(), monsterTileset);  // see MapObjectItem.cpp cellTilesetIsValid
             if(!monsterTileset->loadFromImage(image,QString::fromStdString(imagePath)))
                 abort();
@@ -2146,28 +2249,12 @@ void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
         monsterMapObject->setName("Current player monster");
 
         Tiled::Cell cell=monsterMapObject->cell();
-        switch(direction)
+        const int baseTile=monsterBaseTile(monsterTileset.data(),direction);
+        if(baseTile>=0)
         {
-            case CatchChallenger::Direction_look_at_top:
-            case CatchChallenger::Direction_move_at_top:
-                cell.setTile(monsterTileset->tileAt(2));
-            break;
-            case CatchChallenger::Direction_look_at_right:
-            case CatchChallenger::Direction_move_at_right:
-                cell.setTile(monsterTileset->tileAt(7));
-            break;
-            case CatchChallenger::Direction_look_at_bottom:
-            case CatchChallenger::Direction_move_at_bottom:
-                cell.setTile(monsterTileset->tileAt(6));
-            break;
-            case CatchChallenger::Direction_look_at_left:
-            case CatchChallenger::Direction_move_at_left:
-                cell.setTile(monsterTileset->tileAt(3));
-            break;
-            default:
-            break;
+            cell.setTile(monsterTileset->tileAt(baseTile));
+            monsterMapObject->setCell(cell);
         }
-        monsterMapObject->setCell(cell);
     }
     if(resetMonster)
         loadMonsterFromCurrentMap();

@@ -52,6 +52,8 @@ public:
         Tiled::SharedTileset monsterTileset;
         CATCHCHALLENGER_TYPE_MAPID current_monster_map;
         COORD_TYPE monster_x,monster_y;
+        //which of the two walk frames comes next, only used by the skin layout
+        bool monsterStepAlternance;
 
         //presumed map
         CATCHCHALLENGER_TYPE_MAPID presumed_map;
