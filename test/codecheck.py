@@ -8,18 +8,24 @@ build the clang-LLVM-IR code tree, then process each function/method ONE BY ONE
 with its callers + its multiple callees — but feed the IA only ONE callee branch
 per turn so a small local model's context never saturates.
 
-Two layers:
+Three layers:
   1. INVARIANT CHECK (always, deterministic, no IA): for every function in scope,
      each per-turn view (headers + body + caller tree + ONE callee branch) must
      hold AT MOST ONE callee branch AND stay under CONTEXT_BUDGET_TOKENS. A view
      that saturates -> FAIL (that is exactly the thing this stage exists to catch).
-  2. LIVE SMOKE (only if an IA backend is reachable): audit a few functions for
-     real, one branch at a time, and FAIL only on a transport/tooling error. If no
-     backend is up, this layer is skipped (not a failure) — the suite must not
-     depend on a running Ollama/Claude.
+  2. FILE SWEEP (deterministic clang-tidy over the scope).
+  3. IA REVIEW (default, only if a backend is reachable): a REAL quality review of
+     each function by the local Ollama model — real BUGS, ILLOGICAL/dead code,
+     clear PERFORMANCE problems, naming/clarity. NOT security: security/server.py
+     owns exploitable vulnerabilities and their proof. Only HIGH/CRITICAL findings
+     gate, and the engine adversarially re-checks every one of them (downgrading to
+     MEDIUM when unconfirmed), so a failure means the model proved it from the code.
+     No backend up -> layer skipped, not a failure (the suite must not depend on a
+     running Ollama/Claude).
 
 Scope: general/base (the protocol parsers — security-critical, and they build
-fast from the server/cli compile DB). Override with CC_CODECHECK_SCOPE.
+fast from the server/cli compile DB). Override with --scope= / CC_CODECHECK_SCOPE.
+Run `codecheck.py --help` for the flags (model choice, budget, gating).
 
 Self-skips (PASS) when clang/cmake are absent or the code tree can't be built —
 this is opt-in tooling, like the cross-compile stages.
@@ -29,6 +35,7 @@ import sys
 sys.dont_write_bytecode = True
 
 import os
+import re
 import time
 import shutil
 import importlib.util
@@ -55,9 +62,80 @@ C_GREEN = "\033[92m"; C_RED = "\033[91m"; C_CYAN = "\033[96m"; C_RESET = "\033[0
 # well under it (~4 chars/token, codecheck's own estimate).
 CONTEXT_BUDGET_TOKENS = 8000
 MAX_INVARIANT_FUNCS = 600     # bound the deterministic scan
-LIVE_SMOKE_FUNCS = 3          # how many functions to audit for real when IA is up
 SCOPE_REL = os.environ.get("CC_CODECHECK_SCOPE", "general/base")
 NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
+# Layer 3 (IA quality review) budget + bounds. The verdict cache is keyed by
+# (model, function source), so a re-run replays what it already reviewed for free
+# and spends the budget getting FURTHER through the scope.
+IA_BUDGET_SECS = int(os.environ.get("CC_CODECHECK_IA_BUDGET", "600"))
+# Default reviewer: a local Ollama model, so the stage needs no cloud key and no
+# out-of-repo settings. --model= / CC_CODECHECK_MODEL picks another one.
+DEFAULT_IA_MODEL = os.environ.get("CC_CODECHECK_MODEL", "gemma4:26b")
+MAX_IA_FUNCS = int(os.environ.get("CC_CODECHECK_IA_FUNCS", "400"))
+MAX_IA_PRINTED = 60          # bound the console output, not the review
+IA_FINDINGS_MD = os.path.join(os.path.dirname(FAILED_JSON),
+                              "codecheck-ia-findings.md")
+
+_USAGE = """\
+usage: codecheck.py [--model=NAME] [--budget=SECS] [--scope=REL]
+                    [--no-ia] [--no-gate] [--help]
+
+all.sh stage driving the function-by-function C/C++ quality auditor
+(tools/codecheck/codecheck.py), one callee branch per turn. Three layers:
+
+  1 invariant  deterministic: every per-function IA view holds exactly ONE callee
+               branch and stays under the context budget            [gates]
+  2 sweep      deterministic clang-tidy sweep over the scope        [gates]
+  3 IA review  local-Ollama review of each function: real BUGS, ILLOGICAL/dead
+               code, clear PERFORMANCE problems, naming/clarity.
+               SECURITY IS NOT REVIEWED HERE - security/server.py owns
+               exploitable vulnerabilities + proof.   [gates on HIGH/CRITICAL]
+
+Every HIGH/CRITICAL finding is adversarially re-checked by the same model and
+downgraded to MEDIUM when the check cannot confirm it, so only findings the model
+is SURE of can fail the stage. LOW/MEDIUM print for information.
+
+Options:
+  --model=NAME   Ollama model for layer 3 (default %s, CC_CODECHECK_MODEL).
+                 Append '@host:port' to pin a backend, or use 'claude-cli'.
+                 --llm= is accepted as an alias.
+  --budget=SECS  wall budget for layer 3 (default %d, CC_CODECHECK_IA_BUDGET).
+                 Functions are reviewed leaves-first until it runs out.
+  --scope=REL    repo-relative scope (default %s, CC_CODECHECK_SCOPE)
+  --no-ia        deterministic layers only, no IA call (CC_CODECHECK_NO_IA=1)
+  --no-gate      report IA findings without ever failing (CC_CODECHECK_NO_GATE=1)
+  --help, -h     this help
+
+The shared --sanitize / --valgrind / --profile diagnostic flags also apply.
+"""
+
+
+def _parse_args(argv):
+    """Flags for this stage. Unknown ones are ignored on purpose: all.sh passes
+    the shared diagnostic flags (--sanitize/--valgrind/--profile/--node), which
+    diagnostic.parse_diag_args() owns."""
+    opt = {"model": DEFAULT_IA_MODEL, "budget": IA_BUDGET_SECS, "scope": SCOPE_REL,
+           "ia": not os.environ.get("CC_CODECHECK_NO_IA"),
+           "gate": not os.environ.get("CC_CODECHECK_NO_GATE")}
+    for a in argv:
+        if a in ("--help", "-h"):
+            print(_USAGE % (DEFAULT_IA_MODEL, IA_BUDGET_SECS, SCOPE_REL))
+            sys.exit(0)
+        elif a.startswith("--model=") or a.startswith("--llm="):
+            opt["model"] = a.split("=", 1)[1].strip()
+        elif a.startswith("--budget="):
+            try:
+                opt["budget"] = int(a.split("=", 1)[1])
+            except ValueError:
+                print("error: --budget expects seconds, e.g. --budget=900")
+                sys.exit(2)
+        elif a.startswith("--scope="):
+            opt["scope"] = a.split("=", 1)[1].strip()
+        elif a == "--no-ia":
+            opt["ia"] = False
+        elif a == "--no-gate":
+            opt["gate"] = False
+    return opt
 
 
 def log_pass(label, secs=0.0):
@@ -120,41 +198,133 @@ def _ensure_compile_db():
     return db
 
 
-def _ia_reachable(common):
-    """Cheap one-shot probe of the configured backend (Ollama/Claude/claude-cli).
-    True iff a tiny prompt returns text; any error -> not reachable (skip live)."""
+def _ia_reachable(common, model=None):
+    """Cheap one-shot probe of the model the review will actually use (an Ollama
+    model, or the configured backend when model is None). True iff a tiny prompt
+    returns text; any error -> not reachable, so the IA layer is skipped, not
+    failed (an absent local model is not a code regression)."""
+    msgs = [{"role": "system", "content": "Reply with OK."},
+            {"role": "user", "content": "OK"}]
     try:
-        ans = common.chat([{"role": "system", "content": "Reply with OK."},
-                           {"role": "user", "content": "OK"}], timeout=25)
+        ans = common.chat_with(model, msgs, 60) if model else common.chat(msgs, 60)
         return bool(ans and ans.strip())
     except Exception as exc:
-        log_info(f"IA backend not reachable ({exc}); live smoke skipped")
+        log_info(f"IA backend/model not reachable ({exc}); IA review skipped")
         return False
+
+
+_BARE_SEV_RE = re.compile(r"\|\s*(LOW|MEDIUM|HIGH|CRITICAL)\s*\|", re.I)
+
+
+def _severity_of(eng, finding):
+    """Highest severity in a finding. The engine reads the tagged form
+    SEVERITY(HIGH); a real model often writes the bare column instead
+    ('logic | MEDIUM | fn:35 | ...'), which would otherwise score as untagged and
+    never gate. Fall back to that pipe-delimited column - bounded by the pipes, so
+    the word 'high' inside prose does not match."""
+    sev = eng.finding_severity(finding)
+    if not sev:
+        best = 0
+        for m in _BARE_SEV_RE.finditer(finding):
+            s = m.group(1).upper()
+            if eng._SEV_ORDER[s] > best:
+                best, sev = eng._SEV_ORDER[s], s
+    return sev
+
+
+def _ia_review(eng, idx, funcs, opt, failures):
+    """Layer 3: real quality review of each function by the local IA - bugs,
+    illogical/dead code, clear performance problems, naming/clarity. NOT security
+    (security/server.py owns exploitable vulnerabilities and their proof).
+
+    Only HIGH/CRITICAL findings gate: the engine adversarially re-checks every one
+    of them with the same model and downgrades it to MEDIUM when the check cannot
+    confirm it, so a gating finding is one the model proved from the shown code.
+    A transport error never gates (backend health is not a code regression)."""
+    model = opt["model"] or None
+    t0 = time.monotonic()
+    log_info(f"IA review: bugs/illogic/perf via {model or 'configured backend'} "
+             f"(budget {opt['budget']}s; security NOT reviewed here)")
+    reviewed = 0
+    printed = 0
+    errors = 0
+    counts = {"LOW": 0, "MEDIUM": 0, "HIGH": 0, "CRITICAL": 0}
+    hard = []
+    md = ["# codecheck IA review (bugs / illogic / perf - NOT security)\n"]
+    for fi in funcs[:MAX_IA_FUNCS]:
+        if time.monotonic() - t0 >= opt["budget"]:
+            break
+        try:
+            found = eng.audit_function(idx, fi, model=model, verify=True)
+        except Exception as exc:      # a bad function must not kill the stage
+            errors += 1
+            log_info(f"IA review: {fi.qual_name} raised {exc}")
+            continue
+        reviewed += 1
+        rel = os.path.relpath(fi.file, ROOT)
+        for f in found:
+            if f.startswith("[chat error"):
+                errors += 1
+            else:
+                sev = _severity_of(eng, f)
+                if sev:
+                    counts[sev] += 1
+                one = " ".join(f.split())
+                md.append("- **%s** `%s:%d` %s — %s\n"
+                          % (sev or "INFO", rel, fi.line, fi.qual_name, one))
+                # "[severity downgraded" = the adversarial check did not confirm it
+                if sev in ("HIGH", "CRITICAL") and "[severity downgraded" not in f:
+                    hard.append(("ia %s" % fi.qual_name, "%s:%d %s"
+                                 % (rel, fi.line, one[:400])))
+                    if printed < MAX_IA_PRINTED:
+                        printed += 1
+                        log_info(f"  {C_RED}{sev}{C_RESET} {rel}:{fi.line} "
+                                 f"{fi.qual_name}\n        {one[:400]}")
+                elif printed < MAX_IA_PRINTED:
+                    printed += 1
+                    log_info(f"  {sev or 'INFO'} {rel}:{fi.line} {fi.qual_name}"
+                             f"\n        {one[:300]}")
+    secs = time.monotonic() - t0
+    try:
+        with open(IA_FINDINGS_MD, "w") as fh:
+            fh.write("".join(md))
+    except OSError as exc:
+        log_info(f"could not write {IA_FINDINGS_MD}: {exc}")
+    tally = (f"{reviewed} function(s), {counts['CRITICAL']} critical / "
+             f"{counts['HIGH']} high / {counts['MEDIUM']} medium / {counts['LOW']} low"
+             f"{f', {errors} transport error(s)' if errors else ''}")
+    if reviewed == 0:
+        log_info(f"IA review: nothing reviewed inside the {opt['budget']}s budget "
+                 "— raise --budget or use a faster model")
+    elif hard and opt["gate"]:
+        failures.extend(hard)
+        log_fail("IA review", f"{len(hard)} confirmed HIGH/CRITICAL finding(s); "
+                 f"{tally}; details {IA_FINDINGS_MD}", secs)
+    elif hard:
+        log_info(f"IA review: {len(hard)} HIGH/CRITICAL finding(s) NOT gating "
+                 f"(--no-gate); {tally}; details {IA_FINDINGS_MD}")
+        log_pass(f"IA review (report-only): {tally}", secs)
+    else:
+        log_pass(f"IA review: {tally}; details {IA_FINDINGS_MD}", secs)
 
 
 def main():
     t0 = time.monotonic()
-    # This file is the all.sh HARNESS self-test of the codecheck ENGINE, NOT the
-    # auditor — it ignores the auditor's flags. If invoked WITH them, redirect loudly
-    # so it can't be mistaken for the auditor (don't silently run the smoke + report
-    # "0 failures", which reads as "the code is clean").
-    _auditor_flags = {"--llm", "--panel", "--func", "--model", "--scope", "--limit"}
-    if any(a.split("=", 1)[0] in _auditor_flags for a in sys.argv[1:]):
-        print("test/codecheck.py is the all.sh HARNESS self-test of the codecheck "
-              "engine — NOT the auditor; it ignores %s.\n"
-              "To AUDIT code (find bugs/naming/clarity/perf), run the tool:\n"
-              "    python3 %s --llm <model[@ollama-url]> --scope <path>"
-              % (", ".join(sorted(_auditor_flags)),
-                 os.path.join(CODECHECK_DIR, "codecheck.py")))
-        sys.exit(2)
+    opt = _parse_args(sys.argv[1:])
+    global SCOPE_REL
+    SCOPE_REL = opt["scope"]
     # Thinking models (gemma4) spend the whole num_predict on thought and return
-    # empty; the audit views need no reasoning, so default think OFF for the smoke
+    # empty; the per-function views need no reasoning, so default think OFF
     # (operator can override CC_OLLAMA_THINK).
     os.environ.setdefault("CC_OLLAMA_THINK", "false")
     if shutil.which("clang") is None:
         _skip_pass("clang not found — codecheck needs clang for the LLVM-IR tree")
 
     eng = _load_engine()
+    if opt["model"]:
+        # '@host:port' pins which Ollama backend serves this model; the bare name
+        # is what chat_with() then routes.
+        opt["model"] = eng.common._register_model_spec(opt["model"])
     # codecheck.build_index() auto-finds/generates the compile DB and redirects the
     # clang-IR + type caches to the persistent SSD cache — nothing to wire here.
     scope = [os.path.join(ROOT, SCOPE_REL)]
@@ -248,32 +418,16 @@ def main():
                 log_pass(f"sweep: {total} well-formed finding(s) over {SCOPE_REL}",
                          time.monotonic() - ts)
 
-    # ---- layer 2: bounded live smoke (only if a backend is reachable) ----------
-    # ONE function, ONE branch, ONE IA call — just prove the per-turn pipeline works
-    # end to end. A full audit is a manual / server.py run, NOT a CI gate: a 26-30B
-    # local model is far too slow to audit hundreds of functions inside a test cap.
-    if _ia_reachable(eng.common):
-        target = next((f for f in funcs if eng.callee_branches(idx, f.qual_name)), funcs[0])
-        _label, ctx = next(iter(eng.build_views(idx, target)))
-        log_info(f"live smoke: 1 branch of {target.qual_name} (~{len(ctx)//4} tok)")
-        ts = time.monotonic()
-        # The smoke is OPPORTUNISTIC: an empty/errored reply is a backend-health
-        # issue (unreachable model, a thinking model with think-tokens not disabled,
-        # etc.), NOT a codecheck logic bug — report it but do NOT gate the suite on
-        # local-model health. Only the deterministic invariant check above gates.
-        try:
-            ans = eng.common.chat([{"role": "system", "content": eng.CHECK_SYSTEM},
-                                   {"role": "user", "content": ctx}], timeout=180)
-            if ans and ans.strip():
-                log_pass(f"live smoke {target.qual_name}", time.monotonic() - ts)
-            else:
-                log_info(f"live smoke: empty IA reply ({time.monotonic()-ts:.0f}s) — "
-                         "backend issue, not gating the suite")
-        except Exception as exc:
-            log_info(f"live smoke: IA call failed ({exc}) — not gating the suite")
+    # ---- layer 3: IA quality review (bugs / illogic / perf - NOT security) -----
+    if not opt["ia"]:
+        log_info("IA review skipped (--no-ia / CC_CODECHECK_NO_IA)")
+    elif _ia_reachable(eng.common, opt["model"] or None):
+        _ia_review(eng, idx, funcs, opt, failures)
     else:
-        log_info("live smoke skipped (no IA backend up) — invariant check still ran")
+        log_info("IA review skipped (model/backend not up) — deterministic layers ran")
 
+    # (The old one-call "live smoke" is gone: layer 3 exercises the same per-turn
+    # pipeline for real, so a separate probe call was pure duplication.)
     _save_and_exit(failures)
 
 
