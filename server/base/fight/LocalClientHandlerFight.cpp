@@ -739,6 +739,12 @@ Skill::AttackReturn Client::generateOtherAttack()
     c.doTheCurrentMonsterAttack(skill,skillLevel);
     if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
         doTurnIfChangeOfMonster=false;
+    //c.doTheCurrentMonsterAttack() is what pushes OUR entry, and it returns early
+    //(no push) when c is not in battle or its otherPlayerBattle no longer points
+    //back at us - an asymmetric battle state. attackReturn is cleared at each
+    //fight start, so back() then reads an EMPTY vector: undefined behaviour.
+    if(attackReturn.empty())
+        return attackReturnTemp;
     return attackReturn.back();
 }
 
