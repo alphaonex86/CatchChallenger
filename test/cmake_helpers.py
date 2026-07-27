@@ -222,6 +222,13 @@ _PRO_TO_CMAKE = {
         [],
         "test/testingpathfinding",
     ),
+    # test/testingoverworld/ — MonsterSheet.cpp, the two accepted layouts of
+    # monsters/<id>/overworld.png. Reads two datapack PNGs; no network/DB/event loop.
+    "test/testingoverworld/testoverworld.pro": (
+        "testoverworld",
+        [],
+        "test/testingoverworld",
+    ),
     # qtopengl moved up to client/CMakeLists.txt; client/qtopengl/ is now
     # source-only (no CMakeLists.txt). Both legacy .pro paths point at
     # the new client/ project.
