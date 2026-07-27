@@ -4,6 +4,7 @@
 
 #include <postgresql/libpq-fe.h>
 #include <queue>
+#include <deque>
 #include <vector>
 #include <string>
 #include <chrono>
@@ -51,8 +52,13 @@ private:
     int tuleIndex;
     int ntuples;
     PGresult *result;
-    //vector more fast on small data with less than 1024<entry
-    std::vector<CatchChallenger::DatabaseBaseCallBack> queue;
+    //deque, NOT vector: asyncRead()/asyncPreparedRead() hand the CALLER a pointer
+    //to the entry (&queue.back()), the caller KEEPS it (Client::callbackRegistred)
+    //and ~Client() writes through it to cancel a pending query. A vector moves its
+    //elements on push_back reallocation and shifts them all on the FIFO erase, so
+    //that pointer went stale and the write landed on another client's callback or
+    //on freed memory. deque keeps references valid across push_back/pop_front.
+    std::deque<CatchChallenger::DatabaseBaseCallBack> queue;
     struct PreparedStatement
     {
         std::string query;

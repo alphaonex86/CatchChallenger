@@ -4,6 +4,7 @@
 
 #include <mysql/mysql.h>
 #include <queue>
+#include <deque>
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -44,7 +45,10 @@ private:
     int ntuples;
     int nfields;
     MYSQL_RES *result;
-    std::vector<CatchChallenger::DatabaseBaseCallBack> queue;
+    //deque, NOT vector: see EventLoopPostgresql.hpp - the caller keeps the
+    //&queue.back() pointer we return and writes through it from ~Client(), so the
+    //container must not move its elements on push_back or on the FIFO erase.
+    std::deque<CatchChallenger::DatabaseBaseCallBack> queue;
     std::vector<std::string> queriesList;
     bool started;
     static char emptyString[1];
