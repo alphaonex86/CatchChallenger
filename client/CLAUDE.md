@@ -65,6 +65,20 @@ continuing straight just extends the last run (`.back().second++`, no turn)
 while turning starts a new run. Don't "simplify" it into a standard A*/BFS
 shortest-path; the four-direction bookkeeping is the whole point.
 
+## `monsters/<id>/overworld.png` has TWO accepted sheet layouts
+
+Told apart by image size in `maprender/MapVisualiserPlayer.cpp`; the five
+`monster*()` statics there hold ALL the format knowledge — never re-hardcode a
+tile index or the `-0.5` x correction at a call site.
+
+* **skin layout** 48x96 (3 cols x 4 rows of 16x24) — the very same sheet as
+  `skin/<x>/trainer.png`, so a `trainer.png` can be copied over as-is. Rows
+  top/right/bottom/left, columns walk/idle/walk, idle at 1/4/7/10, both walk
+  frames used.
+* **monster layout** 64x128 (2 cols x 4 rows of 32x32) — read top-walk/left-walk,
+  top-idle/left-idle, bottom-walk/right-walk, bottom-idle/right-idle; idle at
+  2/7/6/3, single walk frame at `base-2`.
+
 ## Testing — drive the client over QLocalServer, don't add in-client test code
 
 Prefer NOT to change production/base client code to implement a test case. The client exposes a **QLocalServer automation channel** (`client/libqtcatchchallenger/LocalListener.*`) precisely so a test harness can drive it EXTERNALLY over a unix socket — inject keys/clicks, read player state/position/map, inventory, chat, trade, fight. Write new client tests by scripting that channel (see `testingmulti.py`), not by adding `--test-*` self-test modes/scaffolding inside MapControllerMP & co. Bug FIXES to production code are fine; TEST drivers belong outside the client binary.
