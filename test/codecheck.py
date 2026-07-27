@@ -62,7 +62,9 @@ C_GREEN = "\033[92m"; C_RED = "\033[91m"; C_CYAN = "\033[96m"; C_RESET = "\033[0
 # well under it (~4 chars/token, codecheck's own estimate).
 CONTEXT_BUDGET_TOKENS = 8000
 MAX_INVARIANT_FUNCS = 600     # bound the deterministic scan
-SCOPE_REL = os.environ.get("CC_CODECHECK_SCOPE", "general/base")
+# The server-reachable code, same scope as security/server.py: general/ + server/
+# (no client/, no tools/, no vendor). Comma-separated, repo-relative.
+SCOPE_REL = os.environ.get("CC_CODECHECK_SCOPE", "general,server")
 NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
 # Layer 3 (IA quality review) budget + bounds. The verdict cache is keyed by
 # (model, function source), so a re-run replays what it already reviewed for free
@@ -77,7 +79,10 @@ DEFAULT_IA_MODEL = os.environ.get("CC_CODECHECK_MODEL", "gemma4:26b")
 # the empty default - point it at a remote box with --ollama-host= (or the
 # settings pin, which every security/ tool then honours too).
 DEFAULT_IA_HOST = os.environ.get("CC_CODECHECK_OLLAMA_HOST", "").strip()
-MAX_IA_FUNCS = int(os.environ.get("CC_CODECHECK_IA_FUNCS", "400"))
+# Function cap. The real bound is --budget: a cached function replays for free, so
+# each run spends its budget on functions not reviewed yet and gets FURTHER through
+# the scope. Keep the cap above the scope size so it never truncates coverage.
+MAX_IA_FUNCS = int(os.environ.get("CC_CODECHECK_IA_FUNCS", "2000"))
 MAX_IA_PRINTED = 60          # bound the console output, not the review
 IA_FINDINGS_MD = os.path.join(os.path.dirname(FAILED_JSON),
                               "codecheck-ia-findings.md")
@@ -260,7 +265,15 @@ def _ia_review(eng, idx, funcs, opt, failures):
     A transport error never gates (backend health is not a code regression)."""
     model = opt["model"] or None
     t0 = time.monotonic()
+    targets = eng.audit_targets(funcs)
+    # A cached verdict replays for free, so a second run over an unchanged tree
+    # finishes in milliseconds having asked the model NOTHING. That is correct
+    # (nothing is silently dropped - every finding is still printed) but it must
+    # never read as a fresh audit: report recomputed vs reused, and how far into
+    # the scope the budget got.
+    eng.reset_cache_stats()
     log_info(f"IA review: bugs/illogic/perf via {model or 'configured backend'} "
+             f"over {len(targets)} function(s) of {len(funcs)} indexed "
              f"(budget {opt['budget']}s; security NOT reviewed here)")
     reviewed = 0
     printed = 0
@@ -273,7 +286,7 @@ def _ia_review(eng, idx, funcs, opt, failures):
     # unfiltered list (it checks the view SIZE of every function), but sending
     # those to the model wastes the budget and invites nonsense findings about a
     # body the function does not have.
-    for fi in eng.audit_targets(funcs)[:MAX_IA_FUNCS]:
+    for fi in targets[:MAX_IA_FUNCS]:
         if time.monotonic() - t0 >= opt["budget"]:
             break
         try:
@@ -312,8 +325,12 @@ def _ia_review(eng, idx, funcs, opt, failures):
             fh.write("".join(md))
     except OSError as exc:
         log_info(f"could not write {IA_FINDINGS_MD}: {exc}")
-    tally = (f"{reviewed} function(s), {counts['CRITICAL']} critical / "
-             f"{counts['HIGH']} high / {counts['MEDIUM']} medium / {counts['LOW']} low"
+    left = max(0, len(targets[:MAX_IA_FUNCS]) - reviewed)
+    tally = (f"{reviewed}/{len(targets)} function(s) "
+             f"({eng.cache_summary()}"
+             f"{f'; {left} not reached in the budget' if left else '; whole scope covered'}), "
+             f"{counts['CRITICAL']} critical / {counts['HIGH']} high / "
+             f"{counts['MEDIUM']} medium / {counts['LOW']} low"
              f"{f', {errors} transport error(s)' if errors else ''}")
     if reviewed == 0:
         log_info(f"IA review: nothing reviewed inside the {opt['budget']}s budget "
@@ -355,7 +372,7 @@ def main():
                  f"{eng.common.backend_for_model(opt['model'])}")
     # codecheck.build_index() auto-finds/generates the compile DB and redirects the
     # clang-IR + type caches to the persistent SSD cache — nothing to wire here.
-    scope = [os.path.join(ROOT, SCOPE_REL)]
+    scope = [os.path.join(ROOT, s.strip()) for s in SCOPE_REL.split(",") if s.strip()]
     log_info(f"building code tree over {SCOPE_REL} (persistent cache)")
     try:
         idx = eng.build_index(scope)
@@ -425,7 +442,7 @@ def main():
     else:
         ts = time.monotonic()
         try:
-            sweep = eng.file_sweep([os.path.join(ROOT, SCOPE_REL)])
+            sweep = eng.file_sweep(scope)
         except Exception as exc:
             log_fail("sweep", f"file_sweep raised: {exc}", time.monotonic() - ts)
             failures.append(("sweep", f"file_sweep raised: {exc}"))

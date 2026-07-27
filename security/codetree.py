@@ -351,7 +351,10 @@ def parse_function_defs(ir_text, src_file):
     for match in _DEF_RE.finditer(ir_text):
         mname = match.group(1)
         demangled = _demangle(mname)
-        if demangled.startswith(('std::', '__cxa', '__gnu', '_ZSt', 'llvm::')):
+        # '_ZNSt'/'_ZSt' catch a std:: symbol whose demangling FAILED (no c++filt,
+        # or a name it cannot parse) - the readable prefixes below miss those.
+        if demangled.startswith(('std::', '__cxa', '__gnu', '_ZSt', '_ZNSt',
+                                 'hps::', 'llvm::')):
             continue
         # A thunk is a compiler-generated trampoline that only fixes `this` and
         # jumps to the real override: same source location, no code of its own.
@@ -389,6 +392,14 @@ def parse_function_defs(ir_text, src_file):
         # (see _extract_subprog_files); fall back to the TU when the metadata has
         # no DIFile.
         def_file = subprog_files.get(dbg_id) or src_file
+        # A template instantiated from a VENDORED header (general/hps, libzstd,
+        # blake3, libtiled...) is emitted into our TU but belongs to code we must
+        # not touch. The TU list already skips vendor .cpp; now that the real
+        # definition file is known, skip vendor headers too - else the reviewer
+        # spends its budget on hps/map_serializer.h and reports findings nobody
+        # may act on.
+        if is_vendor(def_file):
+            continue
         fi = FuncInfo(mname, demangled, def_file, line, 0, class_name=cls)
         funcs.append(fi)
         demangled_cache[mname] = demangled
