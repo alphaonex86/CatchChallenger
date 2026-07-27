@@ -67,6 +67,9 @@ _TYPE_RE = re.compile(r"\b(?:Parm)?VarDecl\b.*?\b([A-Za-z_]\w*)\s+'([^']+)'")
 
 # Triviality pre-filter: skip functions with <= this many real body lines.
 _TRIVIAL_MAX_LINES = int(os.environ.get("CC_TRIVIAL_MAX_LINES", "4"))
+# A "body" that is really a TYPE declaration = a compiler-generated special member
+# (its debug info points at the class, not at a function body).
+_TYPE_DECL_RE = re.compile(r"^(?:template\s*<[^>]*>\s*)?(?:class|struct|union)\b")
 # clang-tidy check sets — GENERAL (codecheck default) vs SECURITY (server sets it).
 TIDY_CHECKS = os.environ.get(
     "CC_TIDY_CHECKS",
@@ -468,6 +471,12 @@ def is_trivial(fi):
     body, _ = codetree.source_body(fi.file, fi.line)
     if not body:
         return False
+    # A ctor/dtor the COMPILER generates has no body of its own: its debug info
+    # points at the TYPE, so source_body() hands back the whole `class X { ... }`.
+    # Reviewing a type declaration under a function name is how a reviewer ends up
+    # reporting "this destructor loads XML files" - there is no function to audit.
+    if _TYPE_DECL_RE.match(body.lstrip()):
+        return True
     n = 0
     for ln in body.splitlines():
         s = ln.strip()
