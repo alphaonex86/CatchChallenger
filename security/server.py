@@ -2310,6 +2310,21 @@ EXPLOIT_BIN_NAME = "exploit"   # fixed path of the compiled ELF (in the chroot: 
 # event-loop ping (case b), and economy/ownership/world-rule/state-corruption via
 # gdb read-only state inspection (case c). So all classes flow into the prove
 # loop, not just memory-safety ones.
+# Findings Memcheck can say ANYTHING about. The valgrind retry re-runs a whole
+# exploit session (a full budget, a full IA conversation) purely to catch a memory
+# error that did not segfault - so it is worth its hour ONLY for a memory-safety
+# claim. For a hang/DoS, an economy dup, an auth bypass or a construction-order
+# defect, Memcheck reports nothing the gdb pass did not already see, and the retry
+# is a guaranteed second no-proof (observed: 12/12 retries in one run came back
+# "also clean"). Deliberately generous - a false positive costs one session, a
+# false negative loses a silent-OOB proof.
+MEMORY_CLASS_RE = re.compile(
+    r"overflow|underflow|out.?of.?bounds|oob|off.?by.?one|"
+    r"use.?after.?free|double.?free|dangling|invalid (?:read|write)|"
+    r"read past|write past|uninitial|null.?deref|wild pointer|"
+    r"memcpy|memmove|strcpy|strcat|sprintf|"
+    r"alloc|dealloc|\bfree\b|\bdelete\b|\bnew\b|buffer|\bindex\b|leak", re.I)
+
 CANDIDATE_RE = re.compile(
     # §3.1 memory safety
     r"overflow|out.?of.?bounds|oob|use.?after.?free|double.?free|"
@@ -4783,7 +4798,16 @@ def run_exploit():
         # VALGRIND RETRY: a clean gdb pass may have MISSED a silent memory
         # error. Re-run the SAME finding under valgrind; if it confirms, that
         # wins; if it ALSO comes back clean, the finding stays not-exploitable.
-        if (verdict != "CONFIRMED" and valgrind_retry
+        # ... and ONLY for a memory-safety claim: Memcheck has nothing to say about
+        # a hang, a dup, an auth bypass or a construction-order defect, so there the
+        # retry is a full extra IA session for a guaranteed second no-proof.
+        if (verdict != VERDICT_CONFIRMED and valgrind_retry
+                and outdir != "-" and os.path.isdir(outdir)
+                and not MEMORY_CLASS_RE.search(body)):
+            sys.stderr.write("%s     [valgrind-retry] skipped: not a memory-safety "
+                             "finding, Memcheck would add nothing to the gdb pass\n"
+                             % _ts())
+        elif (verdict != VERDICT_CONFIRMED and valgrind_retry
                 and outdir != "-" and os.path.isdir(outdir)):
             sys.stderr.write("%s     [valgrind-retry] gdb pass was %s -> "
                              "re-trying under valgrind to catch silent OOB\n"
@@ -4814,19 +4838,25 @@ def run_exploit():
         # brief also covers game-LOGIC exploits (object dup / illicit acquisition /
         # impossible action) proven via GDB state inspection, not just crashes.
         # Opt-in via SECSERVER_ADVERSARIAL_MODEL; a CONFIRMED here wins.
-        # A verdict that came from the model LOOPING or TRUNCATING is an
-        # infrastructure outcome, not an analysis: re-running the SAME model on the
-        # SAME finding reproduces the same loop for another full budget (an hour per
-        # finding, three times in one observed run). Only a DIFFERENT validator model
-        # can add information there.
-        adv_same_model = adv_model == (exploit_model or _primary_model_spec())
-        if (verdict != VERDICT_CONFIRMED and adv_model and adv_same_model
-                and STUCK_SKIP_MARK in (reason or "")):
-            sys.stderr.write("%s     [adversarial-validation] skipped: the primary "
-                             "verdict came from a stuck/truncated reply and the "
-                             "validator is the SAME model (%s) - set "
-                             "SECSERVER_ADVERSARIAL_MODEL=<other model> for an "
-                             "independent re-attack\n" % (_ts(), adv_model))
+        # Re-attacking an UNPROVEN finding with the SAME model buys nothing: it just
+        # spent a full budget on this exact finding and produced no proof - whether
+        # it ran out of time or looped on itself (temperature 0.1 -> the same reply
+        # re-truncates to the same bytes). Observed: 12/12 same-model validation
+        # passes reproduced the primary verdict, ~12h for zero information. So with a
+        # same-model validator the pass runs ONLY over a REFUTATION, where a second
+        # opinion can still catch a wrong "this is safe". A DIFFERENT validator model
+        # is independent information and always runs.
+        adv_independent = bool(adv_model) and adv_model != (exploit_model
+                                                            or _primary_model_spec())
+        if (verdict == VERDICT_UNPROVEN and adv_model and not adv_independent):
+            sys.stderr.write("%s     [adversarial-validation] skipped: same model "
+                             "(%s), and it already spent a full budget here without "
+                             "a proof (%s) - only a DIFFERENT validator adds "
+                             "information (SECSERVER_ADVERSARIAL_MODEL=<model>)\n"
+                             % (_ts(), adv_model,
+                                "stuck/truncated reply"
+                                if STUCK_SKIP_MARK in (reason or "")
+                                else "budget exhausted"))
         elif verdict != VERDICT_CONFIRMED and adv_model:
             adv_hard, adv_soft = _adversarial_budgets(hard_budget, adv_model)
             sys.stderr.write("%s     [adversarial-validation] primary was %s -> "
