@@ -40,7 +40,8 @@ EventLoopMySQL::EventLoopMySQL() :
     emptyCallback.method=NULL;
     databaseTypeVar=DatabaseBase::DatabaseType::Mysql;
 
-    queue.reserve(CATCHCHALLENGER_MAXBDQUERIES);
+    //queue is a deque now (stable references for the callback pointers we hand
+    //out): it has no reserve(), and needs none - it never moves its elements.
     queriesList.reserve(CATCHCHALLENGER_MAXBDQUERIES);
 }
 
@@ -537,7 +538,7 @@ bool EventLoopMySQL::unixEvent(const uint32_t &events)
                 CatchChallenger::DatabaseBaseCallBack callback=queue.front();
                 if(callback.method!=NULL)
                     callback.method(callback.object);
-                queue.erase(queue.cbegin());
+                queue.pop_front();
             }
             if(!queriesList.empty())
                 queriesList.erase(queriesList.cbegin());
@@ -587,7 +588,7 @@ bool EventLoopMySQL::unixEvent(const uint32_t &events)
                 CatchChallenger::DatabaseBaseCallBack callback=queue.front();
                 if(callback.method!=NULL)
                     callback.method(callback.object);
-                queue.erase(queue.cbegin());
+                queue.pop_front();
             }
             if(result!=NULL)
                 clear();

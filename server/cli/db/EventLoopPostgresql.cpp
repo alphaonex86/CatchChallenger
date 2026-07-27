@@ -51,8 +51,9 @@ EventLoopPostgresql::EventLoopPostgresql() :
 
     maxDbQueries=CATCHCHALLENGER_MAXBDQUERIES;
 
-    /*queue.reserve(CATCHCHALLENGER_MAXBDQUERIES);
-    queriesList.reserve(CATCHCHALLENGER_MAXBDQUERIES);*/
+    //(queue is a deque: no reserve, and none needed - it never moves its elements,
+    //which is what keeps the callback pointers we hand out valid.)
+    /*queriesList.reserve(CATCHCHALLENGER_MAXBDQUERIES);*/
 
     if(EventLoopPostgresql::informationDisplayed==false)
     {
@@ -714,7 +715,7 @@ bool EventLoopPostgresql::unixEvent(const uint32_t &events)
                         CatchChallenger::DatabaseBaseCallBack callback=queue.front();
                         if(callback.method!=NULL)
                             callback.method(callback.object);
-                        queue.erase(queue.cbegin());
+                        queue.pop_front();
                     }
                     if(result!=NULL)
                         clear();
