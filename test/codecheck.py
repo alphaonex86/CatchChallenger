@@ -68,9 +68,15 @@ NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
 # (model, function source), so a re-run replays what it already reviewed for free
 # and spends the budget getting FURTHER through the scope.
 IA_BUDGET_SECS = int(os.environ.get("CC_CODECHECK_IA_BUDGET", "600"))
-# Default reviewer: a local Ollama model, so the stage needs no cloud key and no
-# out-of-repo settings. --model= / CC_CODECHECK_MODEL picks another one.
+# Default reviewer. --model= / CC_CODECHECK_MODEL picks another one.
 DEFAULT_IA_MODEL = os.environ.get("CC_CODECHECK_MODEL", "gemma4:26b")
+# WHICH Ollama host serves it. Empty = whatever the out-of-repo settings resolve
+# (~/.config/CatchChallenger/ia-settings.json: 'ollama_backends' can PIN
+# gemma4:26b to the GPU box, else 'ollama_host', else localhost). A backend URL /
+# IP is infrastructure and must NEVER be committed, so this file only ever holds
+# the empty default - point it at a remote box with --ollama-host= (or the
+# settings pin, which every security/ tool then honours too).
+DEFAULT_IA_HOST = os.environ.get("CC_CODECHECK_OLLAMA_HOST", "").strip()
 MAX_IA_FUNCS = int(os.environ.get("CC_CODECHECK_IA_FUNCS", "400"))
 MAX_IA_PRINTED = 60          # bound the console output, not the review
 IA_FINDINGS_MD = os.path.join(os.path.dirname(FAILED_JSON),
@@ -99,6 +105,14 @@ Options:
   --model=NAME   Ollama model for layer 3 (default %s, CC_CODECHECK_MODEL).
                  Append '@host:port' to pin a backend, or use 'claude-cli'.
                  --llm= is accepted as an alias.
+  --ollama-host=URL   Ollama backend serving that model - a full URL or a bare
+                 host:port (http assumed); BRACKET an IPv6 address, e.g.
+                 --ollama-host='[2803:1920::4:100]:11434'. Same as
+                 CC_CODECHECK_OLLAMA_HOST, and as the '@host' suffix of --model.
+                 Default: the out-of-repo settings
+                 (~/.config/CatchChallenger/ia-settings.json 'ollama_backends'
+                 pin / 'ollama_host'), else localhost - no backend IP is ever
+                 stored in the repo. --host= is accepted as an alias.
   --budget=SECS  wall budget for layer 3 (default %d, CC_CODECHECK_IA_BUDGET).
                  Functions are reviewed leaves-first until it runs out.
   --scope=REL    repo-relative scope (default %s, CC_CODECHECK_SCOPE)
@@ -114,7 +128,8 @@ def _parse_args(argv):
     """Flags for this stage. Unknown ones are ignored on purpose: all.sh passes
     the shared diagnostic flags (--sanitize/--valgrind/--profile/--node), which
     diagnostic.parse_diag_args() owns."""
-    opt = {"model": DEFAULT_IA_MODEL, "budget": IA_BUDGET_SECS, "scope": SCOPE_REL,
+    opt = {"model": DEFAULT_IA_MODEL, "host": DEFAULT_IA_HOST,
+           "budget": IA_BUDGET_SECS, "scope": SCOPE_REL,
            "ia": not os.environ.get("CC_CODECHECK_NO_IA"),
            "gate": not os.environ.get("CC_CODECHECK_NO_GATE")}
     for a in argv:
@@ -123,6 +138,8 @@ def _parse_args(argv):
             sys.exit(0)
         elif a.startswith("--model=") or a.startswith("--llm="):
             opt["model"] = a.split("=", 1)[1].strip()
+        elif a.startswith("--ollama-host=") or a.startswith("--host="):
+            opt["host"] = a.split("=", 1)[1].strip()
         elif a.startswith("--budget="):
             try:
                 opt["budget"] = int(a.split("=", 1)[1])
@@ -323,8 +340,14 @@ def main():
     eng = _load_engine()
     if opt["model"]:
         # '@host:port' pins which Ollama backend serves this model; the bare name
-        # is what chat_with() then routes.
-        opt["model"] = eng.common._register_model_spec(opt["model"])
+        # is what chat_with() then routes. --ollama-host= is the same pin spelled
+        # separately, so fold it in (an explicit '@' in --model always wins).
+        spec = opt["model"]
+        if opt["host"] and "@" not in spec:
+            spec = "%s@%s" % (spec, opt["host"])
+        opt["model"] = eng.common._register_model_spec(spec)
+        log_info(f"IA model {opt['model']} -> "
+                 f"{eng.common.backend_for_model(opt['model'])}")
     # codecheck.build_index() auto-finds/generates the compile DB and redirects the
     # clang-IR + type caches to the persistent SSD cache — nothing to wire here.
     scope = [os.path.join(ROOT, SCOPE_REL)]
