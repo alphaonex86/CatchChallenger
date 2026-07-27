@@ -59,8 +59,12 @@ bool CommonFightEngine::dropKOOtherMonster()
             {
                 wildMonsters.erase(wildMonsters.cbegin()+index);
                 otherMonsterReturn=true;
+                //erase shifts the next entry down INTO index: advancing here
+                //skipped it, leaving a KO monster in the list when two are
+                //adjacent
             }
-            index++;
+            else
+                index++;
         }
     }
     if(!botFightMonsters.empty())
@@ -73,8 +77,10 @@ bool CommonFightEngine::dropKOOtherMonster()
             {
                 botFightMonsters.erase(botFightMonsters.cbegin()+index);
                 otherMonsterReturn=true;
+                //same as wildMonsters above: do NOT advance after an erase
             }
-            index++;
+            else
+                index++;
         }
     }
     return otherMonsterReturn;

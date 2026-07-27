@@ -337,6 +337,57 @@ static void test_drop_KO_other(int monsterId)
     report("KO.dropKOOtherMonster", ok, "");
 }
 
+static void test_drop_KO_other_adjacent(int monsterId)
+{
+    // Two ADJACENT KO wild monsters then a live one. dropKOOtherMonster() erases
+    // by index, so advancing after an erase skipped the entry that shifted down
+    // and left a KO monster in the list (CommonFightEngineEnd.cpp). Detected via
+    // getOtherMonster(), which returns wildMonsters.front(): if the 2nd KO
+    // survived, the front is still KO.
+    MockFightEngine eng;
+    PlayerMonster pm;
+    makePlayerMonster(pm,(CATCHCHALLENGER_TYPE_MONSTER)monsterId,5);
+    eng.get_public_and_private_informations().monsters.push_back(pm);
+    PlayerMonster ko1,ko2,alive;
+    makePlayerMonster(ko1,(CATCHCHALLENGER_TYPE_MONSTER)monsterId,5);
+    makePlayerMonster(ko2,(CATCHCHALLENGER_TYPE_MONSTER)monsterId,5);
+    makePlayerMonster(alive,(CATCHCHALLENGER_TYPE_MONSTER)monsterId,5);
+    ko1.hp=0;
+    ko2.hp=0;
+    eng.mockPushWildMonster(ko1);
+    eng.mockPushWildMonster(ko2);
+    eng.mockPushWildMonster(alive);
+    eng.mockPushSeeds(std::vector<uint8_t>(32,0));
+    eng.dropKOOtherMonster();
+    const bool ok=(!eng.otherMonsterIsKO() && eng.isInFightWithWild());
+    report("KO.dropKOOtherMonster.adjacent", ok,
+           ok ? "" : "a KO monster survived the drop (index advanced after erase)");
+}
+
+static void test_remove_absent_buff(int monsterId)
+{
+    // removeBuffOnMonster() with a buff the monster does NOT carry must return
+    // false. Its loop used to never advance -> it spun forever on index 0, which
+    // any anti-buff item used on an unaffected monster reaches
+    // (useObjectOnMonsterByPosition -> MonsterItemEffectType_RemoveBuff). A
+    // regression here HANGS this binary, so the harness timeout is the guard.
+    MockFightEngine eng;
+    PlayerMonster pm;
+    makePlayerMonster(pm,(CATCHCHALLENGER_TYPE_MONSTER)monsterId,5);
+    PlayerBuff carried;
+    carried.buff=1;
+    carried.level=1;
+    pm.buffs.push_back(carried);
+    const bool removedAbsent=eng.removeBuffOnMonster(&pm,2u);
+    const bool keptCarried=(pm.buffs.size()==1);
+    report("buff.removeAbsent", !removedAbsent && keptCarried,
+           removedAbsent ? "reported removing a buff the monster has not"
+                         : (keptCarried ? "" : "dropped the carried buff"));
+    const bool removedCarried=eng.removeBuffOnMonster(&pm,1u);
+    report("buff.removeCarried", removedCarried && pm.buffs.empty(),
+           removedCarried ? "" : "did not remove the carried buff");
+}
+
 static void test_heal_all_monsters(int monsterId)
 {
     MockFightEngine eng;
@@ -445,6 +496,8 @@ int main(int argc, char *argv[])
     test_try_capture(monsterId,trapId);
     test_KO_detection(monsterId);
     test_drop_KO_other(monsterId);
+    test_drop_KO_other_adjacent(monsterId);
+    test_remove_absent_buff(monsterId);
     test_heal_all_monsters(monsterId);
     test_add_move_remove_monsters(monsterId);
     test_static_helpers(monsterId);
