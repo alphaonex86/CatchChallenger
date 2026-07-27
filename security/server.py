@@ -2771,13 +2771,25 @@ def do_write(outdir, rel, content):
                     "recv/shutdown) + its own memory + basic IO. NO spawning "
                     "processes, NO shelling out, NO ptrace/mount. Rewrite your "
                     "client to talk to the server over the socket." % bad)
+    # `exploit` is the compiled ELF the RUN action produces. A WRITE below it
+    # ("exploit/foo.cpp") makes makedirs() hit that FILE with EEXIST, and the
+    # exception used to escape and kill the whole pass with ERROR.
+    if norm.split("/")[0] == EXPLOIT_BIN_NAME:
+        return ("WRITE error: '%s' is reserved for the compiled ELF - use "
+                "another name (e.g. %s.cpp)." % (EXPLOIT_BIN_NAME, EXPLOIT_BIN_NAME))
     dest = os.path.realpath(os.path.join(outdir, rel))
     if not dest.startswith(os.path.realpath(outdir) + os.sep):
         return "WRITE error: path escapes the exploit dir: %s" % rel
-    os.makedirs(os.path.dirname(dest), exist_ok=True)
-    open(dest, "w").write(content)
-    if dest.endswith((".py", ".sh")):
-        os.chmod(dest, 0o755)
+    # Any other filesystem refusal is reported to the model, never raised: one bad
+    # path must cost a turn, not the finding.
+    try:
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        with open(dest, "w") as fh:
+            fh.write(content)
+        if dest.endswith((".py", ".sh")):
+            os.chmod(dest, 0o755)
+    except OSError as exc:
+        return "WRITE error: %s" % exc
     return "WROTE %s (%d bytes)" % (rel, len(content))
 
 
@@ -3187,8 +3199,10 @@ VALGRIND_ERROR_MARKERS = (
 # the root), so seeing these strings means the attacker ACTUALLY tried an
 # escape and either got caught by seccomp (SIGSYS) or got far enough to log it.
 CONTAINMENT_BREACH_MARKERS = (
-    "../",                  # path-traversal attempt in a server error/log
-    "..\\",                 # windows-style (rare, but cheap to flag)
+    # NOT "../": a relative path is everywhere in normal output - datapack paths,
+    # #include paths, debug info ("general/base/DatapackGeneralLoader/../
+    # CommonDatapack.cpp") - and matching it reported a plain symbol listing as a
+    # crash. Keep only markers the server can never legitimately print.
     "/etc/shadow",          # sensitive OS file the server never reads
     "/etc/passwd",
     ".ssh/id_",             # private keys
@@ -3298,6 +3312,7 @@ class LiveServer:
         self._pid = None       # inferior host pid, for /proc CPU-time sampling
         self._baseline_reply = False  # did a healthy server reply to the ping at boot?
         self._closing = False  # in stop(): ignore the kill/exit as a "crash"
+        self._in_gdb_query = False  # inside gdb(): its OUTPUT is not server behaviour
         self._booting = False  # during start(): ignore startup memcheck noise
         # Rolling tail of the server's pty output (most recent last). Every
         # _drain() appends; the harness exposes the last SERVER_TAIL_LINES to
@@ -3418,7 +3433,7 @@ class LiveServer:
         per operator policy ANY such violation is an automatic EXPLOIT SUCCESS
         (the attacker's packets made the server do something it must never do).
         """
-        if self._closing or self.crashed:
+        if self._closing or self.crashed or self._in_gdb_query:
             return
         markers = GDB_CRASH_SIGNALS
         if self.mode == "valgrind":
@@ -3657,13 +3672,23 @@ class LiveServer:
             return ("GDB refused (read-only inspection ONLY - no inferior "
                     "writes/calls/flow-control/shell; '(' and '=' are blocked): "
                     "%s" % "; ".join(bad))
-        banner = self._interrupt()
-        chunks = []
-        for c in cmds:
-            if self.crashed:
-                break
-            self._w(c)
-            chunks.append("(gdb) %s\n%s" % (c, self._drain(idle=0.5, hard=8)))
+        # What gdb prints for an INSPECTION command is not the server acting: an
+        # `info functions` listing carries source paths and symbol names, and
+        # scanning it for crash/containment markers fabricates a CONFIRMED (a
+        # debug path ".../DatapackGeneralLoader/../CommonDatapack.cpp" matched the
+        # path-traversal marker and was reported as a crash). A real crash is
+        # latched by the drains around RUN, not here.
+        self._in_gdb_query = True
+        try:
+            banner = self._interrupt()
+            chunks = []
+            for c in cmds:
+                if self.crashed:
+                    break
+                self._w(c)
+                chunks.append("(gdb) %s\n%s" % (c, self._drain(idle=0.5, hard=8)))
+        finally:
+            self._in_gdb_query = False
         self._continue()
         return ((banner + "\n" if banner.strip() else "")
                 + "\n".join(chunks) + self._crash_suffix())

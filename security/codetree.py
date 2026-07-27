@@ -353,6 +353,14 @@ def parse_function_defs(ir_text, src_file):
         demangled = _demangle(mname)
         if demangled.startswith(('std::', '__cxa', '__gnu', '_ZSt', 'llvm::')):
             continue
+        # A thunk is a compiler-generated trampoline that only fixes `this` and
+        # jumps to the real override: same source location, no code of its own.
+        # Indexing it audits every virtual override TWICE and emits the finding
+        # twice ("non-virtual thunk to Client::singleMove" next to
+        # "Client::singleMove").
+        if demangled.startswith(('non-virtual thunk to ', 'virtual thunk to ',
+                                 'covariant return thunk to ')):
+            continue
         # Get source line from full physical line
         ms = ir_text.rfind('\n', 0, match.start()) + 1
         me = ir_text.find('\n', match.end())
