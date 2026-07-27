@@ -268,7 +268,12 @@ def _ia_review(eng, idx, funcs, opt, failures):
     counts = {"LOW": 0, "MEDIUM": 0, "HIGH": 0, "CRITICAL": 0}
     hard = []
     md = ["# codecheck IA review (bugs / illogic / perf - NOT security)\n"]
-    for fi in funcs[:MAX_IA_FUNCS]:
+    # Only REAL logic: audit_targets drops destructors, getters/setters, thin
+    # forwarders and compiler-generated members. Layer 1 deliberately keeps the
+    # unfiltered list (it checks the view SIZE of every function), but sending
+    # those to the model wastes the budget and invites nonsense findings about a
+    # body the function does not have.
+    for fi in eng.audit_targets(funcs)[:MAX_IA_FUNCS]:
         if time.monotonic() - t0 >= opt["budget"]:
             break
         try:

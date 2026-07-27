@@ -247,6 +247,14 @@ _DBG_MD = re.compile(r'!(\d+)\s*=\s*!DILocation\(line:\s*(\d+),', re.MULTILINE)
 # Map from IR metadata ID to line number for a function (also DISubprogram)
 _DBG_SUBPROG = re.compile(
     r'!(\d+)\s*=\s*distinct\s+!DISubprogram\([^)]*?line:\s*(\d+)', re.MULTILINE)
+# Same DISubprogram, whole field list: we also need the DIFile it points at.
+_DBG_SUBPROG_FULL = re.compile(
+    r'!(\d+)\s*=\s*distinct\s+!DISubprogram\(([^)]*)\)', re.MULTILINE)
+_SUBPROG_LINE_RE = re.compile(r'\bline:\s*(\d+)')
+_SUBPROG_FILE_RE = re.compile(r'\bfile:\s*!(\d+)')
+_DBG_DIFILE = re.compile(
+    r'!(\d+)\s*=\s*!DIFile\(filename:\s*"([^"]*)"'
+    r'(?:,\s*directory:\s*"([^"]*)")?')
 
 
 class FuncInfo:
@@ -301,6 +309,29 @@ def _extract_line_map(ir_text):
     return m
 
 
+def _extract_subprog_files(ir_text):
+    """{dbg_id: definition file} for every DISubprogram carrying a DIFile.
+
+    A method DEFINED IN A HEADER - inline, or a ctor/dtor the compiler generates -
+    gets its `line:` from THAT HEADER, while the TU we compiled is the .cpp. Pairing
+    the two slices an unrelated function's body out of the .cpp and hands it to the
+    reviewer under the header function's name: an implicit `~UnknownObjectEntry`
+    (CommonMap.hpp:27) was reviewed as Map_loaderMain.cpp:27, and the model reported
+    a CRITICAL about code the function does not contain. The file must come from the
+    same metadata as the line."""
+    files = {}
+    for m in _DBG_DIFILE.finditer(ir_text):
+        name, directory = m.group(2), m.group(3) or ""
+        files[m.group(1)] = (name if os.path.isabs(name)
+                             else os.path.normpath(os.path.join(directory, name)))
+    out = {}
+    for m in _DBG_SUBPROG_FULL.finditer(ir_text):
+        fid = _SUBPROG_FILE_RE.search(m.group(2))
+        if fid is not None and fid.group(1) in files:
+            out[m.group(1)] = files[fid.group(1)]
+    return out
+
+
 def parse_function_defs(ir_text, src_file):
     """Extract function definitions and call edges from LLVM IR text.
 
@@ -312,6 +343,7 @@ def parse_function_defs(ir_text, src_file):
     import bisect
 
     line_map = _extract_line_map(ir_text)
+    subprog_files = _extract_subprog_files(ir_text)
 
     # ---- build definition index (one regex scan) ----
     # Each entry: (start_pos, end_pos, mname, demangled, dbg_id)
@@ -345,7 +377,11 @@ def parse_function_defs(ir_text, src_file):
             parts = qname.split("::")
             if len(parts) >= 2:
                 cls = parts[-2] if len(parts) >= 3 else ""
-        fi = FuncInfo(mname, demangled, src_file, line, 0, class_name=cls)
+        # The file the DEFINITION lives in, which is NOT always the TU we compiled
+        # (see _extract_subprog_files); fall back to the TU when the metadata has
+        # no DIFile.
+        def_file = subprog_files.get(dbg_id) or src_file
+        fi = FuncInfo(mname, demangled, def_file, line, 0, class_name=cls)
         funcs.append(fi)
         demangled_cache[mname] = demangled
 
