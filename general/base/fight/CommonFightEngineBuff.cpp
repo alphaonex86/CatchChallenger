@@ -163,6 +163,9 @@ bool CommonFightEngine::removeBuffOnMonster(PlayerMonster * currentMonster, cons
             currentMonster->buffs.erase(currentMonster->buffs.begin()+index);
             return true;
         }
+        //the loop never advanced: asking to remove a buff the monster does NOT
+        //have span forever on index 0 (event loop wedged = remote DoS)
+        index++;
     }
     return false;
 }
