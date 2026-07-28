@@ -230,16 +230,23 @@ public:
         int dropGlobalChatMessageLocalClan;
         int dropGlobalChatMessagePrivate;
         #ifdef CATCHCHALLENGER_CACHE_HPS
+        //The kickLimit* fields only exist when the filter is compiled in, so
+        //the cache layout follows the same #ifdef -- a build without the filter
+        //must not reference members it does not have.
         template <class B>
         void serialize(B& buf) const {
-            buf << kickLimitMove << kickLimitChat << kickLimitOther
-                << computeAverageValueTimeInterval << dropGlobalChatMessageGeneral
+            #ifdef CATCHCHALLENGER_DDOS_FILTER
+            buf << kickLimitMove << kickLimitChat << kickLimitOther;
+            #endif
+            buf << computeAverageValueTimeInterval << dropGlobalChatMessageGeneral
                 << dropGlobalChatMessageLocalClan << dropGlobalChatMessagePrivate;
         }
         template <class B>
         void parse(B& buf) {
-            buf >> kickLimitMove >> kickLimitChat >> kickLimitOther
-                >> computeAverageValueTimeInterval >> dropGlobalChatMessageGeneral
+            #ifdef CATCHCHALLENGER_DDOS_FILTER
+            buf >> kickLimitMove >> kickLimitChat >> kickLimitOther;
+            #endif
+            buf >> computeAverageValueTimeInterval >> dropGlobalChatMessageGeneral
                 >> dropGlobalChatMessageLocalClan >> dropGlobalChatMessagePrivate;
         }
         #endif
