@@ -107,40 +107,41 @@ bool EventLoopPostgresql::syncConnect(const std::string &host, const std::string
         return false;
     }
 
-    strcpy(strCoPG,"");
+    //Built through std::string then length-checked: the previous strcat chain
+    //wrote into the fixed 255-byte members with no bound, so a configured
+    //dbname/host/user/password summing past that (a long password is enough)
+    //overflowed them. Values come from server-properties.xml, not from the
+    //network, but a config value must not corrupt memory either.
+    std::string connectionString;
     if(dbname.size()>0)
-    {
-        strcat(strCoPG,"dbname=");
-        strcat(strCoPG,dbname.c_str());
-    }
+        connectionString+="dbname="+dbname;
     if(host.size()>0 && host!="localhost")
-    {
-        strcat(strCoPG," host=");
-        strcat(strCoPG,host.c_str());
-    }
+        connectionString+=" host="+host;
     if(user.size()>0)
-    {
-        strcat(strCoPG," user=");
-        strcat(strCoPG,user.c_str());
-    }
+        connectionString+=" user="+user;
     if(password.size()>0)
+        connectionString+=" password="+password;
+    if(connectionString.size()>=sizeof(strCoPG))
     {
-        strcat(strCoPG," password=");
-        strcat(strCoPG,password.c_str());
+        std::cerr << "pg connection string too long: " << connectionString.size()
+                  << " bytes for a " << sizeof(strCoPG) << " byte buffer - shorten "
+                  << "dbname/host/user/password in server-properties.xml" << std::endl;
+        return false;
     }
+    memcpy(strCoPG,connectionString.data(),connectionString.size());
+    strCoPG[connectionString.size()]='\0';
 
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    strcpy(simplifiedstrCoPG,"");
+    //same string without the credentials (this one is printed in the logs)
+    std::string simplified;
     if(dbname.size()>0)
-    {
-        strcat(simplifiedstrCoPG,"dbname=");
-        strcat(simplifiedstrCoPG,dbname.c_str());
-    }
+        simplified+="dbname="+dbname;
     if(host.size()>0 && host!="localhost")
-    {
-        strcat(simplifiedstrCoPG," host=");
-        strcat(simplifiedstrCoPG,host.c_str());
-    }
+        simplified+=" host="+host;
+    if(simplified.size()>=sizeof(simplifiedstrCoPG))
+        simplified.resize(sizeof(simplifiedstrCoPG)-1);
+    memcpy(simplifiedstrCoPG,simplified.data(),simplified.size());
+    simplifiedstrCoPG[simplified.size()]='\0';
     #endif
 
     std::cout << "Connecting to postgresql: " << host << " on " << dbname << " with user " << user << std::endl;
@@ -439,9 +440,14 @@ bool EventLoopPostgresql::queryPrepare(const char *stmtName,
         std::cerr << simplifiedstrCoPG << ", ";
         #endif
         std::cerr << "Problem to prepare the query: " << query << ", return code: " << ret << ", error message: " << PQerrorMessage(conn) << std::endl;
+        PQclear(resprep);
         abort();
         return false;
     }
+    //PQprepare hands back a PGresult that libpq will never free for us: without
+    //this every prepared statement leaked one, and they are all re-prepared after
+    //each reconnect.
+    PQclear(resprep);
     if(store)
     {
         PreparedStatementStore preparedStatementStore;

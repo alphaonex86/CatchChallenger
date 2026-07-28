@@ -2,18 +2,8 @@
 #include "../../general/base/customtinyxml2.hpp"
 #include <iostream>
 
-TinyXMLSettings::TinyXMLSettings() :
-    modified(false)
-{
-    abort();//todo to home folder
-    document.LoadFile("");
-    whereIs=document.RootElement();
-    if(whereIs==NULL)
-    {
-        std::cerr << "Unable to open the file: " << file << ", unable to link the base root" << std::endl;
-        abort();
-    }
-}
+//TinyXMLSettings() is `= delete` in the header: the default-file variant was
+//never implemented (its body aborted on the first line).
 
 TinyXMLSettings::TinyXMLSettings(const std::string &file) :
     modified(false)
