@@ -55,11 +55,19 @@
 
 #define CATCHCHALLENGER_GAMESERVER_EVENTSTARTONLOCALTIME
 
+//A benchmark drives far more auth / character-select / move traffic per client
+//than a human ever does, which is exactly what the anti-flood counters exist to
+//stop: the load generator gets kicked and the run measures the filter instead
+//of the event loop. Worse, the limits are uint8_t (ServerStructures.hpp), so
+//"raising" them past 255 silently wraps to a STRICTER value. Compile the filter
+//out for benchmark builds; production is untouched.
+#ifndef CATCHCHALLENGER_BENCHMARK
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 //disable this if in cluster mode with all login server with DDOS
 #define CATCHCHALLENGER_DDOS_FILTER
 #else
 #define CATCHCHALLENGER_DDOS_FILTER
+#endif
 #endif
 
 #if defined(CATCHCHALLENGER_SERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)

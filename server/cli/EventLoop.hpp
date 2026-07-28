@@ -53,6 +53,17 @@ public:
     static ssize_t sendFile(int sock_fd,int in_fd,off_t *offset,size_t len);
 
 #ifdef CATCHCHALLENGER_IO_URING
+    //Size the provided-buffer ring from the number of clients this server will
+    //actually take, instead of a fixed 4096 x 4 KiB = 16 MB. That constant is
+    //bigger than the WHOLE memory budget of the small targets (10-20 MB), which
+    //made io_uring look impossible there -- it is not, the ring was simply never
+    //sized. Call before init(); the caller (main-unix.cpp) knows max-players.
+    //io_uring builds only: on epoll/select this does not exist, so production
+    //builds for those targets are byte-identical to before.
+    static void setExpectedMaxClients(unsigned int maxClients);
+#endif
+
+#ifdef CATCHCHALLENGER_IO_URING
     //Phase 2 substrate: arm a recv_multishot SQE with provided-buffer ring
     //bgid=0 against fd. user_data must point to a BaseClassSwitch* whose
     //onAsyncRecv(buf,len) override consumes incoming bytes. Returns true

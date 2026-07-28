@@ -600,6 +600,20 @@ static bool cc_uring_write_whole_file(const std::string &path,const char *data,s
 }
 #endif
 
+#ifdef CATCHCHALLENGER_IO_URING
+//How many clients this server expects; set by main-unix.cpp from max-players
+//before init(). Read once, when the provided-buffer ring is allocated.
+//io_uring builds only: the epoll/select backends never see this symbol, so
+//production for those targets is unchanged.
+static unsigned int g_uring_expected_clients=500;
+
+void EventLoop::setExpectedMaxClients(unsigned int maxClients)
+{
+    if(maxClients>0)
+        g_uring_expected_clients=maxClients;
+}
+#endif
+
 bool EventLoop::init()
 {
 #if defined(CATCHCHALLENGER_SELECT)
@@ -699,8 +713,23 @@ bool EventLoop::init()
     //io_uring_setup_buf_ring/io_uring_free_buf_ring so the whole phase
     //compiles out.
 #ifdef CC_HAS_URING_BUF_RING
-    const unsigned int BUF_COUNT=4096;//power of two
+    //Ring sized from the expected client count rather than a fixed 16 MB.
+    //One in-flight recv buffer per client is the working set; x2 gives slack
+    //for a client whose buffer is still being consumed when the next datagram
+    //lands. Clamped to [64,4096] and rounded up to a power of two (the ring
+    //mask requires it). Default 500 players -> 1024 buffers -> 4 MB; a 32-player
+    //board -> 64 buffers -> 256 KB, which fits a 10-20 MB budget.
     const unsigned int BUF_SIZE=4096;
+    unsigned int BUF_COUNT=64;
+    {
+        unsigned int want=g_uring_expected_clients*2;
+        if(want<64)
+            want=64;
+        if(want>4096)
+            want=4096;
+        while(BUF_COUNT<want)
+            BUF_COUNT<<=1;
+    }
     {
         const size_t total=static_cast<size_t>(BUF_COUNT)*BUF_SIZE;
         void *storage=nullptr;

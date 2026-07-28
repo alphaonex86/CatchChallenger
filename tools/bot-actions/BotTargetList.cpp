@@ -22,6 +22,7 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include "../libbot/BotAbort.h"
+#include "../libbot/BotSeed.h"
 
 std::unordered_map<const MapServerMini::BlockObject *, std::unordered_map<const MapServerMini::BlockObject *, bool> > BotTargetList::cacheCanGoFromBlockToBlock;
 
@@ -36,10 +37,10 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
     actionsAction(actionsAction),
     botsInformationLoaded(false),
     mapId(0),
-    g(rd())
+    g(botSeed()!=0 ? botSeed() : rd())
 {
     qDebug() << "BotTargetList constructor";
-    srand(time(NULL));
+    srand(botSeed()!=0 ? botSeed() : (unsigned int)time(NULL));
     ui->setupUi(this);
     ui->comboBoxStep->setCurrentIndex(1);
     ui->graphvizText->setVisible(false);
@@ -1685,7 +1686,7 @@ void BotTargetList::autoStartAction()
             const int &msFromStart=player.target.sinceTheLastAction.elapsed();
             if(player.target.blockObject==NULL &&
                     player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None &&
-                    msFromStart>1000
+                    msFromStart>(int)botActionIntervalMs()
                     )
             {
                 player.target.sinceTheLastAction.restart();
