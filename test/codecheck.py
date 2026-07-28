@@ -15,13 +15,16 @@ Three layers:
      that saturates -> FAIL (that is exactly the thing this stage exists to catch).
   2. FILE SWEEP (deterministic clang-tidy over the scope).
   3. IA REVIEW (default, only if a backend is reachable): a REAL quality review of
-     each function by the local Ollama model — real BUGS, ILLOGICAL/dead code,
-     clear PERFORMANCE problems, naming/clarity. NOT security: security/server.py
-     owns exploitable vulnerabilities and their proof. Only HIGH/CRITICAL findings
-     gate, and the engine adversarially re-checks every one of them (downgrading to
-     MEDIUM when unconfirmed), so a failure means the model proved it from the code.
-     No backend up -> layer skipped, not a failure (the suite must not depend on a
-     running Ollama/Claude).
+     each function by the local Ollama model — real BUGS, ILLOGICAL/dead code, and
+     a name that CONTRADICTS what the code does. Style/clarity/perf/duplication are
+     deliberately NOT asked for, and the prompt states the project rules (C++11..23,
+     no exceptions/RTTI, braceless single statements) so the model stops reporting
+     them. NOT security either: security/server.py owns exploitable vulnerabilities
+     and their proof. Only HIGH/CRITICAL findings gate AND reach the console — the
+     engine adversarially re-checks every one of them (downgrading to MEDIUM when
+     unconfirmed), so a failure means the model proved it from the code; everything
+     else is written to the findings file. No backend up -> layer skipped, not a
+     failure (the suite must not depend on a running Ollama/Claude).
 
 Scope: EVERY C/C++ source we own — general/, server/, client/ AND tools/ — with the
 vendored libs excluded. Override with --scope= / CC_CODECHECK_SCOPE.
@@ -51,6 +54,7 @@ build_paths.ensure_root()
 DIAG = diagnostic.parse_diag_args()
 
 SCRIPT_NAME = os.path.basename(__file__)
+_T_START = time.monotonic()          # process start, for the wall-cap-derived budget
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECURITY = os.path.join(ROOT, "security")
 CODECHECK_DIR = os.path.join(ROOT, "tools", "codecheck")
@@ -66,10 +70,11 @@ MAX_INVARIANT_FUNCS = 600     # bound the deterministic scan
 # cares about the server-reachable attack surface — this is a GENERAL quality
 # auditor, so client/ and tools/ are in scope too. Comma-separated, repo-relative.
 SCOPE_REL = os.environ.get("CC_CODECHECK_SCOPE", "general,server,client,tools")
-# Layer 3 (IA quality review) budget + bounds. The verdict cache is keyed by
-# (model, function source), so a re-run replays what it already reviewed for free
-# and spends the budget getting FURTHER through the scope.
-IA_BUDGET_SECS = int(os.environ.get("CC_CODECHECK_IA_BUDGET", "600"))
+# Layer 3 (IA quality review) budget + bounds. <= 0 (the default) = NO wall budget:
+# review the WHOLE scope, bounded only by the per-script wall cap. The verdict cache
+# is keyed by (model, function source), so a re-run replays what it already reviewed
+# for free and spends its time getting FURTHER through the scope.
+IA_BUDGET_SECS = int(os.environ.get("CC_CODECHECK_IA_BUDGET", "-1"))
 # Default reviewer. --model= / CC_CODECHECK_MODEL picks another one.
 DEFAULT_IA_MODEL = os.environ.get("CC_CODECHECK_MODEL", "gemma4:26b")
 # WHICH Ollama host serves it. Empty = whatever the out-of-repo settings resolve
@@ -98,13 +103,14 @@ all.sh stage driving the function-by-function C/C++ quality auditor
                branch and stays under the context budget            [gates]
   2 sweep      deterministic clang-tidy sweep over the scope        [gates]
   3 IA review  local-Ollama review of each function: real BUGS, ILLOGICAL/dead
-               code, clear PERFORMANCE problems, naming/clarity.
-               SECURITY IS NOT REVIEWED HERE - security/server.py owns
-               exploitable vulnerabilities + proof.   [gates on HIGH/CRITICAL]
+               code, and names that CONTRADICT the code. Style, clarity, perf and
+               duplication are NOT asked for; SECURITY IS NOT REVIEWED HERE -
+               security/server.py owns vulns + proof.  [gates on HIGH/CRITICAL]
 
 Every HIGH/CRITICAL finding is adversarially re-checked by the same model and
 downgraded to MEDIUM when the check cannot confirm it, so only findings the model
-is SURE of can fail the stage. LOW/MEDIUM print for information.
+is SURE of can fail the stage. The console shows those; LOW/MEDIUM (and anything
+downgraded) go to the findings file only.
 
 Options:
   --model=NAME   Ollama model for layer 3 (default %s, CC_CODECHECK_MODEL).
@@ -119,7 +125,9 @@ Options:
                  pin / 'ollama_host'), else localhost - no backend IP is ever
                  stored in the repo. --host= is accepted as an alias.
   --budget=SECS  wall budget for layer 3 (default %d, CC_CODECHECK_IA_BUDGET).
-                 Functions are reviewed leaves-first until it runs out.
+                 Functions are reviewed leaves-first until it runs out;
+                 -1 (or any value <= 0) means NO limit - review the whole
+                 scope, bounded only by the script's own wall cap.
   --scope=REL    repo-relative scope (default %s, CC_CODECHECK_SCOPE)
   --no-ia        deterministic layers only, no IA call (CC_CODECHECK_NO_IA=1)
   --no-gate      report IA findings without ever failing (CC_CODECHECK_NO_GATE=1)
@@ -149,7 +157,8 @@ def _parse_args(argv):
             try:
                 opt["budget"] = int(a.split("=", 1)[1])
             except ValueError:
-                print("error: --budget expects seconds, e.g. --budget=900")
+                print("error: --budget expects seconds, e.g. --budget=900 "
+                      "(-1 = no limit)")
                 sys.exit(2)
         elif a.startswith("--scope="):
             opt["scope"] = a.split("=", 1)[1].strip()
@@ -231,8 +240,9 @@ def _severity_of(eng, finding):
 
 def _ia_review(eng, idx, funcs, opt, failures):
     """Layer 3: real quality review of each function by the local IA - bugs,
-    illogical/dead code, clear performance problems, naming/clarity. NOT security
-    (security/server.py owns exploitable vulnerabilities and their proof).
+    illogical/dead code, and names that CONTRADICT the code. Style, clarity, perf
+    and duplication are not asked for; NOT security either (security/server.py owns
+    exploitable vulnerabilities and their proof).
 
     Only HIGH/CRITICAL findings gate: the engine adversarially re-checks every one
     of them with the same model and downgrades it to MEDIUM when the check cannot
@@ -243,26 +253,38 @@ def _ia_review(eng, idx, funcs, opt, failures):
     targets = eng.audit_targets(funcs)
     # A cached verdict replays for free, so a second run over an unchanged tree
     # finishes in milliseconds having asked the model NOTHING. That is correct
-    # (nothing is silently dropped - every finding is still printed) but it must
-    # never read as a fresh audit: report recomputed vs reused, and how far into
-    # the scope the budget got.
+    # (nothing is silently dropped - every finding still reaches IA_FINDINGS_MD) but
+    # it must never read as a fresh audit: report recomputed vs reused, and how far
+    # into the scope the budget got.
     eng.reset_cache_stats()
-    log_info(f"IA review: bugs/illogic/perf via {model or 'configured backend'} "
+    # <= 0 = no budget of our own: review the WHOLE scope. It is still bounded by
+    # the script's own wall cap (wall_cap.arm()), and stopping ~2 min short of it
+    # matters: past the cap the process is SIGALRM'd to exit 124, all.sh reports
+    # [TIMEOUT] and the findings/tally are never printed. So an unlimited budget
+    # means "run to the wall", not "run past it and lose the report".
+    if opt["budget"] > 0:
+        budget = opt["budget"]
+        budget_note = f"budget {budget}s"
+    else:
+        budget = max(60, int(wall_cap.cap_for(SCRIPT_NAME)
+                             - (time.monotonic() - _T_START) - 120))
+        budget_note = f"no budget, whole scope ({budget}s left before the wall cap)"
+    log_info(f"IA review: bugs/illogic/naming via {model or 'configured backend'} "
              f"over {len(targets)} function(s) of {len(funcs)} indexed "
-             f"(budget {opt['budget']}s; security NOT reviewed here)")
+             f"({budget_note}; security NOT reviewed here)")
     reviewed = 0
     printed = 0
     errors = 0
     counts = {"LOW": 0, "MEDIUM": 0, "HIGH": 0, "CRITICAL": 0}
     hard = []
-    md = ["# codecheck IA review (bugs / illogic / perf - NOT security)\n"]
+    md = ["# codecheck IA review (bugs / illogic / naming - NOT security)\n"]
     # Only REAL logic: audit_targets drops destructors, getters/setters, thin
     # forwarders and compiler-generated members. Layer 1 deliberately keeps the
     # unfiltered list (it checks the view SIZE of every function), but sending
     # those to the model wastes the budget and invites nonsense findings about a
     # body the function does not have.
     for fi in targets[:MAX_IA_FUNCS]:
-        if time.monotonic() - t0 >= opt["budget"]:
+        if time.monotonic() - t0 >= budget:
             break
         try:
             found = eng.audit_function(idx, fi, model=model, verify=True)
@@ -282,7 +304,11 @@ def _ia_review(eng, idx, funcs, opt, failures):
                 one = " ".join(f.split())
                 md.append("- **%s** `%s:%d` %s — %s\n"
                           % (sev or "INFO", rel, fi.line, fi.qual_name, one))
-                # "[severity downgraded" = the adversarial check did not confirm it
+                # The console shows ONLY what can gate (a CONFIRMED HIGH/CRITICAL —
+                # "[severity downgraded" means the adversarial check did not confirm
+                # it). Everything else is still recorded, in IA_FINDINGS_MD: over a
+                # 1144-function scope the LOW/MEDIUM tier is hundreds of lines and
+                # buries the findings that matter.
                 if sev in ("HIGH", "CRITICAL") and "[severity downgraded" not in f:
                     hard.append(("ia %s" % fi.qual_name, "%s:%d %s"
                                  % (rel, fi.line, one[:400])))
@@ -290,10 +316,6 @@ def _ia_review(eng, idx, funcs, opt, failures):
                         printed += 1
                         log_info(f"  {C_RED}{sev}{C_RESET} {rel}:{fi.line} "
                                  f"{fi.qual_name}\n        {one[:400]}")
-                elif printed < MAX_IA_PRINTED:
-                    printed += 1
-                    log_info(f"  {sev or 'INFO'} {rel}:{fi.line} {fi.qual_name}"
-                             f"\n        {one[:300]}")
     secs = time.monotonic() - t0
     try:
         with open(IA_FINDINGS_MD, "w") as fh:
@@ -308,8 +330,8 @@ def _ia_review(eng, idx, funcs, opt, failures):
              f"{counts['MEDIUM']} medium / {counts['LOW']} low"
              f"{f', {errors} transport error(s)' if errors else ''}")
     if reviewed == 0:
-        log_info(f"IA review: nothing reviewed inside the {opt['budget']}s budget "
-                 "— raise --budget or use a faster model")
+        log_info(f"IA review: nothing reviewed inside {budget}s "
+                 "— raise --budget / the wall cap, or use a faster model")
     elif hard and opt["gate"]:
         failures.extend(hard)
         log_fail("IA review", f"{len(hard)} confirmed HIGH/CRITICAL finding(s); "
@@ -319,7 +341,8 @@ def _ia_review(eng, idx, funcs, opt, failures):
                  f"(--no-gate); {tally}; details {IA_FINDINGS_MD}")
         log_pass(f"IA review (report-only): {tally}", secs)
     else:
-        log_pass(f"IA review: {tally}; details {IA_FINDINGS_MD}", secs)
+        log_pass(f"IA review: {tally}; LOW/MEDIUM + every finding in "
+                 f"{IA_FINDINGS_MD}", secs)
 
 
 def main():

@@ -111,34 +111,68 @@ _TIDY_RE = re.compile(
 _TIDY_CACHE_DIR = os.path.join(codetree.OUTPUT_ROOT, "tidy-cache")
 _VERDICT_CACHE_DIR = os.path.join(codetree.OUTPUT_ROOT, "verdict-cache")
 
+# What the reviewer may ASSUME about this codebase. A small model otherwise spends
+# every turn re-reporting the project's own conventions as defects: "-> use nullptr",
+# "-> add braces", and a whole class of exception reasoning ("parsing stays true if
+# parseItems throws", "at() may throw") that CANNOT happen - the build has exceptions
+# and RTTI disabled. Kept SHORT on purpose: it is prepended to every per-function
+# turn, and it is part of the verdict-cache key, so editing it re-reviews the tree.
+PROJECT_RULES = (
+    "PROJECT RULES - assume these, and NEVER report a violation of them as a "
+    "finding:\n"
+    "* Portable C++11..C++23. Exceptions and RTTI are DISABLED: no code path ever "
+    "throws, so never reason about a throw - 'leaks if X throws', 'at() may throw', "
+    "'flag stays set on exception' are INVALID findings here.\n"
+    "* The style is deliberate: NULL (not nullptr), snake_case_ members, a "
+    "single-statement if/while indented WITHOUT braces, initializer lists, no auto, "
+    "no templates, magic numbers in UI layout. Report NO coding-style, convention, "
+    "formatting or 'add a comment' issue.\n"
+    "* The server is a SINGLE-THREADED event loop (epoll/io_uring) and uses INTEGER "
+    "math only (it must run on FPU-less CPUs): never report a missing lock or a data "
+    "race, and never propose float/double. Singleton globals (CommonDatapack, "
+    "GlobalServerData, CommonSettings*) are by design.\n"
+    "* Qt6 only. An object created with new and given a PARENT is destroyed by that "
+    "parent - a missing delete on a parented object is NOT a leak.\n"
+    "* abort() on a failed QObject::connect or a broken internal invariant is "
+    "deliberate (a programming error must not continue) - never report it as too "
+    "destructive.\n"
+    "* The Qt clients compute their RESPONSIVE LAYOUT inside paint() (setPos / "
+    "setSize / setPixmap / scaling on child items): that is by design - never report "
+    "work or state changes done in paint().\n"
+    "* Judge ONLY the code you were shown: never assume what an unshown caller, "
+    "destructor or overload does, and never propose lambdas, templates or "
+    "std::thread as the fix.\n")
+
 # Crisp system prompt for a SMALL model: ONE function, terse structured output.
-# codecheck.py is the GENERAL code-quality reviewer — SECURITY is NOT its job
-# (server.py owns exploitable-vuln finding + exploit generation). Review what a
-# careful dev/QA reviewer would, EXCEPT memory-safety/security.
+# codecheck.py is the GENERAL code-quality reviewer - SECURITY is NOT its job
+# (server.py owns exploitable-vuln finding + exploit generation).
 # Every finding carries a SEVERITY; HIGH/CRITICAL are reserved for findings the
-# model is SURE of (the shown code proves them) — anything uncertain is MEDIUM,
+# model is SURE of (the shown code proves them) - anything uncertain is MEDIUM,
 # and audit_function() additionally adversarially verifies every HIGH/CRITICAL.
 CHECK_SYSTEM = (
     "You are a meticulous C/C++ code reviewer for general quality - NOT security "
     "(a separate tool handles vulnerabilities; do not duplicate it). You are shown "
     "the relevant HEADER(s), the param/local TYPES, ONE function to review, its "
-    "CALLER tree, and (when present) ONE thing it calls. Review ONLY the shown "
-    "function for: real BUGS (wrong condition, off-by-one, wrong variable, a return "
-    "value not checked, resource leak, logic error); ILLOGICAL or dead/unreachable "
-    "code; poor VARIABLE and FUNCTION NAMES (unclear, misleading, name-vs-purpose "
-    "mismatch); CLARITY problems (over-complex, confusing flow, needs a comment); "
-    "OPTIMIZATION (needless copy/allocation, redundant work, a better "
-    "algorithm/container); and DUPLICATION. Do NOT report memory-safety or security "
-    "issues - out of scope here. Rate every finding: LOW = style/naming/clarity "
-    "nit; MEDIUM = real improvement, wasted work, or a probable minor bug; HIGH = "
-    "a definite bug producing wrong behaviour; CRITICAL = a definite bug causing a "
-    "crash, data loss/corruption, or a badly wrong result. Use HIGH or CRITICAL "
-    "ONLY when the shown code PROVES it - you must be SURE; if anything is "
-    "uncertain or outside the shown code (including truncated text), use MEDIUM. "
+    "CALLER tree, and (when present) ONE thing it calls. " + PROJECT_RULES +
+    "Review ONLY the shown function, and report ONLY these three things:\n"
+    "* bug: a real defect - wrong condition, off-by-one, wrong variable, a return "
+    "value not checked, a resource leak, a wrong result.\n"
+    "* logic: illogical, contradictory, dead or unreachable code.\n"
+    "* naming: a name that CONTRADICTS what the code does (a getter that writes, "
+    "'disable' that enables). A merely short, terse or unfashionable name is NOT a "
+    "finding.\n"
+    "Everything else - style, clarity, comments, duplication, performance, memory "
+    "safety, security - is OUT OF SCOPE: do not report it. "
+    "Rate every finding: LOW = minor; MEDIUM = a real improvement or a probable "
+    "minor bug; HIGH = a definite bug producing wrong behaviour; CRITICAL = a "
+    "definite bug causing a crash, data loss/corruption, or a badly wrong result. "
+    "Use HIGH or CRITICAL ONLY when the shown code PROVES it - you must be SURE; if "
+    "anything is uncertain or outside the shown code (including truncated text), "
+    "use MEDIUM. "
     "Be terse. If the function is clean, reply exactly: NO ISSUES. Otherwise one "
     "line per finding:\n"
-    "CATEGORY(bug|logic|naming|clarity|perf|duplication|deadcode) | "
-    "SEVERITY(LOW|MEDIUM|HIGH|CRITICAL) | function:line | the problem -> the fix")
+    "CATEGORY(bug|logic|naming) | SEVERITY(LOW|MEDIUM|HIGH|CRITICAL) | "
+    "function:line | the problem -> the fix")
 
 # Severity plumbing: parse the SEVERITY(...) tags out of a finding, order them,
 # downgrade unconfirmed HIGH/CRITICAL to MEDIUM (never silently keep a "sure"
@@ -814,8 +848,10 @@ def reset_cache_stats():
 # ---------------------------------------------------------------------------
 _VERIFY_SYS = (
     "You are a strict reviewer double-checking a colleague's code-review finding "
-    "against the shown code. Reply on ONE line: 'REJECTED <reason>' if the finding "
-    "is wrong, a false positive, a pure nitpick, or not actually about the shown "
+    "against the shown code. " + PROJECT_RULES +
+    "Reply on ONE line: 'REJECTED <reason>' if the finding "
+    "is wrong, a false positive, a pure nitpick, a coding-style/convention remark, "
+    "based on a throw that cannot happen, or not actually about the shown "
     "function; 'DOWNGRADE <reason>' if the issue is real but its HIGH/CRITICAL "
     "severity is not PROVEN by the shown code; otherwise 'CONFIRMED <reason>'. "
     "Confirm a HIGH/CRITICAL severity only when you are SURE.")
