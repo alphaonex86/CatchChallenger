@@ -39,6 +39,7 @@ add_executable(bot-actions
     ../libbot/MultipleBotConnection.cpp
     ../libbot/MultipleBotConnectionImplForGui.cpp
     ../libbot/BotInterface.cpp
+    ../libbot/BotSeed.cpp
     # tools/libbot/actions/ (per Actions.pri)
     ../libbot/actions/ActionsBotInterface.cpp
     ../libbot/actions/ActionsAction.cpp

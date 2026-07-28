@@ -788,6 +788,21 @@ must reflect that:
   (tinyXML2 parse, `listFolderNotRecursive`, dl-* loader) are noise
   unless the benchmark is explicitly a boot-time benchmark.
 
+## 250 bots per map is the protocol ceiling
+
+The per-map player index on the wire is 8-bit with reserved values
+(`SIMPLIFIED_PLAYER_ID_FOR_MAP`), so **250 connected bots is the safe number to
+compute with**, whatever `mapVisibility/Max` says. At 250 on ONE map every bot
+still broadcasts its movement to all the others, which is the load the event
+loop is being measured on. Above 250, split them so no single map holds more
+than 250 — otherwise the run breaks instead of scaling.
+
+Spreading over several maps changes what is being measured: the broadcast stops
+being "everyone sees everyone", so the work per bot drops and the number is no
+longer comparable with a single-map run. Generate those maps with
+`tools/map-procedural-generation/` — that is what it is for — and treat the MAP
+COUNT as a calibration input, recorded alongside the bot count, not as a detail.
+
 ## Auto-revert on REGRESSION
 
 When the decision matrix says DISCARD, revert the patch (then each changes have to be small, under 200 lines). so the next iteration starts from

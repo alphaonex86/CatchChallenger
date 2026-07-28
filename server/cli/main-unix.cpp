@@ -417,6 +417,13 @@ int main(int argc, char *argv[])
     }
     #endif
 
+    #ifdef CATCHCHALLENGER_IO_URING
+    //Size the io_uring provided-buffer ring to this server's client count
+    //before init() allocates it: a fixed 16 MB ring exceeds the whole memory
+    //budget of the constrained targets. io_uring builds only -- epoll/select
+    //compile this out entirely.
+    EventLoop::setExpectedMaxClients(GlobalServerData::serverSettings.max_players);
+    #endif
     if(!EventLoop::loop.init())
         return EPOLLERR;
 

@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "../libbot/BotSeed.h"
 #include "DatabaseBot.h"
 #include <QApplication>
 #include <QCommandLineParser>
@@ -38,6 +39,13 @@ int main(int argc, char *argv[])
     //default to false and were only reachable from the GUI, so a headless load
     //run never produced a single chat packet. Expose them: chat is part of a
     //realistic server load, not test scaffolding.
+    //Deterministic run: same seed -> same decision sequence, so two builds can
+    //be A/B compared. Without it the bot seeds from the wall clock and hardware
+    //entropy and two runs of the SAME build already differ by ~40 %.
+    QCommandLineOption seedOption("seed", "Seed every bot RNG (deterministic run; benchmark A/B)", "n");
+    QCommandLineOption actionIntervalOption("action-interval-ms",
+        "Milliseconds between AI actions per bot (default 1000). Lower = more load; "
+        "raise the server DDOS/kickLimitMove to match or bots get kicked as flooders.", "ms");
     QCommandLineOption chatOption("chat", "Enable the bot random chat and chat replies (chat traffic in a load run)");
 
     parser.addOption(hostOption);
@@ -48,6 +56,8 @@ int main(int argc, char *argv[])
     parser.addOption(latencyOption);
     parser.addOption(latencySecondsOption);
     parser.addOption(mapTimeoutOption);
+    parser.addOption(seedOption);
+    parser.addOption(actionIntervalOption);
     parser.addOption(chatOption);
 
     parser.process(a);
@@ -68,6 +78,26 @@ int main(int argc, char *argv[])
         qCritical("--latency requires a CATCHCHALLENGER_BENCHMARK build");
         return 2;
 #endif
+    }
+
+    if(parser.isSet(seedOption))
+    {
+        bool ok=false;
+        const unsigned int seed=parser.value(seedOption).toUInt(&ok);
+        if(ok && seed!=0)
+            setBotSeed(seed);
+        else
+            qCritical("--seed needs a non-zero unsigned integer");
+    }
+
+    if(parser.isSet(actionIntervalOption))
+    {
+        bool ok=false;
+        const unsigned int ms=parser.value(actionIntervalOption).toUInt(&ok);
+        if(ok && ms>0)
+            setBotActionIntervalMs(ms);
+        else
+            qCritical("--action-interval-ms needs a non-zero unsigned integer");
     }
 
     DatabaseBot::databaseBot.init();

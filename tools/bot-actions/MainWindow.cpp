@@ -19,6 +19,7 @@
 #include <iostream>
 #include <cstdlib>
 #include "../libbot/BotAbort.h"
+#include "../libbot/BotSeed.h"
 
 MultipleBotConnectionAction MainWindow::multipleBotConnexion;
 
@@ -30,7 +31,9 @@ MainWindow::MainWindow(QWidget *parent) :
     Settings::settings=new QSettings();
     QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
     internalId=0;
-    srand(time(0));
+    //A seeded run replays the same decisions, which is what makes two
+    //benchmark runs comparable; 0 = no --seed, keep the old behaviour.
+    srand(botSeed()!=0 ? botSeed() : (unsigned int)time(0));
     qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
     qRegisterMetaType<std::vector<char> >("std::vector<char>");
