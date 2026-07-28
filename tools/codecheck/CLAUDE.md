@@ -44,6 +44,15 @@ on the FULL view + model + mode, only skips the LLM RE-RUN on unchanged input
 (`CC_NO_CACHE` forces recompute; logs `cache: N recomputed, M reused`); (4)
 **adversarial verify** — double-check each LLM finding (`CC_NO_VERIFY` to skip).
 
+**Scope of the review**: `bug` / `logic` / `naming` ONLY — and `naming` only when the
+name CONTRADICTS the code. Style, clarity, perf, duplication, memory-safety and
+security are explicitly out. `PROJECT_RULES` (C++11..23, exceptions+RTTI disabled,
+braceless single statements + NULL + snake_case_, single-threaded integer-only
+server, Qt parent ownership, deliberate `abort()` and paint()-time responsive
+layout) is prepended to BOTH `CHECK_SYSTEM` and `_VERIFY_SYS`, so a small model
+stops re-reporting the project's own conventions. It is part of the verdict-cache
+key: editing it re-reviews the tree.
+
 **Severity**: every finding carries `SEVERITY(LOW|MEDIUM|HIGH|CRITICAL)` (LLM lines,
 panel briefs, and the sweep — tidy checks map bugprone/analyzer/redundant-expression
 => MEDIUM, rest LOW, never HIGH). HIGH/CRITICAL claims SURE: it is ALWAYS

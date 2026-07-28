@@ -414,7 +414,7 @@ PER_TEST_KILL_AFTER=30s
 # with the operator-supplied table; bumping a number should be a
 # deliberate one-line change, not a sneaky drift.
 declare -A PER_TEST_TIMEOUT_MAP=(
-    [codecheck.py]=30m
+    [codecheck.py]=120m
     [testingbots.py]=15m
     # 8 bots create 8 accounts + 8 characters before the first one reaches the
     # map; that cold path plus the action window fits in 25m with margin.

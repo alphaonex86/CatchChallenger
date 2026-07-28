@@ -25,7 +25,10 @@ import sys
 # "fmt: <script>: <seconds>" — adding a new testing*.py? Update BOTH
 # places.
 _CAPS_SECONDS = {
-    "codecheck.py":                   30 * 60,
+    # Layer 3 reviews the WHOLE scope by default (--budget=-1): 1144 audit targets
+    # over general+server+client+tools, ~4 s each on a warm cache, and every verdict
+    # is cached so each run gets further. 2 h leaves room for a full first pass.
+    "codecheck.py":                  120 * 60,
     "testingbots.py":                 15 * 60,
     "testingbroadcast.py":            15 * 60,
     "testingbyIA.py":                 30 * 60,

@@ -55,7 +55,7 @@ Every key in `_doc` MUST exist on every node/execution_node, **except the option
 
 ## codecheck.py — invariants + IA quality review (never security)
 
-`test/codecheck.py --help` for the flags. Three layers: the deterministic per-turn view invariants and the clang-tidy sweep always gate; layer 3 is a REAL IA review of each function for bugs / illogical-dead code / clear perf problems / naming — **security is out of scope** (`security/server.py` owns vulnerabilities + proof). Default reviewer `gemma4:26b` (`--model=NAME`, `@host:port` pin ok, `CC_CODECHECK_MODEL`), wall budget `--budget=` (default 600s; verdicts cached per model+function source, so a re-run resumes free and reaches further). Only HIGH/CRITICAL findings gate — the engine adversarially re-checks each and downgrades unconfirmed ones to MEDIUM; `--no-gate` reports without failing, `--no-ia` skips the layer, an absent model/backend skips it too (never a FAIL). Findings land in `<tmpfs>/codecheck-ia-findings.md`. Scope = ALL our C/C++ (`general,server,client,tools`, vendor excluded; `--scope=`/`CC_CODECHECK_SCOPE`) — `security/server.py` keeps its own general+server scope and its compile DBs unchanged.
+`test/codecheck.py --help` for the flags. Three layers: the deterministic per-turn view invariants and the clang-tidy sweep always gate; layer 3 is a REAL IA review of each function for bugs / illogical-dead code / names that CONTRADICT the code (style, clarity, perf, duplication are NOT asked for, and a compact PROJECT RULES block — C++11..23, no exceptions/RTTI, braceless single statements, single-threaded server, Qt parent ownership, deliberate abort() and paint()-time layout — is prepended to the reviewer AND the adversarial verifier so those never come back as findings) — **security is out of scope** (`security/server.py` owns vulnerabilities + proof). Default reviewer `gemma4:26b` (`--model=NAME`, `@host:port` pin ok, `CC_CODECHECK_MODEL`), wall budget `--budget=` (default -1 = no budget: the whole scope, stopping 2 min short of the script wall cap so the report is never lost to a TIMEOUT; verdicts cached per model+function source, so a re-run resumes free and reaches further). Only HIGH/CRITICAL findings gate — the engine adversarially re-checks each and downgrades unconfirmed ones to MEDIUM; only HIGH/CRITICAL reach the console (everything else is file-only); `--no-gate` reports without failing, `--no-ia` skips the layer, an absent model/backend skips it too (never a FAIL). Findings land in `<tmpfs>/codecheck-ia-findings.md`. Scope = ALL our C/C++ (`general,server,client,tools`, vendor excluded; `--scope=`/`CC_CODECHECK_SCOPE`) — `security/server.py` keeps its own general+server scope and its compile DBs unchanged.
 
 ## Database backends in testing*.py — file_db on host, SQL gated to remote_nodes.json
 
@@ -297,6 +297,7 @@ Each `testing*.py` has its own wall-time ceiling sized roughly to "twice the lon
 
 | script                          | cap   |
 |---------------------------------|-------|
+| codecheck.py                    | 120 min |
 | testingbots.py                  | 15 min |
 | testingbyIA.py                  | 30 min |
 | testingclient.py                | 30 min |
