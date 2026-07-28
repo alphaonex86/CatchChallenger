@@ -14,8 +14,10 @@ Why the Geode and not the 7950X3D: the fast box could not be loaded past 0.43 %
 of one core by any bot count the protocol allows (250 per map), so its absolute
 CPU measures nothing. The Geode calibrates to 11.5 %.
 """
+import os
 import subprocess
 import sys
+import tempfile
 
 # per-move microseconds, 7 runs each (v4 3 + v5 4)
 E = [324.92, 298.87, 330.80, 312.86, 319.89, 317.00, 321.75]
@@ -173,7 +175,11 @@ for col, msg in rows:
 svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
        f'viewBox="0 0 {W} {H}">' + "".join(p) + "</svg>")
 out = sys.argv[1] if len(sys.argv) > 1 else "/tmp/out.png"
-open(out.rsplit(".", 1)[0] + ".svg", "w").write(svg)
-rc = subprocess.run(["rsvg-convert", "-w", str(W), "-o", out,
-                     out.rsplit(".", 1)[0] + ".svg"]).returncode
+#the SVG is a build intermediate: keep it OUT of the source tree, next to the
+#PNG it would be an untracked artefact sitting beside a checked-in file
+with tempfile.NamedTemporaryFile("w", suffix=".svg", delete=False) as fh:
+    fh.write(svg)
+    tmp = fh.name
+rc = subprocess.run(["rsvg-convert", "-w", str(W), "-o", out, tmp]).returncode
+os.unlink(tmp)
 print(("wrote " + out) if rc == 0 else "rsvg-convert failed")
