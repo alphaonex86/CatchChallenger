@@ -18,6 +18,9 @@
 using namespace CatchChallenger;
 
 EventLoopClient::EventLoopClient(const int &infd) :
+#ifdef CATCHCHALLENGER_IO_URING
+    uringOutstanding(0),
+#endif
     infd(infd)
 {
 //    std::cerr << "EventLoopClient::EventLoopClient infd: " << infd << std::endl;
@@ -173,10 +176,91 @@ ssize_t EventLoopClient::read(char *buffer,const size_t &bufferSize)
     return count;
 }
 
+#ifdef CATCHCHALLENGER_IO_URING
+void EventLoopClient::uringOpStarted()
+{
+    uringOutstanding++;
+}
+
+void EventLoopClient::uringOpFinished()
+{
+    if(uringOutstanding>0)
+        uringOutstanding--;
+    //socket idle again: whatever piled up behind the in-flight op goes now
+    if(uringOutstanding==0 && !asyncSendPending.empty() && infd!=-1)
+    {
+        asyncSendBuf.swap(asyncSendPending);
+        asyncSendPending.clear();
+        submitAsyncSendBuf();
+    }
+}
+
+bool EventLoopClient::submitAsyncSendBuf()
+{
+    if(asyncSendBuf.empty())
+        return false;
+    if(!EventLoop::loop.submitAsyncSend(infd,asyncSendBuf.data(),
+                                        static_cast<unsigned int>(asyncSendBuf.size()),
+                                        static_cast<BaseClassSwitch *>(this)))
+        return false;
+    uringOpStarted();
+    return true;
+}
+
+void EventLoopClient::onAsyncSendDone(int res)
+{
+    if(res<0)
+    {
+        //socket errored: drop everything, the disconnect path takes over
+        asyncSendBuf.clear();
+        asyncSendPending.clear();
+    }
+    else
+    {
+        const size_t sent=static_cast<size_t>(res);
+        if(sent<asyncSendBuf.size())
+        {
+            //short write: the tail MUST precede anything queued meanwhile,
+            //otherwise the stream reorders. Rebuild in order and hand it to
+            //uringOpFinished(), which runs right after us and resubmits.
+            asyncSendBuf.erase(asyncSendBuf.begin(),asyncSendBuf.begin()+sent);
+            if(!asyncSendPending.empty())
+            {
+                asyncSendBuf.insert(asyncSendBuf.end(),
+                                    asyncSendPending.begin(),asyncSendPending.end());
+                asyncSendPending.clear();
+            }
+            asyncSendPending.swap(asyncSendBuf);
+        }
+        else
+            asyncSendBuf.clear();
+    }
+}
+#endif
+
 ssize_t EventLoopClient::write(const char *buffer, const size_t &bufferSize)
 {
     if(infd==-1)
         return -1;
+#ifdef CATCHCHALLENGER_IO_URING
+    if(bufferSize>0)
+    {
+        if(uringOutstanding>0)
+        {
+            //another op owns this fd (an ordinary send, or the datapack
+            //chain): queue. Writing past it would reorder the stream.
+            asyncSendPending.insert(asyncSendPending.end(),buffer,buffer+bufferSize);
+            return static_cast<ssize_t>(bufferSize);
+        }
+        //copy: the caller's buffer is the shared output scratch, overwritten by
+        //the next client of this same tick while the SQE still reads it
+        asyncSendBuf.assign(buffer,buffer+bufferSize);
+        if(submitAsyncSendBuf())
+            return static_cast<ssize_t>(bufferSize);
+        //SQ ring full and nothing in flight here: a synchronous write is safe
+        asyncSendBuf.clear();
+    }
+#endif
 #ifdef _WIN32
     const int sret=::send(static_cast<SOCKET>(infd),buffer,static_cast<int>(bufferSize),0);
     const ssize_t size=(sret==SOCKET_ERROR)?-1:sret;
