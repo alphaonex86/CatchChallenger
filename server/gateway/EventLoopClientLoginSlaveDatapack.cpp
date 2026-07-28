@@ -501,7 +501,7 @@ void EventLoopClientLoginSlave::sendCompressedFileContent()
                     EventLoopClientLoginSlave::compressedFilesBuffer.data(),
                     ProtocolParsingBase::tempBigBufferForOutput+posOutput,
                     static_cast<uint32_t>(EventLoopClientLoginSlave::compressedFilesBuffer.size()),
-                    sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput,
+                    CATCHCHALLENGER_BIGBUFFERSIZE-posOutput,
                     CompressionProtocol::compressionTypeServer
                     );
         posOutput+=compressedSize;

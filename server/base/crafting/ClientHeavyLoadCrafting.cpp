@@ -5,7 +5,7 @@ using namespace CatchChallenger;
 
 bool Client::sendInventory()
 {
-    if(sizeof(ProtocolParsingBase::tempBigBufferForOutput)<=(1+4+
+    if(CATCHCHALLENGER_BIGBUFFERSIZE<=(1+4+
                                                             (2+4)*public_and_private_informations.items.size()
                                                             ))
     {

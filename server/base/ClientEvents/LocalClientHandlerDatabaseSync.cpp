@@ -186,7 +186,7 @@ void Client::syncDatabaseReputation()
     //undefined behaviour (mismatched deallocator).
     std::vector<char> bigBuffer;
     char *buffer=NULL;
-    if(public_and_private_informations.reputation.size()*(4+1+1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    if(public_and_private_informations.reputation.size()*(4+1+1)>=CATCHCHALLENGER_BIGBUFFERSIZE)
     {
         bigBuffer.resize(public_and_private_informations.reputation.size()*(4+1+1));
         buffer=bigBuffer.data();

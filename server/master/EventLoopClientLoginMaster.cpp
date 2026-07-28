@@ -760,7 +760,7 @@ bool EventLoopClientLoginMaster::sendGameServerRegistrationReply(const uint8_t q
 
     //monster id list
     {
-        if((posOutput+4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+        if((posOutput+4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)>=CATCHCHALLENGER_BIGBUFFERSIZE)
         {
             std::cerr << "ProtocolParsingBase::tempBigBufferForOutput out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
             abort();
@@ -777,7 +777,7 @@ bool EventLoopClientLoginMaster::sendGameServerRegistrationReply(const uint8_t q
     }
     //clan id list
     {
-        if((posOutput+4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+        if((posOutput+4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK)>=CATCHCHALLENGER_BIGBUFFERSIZE)
         {
             std::cerr << "ProtocolParsingBase::tempBigBufferForOutput out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
             abort();
@@ -792,7 +792,7 @@ bool EventLoopClientLoginMaster::sendGameServerRegistrationReply(const uint8_t q
         posOutput+=4*CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
         charactersGroupForGameServer->maxClanId+=CATCHCHALLENGER_SERVER_MAXCLANIDBLOCK;
     }
-    if((posOutput+1+2+1+2)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    if((posOutput+1+2+1+2)>=CATCHCHALLENGER_BIGBUFFERSIZE)
     {
         std::cerr << "ProtocolParsingBase::tempBigBufferForOutput out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
         abort();

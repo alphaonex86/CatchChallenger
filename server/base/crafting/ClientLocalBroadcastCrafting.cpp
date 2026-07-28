@@ -59,7 +59,7 @@ void Client::plantSeed(const CATCHCHALLENGER_TYPE_PLANT &plant_id)
 bool Client::syncDatabasePlant()
 {
     return true;
-    //if(public_and_private_informations.plantOnMap.size()*(2/*pointOnMap*/+1/*plant*/+8/*timestamps*/)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    //if(public_and_private_informations.plantOnMap.size()*(2/*pointOnMap*/+1/*plant*/+8/*timestamps*/)>=CATCHCHALLENGER_BIGBUFFERSIZE)
     {
         errorOutput("Too many plant");
         return false;

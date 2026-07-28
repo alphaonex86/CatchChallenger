@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
 {
     //capture wall start ASAP so the "correctly bind" log can show ms-since-start
     EventLoopGenericServer::processStart=std::chrono::steady_clock::now();
-    memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
+    memset(ProtocolParsingBase::tempBigBufferForOutput,0,CATCHCHALLENGER_BIGBUFFERSIZE);
 #ifdef _WIN32
     if(!cc_winsock_init())
     {

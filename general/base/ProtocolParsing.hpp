@@ -187,7 +187,33 @@ public:
     char outputQueryNumberToPacketCode[CATCHCHALLENGER_MAXPROTOCOLQUERY];//invalidation packet code: 0x00, store the packetCode
     char inputQueryNumberToPacketCode[CATCHCHALLENGER_MAXPROTOCOLQUERY];//invalidation packet code: 0x00, store the packetCode, store size is useless because the resolution or is do at send or at receive, then no performance gain
 
+#ifdef CATCHCHALLENGER_IO_URING
+    //io_uring builds only. A submitted send SQE keeps referencing this memory
+    //until its CQE comes back, so the single reusable scratch of the epoll/poll
+    //path would be overwritten while sends are still in flight -- silent,
+    //load-dependent corruption. Here the symbol is a POINTER into a small ring
+    //of blocks; nextOutputBlock() moves to the next free one. Indexing and
+    //pointer arithmetic on it are unchanged, which is why every existing use
+    //site still compiles (sizeof() sites were converted to
+    //CATCHCHALLENGER_BIGBUFFERSIZE first -- with a pointer they would silently
+    //have become 4 bytes and turned the overflow guards into no-ops).
+    static char *tempBigBufferForOutput;
+    //Blocks in the ring. More blocks = more ticks can have sends in flight at
+    //once; each costs CATCHCHALLENGER_BIGBUFFERSIZE.
+    static const unsigned int outputBlockCount=4;
+    static char outputBlocks[outputBlockCount][CATCHCHALLENGER_BIGBUFFERSIZE];
+    //in-flight send SQEs per block; a block is only reusable at 0
+    static unsigned int outputBlockInFlight[outputBlockCount];
+    static unsigned int outputBlockCurrent;
+    //Rotate to the next block with no sends in flight. Returns false when every
+    //block is still busy -- the caller must then fall back to a synchronous
+    //send rather than overwrite memory the kernel is reading.
+    static bool nextOutputBlock();
+    static void outputBlockRef(const char * const block);
+    static void outputBlockUnref(const char * const block);
+#else
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
+#endif
     //tempBigBufferForInput was a 16 MB static, but parseIncommingData() only
     //reads up to CATCHCHALLENGER_COMMONBUFFERSIZE (4 KB) per call. It is now
     //declared as a stack-local 4 KB array inside parseIncommingData().

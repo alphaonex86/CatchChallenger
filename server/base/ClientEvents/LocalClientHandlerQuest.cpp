@@ -204,7 +204,7 @@ bool Client::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
 
 void Client::syncDatabaseQuest()
 {
-    if(public_and_private_informations.quests.size()*(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    if(public_and_private_informations.quests.size()*(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/)>=CATCHCHALLENGER_BIGBUFFERSIZE)
     {
         uint16_t lastQuestId=0;
         uint32_t pos=0;

@@ -335,7 +335,7 @@ void Client::characterIsRightSendData()
         else
         {
             //compress
-            const int32_t &compressedSize=CompressionProtocol::computeCompression(buffer,ProtocolParsingBase::tempBigBufferForOutput+posOutput+4,posOutputTemp,sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput-1-4,CompressionProtocol::compressionTypeServer);
+            const int32_t &compressedSize=CompressionProtocol::computeCompression(buffer,ProtocolParsingBase::tempBigBufferForOutput+posOutput+4,posOutputTemp,CATCHCHALLENGER_BIGBUFFERSIZE-posOutput-1-4,CompressionProtocol::compressionTypeServer);
             if(compressedSize<0)
             {
                 errorOutput("Error to compress the data");
@@ -469,7 +469,7 @@ void Client::characterIsRightSendData()
     }*/
 
     {const uint32_t _tmp_le=(htole32(posOutput-1-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
-    if(posOutput>100000 || posOutput>sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    if(posOutput>100000 || posOutput>CATCHCHALLENGER_BIGBUFFERSIZE)
         std::cerr << "strange output is bigger than 100K" << std::endl;
     if(!sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput))
         return;
@@ -514,7 +514,7 @@ void Client::characterIsRightSendData()
             outputSize=3;
         }
         //can't use receive_instant_player_number() due this->connected_players==connected_players
-        if(posOutput>100000 || posOutput>sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+        if(posOutput>100000 || posOutput>CATCHCHALLENGER_BIGBUFFERSIZE)
             std::cerr << "strange output is bigger than 100K" << std::endl;
         sendRawBlock(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),outputSize);
     }
