@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="7" height="11" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="8">
+ <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
+ <tileset firstgid="17" source="../../../tileset/heal4.tsx"/>
+
+ <tileset firstgid="1111" source="../../../tileset/building-small.tsx"/>
+ <tileset firstgid="2135" source="../../../tileset/houses.tsx"/>
+ <tileset firstgid="3096" source="../../../tileset/sea.tsx"/>
+ <layer id="4" name="OnGrass" width="7" height="11">
+  <data encoding="base64" compression="zlib">
+   eJxjYBj6YC8nA8M+TvqZCQDT9AMb
+  </data>
+ </layer>
+ <layer id="1" name="Collisions" width="7" height="11">
+  <data encoding="base64" compression="zlib">
+   eJx90NeRgWEAQNFvRvw14F1ugxXaYIU25DZYoRW5DXaXKpwXD17cmdPADeFz2cy7V7t0CHsOHDlx5sKVG7/88c+dB7EohDgJkqRIE5EjT4EiJcpUqFLjizoNmrRo0+GbLj36DBgyYsyEKTPmLFjyw4o1G7bR5ydPaO4b6w==
+  </data>
+ </layer>
+ <layer id="2" name="WalkBehind" width="7" height="11">
+  <data encoding="base64" compression="zlib">
+   eJy1zNkJgEAMBNAobNguPBoRbcSjEY9frcO7J9FGdCSCsQADj5llYIm+11qizkrvkQOMMMEMC6ywGXHfjjzM+8dpBDGRAy6/m/d0HxlAqLZI9Rg9Ue+URQY5FGorWVRQQ6O2P+4CqawRvQ==
+  </data>
+ </layer>
+ <objectgroup id="3" name="Moving"/>
+</map>

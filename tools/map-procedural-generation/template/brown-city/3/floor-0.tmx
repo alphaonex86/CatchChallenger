@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="12" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="41">
+ <tileset firstgid="1" source="../../../../tileset-1.tsx"/>
+ <tileset firstgid="1" source="../../../../tileset-2.tsx"/>
+ <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
+ <tileset firstgid="17" source="../../../../normal3.tsx"/>
+ <tileset firstgid="17" source="../../../../indoor.tsx"/>
+ <tileset firstgid="17" source="../../../../tileset-3.tsx"/>
+ <tileset firstgid="17" source="../../../tileset/indoor.tsx"/>
+ <layer id="1" name="Walkable" width="12" height="10">
+  <data encoding="base64" compression="zstd">
+   KLUv/WDgALUAACgAGAKVAQUALUBBT4UCIOO1S5GZHBs=
+  </data>
+ </layer>
+ <layer id="2" name="Walkable" width="12" height="10">
+  <data encoding="base64" compression="zstd">
+   KLUv/WDgAMUBAOAAfwB5AQAAensBAJQBAACNlq8BAACwsQEAfwEACgAKpiGcNHad4lTIL8vOjDVuGbtOD5AiOB0b
+  </data>
+ </layer>
+ <layer id="3" name="Collisions" width="12" height="10">
+  <data encoding="base64" compression="zstd">
+   KLUv/WDgAF0CABJEDBmwJ40BDIsC4NECwnhhGhBGNOHihMHZEpkCq9UJuCj0Z715PORy4sONF1eEO0+CMwEKIHDDAwuywuGiOZ60hMqMFihN5XEZtQ==
+  </data>
+ </layer>
+ <layer id="4" name="WalkBehind" width="12" height="10">
+  <data encoding="base64" compression="zstd">
+   KLUv/WDgAB0CAMQCAGUBSn0BAABEPgAAAD8AAAA1AAAANgAAAG0AmAEAAF8AAAClAAAAQADNAQAIAA5ADWtAKTgZZsYHz4BjK7iROSE=
+  </data>
+ </layer>
+ <objectgroup id="5" name="Moving"/>
+ <objectgroup id="6" name="Object">
+  <object id="40" gid="1" x="64" y="80" width="16" height="16">
+   <properties>
+    <property name="id" value="1"/>
+    <property name="lookAt" value="left"/>
+    <property name="skin" value="3"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

@@ -72,6 +72,7 @@ Before starting a task, always check for a CLAUDE.md file in the current working
 * prefer not use template, hard to debug
 * prefer not use auto, poorly detected into qt creator
 * never use exceptions or RTTI (dynamic_cast/typeid), not supported on all platforms
+* **no float/double in the server** — integer math only, it must run on FPU-less CPUs. (An armhf sysroot still needs `-mcpu=<cpu-with-fp>`: its libc uses the hard-float ABI. Never pair `-march=` with `-mcpu=`.)
 * prefer while over for
 * never use in-class member variable initialization in .hpp; always init in constructor initializer list in .cpp
 * never use Qt5 or lower, only Qt6+; if you need qmake use /usr/bin/qmake6

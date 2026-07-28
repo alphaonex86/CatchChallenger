@@ -1,0 +1,9 @@
+<map type="indoor" zone="test" backgroundsound="music/gym.opus">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[I sleep with one eye open. You never know when a wild Haunter might drift through your bedroom window!]]></text>
+        </step>
+    </bot>
+</map>

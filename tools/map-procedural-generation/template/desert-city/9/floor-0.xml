@@ -1,0 +1,9 @@
+<map type="indoor" zone="test" backgroundsound="music/gym.opus">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[Don't touch that poster on the wall! It’s a rare, signed photo of the Indigo Plateau Champion.]]></text>
+        </step>
+    </bot>
+</map>

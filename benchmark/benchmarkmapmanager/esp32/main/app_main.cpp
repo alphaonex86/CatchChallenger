@@ -26,10 +26,49 @@
 #include <new>
 #include <vector>
 #include <iostream>
+#include <fcntl.h>
+#include <unistd.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_heap_caps.h"
 #include "esp_log.h"
+
+// ESP-IDF exposes the app descriptor under different names across major
+// versions; both give the same struct (version / project_name / date / idf_ver).
+#if __has_include("esp_app_desc.h")
+#  include "esp_app_desc.h"                 // IDF >= 5.0
+#  define CC_APP_DESC() esp_app_get_description()
+#else
+#  include "esp_ota_ops.h"                  // IDF 4.x
+#  define CC_APP_DESC() esp_ota_get_app_description()
+#endif
+
+// What this board answers with when something pokes its console (see the idle
+// loop at the end of app_main() for why it answers at all).
+//
+// It reports the FIRMWARE VERSION, which ESP-IDF fills from `git describe` of
+// the CatchChallenger tree whenever PROJECT_VER is not set explicitly — as here.
+// That matters for benchmarking: the BENCH numbers a board produces are only
+// interpretable if you know which commit produced them, and reading it off the
+// running device beats trusting that the flashed image is what you think it is.
+// 224, not 192: the ESP-IDF app descriptor fields are fixed-size (project_name
+// 32, version 32, date 16, time 16, idf_ver 32) and GCC computes this snprintf
+// at up to 196 bytes, so 192 could silently truncate the identity of the very
+// firmware you are trying to identify (-Wformat-truncation caught it).
+static char ident_line[224];
+
+static void build_ident_line(void)
+{
+    const esp_app_desc_t *d = CC_APP_DESC();
+    snprintf(ident_line, sizeof(ident_line),
+             "ESP32 CatchChallenger %s — idle, NOT an ONU console — "
+             "fw=%s built=%s %s idf=%s",
+             (d && d->project_name[0]) ? d->project_name : "benchmarkmapmanager",
+             (d && d->version[0]) ? d->version : "unknown",
+             (d && d->date[0]) ? d->date : "?",
+             (d && d->time[0]) ? d->time : "",
+             (d && d->idf_ver[0]) ? d->idf_ver : "?");
+}
 
 // Provided by benchmark/benchmarkmapmanager/main.cpp, given external linkage
 // there under CC_TARGET_ESP32 (the argv main() is compiled out on ESP32). Use
@@ -130,6 +169,50 @@ extern "C" void app_main(void)
 
     // Idle forever; do NOT esp_restart() — a reboot mid-output would truncate
     // the serial capture on the host. The host reader has the full BENCH block.
+    //
+    // ...but ANSWER IF POKED. Why: this board sits on a shared lab bench next to
+    // a GPON ONU's serial console, and both use a CP2102 (10c4:ea60), so the USB
+    // VID:PID CANNOT tell them apart — and their /dev/ttyUSBn indices shuffle on
+    // every re-enumeration. Tooling that must find the ONU console therefore
+    // identifies it by REPLY SIGNATURE. While this firmware stayed mute, it was
+    // only excluded from that search by accident (it happened to be silent);
+    // anything that made it emit output could have got it mistaken for the ONU,
+    // and the neighbouring ports on that bench are an irreplaceable OLT and a
+    // relay that cuts board power. Answering with a self-describing line turns
+    // "the one that says nothing" into a positively identified device.
+    //
+    // Cost is nil: stdin is put in non-blocking mode, so the read returns
+    // immediately when nothing is pending and the task still spends all its time
+    // in vTaskDelay(). This runs only AFTER BENCH_END, so it can never interfere
+    // with the timed measurements or pollute the BENCH lines the host parses.
+    fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
+    build_ident_line();
+    // Print it once unprompted too: a host that attaches to the port AFTER the
+    // sweep finished then sees what this board is without having to poke it.
+    printf("%s\n", ident_line);
+    fflush(stdout);
+
     while(true)
-        vTaskDelay(pdMS_TO_TICKS(10000));
+    {
+        // Drain whatever arrived and answer once per burst, so holding a key
+        // down cannot turn into a flood of identity lines.
+        bool poked = false;
+        int c;
+        while((c = getchar()) != EOF)
+            poked = true;
+        // ★ REQUIRED: a non-blocking read with nothing pending returns EOF and
+        // LATCHES the stream's eof/error flag, after which every later getchar()
+        // keeps returning EOF even once bytes do arrive. Without this the board
+        // would answer the first poke and then appear mute forever — which is
+        // exactly the ambiguity this code exists to remove.
+        clearerr(stdin);
+        if(poked)
+        {
+            printf("%s\n", ident_line);
+            fflush(stdout);
+        }
+        // 200 ms keeps a poke feeling instant to a prober with a ~1 s deadline,
+        // while leaving the CPU essentially idle.
+        vTaskDelay(pdMS_TO_TICKS(200));
+    }
 }

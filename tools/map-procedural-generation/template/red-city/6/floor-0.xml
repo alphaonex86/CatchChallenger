@@ -1,0 +1,9 @@
+<map type="indoor" zone="test" backgroundsound="music/gym.opus">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[My older sister collects gym badges from all over the world. Her room upstairs looks like a real museum!]]></text>
+        </step>
+    </bot>
+</map>

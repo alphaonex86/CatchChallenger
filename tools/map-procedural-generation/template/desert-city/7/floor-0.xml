@@ -1,0 +1,9 @@
+<map type="indoor" zone="test" backgroundsound="music/gym.opus">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[My dream is to become a Pokémon Professor one day. My room is already full of specimen jars and field notes.]]></text>
+        </step>
+    </bot>
+</map>

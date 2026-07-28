@@ -51,7 +51,10 @@ adversarially verified (even under `CC_NO_VERIFY`) with the SAME full view the f
 saw; unconfirmed => downgraded to MEDIUM (rejected => dropped). Capped view texts get
 an explicit `[truncated]` marker so the model never rates SURE on partial code.
 
-`num_ctx` is dynamic (common.fit_ctx): sized to the payload, not a fixed floor.
+`num_ctx` is NEVER sent: Ollama bakes it into the runner at spawn, so a differing
+value evicts the runner and reloads the whole model (measured: ~73% of wall-clock).
+The host's `OLLAMA_CONTEXT_LENGTH` sets the window; `common.assumed_ctx()` is only
+what we assume it to be, for prompt budgeting (`CC_OLLAMA_CTX`).
 Persistent SSD cache (clang-IR + types + tidy + verdict + auto-gen compile DB) at
 `/mnt/data/perso/tmp/codecheck` (`CC_CODECHECK_CACHE`). Bound a run: `--scope` /
 `--limit`.

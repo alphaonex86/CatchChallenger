@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="25" height="21" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="5">
+ <properties>
+  <property name="type" value="indoor"/>
+ </properties>
+ <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
+ <tileset firstgid="17" source="../../../tileset/heal.tsx"/>
+ <tileset firstgid="397" source="../../../tileset/heal2.tsx"/>
+ <layer id="1" name="Walkable" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJzd0klIVVEYwPF736VFamqDSS6Ccp41NUsrbbSCoGjSRiuQ1CZttJnaadCsUAZNq5ZaLSqpkKBFVrusVRYtAheNppbS//HO5X4d3rtPcdeBH+f77vnOd8679xnG/zEem4bxBE9NX96u5memU/Pc/HfPCy1/reX6KPI4/OXv2d+l9fik5Z9F3h3gPLufPXpEXR/xNNZzkKvqBtW6/Vyuj9J6eUcIz0IRptbCmSMQ6ac2Sj2LVvMk5hg/dfqIpSYO8UhAIpKQrPamMqchHRnIRBaytfvnYTryMQMzUYBCcQf7GxRr91rhGTk5SsnLhvDb3UYl+6tcetSwVjvCM06x/7RLj3rWGnBG1JwlPofzuICLuITLaESTqL1CfBXNuCaeXye+gZu4hdt4g07tLneC5C3krbiLe7gv1uMsw3hA/hCP0BbgjPYgeYfH8RKvVJxiOefIM+0z3uJdkO/zgfWPon+x6JViBd73hdqv+Ibv+IGf6MEv9KIP/fiNPxjA4DD+L6M5PwShCMMYhCMCkRiLcRiPCYjCRES73HuyWJtCPBWxlu+9xSMBiUhCsuV7B6lIQzoykIksZIteuSLOV/28ClCIWZiNOSiyfO95LuZhPhZgIRahBIuxBEtVrdcyccZyEa8kXoXVWIO1KEUZ1mE9NmAjNmEzyrEFW7FN9KpQ8XbmSlShGjuwE7uwG3tQg1rsxT7sxwEcxCHU4TCO4CiO4ThO4KTLN/I32kzHcMZfvp50Ew==
+  </data>
+ </layer>
+ <layer id="2" name="Other" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJxjYKAdMGVjYDBjo6EFQBAKND+MxnYMF3+MglEwCigHXYwD7YJRMAoGDgAArAkC6A==
+  </data>
+ </layer>
+ <layer id="3" name="Collisions" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJy10llI1FEUx/H/zJjagw8thLnXY49FPuVD9F4olFCZuGVgG6QpLaaQLdBM2aZWartarqWpuZASlUaK5lJqaRkpmktq5EvYVzgDf//4ZyZmuvDh3HvOnd8dB80GRbHgIi4hHZdxBVdxDdeRgUxk4QZu4haykYNc3MYd3MU93McDPEQe8lGAR3iMQhShGCUoRRme4CnKUYFnqEQVqvEcNahFHeqhXo1yfin1FfW17JuozXgr53fUFrTKuY3ajvfoQCe60I0P+Ige9Gre7Fedv7IfxDfpfacOYVjOI9RR2Y9RxzGBSfzEFKYxg19y7zd1VvPm/PojvblFZtblalQUN7hjqXHhzENzXsZ5OVZgpcxWSfVU3fVm7wNf+MEfAViDtZpM7VpnY27v2kROkCZrs/S2OOmN7eTsQKgqbyf7XdiNMOxBOCJEJKIQjRjsRSz2qTLi2O/HARzEIRxWzY+wj0cCjiIRSTgmjuMETiIZp5CCVFXGafZpOIOzOIfzmt/FzNli52+Vyb2sRe7m0Mu1kZHHPB8FOvdK6JeiTGdeSb/KxhsvmDegUefeG/pNaLaR0y7zDmqnzt1e+n34hM/oxwC+6Nwfoj8ssxHqKH5gDOOYcPD/dW7+8yZFMcAIE1ywBK5wg7vJsTc8+fxqeMEbPvCVTH9qgIP51rWenA2StZEa6KRcvbWV/G3yRjA1xEnvRZMTI1mx//lvsK46g/0u8J3MsJj+7XN/AQ31krg=
+  </data>
+ </layer>
+ <layer id="4" name="Other" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjAL6gtVMDAxrgHgtE+3sOAI0+ygQH6OhHaNgFIw0AABhDQRg
+  </data>
+ </layer>
+ <layer id="5" name="WalkBehind" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgF5IJOZgaGLiDuZqavvf1A+yYA8UQgngS1ezKQngLEU4F4GjNETT+d3TVQoA2HP1uYicfIZrQiiY8C6oEURsrNaCYQJ+UU2gEzHznucaUvYkErkv7RNEU+aASGXROVwq8daE7HaFyQBQDjDRYT
+  </data>
+ </layer>
+ <layer id="6" name="other" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGwSggDAAINAAB
+  </data>
+ </layer>
+ <objectgroup id="9" name="Object">
+  <object id="2" gid="1" x="160" y="208" width="16" height="16">
+   <properties>
+    <property name="id" value="2"/>
+    <property name="lookAt" value="bottom"/>
+    <property name="skin" value="153"/>
+   </properties>
+  </object>
+  <object id="3" gid="1" x="224" y="208" width="16" height="16">
+   <properties>
+    <property name="id" value="2"/>
+    <property name="lookAt" value="bottom"/>
+    <property name="skin" value="153"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="7" name="Moving">
+  <object id="1" type="teleport on push" gid="3" x="192" y="320" width="16" height="16">
+   <properties>
+    <property name="map" value="building-heal"/>
+    <property name="x" type="int" value="2"/>
+    <property name="y" type="int" value="5"/>
+   </properties>
+  </object>
+  <object id="4" gid="1" x="128" y="208" width="16" height="16">
+   <properties>
+    <property name="id" value="3"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

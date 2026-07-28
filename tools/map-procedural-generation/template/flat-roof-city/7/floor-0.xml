@@ -1,0 +1,9 @@
+<map type="indoor" zone="test" backgroundsound="music/gym.opus">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[Are you a Pokémon Trainer? My little boy dreams of getting his own license and challenging the local Gym as soon as he turns ten.]]></text>
+        </step>
+    </bot>
+</map>

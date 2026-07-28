@@ -53,10 +53,10 @@ FUNC_SECS = int(os.environ.get("CC_AGENTIC_FUNC_SECS", "180"))  # wall cap / fun
 FINAL_GRACE_SECS = int(os.environ.get("CC_AGENTIC_FINAL_SECS", "120"))
 CONSENSUS_MIN = int(os.environ.get("CC_CONSENSUS_MIN", "2"))  # IAs to form a wg (QA)
 _TOOL_RESULT_CAP = 8000
-# Keep the agentic conversation inside the model's context so the prompt is NEVER
-# truncated. Budget = (the model's real ctx when known, else this) - reply - margin.
-# Default 32768 fits the common local models (gemma4, qwen-coder); set lower for a
-# smaller-context model.
+# Keep the agentic conversation inside the server's context window so the prompt is
+# NEVER truncated. Budget = (that window) - reply - margin. Fallback for the backends
+# that expose no window (Claude); 32768 fits the common local models (gemma4,
+# qwen-coder); set lower for a smaller-context model.
 _CTX_BUDGET_TOKENS = int(os.environ.get("CC_AGENTIC_CTX_BUDGET", "32768"))
 
 REPO_ROOT = codecheck.REPO_ROOT
@@ -64,9 +64,22 @@ REPO_ROOT = codecheck.REPO_ROOT
 
 def _convo_char_budget():
     """Max conversation size (chars) before we force a conclusion — keeps the prompt
-    within the model's context (no truncation). ~3 chars/token, matching fit_ctx."""
-    ctx = common.MODEL_CTX or _CTX_BUDGET_TOKENS
-    return max(4096, ctx - 3072) * 3
+    within the context (no truncation). ~3 chars/token.
+
+    Budget against the window the SERVER gives us (common.assumed_ctx), NOT the
+    model's trained context. We send no num_ctx — that would evict the running
+    runner and reload the whole model — so the real window is the host's
+    OLLAMA_CONTEXT_LENGTH, which is typically far below what the model was trained
+    for. Budgeting off the trained ctx (131072 on gemma4:26b) against a 32768 window
+    would let the conversation grow 4x past it and be silently truncated.
+
+    Reserve the REAL reply cap, not a flat slab: prompt and answer share that one
+    window, and nothing grows it to fit. Under-reserving cuts the reply at the same
+    byte every turn — which the agent loop reads as a stuck model
+    ([TRUNCATED REPEAT] -> finding skipped)."""
+    ctx = common.assumed_ctx() or _CTX_BUDGET_TOKENS
+    reply = common._ollama_num_predict() + 1024      # answer (thought included) + slab
+    return max(4096, ctx - reply) * 3
 
 _TOOL_HELP = (
     "\n\nBefore concluding you MAY request more data — ONE request per reply, on "

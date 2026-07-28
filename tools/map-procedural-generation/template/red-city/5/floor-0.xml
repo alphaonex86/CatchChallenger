@@ -1,0 +1,9 @@
+<map type="indoor" zone="test" backgroundsound="music/gym.opus">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[The hallway gets so drafty at night. I really need to buy a Cloyster-skin rug to keep things warm.]]></text>
+        </step>
+    </bot>
+</map>

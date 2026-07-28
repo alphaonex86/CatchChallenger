@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="11" height="12" tilewidth="16" tileheight="16" nextobjectid="2">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="25" height="21" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="5">
  <properties>
   <property name="type" value="indoor"/>
  </properties>
@@ -7,42 +7,52 @@
  <tileset firstgid="1025" source="../../tileset/invisible.tsx"/>
  <tileset firstgid="1041" source="../../tileset/inside-decoration.tsx"/>
  <tileset firstgid="2065" source="../../tileset/inside-mobilier.tsx"/>
- <layer name="Walkable" width="11" height="12">
+ <tileset firstgid="3089" source="../../tileset/shop.tsx"/>
+ <layer id="1" name="Walkable" width="25" height="21">
   <data encoding="base64" compression="zlib">
-   eJxbzMDAsBiI2YnAi6FYnQj8ZBQPGkwKAAAHwFxX
+   eJzdkslKQzEUhq8Dukn6BIIP4Uuo0L6AA064ddWF1tKNC1dCUcGNCwUHXCmom0KLUCd06UUXfQRnrfP0hybc03hyvRZX/vBxknOT8+fkxvP+n7IigCoh3NjqEvy8B7FXuD2OpBujERFg5r6eJ626ZpwS3z04X6pJ62w+mWcFz288zJlNXV8EKK2GeHD3wuXzWF8Q1bVNTmlH1yxqaumD9kPPb6ukPWzV4uFS2fEtyrsyakKumckb5WQFqm7pJqFpIXtadY6rS+HqcWojPmFE8TBqx7gDdJJcnOnLxu6JuyOlPsR+MAAGwZDODzNnOQ75HwvkW9LaO4o4BlJgHKR1PsN4TDg8LmW1xxSzdxrjGTBLcnPMunnLQ9VdlBUPxRJYBitk75rjXOvIb5B1m2ALbDP/M0c88qBAollXBLtgD+yDA3AY8q7t3k7I+BTjMxnEn2pE8ThHvNA9XIFrcANuwR24B2XwAB7BE3gGL+AVvIF38AE+Vc2Y59WBetAAGmP8Pf+1vgC8IrRj
   </data>
  </layer>
- <layer name="Other" width="11" height="12">
+ <layer id="2" name="Other" width="25" height="21">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFUziIV7uFBLX0BrJUMAMAUZMBdg==
+   eJxjYBgFo2AUjIJRMApGwSggDAAINAAB
   </data>
  </layer>
- <layer name="Collisions" width="11" height="12">
+ <layer id="3" name="Collisions" width="25" height="21">
   <data encoding="base64" compression="zlib">
-   eJxbzMDAsJhMzI4Ho6tVx4PR1W7nYACDr0D6GxCLcjIwiHFCxNDtwQfQ7UEHk4BmT4baZQek7Tlwm7UJKLcZjzwuYMXB0IBLzgJoniUHgo7Co5YSQEqcAgBxFyB1
+   eJy10klI1FEcwPE/1ZTL/MeZ0XEfbbR90XEp22ynMLsVZhYELYdCK8mDh4pUXKmgKKMUFTp0SA3Kg3SqQxZUUEo7tEBF0wStZHXqe3jR41f/xgF78OH9lvd+j1lcdsNwIxZx8CAeCUhEEpKRglR4kYZ0TIQPGcjEJEzGFEzFNEzHDMzELMxGFrLhRw5ykYd8zMFcFGAe5mMBFmIRCrEYS7AUy7AcK7AS1dBXEfkaFIu6XOvor8dGlKizpSovU/lmixlbqW/D9hBvlNOvEGcq/3FHfpb95Ae02iHiGtRqtXriBjSqWjN7i8iPWrx5gvpJtGr908Rn0KbVOog7xYyzIj/3lze6qfWgV/Qukl9Cn6j3h/g+r9C/Ks5cIx/AddzQejeJb+G2VrtDfBeDGBJzHpA/xCM8xhOt/5T4GZ7jhVZ/SfwKr7VagPgtgnin1d8Tf8BHfMJnfFH9r+zD+Ibv+BHiexhjGsZYjIPN/F2PII5EFKJhh6n1ncQuuM0/Z1otL2fTtPM+4gxkhjEji7PZ8CMHuWHcHclaxbzVYmYx+doRvlPCuQ0oVefL2DeJu1ssZu0Q9Z3ku1StnL0Cu7EHe1GpevvYq8Tdaos3Dop6LXmdqtWzN6ARTWhGi+odZj8i7h4jPy5qreSnRK2NvF3VOtg70RXG73aes93oQS8uhHH38ij/P+QaZP6QeuMe+/1Reu8NcwJqVvA/f4Zfy+YwjPGYgAhEIgrRsMOEAzFwwgU3YhEHD+KRgEQkIRkpSIUXPwGqc3GP
   </data>
  </layer>
- <layer name="Other" width="11" height="12">
+ <layer id="4" name="Other" width="25" height="21">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFowABAAIQAAE=
+   eJxjYBgFo2AUjIJRMApGwSggDAAINAAB
   </data>
  </layer>
- <layer name="WalkBehind" width="11" height="12">
+ <layer id="5" name="WalkBehind" width="25" height="21">
   <data encoding="base64" compression="zlib">
-   eJxjYKAPmM4BoUWBtBgHgsYHTIHyZhwImlQgB9QjT4Y+QkCKg6EBl9wMoH0zORA0PrADKL+TA0EPBgAAiSEIfw==
+   eJxjYBgFtACKfAwM8kCswIcppwwVU+XDzh9JQAnNz3JkhAFyGMPCnRKgiEf/cI8jNaD/NJCwOpX9q4bDPGLtkceTr0gFmkAztKDmwNINetohJz1iA+jpfBSQDrSBYahDpXDUBZqjNxonZAEA6CoG1Q==
   </data>
  </layer>
- <layer name="other" width="11" height="12">
+ <layer id="6" name="other" width="25" height="21">
   <data encoding="base64" compression="zlib">
-   eJxjYKAcCLMwMIiwEKfWGKjOhEi1g8U+UoAEBwODJAeCHmoAACpmAb8=
+   eJxjYBgFo2AUjIJRMApGwSggDAAINAAB
   </data>
  </layer>
- <objectgroup name="Moving">
+ <objectgroup id="7" name="Moving" visible="0">
   <object id="1" type="teleport on push" gid="1027" x="80" y="192" width="16" height="16">
    <properties>
-    <property name="map" value="building-shop"/>
-    <property name="x" type="int" value="2"/>
-    <property name="y" type="int" value="5"/>
+    <property name="map" value="gym-building"/>
+    <property name="x" type="int" value="4"/>
+    <property name="y" type="int" value="8"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="8" name="Object">
+  <object id="4" gid="1025" x="208" y="256" width="16" height="16">
+   <properties>
+    <property name="id" value="1"/>
+    <property name="lookAt" value="bottom"/>
+    <property name="skin" value=""/>
    </properties>
   </object>
  </objectgroup>
