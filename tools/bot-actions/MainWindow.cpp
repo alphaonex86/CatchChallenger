@@ -9,6 +9,13 @@
 
 #include <QNetworkProxy>
 #include <QMessageBox>
+#include <QListWidget>
+#include <QComboBox>
+#include <QCheckBox>
+#include <QSpinBox>
+#include <QLineEdit>
+#include <QLabel>
+#include "../../client/libqtcatchchallenger/LocalListener.hpp"
 #include <iostream>
 #include <cstdlib>
 #include "../libbot/BotAbort.h"
@@ -719,6 +726,105 @@ void MainWindow::on_autoCreateCharacter_stateChanged(int arg1)
     settings.setValue("autoCreateCharacter",ui->autoCreateCharacter->isChecked());
 }
 
+void MainWindow::wireRemoteControl(LocalListener *localListener)
+{
+    if(localListener==NULL)
+        return;
+    if(!connect(localListener,&LocalListener::actionReceived,this,&MainWindow::remoteAction))
+        BOT_ABORT();
+    if(!connect(this,&MainWindow::remoteReply,localListener,&LocalListener::sendReply))
+        BOT_ABORT();
+}
+
+QWidget *MainWindow::findRemoteWidget(const QString &name)
+{
+    //The interesting widgets are split over three windows: the connection form
+    //lives here, the bot/target lists in BotTargetList, the chat in SocialChat.
+    //Look in all three so a controller only needs the objectName.
+    QWidget *widget=this->findChild<QWidget *>(name);
+    if(widget==NULL && botTargetList!=NULL)
+        widget=botTargetList->findChild<QWidget *>(name);
+    if(widget==NULL && SocialChat::socialChat!=NULL)
+        widget=SocialChat::socialChat->findChild<QWidget *>(name);
+    return widget;
+}
+
+QString MainWindow::describeWidget(QWidget *widget)
+{
+    //One line per widget, "<TYPE> key=value ...", so the controller can assert
+    //on a value without parsing Qt internals.
+    QListWidget *list=qobject_cast<QListWidget *>(widget);
+    if(list!=NULL)
+        return QStringLiteral("LIST count=%1 selected=%2")
+                .arg(list->count()).arg(list->selectedItems().size());
+    QComboBox *combo=qobject_cast<QComboBox *>(widget);
+    if(combo!=NULL)
+        return QStringLiteral("COMBO count=%1 index=%2 current=%3")
+                .arg(combo->count()).arg(combo->currentIndex()).arg(combo->currentText());
+    QCheckBox *check=qobject_cast<QCheckBox *>(widget);
+    if(check!=NULL)
+        return QStringLiteral("CHECK checked=%1").arg(check->isChecked() ? 1 : 0);
+    QSpinBox *spin=qobject_cast<QSpinBox *>(widget);
+    if(spin!=NULL)
+        return QStringLiteral("SPIN value=%1").arg(spin->value());
+    QLineEdit *edit=qobject_cast<QLineEdit *>(widget);
+    if(edit!=NULL)
+        return QStringLiteral("TEXT value=%1").arg(edit->text());
+    QLabel *label=qobject_cast<QLabel *>(widget);
+    if(label!=NULL)
+        return QStringLiteral("LABEL value=%1").arg(label->text());
+    return QStringLiteral("WIDGET class=%1 enabled=%2")
+            .arg(QString::fromUtf8(widget->metaObject()->className()))
+            .arg(widget->isEnabled() ? 1 : 0);
+}
+
+void MainWindow::remoteAction(const QString &line)
+{
+    const QStringList parts=line.split(QChar(' '),Qt::SkipEmptyParts);
+    if(parts.isEmpty())
+        return;
+    const QString verb=parts.at(0).toUpper();
+    if(verb==QStringLiteral("GETWIDGET") && parts.size()>=2)
+    {
+        QWidget *widget=findRemoteWidget(parts.at(1));
+        if(widget==NULL)
+            emit remoteReply(QStringLiteral("WIDGET %1 MISSING").arg(parts.at(1)));
+        else
+            emit remoteReply(QStringLiteral("WIDGET %1 %2").arg(parts.at(1),describeWidget(widget)));
+    }
+    else if(verb==QStringLiteral("LISTITEMS") && parts.size()>=2)
+    {
+        QWidget *widget=findRemoteWidget(parts.at(1));
+        QListWidget *list=qobject_cast<QListWidget *>(widget);
+        if(list==NULL)
+            emit remoteReply(QStringLiteral("ITEMS %1 MISSING").arg(parts.at(1)));
+        else
+        {
+            //bounded: the bot list can hold hundreds of rows and the controller
+            //only ever needs a sample to assert the contents are sane
+            int max=20;
+            if(parts.size()>=3)
+                max=parts.at(2).toInt();
+            int index=0;
+            while(index<list->count() && index<max)
+            {
+                emit remoteReply(QStringLiteral("ITEM %1 %2 %3")
+                                 .arg(parts.at(1)).arg(index).arg(list->item(index)->text()));
+                index++;
+            }
+            emit remoteReply(QStringLiteral("ITEMS %1 END count=%2").arg(parts.at(1)).arg(list->count()));
+        }
+    }
+    else if(verb==QStringLiteral("GETSTATE"))
+    {
+        emit remoteReply(QStringLiteral("STATE bots=%1 targetlist=%2")
+                         .arg(multipleBotConnexion.apiToCatchChallengerClient.size())
+                         .arg(botTargetList!=NULL ? 1 : 0));
+    }
+    else
+        emit remoteReply(QStringLiteral("ERROR unknown command %1").arg(verb));
+}
+
 void MainWindow::all_player_connected()
 {
     /*if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
@@ -760,7 +866,19 @@ void MainWindow::all_player_on_map()
         static_cast<ActionsAction *>(multipleBotConnexion.botInterface)->stopAll();
         latencyRecorder->start(g_latencySeconds);
     }
+    else
 #endif
+    {
+        if(mAutoConnect)
+        {
+            //Headless run with no latency driver (the botactions benchmark, and
+            //any --host/--port/--bots invocation): nobody can tick "Auto-select",
+            //so without this the AI timer never starts, every bot stands still
+            //and the run measures an idle server instead of the packet path
+            //(moves, direction changes, actions).
+            botTargetList->enableAutoSelectTarget();
+        }
+    }
 }
 
 void MainWindow::on_host_returnPressed()

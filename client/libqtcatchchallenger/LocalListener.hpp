@@ -19,7 +19,12 @@ class DLL_PUBLIC LocalListener : public QObject
 {
     Q_OBJECT
 public:
-    explicit LocalListener(QObject *parent = 0);
+    //socketPrefix names the QLocalServer slot family. It stays
+    //"CatchChallenger-Client-" for the clients; another binary driven over the
+    //same automation channel (bot-actions) passes its own prefix so the two
+    //never take each other's slot when both run on one box.
+    explicit LocalListener(QObject *parent = 0,
+                           const QString &socketPrefix = QStringLiteral("CatchChallenger-Client-"));
     ~LocalListener();
     bool tryListen();
     void quitAllRunningInstance();
@@ -35,6 +40,7 @@ public slots:
     void sendReply(const QString &line);
 private:
     QLocalServer localServer;
+    QString socketPrefix;
     uint8_t count;
     QLocalSocket *controlSocket;
     QByteArray controlBuffer;

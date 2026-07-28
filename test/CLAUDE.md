@@ -10,7 +10,9 @@ to the testing harness too.
 
 ## No test code in production binaries
 
-Never add test code, self-test flags, or test-only branches to `general/`, `client/`, `server/`, `tools/` — it damages stability and grows the base. The test tool lives ONLY in `test/`. Drive/observe the binary EXTERNALLY: a TCP socket, the QLocalServer automation channel (remote-control the qtopengl client: keys/clicks/state queries), or a derivative of the bot connect-to-gameserver CLI. A real production BUG fix in those dirs is still allowed — only test scaffolding is forbidden.
+Never add test code, self-test flags, or test-only branches to `general/`, `client/`, `server/`, `tools/` — it damages stability and grows the base. The test tool lives ONLY in `test/`. Drive/observe the binary EXTERNALLY: a TCP socket, the QLocalServer automation channel (remote-control the qtopengl client: keys/clicks/state queries; `bot-actions` exposes the same channel on socket prefix `CatchChallenger-BotActions-` with `GETSTATE`/`GETWIDGET <objectName>`/`LISTITEMS <objectName>`), or a derivative of the bot connect-to-gameserver CLI. A real production BUG fix in those dirs is still allowed — only test scaffolding is forbidden.
+
+**GammaRay prefix:** `/mnt/data/perso/progs/CatchChallenger-GammaRay/` (built from upstream; binary `install/bin/gammaray`). Qt object/widget introspection for INTERACTIVE debugging of client + bot GUI cases — attaches to a running Qt app. Not for scripted assertions (it injects into the process, so it does not compose with sanitizer/valgrind runs): those use the QLocalServer channel above.
 
 ## Datapack `map/main/test/` — intentional bugs as fixtures
 
@@ -42,6 +44,7 @@ When adding new validation, add a matching broken fixture. Absence of message (o
 * Client connects → datapack syncs to server's.
 * Resume with `failed.json`: `test/all.sh --continue` → failures in `/mnt/data/perso/tmpfs/failed.json` → fix+`make -j32` → `--continue` re-runs only failed → repeat → `rm failed.json` → full run → repeat if failures.
 * Force fresh: `rm -f /mnt/data/perso/tmpfs/failed.json`.
+* **Resume mode lies twice — check it when verifying a fix.** With a `failed.json` entry a script (a) skips entirely when the entry is empty, printing only "all previously passed, skipping" and exiting 0, and (b) skips the COMPILE steps when the entry lists other cases, so the run uses the OLD binary and a just-made fix looks ineffective. A run whose output has no `[PASS]`/compile lines did not execute. Clear the script's key (or the file) before trusting a green/red verdict.
 * Target node: `--node <label>` (repeatable) or `CC_NODE_FILTER=mips-lxc,x86-lxc`. Bypasses per-node `enabled` flag.
 
 ## All remote_nodes.json fields are mandatory

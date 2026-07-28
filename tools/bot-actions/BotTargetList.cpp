@@ -1645,6 +1645,18 @@ void BotTargetList::on_autoSelectTarget_toggled(bool checked)
         autoStartActionTimer.stop();
 }
 
+void BotTargetList::enableAutoSelectTarget()
+{
+    //A headless run (--host/--port/--bots) has no one to tick "Auto-select", and
+    //without it autoStartActionTimer never starts. The bots then reach the map
+    //and stand still, so the run measures an idle server instead of the packet
+    //path. Force it on, and arm the timer directly in case the box was already
+    //checked (setChecked() emits nothing when the state does not change).
+    ui->autoSelectTarget->setChecked(true);
+    if(!autoStartActionTimer.isActive())
+        autoStartActionTimer.start(100);
+}
+
 void BotTargetList::autoStartAction()
 {
     if(MainWindow::multipleBotConnexion.haveAnError())

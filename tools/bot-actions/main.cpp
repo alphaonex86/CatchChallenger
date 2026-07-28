@@ -2,6 +2,7 @@
 #include "DatabaseBot.h"
 #include <QApplication>
 #include <QCommandLineParser>
+#include "../../client/libqtcatchchallenger/LocalListener.hpp"
 #ifdef CATCHCHALLENGER_BENCHMARK
 #include "LatencyRecorder.h"
 #include <csignal>
@@ -33,6 +34,11 @@ int main(int argc, char *argv[])
     //target (e.g. the ESP32 all-in-one, single-threaded over WiFi) onboards N
     //clients much slower, so the harness raises this for that node.
     QCommandLineOption mapTimeoutOption("map-timeout-seconds", "Seconds to wait for all bots to reach the map before aborting (default 60)", "seconds", "60");
+    //randomText/globalChatRandomReply already exist in ActionsBotInterface but
+    //default to false and were only reachable from the GUI, so a headless load
+    //run never produced a single chat packet. Expose them: chat is part of a
+    //realistic server load, not test scaffolding.
+    QCommandLineOption chatOption("chat", "Enable the bot random chat and chat replies (chat traffic in a load run)");
 
     parser.addOption(hostOption);
     parser.addOption(portOption);
@@ -42,6 +48,7 @@ int main(int argc, char *argv[])
     parser.addOption(latencyOption);
     parser.addOption(latencySecondsOption);
     parser.addOption(mapTimeoutOption);
+    parser.addOption(chatOption);
 
     parser.process(a);
 
@@ -67,6 +74,16 @@ int main(int argc, char *argv[])
     a.setOrganizationDomain("CatchChallenger");
     a.setOrganizationName("bot-action");
     MainWindow w;
+    if(parser.isSet(chatOption))
+    {
+        MainWindow::multipleBotConnexion.botInterface->setValue("randomText",true);
+        MainWindow::multipleBotConnexion.botInterface->setValue("globalChatRandomReply",true);
+    }
+    //QLocalServer automation channel (same one the clients expose). Its own
+    //socket family so a running client never takes our slot, and vice versa.
+    LocalListener localListener(NULL,QStringLiteral("CatchChallenger-BotActions-"));
+    if(localListener.tryListen())
+        w.wireRemoteControl(&localListener);
     w.show();
 
     if(parser.isSet(hostOption) && parser.isSet(portOption))

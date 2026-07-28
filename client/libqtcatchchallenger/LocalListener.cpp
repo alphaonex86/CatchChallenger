@@ -12,9 +12,10 @@
 #include <QCoreApplication>
 #include <iostream>
 
-LocalListener::LocalListener(QObject *parent) :
+LocalListener::LocalListener(QObject *parent, const QString &socketPrefix) :
     QObject(parent)
 {
+    this->socketPrefix=socketPrefix;
     controlSocket=nullptr;
     count=16;
 }
@@ -24,7 +25,7 @@ LocalListener::~LocalListener()
     if(localServer.isListening())
     {
         localServer.close();
-        QLocalServer::removeServer(QString::fromStdString(ExtraSocket::pathSocket("CatchChallenger-Client-"+std::to_string(count))));
+        QLocalServer::removeServer(QString::fromStdString(ExtraSocket::pathSocket(socketPrefix.toStdString()+std::to_string(count))));
     }
 }
 
@@ -35,7 +36,7 @@ bool LocalListener::tryListen()
     {
         QLocalSocket localSocket;
         localSocket.connectToServer(
-                    QString::fromStdString(ExtraSocket::pathSocket("CatchChallenger-Client-"+std::to_string(count))),QIODevice::WriteOnly);
+                    QString::fromStdString(ExtraSocket::pathSocket(socketPrefix.toStdString()+std::to_string(count))),QIODevice::WriteOnly);
         if(localSocket.waitForConnected(1000) && localSocket.isValid())
         {}
         else
@@ -52,11 +53,11 @@ bool LocalListener::tryListen()
 
 void LocalListener::listenServer(const uint8_t &count)
 {
-    QLocalServer::removeServer(QString::fromStdString(ExtraSocket::pathSocket("CatchChallenger-Client-"+std::to_string(count))));
+    QLocalServer::removeServer(QString::fromStdString(ExtraSocket::pathSocket(socketPrefix.toStdString()+std::to_string(count))));
     #ifndef Q_OS_MAC
     localServer.setSocketOptions(QLocalServer::UserAccessOption);
     #endif
-    if(localServer.listen(QString::fromStdString(ExtraSocket::pathSocket("CatchChallenger-Client-"+std::to_string(count)))))
+    if(localServer.listen(QString::fromStdString(ExtraSocket::pathSocket(socketPrefix.toStdString()+std::to_string(count)))))
         if(!connect(&localServer, &QLocalServer::newConnection, this, &LocalListener::newConnexion))
             abort();
 }
@@ -116,7 +117,7 @@ void LocalListener::quitAllRunningInstance()
     {
         QLocalSocket localSocket;
         localSocket.connectToServer(QString::fromStdString(ExtraSocket::pathSocket(
-                           "CatchChallenger-Client-"+std::to_string(count))),QIODevice::WriteOnly);
+                           socketPrefix.toStdString()+std::to_string(count))),QIODevice::WriteOnly);
         if(localSocket.waitForConnected(1000) && localSocket.isValid())
         {
             localSocket.write(data);

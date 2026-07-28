@@ -416,6 +416,9 @@ PER_TEST_KILL_AFTER=30s
 declare -A PER_TEST_TIMEOUT_MAP=(
     [codecheck.py]=30m
     [testingbots.py]=15m
+    # 8 bots create 8 accounts + 8 characters before the first one reaches the
+    # map; that cold path plus the action window fits in 25m with margin.
+    [testingbotactions.py]=25m
     [testingbroadcast.py]=15m
     [testingbyIA.py]=30m
     [testingclient.py]=40m
@@ -553,6 +556,7 @@ run_test testingoverworld.py
 run_test testingprotocolstate.py
 run_test testingclient.py
 run_test testingbots.py
+run_test testingbotactions.py
 run_test testingserver.py
 run_test testingbroadcast.py
 run_test testinghttp.py

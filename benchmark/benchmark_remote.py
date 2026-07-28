@@ -24,6 +24,7 @@ the rest of the batch.
 import hashlib
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -57,10 +58,24 @@ def set_benchmark_label(name):
     _BENCH_LABEL = name or ""
 
 
+# Step-by-step dispatch chatter: one line per node per step (staging, building,
+# pushing, and every successful rc=0). With 25 nodes it drowns the two things a
+# reader acts on - the progression counter and the per-node result - so it is
+# silent unless CC_BENCH_VERBOSE=1. Failures are never silenced: err=True lines
+# and any non-zero rc still print.
+_RVERBOSE = bool(os.environ.get("CC_BENCH_VERBOSE", ""))
+_ROUTINE_RE = re.compile(
+    r"(: rc=0$|staging source|pushing binary|: building$|: building |"
+    r"server bound in |staged pre-generated cache|datapack cache pre-generated)")
+
+
 def _rlog(msg, err=False):
     """Print a remote-dispatch line tagged with the current benchmark, e.g.
     `[remote:benchmarkmapmanager] 'pentium-m': pushing binary`. Falls back
-    to a bare `[remote]` tag when no benchmark label was set."""
+    to a bare `[remote]` tag when no benchmark label was set. Routine progress
+    chatter is dropped unless CC_BENCH_VERBOSE=1 (see _ROUTINE_RE)."""
+    if not err and not _RVERBOSE and _ROUTINE_RE.search(msg):
+        return
     raw_tag = f"[remote:{_BENCH_LABEL}]" if _BENCH_LABEL else "[remote]"
     tag = f"{bh.log_stamp()} {bh.C_BLUE}{raw_tag}{bh.C_RESET}"
     print(f"{tag} {msg}", file=sys.stderr if err else sys.stdout, flush=True)
@@ -650,7 +665,9 @@ def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
     if verbose:
         _rlog(f"cmake configure {compile_node['label']!r}: rc={rc}")
     if rc != 0:
-        return rc, f"cmake configure failed:\n{sout}\n{serr}", bld
+        _rlog(f"cmake configure failed on {compile_node['label']!r} in {bld}:\n"
+              f"{sout}\n{serr}", err=True)
+        return rc, _compile_error_summary("cmake configure failed", sout, serr), bld
     # Record which libs (system .so vs vendored copy) + version this
     # compile node's build resolved, parsed from the configure log. The
     # system-version probe (pkg-config) must run ON the compile node, so
@@ -669,8 +686,32 @@ def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
     if verbose:
         _rlog(f"cmake build {compile_node['label']!r}: rc={rc}")
     if rc != 0:
-        return rc, f"cmake build failed:\n{sout}\n{serr}", bld
+        _rlog(f"cmake build failed on {compile_node['label']!r} in {bld}:\n"
+              f"{sout}\n{serr}", err=True)
+        return rc, _compile_error_summary("cmake build failed", sout, serr), bld
     return 0, "ok", bld
+
+
+def _compile_error_summary(stage, sout, serr):
+    """Compact, information-FIRST message for a failed remote cmake step.
+
+    The caller truncates this into an 80-char progress cell, so the most
+    specific line has to come first. The old message was
+    `cmake build failed:\\n<stdout>\\n<stderr>`, which spent the whole budget on
+    the banner plus the build path ("cmake build failed: / Error: /home/…/bu")
+    and never showed the cause. The compiler/generator error is at the END of
+    the output, so take the last non-empty lines; the full text is logged
+    separately by the caller.
+    """
+    text = (serr or "").strip() or (sout or "").strip()
+    lines = []
+    for raw in text.splitlines():
+        stripped = raw.strip()
+        if stripped:
+            lines.append(stripped)
+    if not lines:
+        return f"{stage}: no output"
+    return f"{stage}: " + " | ".join(lines[-3:])
 
 
 def _have_remote_tool(user, host, port, tool):
@@ -1495,12 +1536,24 @@ def remote_callgrind(exec_node, bin_cmd, work_dir, timeout=None,
                 "skip_reason": "callgrind unavailable for this arch on node "
                                "(valgrind: %s)" % reason[:200],
                 "error": reason[:500]}
-    hint = ""
+    # Toggled run that collected nothing: the glob matched no CALL, which on a
+    # good optimiser means the callee was inlined into its caller (the
+    # out-of-line copy can still be in .symtab, so "the symbol exists" proves
+    # nothing). x86-64 gcc 15 inlines MapVisibilityAlgorithm::min_network into
+    # the benchmark's scenario loop while armv7/armv8 keep it out of line - same
+    # source, same harness, different inlining decision. Like the unavailable-
+    # tool case above this is a SKIP, not a FAIL: no wrong number was produced,
+    # the profiler just had nothing to hook. The ISA-level signal for that node
+    # still comes from perf-stat. To get the toggled number back, keep the
+    # callee out of line in the BENCHMARK build (never in production).
     if (ir is None or ir == 0) and toggle_collect:
-        hint = (" — collected ~0 Ir; --toggle-collect glob may match no symbol "
-                "in this binary (stripped? inlined?)")
+        return {"rc": vgrc if vgrc is not None else 0,
+                "skip_reason": "callgrind collected ~0 Ir: --toggle-collect %s "
+                               "matched no call (callee inlined into its caller "
+                               "in this build)" % toggle_collect,
+                "error": reason[:500]}
     return {"rc": vgrc if vgrc is not None else 0,
-            "error": f"callgrind Ir={ir}: {reason}{hint}"[:500]}
+            "error": f"callgrind Ir={ir}: {reason}"[:500]}
 
 
 def remote_nproc(exec_node):
@@ -2259,7 +2312,7 @@ def push_and_run_profilers(compile_node, exec_node, remote_bld, bin_name,
         nfs_lxc_teardown(exec_node, verbose=verbose)
 
 
-def run_profiler_fleet(specs, verbose=False, max_workers=8):
+def run_profiler_fleet(specs, verbose=False, max_workers=None):
     """Two-phase PARALLEL fleet runner for profiler-based benchmarks.
 
     `specs` -- one dict per exec node, each with:
@@ -2316,7 +2369,11 @@ def run_profiler_fleet(specs, verbose=False, max_workers=8):
 
     keys = list(by_build.keys())
     if keys:
-        with cf.ThreadPoolExecutor(max_workers=min(max_workers, len(keys))) as ex:
+        # Builds stay capped: several builds on ONE compile node fight for its
+        # cores, and that is a build-time cost with no measurement benefit.
+        # (Phase 2 is the one that widens to the whole fleet.)
+        build_width = max_workers or 8
+        with cf.ThreadPoolExecutor(max_workers=min(build_width, len(keys))) as ex:
             for key, res in ex.map(_build, keys):
                 builds[key] = res
 
@@ -2363,7 +2420,14 @@ def run_profiler_fleet(specs, verbose=False, max_workers=8):
             results[label] = (out, m)
 
     if specs:
-        with cf.ThreadPoolExecutor(max_workers=min(max_workers, len(specs))) as ex:
+        # Width = one worker per DISTINCT exec machine. These benchmarks do not
+        # touch the network while measuring, so N machines measure at once with
+        # no interference and the fleet costs the SLOWEST node, not their sum.
+        # (max_workers=None -> auto; pass a number to cap it.)
+        hosts = {(sp["exec_node"].get("ssh_host") or sp["exec_node"].get("host"))
+                 for sp in specs}
+        width = max_workers or max(1, len(hosts))
+        with cf.ThreadPoolExecutor(max_workers=min(width, len(specs))) as ex:
             list(ex.map(_run, specs))
     return results
 

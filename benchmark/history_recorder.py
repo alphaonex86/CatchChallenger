@@ -1678,7 +1678,10 @@ class PlatformRecord:
         doc = {
             "benchmark":       self.benchmark,
             "commit":          commit,
-            "commit_short":    (commit or "")[:7] or None,
+            # keep the '-dirty' marker: series.json stores the SHORT form, and
+            # truncating to 7 chars would drop exactly the part that says these
+            # numbers are not HEAD's
+            "commit_short":    _short_commit(commit),
             "comment":         comment or "",
             "started_utc":     started_utc,
             "ended_utc":       ended_utc,
@@ -1704,6 +1707,18 @@ class PlatformRecord:
         # file per node instead of one per run, and nothing constant repeated.
         import history_series
         return history_series.append_run(doc)
+
+
+def _short_commit(commit):
+    """7-char sha, preserving a '-dirty' suffix from benchmark_helpers.git_sha()."""
+    if not commit:
+        return None
+    dirty = commit.endswith("-dirty")
+    base = commit[:-len("-dirty")] if dirty else commit
+    short = base[:7]
+    if not short:
+        return None
+    return short + "-dirty" if dirty else short
 
 
 # ---- post-hoc decision tagging -------------------------------------------
