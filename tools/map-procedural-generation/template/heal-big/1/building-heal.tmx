@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="7" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="8">
+ <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
+ <tileset firstgid="17" source="../../../tileset/heal4.tsx"/>
+ <layer id="4" name="OnGrass" width="7" height="10">
+  <data encoding="base64" compression="zlib">
+   eJxjYBi5IACIA4E4CIiDgTgEiEOBOAyIAST4AkY=
+  </data>
+ </layer>
+ <layer id="1" name="Collisions" width="7" height="10">
+  <data encoding="base64" compression="zlib">
+   eJzVzLkRwCAAwDBmI/wksP82aAPq+E6tQ/h/kYdEplBpdAaTl4/FvjwP44AD+A==
+  </data>
+ </layer>
+ <layer id="2" name="WalkBehind" width="7" height="10">
+  <data encoding="base64" compression="zlib">
+   eJy1yccRglAAQMHfghgQE1lFMWPA/gtzO/DEm9nTG4UQIsZMmDIjZk7CgiUr1mxIycgpKKmo2bJjT8OBIy0nzly4cuPOg44nL9586Pn+eUP0A/kIB6k=
+  </data>
+ </layer>
+ <objectgroup id="3" name="Moving">
+  <object id="3" type="rescue" gid="2" x="48" y="160" width="16" height="16"/>
+  <object id="7" type="teleport on push" gid="3" x="48" y="144" width="16" height="16">
+   <properties>
+    <property name="map" value="floor-0"/>
+    <property name="x" value="5"/>
+    <property name="y" value="10"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

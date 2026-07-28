@@ -37,7 +37,13 @@ idf_component_register(
                  "${CC_REPO}/benchmark/benchmarkmapmanager"
                  "${CC_REPO}/test/testingmapmanagement"
                  ${CC_ESP32_VENDOR_INCLUDE_DIRS}
-    REQUIRES esp_timer
+    # esp_app_format provides esp_app_desc.h (IDF >= 5, what this prefix has:
+    # v5.3.2), app_update provides the 4.x esp_ota_ops.h fallback. app_main.cpp
+    # picks between them with __has_include, but a header only becomes visible
+    # once its component is REQUIRED - without this the __has_include test was
+    # false on IDF 5 too, so it fell through to the 4.x branch and failed there
+    # as well ("esp_ota_ops.h: No such file or directory").
+    REQUIRES esp_timer esp_app_format app_update
 )
 
 # Defines: mirror the native benchmark CMakeLists.txt (CATCHCHALLENGER_TESTING

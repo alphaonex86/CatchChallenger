@@ -48,6 +48,7 @@ BENCHMARKS=(
     ./benchmarkmapmanager.py
     ./benchmarkserversave.py
     ./benchmarkbotactions.py
+    ./benchmarkclientlatency.py
 )
 
 COMMENT="${COMMENT:-}"

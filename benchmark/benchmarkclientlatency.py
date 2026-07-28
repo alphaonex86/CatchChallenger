@@ -1254,7 +1254,7 @@ def main():
                          net_family=per_netfamily.get(label),
                          harness_version=hr.harness_version(), comment=comment)
         if out_p is not None:
-            print(_c(bh.C_CYAN, f"[history] {out_p}"))
+            bh.chatter(_c(bh.C_CYAN, f"[history] {out_p}"))
 
     if not partial:
         hr.attach_decision(BENCH, batch_id, decision)

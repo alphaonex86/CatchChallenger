@@ -1068,7 +1068,7 @@ def main():
                          harness_version=hr.harness_version(),
                          comment=comment)
         if out_p is not None:
-            print(_color(bh.C_CYAN, f"[history] {out_p}"))
+            bh.chatter(_color(bh.C_CYAN, f"[history] {out_p}"))
 
     # ESP32 per-platform history: no shell on the board, so collect() can't run
     # -- synthesize the fixed platform fields (shared helper). Written even on a
@@ -1093,7 +1093,7 @@ def main():
                          simd_tier="generic",
                          harness_version=hr.harness_version(), comment=comment)
         if out_p is not None:
-            print(_color(bh.C_CYAN, f"[history] {out_p}"))
+            bh.chatter(_color(bh.C_CYAN, f"[history] {out_p}"))
 
     # Cross-platform champion compare — aggregates every node's metrics,
     # not just the local host. SKIP entirely on a --node run OR a --maxtime

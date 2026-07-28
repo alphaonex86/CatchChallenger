@@ -220,24 +220,15 @@ def _extract_session_series(batches, champion_commit_short):
                         (idx, v, commit_short, batch_decision))
                     if label not in better_map and m.get("better"):
                         better_map[label] = m["better"]
-                for slice_label, smetrics in (blk.get("subbenchmarks") or {}).items():
-                    if not isinstance(smetrics, dict):
-                        continue
-                    for mname, m in smetrics.items():
-                        if not isinstance(m, dict):
-                            continue
-                        v = m.get("median") if m.get("median") is not None else m.get("value")
-                        if v is None:
-                            continue
-                        try:
-                            v = float(v)
-                        except (TypeError, ValueError):
-                            continue
-                        label = f"{node}.{tool}.{slice_label}.{mname}"
-                        series.setdefault(label, []).append(
-                            (idx, v, commit_short, batch_decision))
-                        if label not in better_map and m.get("better"):
-                            better_map[label] = m["better"]
+                # Sub-benchmark slices are deliberately NOT plotted here. This is
+                # the CROSS-NODE chart: one line per node per metric, so you can
+                # compare hardware. Slices are per-node detail and only "local"
+                # reports them in bulk (720 of them for mapmanager, 989 for
+                # botactions vs ~40 aggregates on every remote node), so adding
+                # them put ~700 lines belonging to ONE machine into the same
+                # panels as the 23 nodes' aggregates - the comparison drowned and
+                # the SVG grew to 1.6 MB. The per-node chart still shows every
+                # slice (see _extract_series).
     return series, commits, better_map
 
 
@@ -743,7 +734,7 @@ PANEL_W = 720
 PANEL_H = 120
 PANEL_GAP = 18
 LEFT_MARGIN = 40
-TOP_MARGIN = 28
+TOP_MARGIN = 42   # chart title + clearance for the first panel's own title
 X_AXIS_H = 50
 
 
@@ -1070,7 +1061,11 @@ def _plot_by_node_panel(x0, y0, w, h, node_vals, title, better):
     parts.append(f'<text x="4" y="-4" font-size="11" font-family="sans-serif">'
                  f'{_esc(title_txt)}{"  [log]" if uselog else ""}</text>')
     vmin = min(allv); vmax = max(allv)
-    top = 14; bot = h - 38     # reserve a bottom band for node labels
+    # Bottom band for the rotated node labels. A -35 deg label of N px runs
+    # 0.57*N px BELOW its anchor, and the longest node names here
+    # ('celeron-b820-m32') are ~60px at 7px -> ~35px of descent, which used
+    # to spill out of the panel and land on the NEXT panel's title.
+    top = 14; bot = h - 58
     if uselog:
         lmin = math.log10(vmin); lmax = math.log10(vmax)
         if lmin == lmax:
@@ -1086,11 +1081,15 @@ def _plot_by_node_panel(x0, y0, w, h, node_vals, title, better):
             return bot - ((v - lo) / (hi - lo)) * (bot - top)
     # y range labels
     parts.append(f'<text x="2" y="{top+4}" font-size="8" fill="#444" '
-                 f'font-family="sans-serif">{_esc(_humanize_name(vmax, title))}</text>')
+                 f'font-family="sans-serif" stroke="#fff" stroke-width="2.5" '
+                 f'paint-order="stroke">{_esc(_humanize_name(vmax, title))}</text>')
     parts.append(f'<text x="2" y="{bot}" font-size="8" fill="#444" '
-                 f'font-family="sans-serif">{_esc(_humanize_name(vmin, title))}</text>')
+                 f'font-family="sans-serif" stroke="#fff" stroke-width="2.5" '
+                 f'paint-order="stroke">{_esc(_humanize_name(vmin, title))}</text>')
     n = len(items)
-    padx = 14
+    # Leave room for the y-axis min/max labels on the left: with padx=14 the
+    # first box's value label landed on top of them ('809KB' over '809KB').
+    padx = 40
     slot = (w - 2 * padx) / float(n)
     bw = min(slot * 0.6, 26)
     i = 0
@@ -1122,8 +1121,8 @@ def _plot_by_node_panel(x0, y0, w, h, node_vals, title, better):
                      f'fill="{col}" font-family="sans-serif" '
                      f'text-anchor="middle">{_esc(_humanize_name(med, title))}</text>')
         # node label below, rotated to avoid overlap
-        ly = h - 4
-        parts.append(f'<text x="{cx:.1f}" y="{ly:.1f}" font-size="7.5" '
+        ly = h - 26
+        parts.append(f'<text x="{cx:.1f}" y="{ly:.1f}" font-size="7" '
                      f'fill="#333" font-family="sans-serif" text-anchor="end" '
                      f'transform="rotate(-35 {cx:.1f} {ly:.1f})">'
                      f'{_esc(node)}</text>')
@@ -1157,7 +1156,7 @@ def _render_by_node_chart(benchmark, records):
         return None
     npanels = len(mkeys)
     # base height + bottom band for the rotated node labels
-    panel_h = PANEL_H + 24
+    panel_h = PANEL_H + 48
     height = TOP_MARGIN + npanels * (panel_h + PANEL_GAP) + 10
     width = LEFT_MARGIN + PANEL_W + 20
     head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'

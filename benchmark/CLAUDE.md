@@ -81,6 +81,7 @@ Every benchmark runs on:
 
 * The current workstation (host) — compiled here, run here.
 * remote_nodes.json (not execution_nodes) compiled here — , execution_nodes run here.
+* NEVER assume a board compiles: `execution_nodes[]` only RUN. Builds happen on the parent compile node (e.g. the armv6 one is a 32-core ARMv8) or a local cross toolchain (`/mnt/data/perso/progs/catchchallenger-arm-softFPU/` for rpi-zero-w).
 * Every `execution_nodes[]` entry in
   `/home/user/Desktop/CatchChallenger/remote_nodes.json` whose
   `benchmark: true` flag is set AND whose **runtime load average (1

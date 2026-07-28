@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="25" height="21" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="5">
+ <properties>
+  <property name="type" value="indoor"/>
+ </properties>
+ <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
+ <tileset firstgid="17" source="../../../tileset/heal.tsx"/>
+ <tileset firstgid="397" source="../../../tileset/heal2.tsx"/>
+ <layer id="1" name="Walkable" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJzd0kdMFUEYwPHdt/FAEbAg0YOJ9F4URQEFrGhiorGBvSRGsFJsiEr0hiY20EQ0UfDk0XZQjBo08WC7WU6WeDDxYEVRIfxfdjb7OXlvn4Sbk/wy37fzzTfzdp9h/B/jjmkYd3HPtPMu5vt4YLo1D82/9zzS8mdaro8SnytQ/pr9b7Qe77X8g8g/BjnP6eeMblHXQzye9QnIV3V9at15LteHaL38I5xnEYhUa1HM0YgJUBurnsWpeTTzmAB1+kigJhFJSEYKUpGm9mYwZyIL2chBLvK0+0/EJBRgMqagEEXiDs43KNXutdA3eHJUkFf+w2/3GlXsr/boUcNa7SDPOMT+wx49mlk7gqOi5hjxcZzASZxCC1pxGmdU7VmfrQ3ncF70uEB8Ee3owCU8xwvtLpdD5FfIr+IaruOGWE+0DOMm+S104naQM7pC5I99rid4quJ0yz1Hnumc8RKvQnyft6y/E/1LRa90K/i+T9R+xhd8xTd8Rzd+4Cd68Au/8Qe96BvA/yWM88MRgUgMRRSiEYNhGI4RGIlYjEKcx73HirVxxPFIsOz3loRkpCAVaZb9DjKQiSxkIwe5yBO98kVcoPr5FaIIxZiKaSix7PdchumYgZmYhdmYg3LMxTxV6zdfnLFAxIuIF2MJlmIZKlCJ5ViBlViF1ViDtViH9dggem1U8SbmKlRjM7ZgK7ZhO3agBrWoQz12Yhd2Yw/2ogH70Ij9OICDaPL4RoFGp+kayOgH1591cQ==
+  </data>
+ </layer>
+ <layer id="2" name="Other" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjALiQRfjQLtgFIyCUTBQAAA0UQCM
+  </data>
+ </layer>
+ <layer id="3" name="Collisions" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJy10llIVGEUwPE7M7n00IMZ4praY49GPemD9G4YVFBmRGpCWkGlIWYIWgrNaKu2qK0uabm0aGVRPmgaGZpaZqWVqGhqi1Evon/hDHxeuszETB/8ON8557vnu3MZq0nTbChAIU7iFE7jDM7iHIpQjPO4gIu4hBKUogyXcQVXcQ3XcQPlqEAlqnAT1ajBLdxGLepQjwbcwV3cw300ogkP8BCP0IzHeAJ1tejyVvI2qbUTO/BC8pfETrySvIvYjdfoQS/68AZv0Y93GNDdMajkn9l/wbDURoijGJN8nDgh+0niFKbxDd/xAz8xg19y7jfxj+7OhTUrtbm/9OzL06xpXvDGUvPi3jJd7kO+HL5YIT0/if7K2SD2wQjBSoQiDOFYpZupX6sd9J1dkcyJ0s2Kltp6N92xiTmbsUWZt5X9NsRhO+KxAzsVu5CARCRJLVmZsYd9ClKxF/uwX+kfYH8Qh5CGdBxGhiITR5CFo1LLVmbksM/FMRxHHvJ138VKbnPyWxUbnCulXuZgRgX9SlQZnKulXod6g34j9SYHdzyl/wwtBueeU29Hh4M53dLvIfYanB2g/h4f8BGDGMIng/Oj1MekN06cwFdMYgrTLv5f5xaet2iaCWZYsAQe8IQXvC2u3eHP8wEIRBCCESIzQ4lhLs63rwjmrJFZa4nr3DTXaMUwf4PcEUvc6Kb7EpiTKLN2/+ffYF/NJued4J2ssFn+7bl5s0GRNA==
+  </data>
+ </layer>
+ <layer id="4" name="Other" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AU0AOkMNLejnI62EENsJqJgWENEK9lop0dR4BmHwXiYzS0YxSMgpEGAFMPBT0=
+  </data>
+ </layer>
+ <layer id="5" name="WalkBehind" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgF5IJOZgaGLiDuZqavvf1A+yYA8UQgngS1ezKQngLEU4F4GjNETT+d3TVQoA2HP1uYicfIZrQiiY+CwQWaaRwnMPOR4x5X+iIWtCLpH01T5INGYNg1USn82oHmdIzGBVkAAM4aFTY=
+  </data>
+ </layer>
+ <layer id="6" name="other" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGwSggDAAINAAB
+  </data>
+ </layer>
+ <objectgroup id="9" name="Object">
+  <object id="2" gid="1" x="160" y="208" width="16" height="16">
+   <properties>
+    <property name="id" value="2"/>
+    <property name="lookAt" value="bottom"/>
+    <property name="skin" value="153"/>
+   </properties>
+  </object>
+  <object id="3" gid="1" x="224" y="208" width="16" height="16">
+   <properties>
+    <property name="id" value="2"/>
+    <property name="lookAt" value="bottom"/>
+    <property name="skin" value="153"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="7" name="Moving">
+  <object id="1" type="teleport on push" gid="3" x="192" y="320" width="16" height="16">
+   <properties>
+    <property name="map" value="building-heal"/>
+    <property name="x" type="int" value="2"/>
+    <property name="y" type="int" value="5"/>
+   </properties>
+  </object>
+  <object id="4" gid="1" x="304" y="160" width="16" height="16">
+   <properties>
+    <property name="id" value="3"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

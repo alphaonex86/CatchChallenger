@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="25" height="21" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="5">
+ <properties>
+  <property name="type" value="indoor"/>
+ </properties>
+ <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
+ <tileset firstgid="17" source="../../../tileset/heal.tsx"/>
+ <tileset firstgid="397" source="../../../tileset/heal2.tsx"/>
+ <layer id="1" name="Walkable" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJzd0kdMFGEUwPEp8SBdEQ0eTJSOAqugIqiLvSQkEBsI9sRIEQV7N3pTE7smlkSBE0dQD5aoQRMOtpMKJ5VwMPEgiigW4n8z32Yek91ZCTe/5Jd5b973vTc7s5r2f6yHuqY9wmPdylu5PsFT3d7Tpg8884zcY9j5K0fdubyGLVD+jvPvRQ9f7y7HjI+i/inIPK8xMO8V+/qIp1DPRo5h9e5XM/z3ZX2Yo5dvhXEvHBGqFsU1GjEB9marXvHC2AD7nCuBPYlIQjJSkIo0dTbLsGQgU8UedZXPPxXT1P1czEAe8sUz+L9BgeO5io2hk6uEvPQffrvbquB8pUuPWmp1Q5xxjPPHXXqcoHYSp8Se08RncBbncB4XcBGXcFnsvUJ8FddwXdy/QXwT9WhAI97greNZmkLkzeQtuIXbuCPqiaam3SW/h/t4EGRGa4j8uWF7gZcqTjftOXKmf0Y7OkJ8nw/UO0X/AtEr3Qx+7jN7u/EFX9GDb+jFd/xAH37iF37jD/oH8X8ZzvwwhCMCkYhCNGIwAiMRi1GIw2iMcXnucaI2nngCEkzrvSUhGSlIRZppvYOJmIQMZCILHkwWvXJEPF3188lDPmZiFmbDa1rveQ7mYh7mYwEWYhEWYwmWqr0+hWJGkYiXES/HCqzEKpSgFKtRhnKswVqsw3pswEZsEr02q3gL1wpUogrV2IoabMN21KIOO7ATu7Abe7AX+7AfB3AQh3AYR3DU5RsFWq9122DWX6Mkdoo=
+  </data>
+ </layer>
+ <layer id="2" name="Other" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRQC3QxTjQLhgFo4B2AACX4gCM
+  </data>
+ </layer>
+ <layer id="3" name="Collisions" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJy10klIlVEUwPE3lMOiRcOinHNZu6RWuqj2iYIJZkWoGVQWaCbSoGAO0HvmmEVpmaY2qURpaqEuKl0YzuaQ00LR1MykdvqXjnD78OM9ea8LP86595zv3Pd9PIvRYLAiG3eQg1zkIR8FKMRdFOEx7qMYD/BQ8hI8knopnqAM5XiKClSiCs/wHC/wEq9QjRrUogGvUYc3eCt5Pd5JvRFNeI8PUFerZv+R/Sc5ayO2oxv7TX/POsi/SL2T2CX1HvSiD/0YwFcMYkhzx6iynyCf1NSn2E/L2QxxVvI54jwW8AOL+Ikl/MKy9P0m/tHMtHe58J6ucIO76d/aNs1+O/sd2AkvsUvTs7Y8peYNH/jCD3vhv0G/uvbZqNu7ApkTpJl1mP0RHHXSHWHMOY5wZV4E+QlE4iRO4TTOKKIQjRicRSzOKTPOk1/ARcThEi4r9XjyBFxBIq4iCcmKa7iOG7iJFKQqM9LIbyEdGchElua7WNhb7fxWRfTd26C3mLMSGzMqqFeiSqevmvMa1OrU6zivt3FHM/UWtOr0fea8De025nRJvYfYq9M7xPkwRvANoxjDuE7/FOfTUpshzuI75jCPBQf/rytrz5sNBiNMMGMLtsIFrnAzO3bHbp7fAw94wgveMtOX6Ofg/PV1gDkBMusg8ZCT5uqtY8wPljtCiKFOui+aOTEyK/Y/v8P66jPa7za/yQKreXPPrQJrY4/Z
+  </data>
+ </layer>
+ <layer id="4" name="Other" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjAL6gtVMDAxrgHgtE0IshZG6dhwBmn0UiI8h2VFOZTtGwSgYaQAAWmAFPQ==
+  </data>
+ </layer>
+ <layer id="5" name="WalkBehind" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgF5IJOZgaGLiDuZqavvf3MCDwBiCdC8RQgngrE05DkRwJow+HPFmbiMbIZrUjio2BwgWYaxwnMfOS4x5W+iAWtSPpH0xT5oBEYdk1UCr92oDkdo3FBFgAAWecVww==
+  </data>
+ </layer>
+ <layer id="6" name="other" width="25" height="21">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMApGwSggDAAINAAB
+  </data>
+ </layer>
+ <objectgroup id="9" name="Object">
+  <object id="2" gid="1" x="224" y="208" width="16" height="16">
+   <properties>
+    <property name="id" value="2"/>
+    <property name="lookAt" value="bottom"/>
+    <property name="skin" value="153"/>
+   </properties>
+  </object>
+  <object id="3" gid="1" x="160" y="208" width="16" height="16">
+   <properties>
+    <property name="id" value="2"/>
+    <property name="lookAt" value="bottom"/>
+    <property name="skin" value="153"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="7" name="Moving">
+  <object id="1" type="teleport on push" gid="3" x="192" y="320" width="16" height="16">
+   <properties>
+    <property name="map" value="building-heal"/>
+    <property name="x" type="int" value="2"/>
+    <property name="y" type="int" value="5"/>
+   </properties>
+  </object>
+  <object id="4" gid="1" x="256" y="208" width="16" height="16">
+   <properties>
+    <property name="id" value="3"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

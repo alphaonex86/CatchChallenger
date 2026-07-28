@@ -105,8 +105,8 @@ SRV_RUN_DIR    = os.path.join(TMPFS_ROOT, "cc-bench-botactions-server")
 #   small  -- baseline syscall floor, only a couple of bots
 #   medium -- typical per-tick offered load
 #   large  -- saturate the NIC tx queue / kernel sk_buff pool
-BOT_COUNTS    = [2, 4, 8, 16, 32, 60, 79, 128, 200, 300]
-DURATION_S    = 30
+BOT_COUNTS    = [2, 8, 30, 50, 150]
+DURATION_S    = 15
 RUN_REPEATS   = 3        # 1 warmup + 2 measured per (size)
 BUILD_TIMEOUT = 1800
 RUN_TIMEOUT   = DURATION_S + 60
@@ -248,7 +248,7 @@ def build_bot():
     if not os.path.isfile(bin_path):
         print(_color(bh.C_RED, f"[build:bot] missing binary: {bin_path}"))
         return None
-    print(_color(bh.C_GREEN, f"[build:bot] OK ({bh.binary_size(bin_path)} bytes)"))
+    bh.chatter(_color(bh.C_GREEN, f"[build:bot] OK ({bh.binary_size(bin_path)} bytes)"))
     return bin_path
 
 
@@ -273,7 +273,7 @@ def build_server():
     if not os.path.isfile(bin_path):
         print(_color(bh.C_RED, f"[build:server] missing binary: {bin_path}"))
         return None
-    print(_color(bh.C_GREEN, f"[build:server] OK ({bh.binary_size(bin_path)} bytes)"))
+    bh.chatter(_color(bh.C_GREEN, f"[build:server] OK ({bh.binary_size(bin_path)} bytes)"))
     return bin_path
 
 
@@ -1964,7 +1964,7 @@ def _run_with_server(bin_path, server_proc, comment,
                          harness_version=hr.harness_version(),
                          comment=comment)
         if out_p is not None:
-            print(_color(bh.C_CYAN, f"[history] {out_p}"))
+            bh.chatter(_color(bh.C_CYAN, f"[history] {out_p}"))
 
     if not partial_run:
         hr.attach_decision("benchmarkbotactions", batch_id, decision)

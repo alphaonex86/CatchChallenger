@@ -442,26 +442,6 @@ def _ollama_turn_max():
         return 7200
 
 
-def _ollama_num_ctx():
-    """Context-window size (tokens) for the router backend. Configurable
-    (CC_OLLAMA_NUM_CTX / settings 'ollama_num_ctx'); default 131072 so a LARGE
-    audit prompt (server.py attaches the file + related files + analyzer
-    candidates - tens of thousands of tokens) fits WITHOUT being truncated and
-    still leaves room for the answer. gemma4:26b uses compact sliding-window KV,
-    so 128K fits the rtx5090 (~21GB). LOWER it for a smaller GPU."""
-    v = os.environ.get("CC_OLLAMA_NUM_CTX")
-    if not v:
-        cfg = load_settings().get("ollama_num_ctx")
-        if cfg is not None:
-            v = str(cfg)
-    if v:
-        try:
-            return int(v)
-        except ValueError:
-            pass
-    return 131072
-
-
 # ---------------------------------------------------------------------------
 # Truncation flag. Every transport sets this when its reply was cut at the
 # output-token cap (router/ollama done_reason=="length", Claude stop_reason==
@@ -516,9 +496,12 @@ def _chat_router(messages, timeout=None, model=None):
     # Cap generation (the router runs stream=false and waits for the WHOLE reply,
     # so an uncapped/rambly model blocks for minutes) and keep the model warm
     # across chunks. Mirrors the native /api/chat options.
+    # num_ctx deliberately NOT sent (see "Context window" above) — the router
+    # forwards options verbatim to a SHARED Ollama, so a num_ctx here evicts
+    # every other client's runner and forces a full model reload.
     payload = {"model": mdl, "prompt": prompt, "preprompt": preprompt,
                "options": {"temperature": 0.1, "num_predict": _ollama_num_predict(),
-                           "num_ctx": _ollama_num_ctx(), "repeat_penalty": 1.3},
+                           "repeat_penalty": 1.3},
                "keep_alive": "30m"}
     # Disable slow reasoning tokens on a thinking model (gemma4:26b spends ~1300
     # tokens thinking before a ~30-token answer otherwise). Omitted unless the
@@ -595,60 +578,95 @@ def _human_dur(seconds):
 
 
 # ===========================================================================
-# num_ctx sizing (Ollama) — DYNAMIC: size to the ACTUAL payload + reply budget so a
-# small per-function view runs a SMALL (fast-loading, fast) KV cache while a big
-# payload or a thinking run scales up. Low floor (a tiny payload needs no more);
-# ceiling 1M, capped to what the model honours (ensure_context()). Override the
-# floor with CC_OLLAMA_MIN_CTX.
+# Context window (Ollama) — we deliberately do NOT send num_ctx. At all.
+#
+# Ollama bakes num_ctx into the llama-server runner at spawn time
+# (-c = num_ctx * OLLAMA_NUM_PARALLEL) and cannot resize a live runner: a
+# request whose num_ctx differs from the running one makes it evict that
+# runner, free the VRAM and reload the ENTIRE model. Sizing num_ctx per
+# payload — which this used to do, rounding up to a 2048 multiple — therefore
+# reloaded the model on very nearly every call. Measured on gemma4:26b /
+# rtx5090 (2026-07-27): a 17 GB reload every ~8.6 s taking 6.3 s each, i.e.
+# ~73% of the audit's wall-clock spent re-uploading weights instead of
+# auditing, with the GPU at 0% util most of that time. The "small payload =>
+# small KV cache => faster" reasoning is true for one standalone llama.cpp
+# process, but inverts under Ollama: the KV saving is dwarfed by the reload.
+#
+# The reload is symmetric — measured on rtx5090 2026-07-27, per-slot window of
+# the live runner before -> after each request:
+#     32768 --ask 2048--> 2048     2048 --ask 8192--> 8192   (reload)
+#      8192 --ask 2048--> 2048     2048 --ask 32768-> 32768  (reload)
+#     32768 --ask 65536-> 65536                              (reload)
+#     32768 --omitted--> 32768                               (REUSED)
+#     65536 --omitted--> 32768                               (reload)
+# i.e. ANY explicit num_ctx that differs from the running runner reloads, in
+# BOTH directions — asking for LESS than is already loaded does not "just fit"
+# inside the bigger window, it rebuilds the runner at the smaller size.
+#
+# Note the last two rows: omitting num_ctx is NOT "accept whatever runner is
+# up" — it means "give me OLLAMA_CONTEXT_LENGTH" (it pulled a 65536 runner back
+# down to 32768). So omitting does not make us immune to a co-tenant; what it
+# does is make every omitting client converge on ONE window — the host's — which
+# is the only value nobody has to coordinate. That is also the right place to
+# decide it: only the host knows its VRAM and its OLLAMA_NUM_PARALLEL multiplier
+# (it allocates num_ctx * OLLAMA_NUM_PARALLEL of KV; on rtx5090 with
+# OLLAMA_NUM_PARALLEL=12 a 32768 window is already 393216 KV, ~24 GB).
+#
+# Consequence: EVERY client of a shared Ollama must omit num_ctx too, or it will
+# still evict this one on each call. Pinning a constant here instead would have
+# required all of them to agree on the same number; omitting requires only that
+# they all stay quiet.
+#
+# ASSUMED_CTX below is NOT sent anywhere. It is only what we ASSUME the server
+# gives us, so the agentic loop can size its conversation and never overflow
+# the window (agentic._convo_char_budget). We cannot query it: /api/show
+# reports the model's TRAINED context (131072 on gemma4:26b), not the runner's
+# actual window. Keep it equal to the host's OLLAMA_CONTEXT_LENGTH (32768 on
+# rtx5090); override with CC_OLLAMA_CTX when talking to a differently-sized host.
 # ===========================================================================
-MIN_CTX = int(os.environ.get("CC_OLLAMA_MIN_CTX", "4096"))
+ASSUMED_CTX = int(os.environ.get("CC_OLLAMA_CTX", "32768"))
+MIN_CTX = ASSUMED_CTX        # what we need of the model; ensure_context() warns below it
 MAX_CTX = 1024 * 1024
-# Model's actual trained context, discovered at runtime by ensure_context();
-# fit_ctx caps to it so we never ask Ollama for more than the model can honour.
+# Model's actual TRAINED context, discovered at runtime by ensure_context().
+# Only a sanity check now (we send no num_ctx) — and the cap on ASSUMED_CTX,
+# since a model cannot give us a window bigger than it was trained for.
 MODEL_CTX = None
 
 
-def fit_ctx(*texts):
-    """num_ctx sized to the payload + chat_ollama's reply cap + a safety slab,
-    rounded up to a 2048 multiple and clamped to [MIN_CTX, model ceiling].
+def assumed_ctx():
+    """The context window we ASSUME the server gives us — for prompt budgeting
+    ONLY, never sent on the wire. See the block comment above.
 
-    DYNAMIC: a small per-function view gets a SMALL context — a model loads and runs
-    a smaller KV cache far faster — while a big payload scales up. The estimate is
-    deliberately generous: chars/3 (~33% over real tokens) + the reply cap
-    (_ollama_num_predict, so the answer — thought included — always fits) + a 1024
-    slab, so an under-count truncates neither the prompt nor the
-    answer (the 'margin of error just in case'). Only chat_ollama uses this; the
-    router path manages its own num_ctx."""
-    chars = 0
-    for t in texts:
-        chars += len(t)
-    # payload + the ACTUAL reply cap (_ollama_num_predict, which is high unless
-    # thinking is explicitly off) + safety slab. Reserving less than the reply cap
-    # makes the model run out of window mid-answer -> a reply cut at the same byte
-    # every turn, which the agent loop reads as a stuck model.
-    tokens = chars // 3 + _ollama_num_predict() + 1024
-    tokens = ((tokens + 2047) // 2048) * 2048      # round up to a 2048 multiple
-    ceiling = MAX_CTX if MODEL_CTX is None else min(MAX_CTX, MODEL_CTX)
-    return max(MIN_CTX, min(tokens, ceiling))
+    Capped to the model's trained context when known: whatever
+    OLLAMA_CONTEXT_LENGTH says, the runner cannot exceed what the model can
+    honour, and budgeting above that would silently truncate the prompt."""
+    if MODEL_CTX is None:
+        return ASSUMED_CTX
+    return min(ASSUMED_CTX, MODEL_CTX)
 
 
 def ensure_context():
-    """Verify at runtime that the model can honour a >=16K context. Asks Ollama
-    (/api/show) for the trained context_length and warns if below MIN_CTX. Stores
-    it in MODEL_CTX so fit_ctx caps num_ctx to it. Best-effort, never fatal."""
+    """Sanity-check that the model can honour the window we ASSUME (ASSUMED_CTX).
+    Asks Ollama (/api/show) for the trained context_length and warns if below
+    MIN_CTX. Stores it in MODEL_CTX so assumed_ctx() caps the prompt budget to it.
+    Best-effort, never fatal.
+
+    NB: this reports the model's TRAINED context, which is NOT the runner's real
+    window — that is set by OLLAMA_CONTEXT_LENGTH on the host and is not queryable.
+    We send no num_ctx, so this is a floor check, not the value we request."""
     global MODEL_CTX
     if USE_CLAUDE:
-        # No Ollama to probe; Claude carries a >=200K context and ignores the
-        # num_ctx knob entirely, so there is nothing to discover or cap.
+        # No Ollama to probe; Claude carries a >=200K context and has no num_ctx
+        # knob at all, so there is nothing to discover or cap.
         sys.stderr.write("%s [ctx] backend=claude model=%s (Ollama probe "
                          "skipped)\n" % (_ts(), CLAUDE_MODEL))
         return None
     if _ollama_api_kind() == "router":
         # The PHP router only accepts authenticated POST chat - it has no GET
-        # /api/show, so probing it just returns empty. num_ctx is managed by the
-        # router/Ollama server-side, so there is nothing to discover here.
+        # /api/show, so probing it just returns empty. The window is managed by
+        # the Ollama host anyway, so there is nothing to discover here.
         sys.stderr.write("%s [ctx] backend=router (model metadata not exposed; "
-                         "num_ctx managed server-side)\n" % _ts())
+                         "window managed by the Ollama host)\n" % _ts())
         return None
     try:
         req = urllib.request.Request(
@@ -660,8 +678,8 @@ def ensure_context():
             info = json.loads(resp.read().decode("utf-8", "replace"))
     except (urllib.error.URLError, OSError, ValueError) as exc:
         sys.stderr.write("%s [ctx] could not query model context length (%s); "
-                         "requesting num_ctx in [%d,%d] anyway\n"
-                         % (_ts(), exc, MIN_CTX, MAX_CTX))
+                         "assuming a %d window anyway\n"
+                         % (_ts(), exc, ASSUMED_CTX))
         return None
     # model_info keys are arch-prefixed, e.g. "qwen2.context_length".
     ctx = None
@@ -673,17 +691,18 @@ def ensure_context():
                 ctx = None
             break
     if ctx is None:
-        sys.stderr.write("%s [ctx] model %s context length unknown; requesting "
-                         "num_ctx in [%d,%d]\n"
-                         % (_ts(), MODEL_NAME, MIN_CTX, MAX_CTX))
+        sys.stderr.write("%s [ctx] model %s context length unknown; assuming a "
+                         "%d window\n" % (_ts(), MODEL_NAME, ASSUMED_CTX))
     elif ctx < MIN_CTX:
-        sys.stderr.write("%s [ctx] WARNING: model %s max context %d < required "
-                         "%d - prompts will be TRUNCATED. Use a model with a "
-                         "bigger context.\n" % (_ts(), MODEL_NAME, ctx, MIN_CTX))
+        sys.stderr.write("%s [ctx] WARNING: model %s max context %d < assumed "
+                         "%d - prompts will be TRUNCATED. Lower CC_OLLAMA_CTX, or "
+                         "use a model with a bigger context.\n"
+                         % (_ts(), MODEL_NAME, ctx, MIN_CTX))
     else:
-        sys.stderr.write("%s [ctx] model %s context %d >= %d OK (num_ctx capped "
-                         "to min(%d, %d))\n"
-                         % (_ts(), MODEL_NAME, ctx, MIN_CTX, MAX_CTX, ctx))
+        sys.stderr.write("%s [ctx] model %s trained context %d >= assumed %d OK "
+                         "(no num_ctx sent; the host's OLLAMA_CONTEXT_LENGTH sets "
+                         "the real window)\n"
+                         % (_ts(), MODEL_NAME, ctx, MIN_CTX))
     MODEL_CTX = ctx
     return ctx
 
@@ -1207,14 +1226,14 @@ def chat_ollama(messages, timeout=None, model=None):
     turn_max = _ollama_turn_max()
     mdl = model or MODEL_NAME
     chat_url = backend_for_model(mdl) + "/api/chat"
-    body = "".join(m["content"] for m in messages)
     payload = {
         "model": mdl,
         "messages": messages,
         "stream": True,
+        # num_ctx deliberately NOT sent (see "Context window" above): it would
+        # evict the running runner and reload the whole model on every change.
         "options": {
             "temperature": 0.1,
-            "num_ctx": fit_ctx(body),
             # Bound a single reply and discourage the 33B's repetition loops
             # (it sometimes spews the same line thousands of times). Same knob as
             # the router path: 2048 only when thinking is explicitly OFF, else a
@@ -1397,10 +1416,10 @@ __all__ = [
     "IA_BACKEND", "USE_CLAUDE", "CLAUDE_VIA_CLI", "CLAUDE_MODEL", "CLAUDE_API",
     "CLAUDE_VERSION", "CLAUDE_MAX_TOKENS", "IA_LABEL", "CLAUDE_PRICES",
     "CLAUDE_COST_USD", "IA_SETTINGS_FILE",
-    "MIN_CTX", "MAX_CTX", "MODEL_CTX", "CLAUDE_CRED_VARS",
+    "ASSUMED_CTX", "MIN_CTX", "MAX_CTX", "MODEL_CTX", "CLAUDE_CRED_VARS",
     "claude_usage_summary", "load_settings", "ollama_backends",
     "_model_locations", "_register_model_spec", "backend_for_model",
-    "_ts", "_Tee", "_human_dur", "fit_ctx", "ensure_context",
+    "_ts", "_Tee", "_human_dur", "assumed_ctx", "ensure_context",
     "_claude_split", "_cache_text", "_claude_has_creds", "_claude_auth_headers",
     "_settings_claude_key", "_resolve_ia_backend",
     "_ClaudeStreamError", "chat_claude", "claude_preflight",

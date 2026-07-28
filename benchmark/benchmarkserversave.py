@@ -658,7 +658,7 @@ def main():
                          harness_version=hr.harness_version(),
                          comment=comment)
         if out_p is not None:
-            print(_color(bh.C_CYAN, f"[history] {out_p}"))
+            bh.chatter(_color(bh.C_CYAN, f"[history] {out_p}"))
 
     # Cross-platform champion compare. SKIP on a --node run OR a --maxtime
     # truncated run: decision + champion promotion need the WHOLE fleet.

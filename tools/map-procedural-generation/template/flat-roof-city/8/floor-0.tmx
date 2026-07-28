@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="16" height="13" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="41">
+ <tileset firstgid="1" source="../../../../tileset-1.tsx"/>
+ <tileset firstgid="1" source="../../../../tileset-2.tsx"/>
+ <tileset firstgid="1" source="../../../../invisible.tsx"/>
+ <tileset firstgid="1" source="../../../../normal3.tsx"/>
+ <tileset firstgid="1" source="../../../../indoor.tsx"/>
+ <tileset firstgid="1" source="../../../../tileset-3.tsx"/>
+ <tileset firstgid="1" source="../../../tileset/indoor.tsx"/>
+ <tileset firstgid="622" source="../../../tileset/building3.tsx"/>
+ <tileset firstgid="1078" source="../../../tileset/invisible.tsx"/>
+ <layer id="1" name="Walkable" width="16" height="13">
+  <data encoding="base64" compression="zstd">
+   KLUv/WBAAkUBAFAACALSAYUBnAGXDKAA7wEAg5cHHRRvdOn3lDSzTW+yHqLwPjROmlk=
+  </data>
+ </layer>
+ <layer id="2" name="Walkable" width="16" height="13">
+  <data encoding="base64" compression="zstd">
+   KLUv/WBAAqUBAMgAPABpAQAAamsBAIQBAAAfhp8BAACgoQEACQCaOHXsnaIhJL8sO1Ws4aCx6/QAUAigjg0=
+  </data>
+ </layer>
+ <layer id="3" name="Collisions" width="16" height="13">
+  <data encoding="base64" compression="zstd">
+   KLUv/WBAAq0DALLFEB6wtzIGmMzolmS5AFQCcEJvahz7xh5Uz77vU/45MgVL8pCPO140iZl40xXxmgs8wD3PaUg49cr64oqNMz6AfrhAeSETIOCCFRZ2cIBDoZdLpj4OEoyckhhoIGH2ymp57xUFNXYaCh4u0ZQdioifh59DCw==
+  </data>
+ </layer>
+ <layer id="4" name="WalkBehind" width="16" height="13">
+  <data encoding="base64" compression="zstd">
+   KLUv/WBAAr0BADQCAMwAAADNAMoAAADLMAAAAC4AAAAvADcBACUBAADWAAAA1wAGAH9AIRegxh9H0UxDA7GI5K4=
+  </data>
+ </layer>
+ <objectgroup id="5" name="Moving"/>
+ <objectgroup id="6" name="Object">
+  <object id="40" gid="1078" x="192" y="208" width="16" height="16">
+   <properties>
+    <property name="id" value="1"/>
+    <property name="lookAt" value="top"/>
+    <property name="skin" value="14"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

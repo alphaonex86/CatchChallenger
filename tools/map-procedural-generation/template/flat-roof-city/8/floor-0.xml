@@ -1,0 +1,9 @@
+<map type="indoor" zone="test" backgroundsound="music/gym.opus">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[We used to have a wild Rattata living in our pantry, but my cat-like Purrloin chased it away for good.]]></text>
+        </step>
+    </bot>
+</map>
