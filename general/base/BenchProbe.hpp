@@ -100,6 +100,29 @@ inline void benchLoopOut(BenchLoopProbe &p)
 
 }
 
+//Client read events. Defined in main-unix.cpp; declared here because BOTH
+//event-loop backends have to count them the SAME way -- epoll counts one per
+//EPOLLIN dispatch, io_uring one per recv_multishot CQE that delivered bytes.
+//Each is exactly one parseIncommingData()/parseIncommingDataAsync() call, so
+//requests/s and the latency tail mean the same thing whichever loop is
+//compiled in. Counting only the epoll path made io_uring report 0 requests/s.
+#define BENCH_LAT_BUCKETS 48
+extern volatile unsigned long bench_packets_in;
+extern volatile unsigned long bench_lat_hist[BENCH_LAT_BUCKETS];
+
+//Record one read event lasting ns nanoseconds.
+//plain assignment (not ++/+=) so C++20+ builds don't warn -Wvolatile on RMW
+inline void benchRecordReadEvent(unsigned long long ns)
+{
+    bench_packets_in=bench_packets_in+1;
+    int bucket=0;
+    if(ns>0)
+        bucket=63-__builtin_clzll(ns);
+    if(bucket>=BENCH_LAT_BUCKETS)
+        bucket=BENCH_LAT_BUCKETS-1;
+    bench_lat_hist[bucket]=bench_lat_hist[bucket]+1;
+}
+
 #define CC_BENCH_LOOP_IN(probe)  CatchChallenger::benchLoopIn(probe)
 #define CC_BENCH_LOOP_OUT(probe) CatchChallenger::benchLoopOut(probe)
 

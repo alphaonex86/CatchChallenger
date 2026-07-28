@@ -1,4 +1,5 @@
 #include "EventLoop.hpp"
+#include "../../general/base/BenchProbe.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 
 #include <iostream>
@@ -1204,7 +1205,20 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
                                 cqe_flags >> IORING_CQE_BUFFER_SHIFT);
                         char *base=static_cast<char *>(g_uring->buf_storage)+
                                    static_cast<size_t>(bid)*g_uring->buf_size;
+                        #ifdef CATCHCHALLENGER_BENCHMARK
+                        //Same unit epoll counts under EPOLLIN: one dispatch
+                        //of incoming bytes into the protocol parser.
+                        struct timespec benchT0;
+                        clock_gettime(CLOCK_MONOTONIC,&benchT0);
+                        #endif
                         obj->onAsyncRecv(base,static_cast<size_t>(res));
+                        #ifdef CATCHCHALLENGER_BENCHMARK
+                        struct timespec benchT1;
+                        clock_gettime(CLOCK_MONOTONIC,&benchT1);
+                        benchRecordReadEvent(
+                            static_cast<unsigned long long>(benchT1.tv_sec-benchT0.tv_sec)*1000000000ULL
+                            +static_cast<unsigned long long>(benchT1.tv_nsec-benchT0.tv_nsec));
+                        #endif
                         //Recycle buffer back into the ring.
                         const int mask=
                             io_uring_buf_ring_mask(g_uring->buf_count);
