@@ -227,19 +227,23 @@ static UringState *g_uring=nullptr;
 // 01 -> recv_multishot CQE, pointer = (BaseClassSwitch*)(udata & ~3)
 // 10 -> Phase 3 send-chain final CQE, pointer = (PendingSendOp*)(udata & ~3)
 //
-//Tag 11 is free, but note what blocks the obvious use for it. Putting the
+//Tag 11 -> ordinary async send CQE, pointer = (BaseClassSwitch*)(udata & ~3).
+//
+//This is where the syscalls are. Putting the
 //BROADCAST sends on the ring is where the syscalls are -- with 250 players on
 //one map each move produces ~249 ::send() calls in EventLoopClient::write, and
 //io_uring currently only covers the receive side, so it saves ~1 syscall of
-//~250. Simply queueing those writes as SQEs was tried and CORRUPTS the stream:
-//the datapack transfer runs its own SQE chain (tag 10) on the SAME socket, so
-//two independent operations end up in flight on one fd and can complete out of
-//order. Measured on a Geode LX800: epoll finished normally (3.33 s, 0 kicks)
-//while io_uring bots never completed onboarding.
-//Doing it correctly needs ONE per-socket in-flight state shared by the file-send
-//chain and the normal write path, so a write is only queued when nothing else
-//is outstanding on that fd -- plus a per-client output queue for what arrives
-//meanwhile (writing synchronously behind an in-flight SQE reorders too).
+//~250, which is why the broadcast now goes through the ring too (tag 11).
+//Two earlier attempts stalled onboarding outright (server accepts, never
+//answers, 600 s silence) because they relied on wait() flushing the ring --
+//it does NOT: wait() blocks in io_uring_wait_cqe, which submits nothing, so
+//the handshake reply sat in the SQ forever. submitAsyncSend submits explicitly,
+//like every other submit site here.
+//Correctness needs ONE per-socket in-flight state shared by the file-send chain
+//(tag 10) and the normal write path (tag 11), so a write is only queued when
+//nothing else is outstanding on that fd -- plus a per-client output queue for
+//what arrives meanwhile (writing synchronously behind an in-flight SQE reorders
+//just as badly). EventLoopClient owns that state.
 //Pointer alignment makes low 2 bits always 0 for legitimate heap/stack
 //object addresses (malloc returns 16-byte-aligned on glibc).
 static inline __u64 URING_TAG_RECV(void *p)
@@ -257,6 +261,14 @@ static inline __u64 URING_TAG_SEND_CHAIN(void *p)
 static inline bool URING_IS_SEND_CHAIN(__u64 u)
 {
     return (u & 0x3ULL) == 0x2ULL;
+}
+static inline __u64 URING_TAG_ASYNC_SEND(void *p)
+{
+    return reinterpret_cast<__u64>(p) | 0x3ULL;
+}
+static inline bool URING_IS_ASYNC_SEND(__u64 u)
+{
+    return (u & 0x3ULL) == 0x3ULL;
 }
 static inline void *URING_UNTAG(__u64 u)
 {
@@ -1112,10 +1124,17 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
     if(g_uring==nullptr)
         return 0;
     io_uring_cqe *cqe=nullptr;
-    //Block until at least one event lands.
-    const int wret=io_uring_wait_cqe(&g_uring->ring,&cqe);
-    if(wret<0 || cqe==nullptr)
+    //Flush everything this tick accumulated (the broadcast sends, tag 11) AND
+    //block for a completion in ONE enter. This is the whole point of io_uring
+    //here: with 250 players on one map a move produces ~249 sends, which
+    //collapse into a single syscall instead of 249 ::send() calls. Submitting
+    //per-send instead would just swap ::send for io_uring_enter and save
+    //nothing -- measured +3.8% CPU when it was done that way.
+    const int wret=io_uring_submit_and_wait(&g_uring->ring,1);
+    if(wret<0 && wret!=-EINTR && wret!=-EBUSY)
         return -1;
+    if(io_uring_peek_cqe(&g_uring->ring,&cqe)<0 || cqe==nullptr)
+        return 0;//interrupted before anything completed
     int produced=0;
     while(produced<maxevents)
     {
@@ -1233,6 +1252,15 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
                     }
                 }
             }
+            else if(URING_IS_ASYNC_SEND(udata))
+            {
+                //Ordinary send completion: let the client handle a short write,
+                //then release the socket so queued bytes go out.
+                BaseClassSwitch *obj=
+                    static_cast<BaseClassSwitch *>(URING_UNTAG(udata));
+                obj->onAsyncSendDone(static_cast<int>(res));
+                obj->uringOpFinished();
+            }
             else if(URING_IS_SEND_CHAIN(udata))
             {
                 //Phase 3: final CQE of a datapack-send chain. All
@@ -1261,7 +1289,11 @@ int EventLoop::wait(epoll_event *events,const int &maxevents)
                     fi++;
                 }
                 if(op->client!=nullptr)
+                {
                     op->client->onAsyncSendChainComplete(success);
+                    //releases the socket, flushing anything queued behind
+                    op->client->uringOpFinished();
+                }
                 delete op;
             }
             else
@@ -1427,6 +1459,29 @@ bool EventLoop::multishotEnabled() const
     return g_uring->multishot_enabled;
 }
 
+bool EventLoop::submitAsyncSend(int fd,const char *buffer,unsigned int size,
+                                BaseClassSwitch *client)
+{
+    if(g_uring==nullptr || buffer==nullptr || size==0 || client==nullptr)
+        return false;
+    io_uring_sqe *sqe=io_uring_get_sqe(&g_uring->ring);
+    if(sqe==nullptr)
+    {
+        //SQ ring full mid-burst: flush it and retry once. Without this a
+        //broadcast wider than the ring would stall.
+        if(io_uring_submit(&g_uring->ring)<0)
+            return false;
+        sqe=io_uring_get_sqe(&g_uring->ring);
+        if(sqe==nullptr)
+            return false;//caller falls back to a synchronous ::send()
+    }
+    io_uring_prep_send(sqe,fd,buffer,size,MSG_NOSIGNAL);
+    io_uring_sqe_set_data64(sqe,URING_TAG_ASYNC_SEND(client));
+    //Deliberately NOT submitted here: wait() flushes the whole tick in one
+    //enter (io_uring_submit_and_wait), which is what saves the syscalls.
+    return true;
+}
+
 bool EventLoop::armRecvMultishot(int fd,void *user_data)
 {
     if(g_uring==nullptr || !g_uring->multishot_enabled)
@@ -1483,6 +1538,9 @@ bool EventLoop::submitDatapackChain(int sock_fd,
     //Heap-own all bytes referenced by SQEs so they outlive submission.
     PendingSendOp *op=new PendingSendOp();
     op->client=client;
+    //The chain owns the socket until its final CQE: ordinary writes queue.
+    if(client!=nullptr)
+        client->uringOpStarted();
     op->file_fds=file_fds;
     op->header_buf.assign(header_bytes,header_len);
     op->meta=per_file_meta;

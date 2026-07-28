@@ -21,6 +21,8 @@
 #error CATCHCHALLENGER_SELECT, CATCHCHALLENGER_POLL, and CATCHCHALLENGER_IO_URING are mutually exclusive
 #endif
 
+class BaseClassSwitch;
+
 class EventLoop
 {
 public:
@@ -72,6 +74,10 @@ public:
     //path: that wiring is staged for a follow-up commit so the existing
     //poll_multishot dispatch stays primary while the substrate matures.
     bool armRecvMultishot(int fd,void *user_data);
+    //Queue one ordinary send as an SQE (tag 11). Returns false if the SQ
+    //ring is full, in which case the caller must fall back to ::send().
+    bool submitAsyncSend(int fd,const char *buffer,unsigned int size,
+                         BaseClassSwitch *client);
     bool multishotEnabled() const;
     //Phase 3: submit one SQE chain that sends a packet header, then
     //per-file (metadata bytes + splice file→pipe + splice pipe→sock +

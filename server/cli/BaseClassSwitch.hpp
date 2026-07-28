@@ -23,6 +23,13 @@ public:
     //SQEs were canceled — caller should disconnect the client since
     //bytes may have been only partially written. Default no-op.
     virtual void onAsyncSendChainComplete(bool /*success*/) {}
+    #ifdef CATCHCHALLENGER_IO_URING
+    //Per-socket in-flight accounting, shared by the datapack send chain
+    //and ordinary writes so only ONE op is ever outstanding on an fd.
+    virtual void uringOpStarted() {}
+    virtual void uringOpFinished() {}
+    virtual void onAsyncSendDone(int /*res*/) {}
+    #endif
     //Phase 2 helper: when a recv_multishot CQE clears IORING_CQE_F_MORE
     //(the kernel dropped the persistent recv, e.g. on ENOBUFS or after
     //a hard error), EventLoop::wait() needs to re-arm. It only has the
