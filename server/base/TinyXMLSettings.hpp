@@ -10,7 +10,10 @@
 class TinyXMLSettings
 {
 public:
-    TinyXMLSettings();
+    //No default settings file (the "to home folder" variant was never written):
+    //its body was a bare abort(), a runtime landmine for a mistake the compiler
+    //can catch. Deleted = the same "do not use" contract, enforced at build time.
+    TinyXMLSettings() = delete;
     TinyXMLSettings(const std::string &file);
     ~TinyXMLSettings();
     void beginGroup(const std::string &group);
