@@ -669,7 +669,7 @@ bool EventLoopClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const ui
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;//token ok
                 posOutput++;
             }
-            if((posOutput+4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+            if((posOutput+4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)>=CATCHCHALLENGER_BIGBUFFERSIZE)
             {
                 std::cerr << "ProtocolParsingBase::tempBigBufferForOutput out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
                 abort();
@@ -684,7 +684,7 @@ bool EventLoopClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const ui
                 index++;
             }
             {
-                if((posOutput+2*4*CATCHCHALLENGER_SERVER_MAXIDBLOCK*CharactersGroup::list.size())>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+                if((posOutput+2*4*CATCHCHALLENGER_SERVER_MAXIDBLOCK*CharactersGroup::list.size())>=CATCHCHALLENGER_BIGBUFFERSIZE)
                 {
                     std::cerr << "ProtocolParsingBase::tempBigBufferForOutput out of buffer, file: " << __FILE__ << ":" << __LINE__ << std::endl;
                     abort();

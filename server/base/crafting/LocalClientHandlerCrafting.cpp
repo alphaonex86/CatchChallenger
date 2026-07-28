@@ -138,7 +138,7 @@ void Client::takeAnObjectOnMap()
 bool Client::syncDatabaseItemOnMap()
 {
     return true;
-    //if(public_and_private_informations.plantOnMap.size()*(1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    //if(public_and_private_informations.plantOnMap.size()*(1)>=CATCHCHALLENGER_BIGBUFFERSIZE)
     /*{
         errorOutput("Too many item on map");
         return false;
