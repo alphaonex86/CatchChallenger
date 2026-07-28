@@ -57,7 +57,10 @@ The host's `OLLAMA_CONTEXT_LENGTH` sets the window; `common.assumed_ctx()` is on
 what we assume it to be, for prompt budgeting (`CC_OLLAMA_CTX`).
 Persistent SSD cache (clang-IR + types + tidy + verdict + auto-gen compile DB) at
 `/mnt/data/perso/tmp/codecheck` (`CC_CODECHECK_CACHE`). Bound a run: `--scope` /
-`--limit`.
+`--limit`. One cmake CONFIGURE per BINARY (each has its own -D set); the client/tools
+DBs are pinned to clang (Qt hands GCC targets `-mno-direct-extern-access`, which clang
+rejects) and generated ONLY when `--scope` reaches client//tools, so a server-only
+scope keeps exactly its flags.
 
 **NOT `test/codecheck.py`** — that is the all.sh HARNESS self-test of this engine
 (view-size invariant + one smoke call), not the auditor. Running it with `--llm` does

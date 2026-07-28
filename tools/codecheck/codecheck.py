@@ -63,6 +63,7 @@ _LEADING_COMMENT_CAP = 1500  # doc-comment block right above the signature
 _MAX_BRANCHES = 10           # cap callee branches audited per function
 _MAX_TYPES = 16              # cap the param/local types listed (don't saturate)
 _TYPE_CACHE_DIR = os.path.join(codetree.OUTPUT_ROOT, "types-cache")
+_TIDY_CDB_DIR = None         # dir of the merged compile DB clang-tidy is pointed at
 _TYPE_RE = re.compile(r"\b(?:Parm)?VarDecl\b.*?\b([A-Za-z_]\w*)\s+'([^']+)'")
 
 # Triviality pre-filter: skip functions with <= this many real body lines.
@@ -190,7 +191,7 @@ def _cache_root():
                           "/mnt/data/perso/tmp/codecheck").rstrip("/")
 
 
-# One compile DB per server BINARY. Each binary compiles the SHARED sources with its
+# One compile DB per BINARY. Each binary compiles the SHARED sources with its
 # OWN -D set (CATCHCHALLENGER_CLASS_*, DB backend), so a TU that belongs to another
 # binary but is compiled with server/cli's flags fails ("no member named 'MasterLink'",
 # "unknown type name 'DatabaseBaseCallBack'") and its functions never enter the index.
@@ -206,45 +207,142 @@ _CDB_TARGETS = (
     ("cdb-master", ("server", "master")),
 )
 
+# The client + tools binaries. Their TUs need Qt's -I set and each tool's own -D set,
+# which no server DB carries. Registered ONLY when the audited scope reaches into
+# client/ or tools/ (see _targets_for): a server-only audit — security/server.py pins
+# CODECHECK_SCOPE_DIRS to general+server — must keep EXACTLY the flags it had, and
+# _common_flags() (the fallback for a TU in no DB) is a majority vote over every
+# merged DB entry, so silently adding ~700 client/tools entries would shift it.
+_CDB_TARGETS_SCOPED = (
+    ("cdb-client", ("client",)),             # qtopengl (+ embedded server for solo)
+    ("cdb-client800x600", ("client", "qtcpu800x600")),
+    ("cdb-bot-actions", ("tools", "bot-actions")),
+    ("cdb-bot-cli", ("tools", "bot-test-connect-to-gameserver-cli")),
+    ("cdb-datapack-downloader", ("tools", "datapack-downloader-cli")),
+    ("cdb-datapack-explorer", ("tools", "datapack-explorer-generator-cli")),
+    ("cdb-tileset-dedup", ("tools", "datapack-tileset-deduplicate")),
+    ("cdb-gba2cc", ("tools", "gba2catchchallenger")),
+    ("cdb-map2png", ("tools", "map2png")),
+    ("cdb-mapgen", ("tools", "map-procedural-generation")),
+    ("cdb-mapgen-terrain", ("tools", "map-procedural-generation-terrain")),
+    ("cdb-stats", ("tools", "stats")),
+    ("cdb-tileset-tagger", ("tools", "tileset-tagger")),
+    ("cdb-tmx2zstd", ("tools", "tmxTileLayerConverterToZstd")),
+    ("cdb-tuxemon2cc", ("tools", "tuxemon2catchchallenger")),
+)
 
-def _ensure_compile_db(root):
+
+def _targets_for(scope):
+    """Which binaries need a compile DB for `scope`: always the server set (general/
+    + server/ is every scope's core, and server/cli's flags must stay first for the
+    sources several binaries share), plus each client/tools binary whose own sources
+    are inside the scope. scope=None means the DEFAULT_SCOPE (everything)."""
+    out = list(_CDB_TARGETS)
+    roots = [os.path.realpath(s) for s in (scope if scope else DEFAULT_SCOPE)]
+    for name, parts in _CDB_TARGETS_SCOPED:
+        src = os.path.realpath(os.path.join(REPO_ROOT, *parts))
+        if any(src == r or src.startswith(r + os.sep) for r in roots):
+            out.append((name, parts))
+    return out
+
+
+def _ensure_compile_db(root, scope=None):
     """Find or auto-generate the compile_commands.json set so clang resolves REAL
     flags (codetree's default /tmp path is absent on a fresh checkout). CC_COMPILE_DB
-    wins (single DB); else configure each _CDB_TARGETS binary ONCE into <root>/<dir>
-    and reuse forever. Returns the list of DB paths, primary target first; empty when
-    cmake is unavailable. A target that fails to configure is simply skipped."""
+    wins (single DB); else configure each in-scope binary (_targets_for) ONCE into
+    <root>/<dir> and reuse forever. Returns the list of DB paths, primary target
+    first; empty when cmake is unavailable."""
     db = os.environ.get("CC_COMPILE_DB", "").strip()
     if db and os.path.isfile(db):
         return [db]
     if shutil.which("cmake") is None:
         return []
     out = []
-    for name, parts in _CDB_TARGETS:
+    for name, parts in _targets_for(scope):
         build = os.path.join(root, name)
         js = os.path.join(build, "compile_commands.json")
+        why = ""
         if not os.path.isfile(js):
             src = os.path.join(REPO_ROOT, *parts)
-            if os.path.isfile(os.path.join(src, "CMakeLists.txt")):
+            if not os.path.isfile(os.path.join(src, "CMakeLists.txt")):
+                why = "no CMakeLists.txt"
+            else:
                 os.makedirs(build, exist_ok=True)
                 cmd = ["nice", "-n", "19", "ionice", "-c", "3", "cmake",
                        "-S", src, "-B", build,
                        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                        "-DCATCHCHALLENGER_DB_FILE=ON",
                        "-DCMAKE_BUILD_TYPE=RelWithDebInfo"]
+                if (name, parts) not in _CDB_TARGETS:
+                    # Describe the binary with the compiler we ANALYSE with. Qt6
+                    # hands every Qt target GCC's -mno-direct-extern-access, which
+                    # clang rejects outright -> the whole TU never compiles to IR
+                    # (~300 client/tools TUs). Configuring these with clang keeps
+                    # the DB flags clang-valid. The server DBs stay on the default
+                    # compiler: they carry no Qt flags, they already work, and
+                    # security/server.py depends on them exactly as they are.
+                    cmd += ["-DCMAKE_C_COMPILER=clang",
+                            "-DCMAKE_CXX_COMPILER=clang++"]
                 try:
-                    subprocess.run(cmd, capture_output=True, text=True, timeout=600)
-                except (OSError, subprocess.SubprocessError):
-                    pass
+                    r = subprocess.run(cmd, capture_output=True, text=True,
+                                       timeout=600)
+                    if r.returncode != 0:
+                        why = (r.stderr or r.stdout or "").strip().replace(
+                            "\n", " ")[-160:]
+                except (OSError, subprocess.SubprocessError) as exc:
+                    why = str(exc)
         if os.path.isfile(js):
             out.append(js)
+        else:
+            # A missing DB is not fatal (flags fall back to the common set) but it
+            # means that binary's TUs are audited with someone else's -D set, so say
+            # so instead of silently narrowing the scope.
+            sys.stderr.write("[codecheck] no compile DB for %s: %s\n"
+                             % (os.path.join(*parts), why or "cmake unavailable"))
     return out
 
 
-def setup_caches():
+def _write_merged_cdb(root, dbs):
+    """Merge every registered compile DB into ONE compile_commands.json and return
+    its dir. clang-tidy takes a single `-p <dir>`, so with the raw list it saw only
+    the FIRST DB (server/cli) and every client/tools/login file was swept with NO
+    flags — i.e. it did not compile, and the sweep was blind exactly where the code
+    is. Merge order follows _CDB_PATHS (first wins), same precedence as _load_cdb."""
+    merged, seen = [], set()
+    for db in dbs:
+        try:
+            entries = json.load(open(db))
+        except (OSError, ValueError) as exc:
+            sys.stderr.write("[codecheck] unreadable compile DB %s: %s\n" % (db, exc))
+            continue
+        for e in entries:
+            f = e.get("file")
+            if f and f not in seen:
+                seen.add(f)
+                merged.append(e)
+    # One dir per DB SET (a server-only scope merges 5 DBs, the full scope 20), and
+    # an atomic rename: a security audit and the all.sh stage can run at the same
+    # time, and neither may read the other's half-written file.
+    key = hashlib.sha256("|".join(dbs).encode()).hexdigest()[:12]
+    out = os.path.join(root, "cdb-merged-" + key)
+    dst = os.path.join(out, "compile_commands.json")
+    try:
+        os.makedirs(out, exist_ok=True)
+        tmp = dst + ".%d.tmp" % os.getpid()
+        with open(tmp, "w") as fh:
+            json.dump(merged, fh)
+        os.replace(tmp, dst)
+    except OSError as exc:
+        sys.stderr.write("[codecheck] cannot write the merged compile DB: %s\n" % exc)
+        return None
+    return out
+
+
+def setup_caches(scope=None):
     """Point codetree's clang-IR cache + our type/tidy/verdict caches at the
     PERSISTENT SSD cache (CC_CODECHECK_CACHE) and auto-find/generate the compile DB
-    (so clang-tidy resolves real flags). Shared by build_index AND the deterministic
-    --sweep, which needs the compile DB but NOT the IR index."""
+    for `scope` (so clang-tidy resolves real flags). Shared by build_index AND the
+    deterministic --sweep, which needs the compile DB but NOT the IR index."""
     global _TYPE_CACHE_DIR, _TIDY_CACHE_DIR, _VERDICT_CACHE_DIR
     root = _cache_root()
     codetree.OUTPUT_ROOT = root
@@ -256,9 +354,14 @@ def setup_caches():
     # Insert in REVERSE so the first DB returned (server/cli, the primary target)
     # ends up first in _CDB_PATHS: _load_cdb() merges with setdefault, so the
     # earliest path wins for a source shared by several binaries (general/base/*).
-    for db in reversed(_ensure_compile_db(root)):
+    global _TIDY_CDB_DIR
+    dbs = _ensure_compile_db(root, scope)
+    for db in reversed(dbs):
         if db not in codetree._CDB_PATHS:
             codetree._CDB_PATHS.insert(0, db)
+    if dbs:
+        _TIDY_CDB_DIR = _write_merged_cdb(root, [p for p in codetree._CDB_PATHS
+                                                 if os.path.isfile(p)])
     return root
 
 
@@ -266,7 +369,7 @@ def build_index(scope=None):
     """Build (or reuse) the codetree C/C++ index over `scope` (excl vendor), on the
     persistent SSD cache + auto-generated compile DB, so a re-audit is fast and the
     tool works out of the box."""
-    setup_caches()
+    setup_caches(scope)
     codetree.SCOPE_DIRS = tuple(scope) if scope else DEFAULT_SCOPE
     idx = codetree.Index()
     idx.build()
@@ -508,8 +611,8 @@ def _file_tidy(path, checks, run=True):
     if not tidy:
         return []
     real = os.path.realpath(path)
-    cdb_dir = next((os.path.dirname(p) for p in codetree._CDB_PATHS
-                    if os.path.isfile(p)), None)
+    cdb_dir = _TIDY_CDB_DIR or next((os.path.dirname(p) for p in codetree._CDB_PATHS
+                                     if os.path.isfile(p)), None)
     if not cdb_dir:
         return []
     try:
@@ -604,7 +707,7 @@ def file_sweep(scope=None, checks=None, workers=None):
     """Run clang-tidy over EVERY non-vendor C/C++ file in the scope (cached per file).
     Returns {rel_path: [(line, check, message), ...]} sorted by line — the
     comprehensive deterministic 'where + how' improvement list."""
-    setup_caches()                                 # compile DB + cache dirs (for --sweep)
+    setup_caches(scope)                            # compile DB + cache dirs (for --sweep)
     checks = checks or SWEEP_CHECKS
     files = _scope_files(scope)
     from concurrent.futures import ThreadPoolExecutor
