@@ -50,6 +50,21 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol_Qt  *api,const C
     Q_UNUSED(y);
     Q_UNUSED(direction);
 
+    //The bot's OWN position must NOT go through the delayed queue below.
+    //dropAllPlayerOnTheMap() clears that queue on every map change, and on a
+    //large datapack the map preload finishes long after the spawn position
+    //arrives, so the queued self-insert was destroyed and the bot kept the
+    //placeholder MainWindow created (0,0 with canMoveOnMap=false) — it then
+    //stood still for the whole run. Storing mapId/x/y needs no map data, so it
+    //is safe here; everything that DOES need the maps (monsters, tile events,
+    //moveTimer) stays on the path below, which runs once they are loaded.
+    if(clientList.find(api)!=clientList.cend())
+    {
+        const CatchChallenger::Player_private_and_public_informations &ownInfo=api->get_player_informations();
+        if(ownInfo.public_informations.pseudo==player.pseudo)
+            ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
+    }
+
     //after allMapIsLoaded because is after allMapIsLoaded the api is loaded
     if(!allMapIsLoaded)
     {

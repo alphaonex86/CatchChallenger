@@ -25,6 +25,8 @@ namespace Ui {
 class MainWindow;
 }
 
+class LocalListener;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -33,6 +35,12 @@ public:
     ~MainWindow();
     static MultipleBotConnectionAction multipleBotConnexion;
     void autoConnect(const QString &host, quint16 port, int bots, const QString &login, const QString &pass, int mapTimeoutSeconds=60);
+    //QLocalServer automation channel, same mechanism the clients already use
+    //(test/CLAUDE.md: drive/observe the binary EXTERNALLY). Lets a controller
+    //read back real widget state -- how many rows the bot list holds, whether
+    //the global-target list filled, which step the combo is on -- instead of
+    //guessing it from stdout.
+    void wireRemoteControl(LocalListener *localListener);
 private:
     QSettings settings;
     QTimer slowDownTimer;
@@ -41,7 +49,12 @@ private:
     QHash<uint8_t/*character group index*/,QPair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
     std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList;
     std::vector<std::vector<CatchChallenger::CharacterEntry> > characterEntryList;
+    QWidget *findRemoteWidget(const QString &name);
+    static QString describeWidget(QWidget *widget);
+signals:
+    void remoteReply(const QString &line);
 public slots:
+    void remoteAction(const QString &line);
     void detectSlowDown(uint32_t queryCount, uint32_t worseTime);
 private slots:
     void lastReplyTime(const quint32 &time);

@@ -268,7 +268,7 @@ void MultipleBotConnectionImplForGui::logged(const std::vector<std::vector<Catch
     }
 }
 
-void MultipleBotConnectionImplForGui::haveCharacter()
+void MultipleBotConnectionImplForGui::haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     //qDebug() << "MultipleBotConnectionImplFoprGui::haveCharacter()";
     if(apiToCatchChallengerClient.size()==1)
@@ -282,7 +282,7 @@ void MultipleBotConnectionImplForGui::haveCharacter()
     }
     /*CatchChallenger::ClientFightEngine::fightEngine.public_and_private_informations.playerMonster=CatchChallenger::Api_client_real::client->player_informations.playerMonster;
     CatchChallenger::ClientFightEngine::fightEngine.setVariableContent(CatchChallenger::Api_client_real::client->get_player_informations());*/
-    MultipleBotConnection::haveCharacter();
+    MultipleBotConnection::haveCharacter(mapId,x,y,direction);
 }
 
 void MultipleBotConnectionImplForGui::connectTheExternalSocket(CatchChallengerClient * client)

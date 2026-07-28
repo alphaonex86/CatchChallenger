@@ -123,6 +123,22 @@ void ActionsAction::loadFinishedReemitTheDelayedFunction()
             index++;
         }
     }
+
+    //Arm the mover here too. It is normally started by the self-insert in
+    //insert_player(), but that message can be dropped from the delayed queue by
+    //dropAllPlayerOnTheMap() before this replay runs, and then nothing ever
+    //starts it and the bot stands still for the whole run. This is also the
+    //earliest safe point: doMove() resolves player.mapId through id_map_to_map,
+    //which only exists once the maps are loaded. Only arm when a client really
+    //has a position (canMoveOnMap), so a bot still waiting for its spawn is
+    //never walked from the placeholder 0,0.
+    bool anyPlayerReady=false;
+    for(const std::pair<CatchChallenger::Api_protocol_Qt * const, ActionsBotInterface::Player> &c:clientList) {
+        if(c.second.canMoveOnMap)
+            anyPlayerReady=true;
+    }
+    if(anyPlayerReady && !moveTimer.isActive())
+        moveTimer.start(200);
 }
 
 uint64_t ActionsAction::elementToLoad() const

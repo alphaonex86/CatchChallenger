@@ -61,6 +61,7 @@ public:
     void startPlayerMove();
     void startPlayerMove(CatchChallenger::Api_protocol_Qt *api);
     void autoStartAction();
+    void enableAutoSelectTarget();
     void updateFightStats();
     void teleportTo();
     void monsterCatch(const bool &success);

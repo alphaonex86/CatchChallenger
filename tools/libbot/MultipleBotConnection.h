@@ -91,7 +91,12 @@ protected:
     QStringList tempMapList;
 protected:
     virtual void insert_player_with_client(CatchChallengerClient *client,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
-    virtual void haveCharacter();
+    //Carries the bot's OWN spawn position: Api_protocol_loadchar emits
+    //QthaveCharacter(mapId,x,y,direction) at the end of the character load, and
+    //that is the only place the bot ever learns where it is (the server never
+    //sends a client an insert_player for itself). Declaring the slot without
+    //those parameters made Qt drop them silently.
+    virtual void haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
     virtual void logged_with_client(CatchChallengerClient *client);
     virtual std::string getNewPseudo();
     void have_current_player_info_with_client(CatchChallengerClient *client, const CatchChallenger::Player_private_and_public_informations &informations);

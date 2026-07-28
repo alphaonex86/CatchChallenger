@@ -207,7 +207,7 @@ void MultipleBotConnection::insert_player_with_client(CatchChallengerClient *cli
     client->have_informations=true;
 }
 
-void MultipleBotConnection::haveCharacter()
+void MultipleBotConnection::haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(QObject::sender());
     if(senderObject==NULL)
@@ -242,6 +242,16 @@ void MultipleBotConnection::haveCharacter()
     }
     else
         emit emit_all_player_on_map();
+
+    //Register the bot's OWN player, the same way MapControllerMP::loadCurrentPlayer()
+    //does for the real client. Without it the bot keeps the placeholder entry
+    //MainWindow creates (mapId 0, 0/0, canMoveOnMap false) and ActionsAction never
+    //starts moveTimer, so doMove() never walks the step the AI computes into
+    //target.localStep: the bot stands still for the whole run.
+    if(botInterface!=NULL && client->api!=NULL)
+        botInterface->insert_player(client->api,
+                                    client->api->get_player_informations().public_informations,
+                                    mapId,x,y,direction);
 }
 
 std::string MultipleBotConnection::getNewPseudo()
@@ -636,6 +646,12 @@ void MultipleBotConnection::have_current_player_info_with_client(CatchChallenger
         return;
     qDebug() << "selected character: " << client << " at " << __FILE__ << ":" << __LINE__;
     client->selectedCharacter=true;
+    //This is literally "the client now has its informations". It was only set
+    //in insert_player_with_client(), i.e. when the server pushed some OTHER
+    //player's insert to this bot -- a bot that had not seen anyone yet stayed
+    //false and BotTargetList's constructor then skipped it, so the bot list
+    //showed 7 rows for 8 connected bots.
+    client->have_informations=true;
     numberOfSelectedCharacter++;
     emit emit_numberOfSelectedCharacter(numberOfSelectedCharacter);
     client->stat=Status_SelectedCharacter;

@@ -175,6 +175,11 @@ def print_local_build_error(label, stage, sout, serr):
         sout, serr)
 
 
+# (benchmark, node, status, detail) already reported - a SKIP repeats once
+# per profiler and says nothing new the second time.
+_NODE_ERROR_SEEN = set()
+
+
 def print_node_error(benchmark, node_label, status, detail):
     """Print the FULL error of a remote/infra failure on ONE exec node under a
     banner (the live progress line only carries a truncated reason).  `status`
@@ -183,6 +188,20 @@ def print_node_error(benchmark, node_label, status, detail):
     fleet continues on other nodes; the banner shows the actual cause + the
     re-run command for this benchmark."""
     colour = C_YELLOW if status == "SKIP" else C_RED
+    # The banner repeats for EVERY profiler of the same node (3x the identical
+    # compile-failed text), and the progression line already carries the reason.
+    # A SKIP is infra, not a regression: keep it to one line unless the reason
+    # has never been seen, so the stream stays progression + WARN + failures.
+    key = (benchmark, node_label, status, (detail or "").strip()[:200])
+    if status == "SKIP" and key in _NODE_ERROR_SEEN and not VERBOSE:
+        return
+    _NODE_ERROR_SEEN.add(key)
+    if status == "SKIP" and not VERBOSE:
+        first = (detail or "").strip().splitlines()
+        first = first[0] if first else ""
+        print(f"{colour}[{benchmark}] {node_label} [SKIP] {first[:160]}{C_RESET}",
+              flush=True)
+        return
     _error_banner(
         colour,
         f"[{benchmark}] {node_label} [{status}]",
@@ -499,6 +518,20 @@ def warn_ssh_key_failure(node_label, host, stderr):
           f"  ssh said: {tail}\n"
           f"{bar}{C_RESET}", file=sys.stderr, flush=True)
     return True
+
+
+# One switch for the whole harness: step-by-step chatter (a build that worked, a
+# cache that was staged, a server that came up, a history file that was written)
+# is dropped unless CC_BENCH_VERBOSE=1. What survives is what a reader acts on:
+# the progression counter, the per-node result, WARN lines and every failure.
+VERBOSE = bool(os.environ.get("CC_BENCH_VERBOSE", ""))
+
+
+def chatter(msg):
+    """Print `msg` only in verbose mode. Never use it for a result, a warning or
+    an error - those must always reach the operator."""
+    if VERBOSE:
+        print(msg, flush=True)
 
 
 def note_ssh_failure(node_label, host, rc, stderr):
@@ -1802,10 +1835,28 @@ def write_record(path, record):
 
 
 def git_sha():
+    """HEAD sha, suffixed '-dirty' when tracked files differ from it.
+
+    A run built from a modified worktree does NOT measure HEAD, and recording
+    the bare sha silently attributes those numbers to a commit that does not
+    contain them — a reader months later sees a step change credited to the
+    wrong commit. Untracked files are ignored (-uno) on purpose: build dirs and
+    logs live under the tree and would otherwise mark every run dirty.
+    """
     try:
         out = subprocess.check_output(["git", "rev-parse", "HEAD"],
                                        cwd=REPO_ROOT, timeout=4).decode().strip()
-        return out or "nogit"
+        if not out:
+            return "nogit"
+        try:
+            changed = subprocess.check_output(
+                ["git", "status", "--porcelain", "--untracked-files=no"],
+                cwd=REPO_ROOT, timeout=8).decode().strip()
+            if changed:
+                out += "-dirty"
+        except Exception:
+            pass
+        return out
     except Exception:
         return "nogit"
 

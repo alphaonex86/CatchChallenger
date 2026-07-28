@@ -57,7 +57,7 @@ private:
     virtual void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
     virtual void disconnected();
     virtual void connectTimerSlot();
-    virtual void haveCharacter();
+    virtual void haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
     virtual void connectTheExternalSocket(CatchChallengerClient * client);
 signals:
     void loggedDone(CatchChallenger::Api_client_real *senderObject,
