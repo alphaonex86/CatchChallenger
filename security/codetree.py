@@ -17,6 +17,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -122,46 +123,92 @@ def flags_for(path):
     real = os.path.realpath(path)
     cmd = _load_cdb().get(real, "")
     if not cmd:
-        return _common_flags()
+        return _common_flags(real)
     cmd = re.sub(r'^\S+\s+', '', cmd)
     cmd = re.sub(r'-o\s+\S+\s*', '', cmd)
     cmd = re.sub(r'\s+CMakeFiles/\S+\.dir/\S+', '', cmd)
-    parts = []
-    for p in cmd.split():
-        if p.startswith(('-I', '-D', '-std', '-f', '-W', '-O', '-m', '-g')):
-            parts.append(p)
-    return ' '.join(parts)
+    # shlex, not split(): cmake writes shell-escaped defines (-DTILED_LIB_DIR=\"lib\"),
+    # and a raw split hands clang the backslashes -> "missing terminating '\"'" kills
+    # the whole TU. shlex unescapes them to -DTILED_LIB_DIR="lib". A token holding a
+    # space cannot survive the string round-trip, so drop it rather than corrupt the
+    # command line.
+    try:
+        tokens = shlex.split(cmd)
+    except ValueError:
+        tokens = cmd.split()
+    return ' '.join(_keep_flags(tokens))
+
+
+# Flags whose VALUE is the next token ("-isystem /usr/include/qt6"). cmake writes
+# every Qt/system include that way, and a prefix-only filter dropped them all - so
+# every Qt TU died on "'QThread' file not found" and never entered the index. They
+# are re-joined into ONE token (clang accepts -isystem<dir>) so the flag list stays
+# a plain space-joined string that survives sorting and re-splitting.
+_FLAG_WITH_VALUE = ('-isystem', '-iquote', '-idirafter', '-include', '-imacros',
+                    '-I', '-D', '--sysroot')
+_FLAG_PREFIXES = ('-I', '-D', '-std', '-f', '-W', '-O', '-m', '-g', '-isystem',
+                  '-iquote', '-idirafter', '-include', '-imacros', '--sysroot')
+
+
+def _keep_flags(tokens):
+    """The -I/-D/-std/-f/-W/-O/-m/-g flags of a compile command, separated-value
+    forms folded into one token. A token holding a space cannot survive the string
+    round-trip, so it is dropped rather than corrupting the command line."""
+    out = []
+    i = 0
+    while i < len(tokens):
+        t = tokens[i]
+        if t in _FLAG_WITH_VALUE and i + 1 < len(tokens):
+            # short options join directly (-isystem/usr/include), long ones with '='
+            t += ("=" if t.startswith("--") else "") + tokens[i + 1]
+            i += 1
+        if t.startswith(_FLAG_PREFIXES) and ' ' not in t:
+            out.append(t)
+        i += 1
+    return out
 
 
 _FLAGS_LOCK = threading.Lock()
 _FLAGS_CACHED = None
 
 
-def _common_flags():
-    """Extract -I (all), -D/-std (majority) flags from the CDB.  Cached."""
+def _common_flags(path=None):
+    """Extract -I (all), -D (majority) flags from the CDB, plus the -std matching
+    `path`'s LANGUAGE.  Cached.
+
+    The -std MUST be language-picked: the DB mixes C and C++ entries, and emitting
+    both ("-std=gnu++23 -std=gnu11") makes clang reject every fallback TU outright
+    ("invalid argument '-std=gnu11' not allowed with 'C++'"), so a source in no
+    compile DB was never analysed at all."""
     global _FLAGS_CACHED
-    if _FLAGS_CACHED is not None:
-        return _FLAGS_CACHED
-    with _FLAGS_LOCK:
-        if _FLAGS_CACHED is not None:
-            return _FLAGS_CACHED
-        include_set = set()
-        def_counts = {}
-        std_set = set()
-        for path, cmd in _load_cdb().items():
-            for p in cmd.split():
-                if p.startswith('-I'):
-                    include_set.add(p)
-                elif p.startswith('-D'):
-                    def_counts[p] = def_counts.get(p, 0) + 1
-                elif p.startswith('-std'):
-                    std_set.add(p)
-        threshold = max(1, len(_load_cdb()) // 2)
-        defines = sorted(p for p, c in def_counts.items() if c >= threshold)
-        includes = sorted(include_set)
-        stden = sorted(std_set)
-        _FLAGS_CACHED = ' '.join(stden + includes + defines)
-        return _FLAGS_CACHED
+    if _FLAGS_CACHED is None:
+        with _FLAGS_LOCK:
+            if _FLAGS_CACHED is None:
+                include_set = set()
+                def_counts = {}
+                std_set = set()
+                for _p, cmd in _load_cdb().items():
+                    try:
+                        tokens = shlex.split(cmd)
+                    except ValueError:
+                        tokens = cmd.split()
+                    for p in _keep_flags(tokens):
+                        if p.startswith(('-I', '-isystem', '-iquote',
+                                         '-idirafter')):
+                            include_set.add(p)
+                        elif p.startswith('-D'):
+                            def_counts[p] = def_counts.get(p, 0) + 1
+                        elif p.startswith('-std'):
+                            std_set.add(p)
+                threshold = max(1, len(_load_cdb()) // 2)
+                _FLAGS_CACHED = (
+                    sorted(p for p in std_set if '++' in p),      # C++ standards
+                    sorted(p for p in std_set if '++' not in p),  # C standards
+                    sorted(include_set),
+                    sorted(p for p, c in def_counts.items() if c >= threshold))
+    cxx_std, c_std, includes, defines = _FLAGS_CACHED
+    std = c_std if (path and path.endswith('.c')) else cxx_std
+    return ' '.join(std[-1:] + includes + defines)
 
 
 # ---------------------------------------------------------------------------

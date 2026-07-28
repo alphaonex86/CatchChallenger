@@ -23,8 +23,8 @@ Three layers:
      No backend up -> layer skipped, not a failure (the suite must not depend on a
      running Ollama/Claude).
 
-Scope: general/base (the protocol parsers — security-critical, and they build
-fast from the server/cli compile DB). Override with --scope= / CC_CODECHECK_SCOPE.
+Scope: EVERY C/C++ source we own — general/, server/, client/ AND tools/ — with the
+vendored libs excluded. Override with --scope= / CC_CODECHECK_SCOPE.
 Run `codecheck.py --help` for the flags (model choice, budget, gating).
 
 Self-skips (PASS) when clang/cmake are absent or the code tree can't be built —
@@ -39,14 +39,13 @@ import re
 import time
 import shutil
 import importlib.util
-import subprocess
 
 import diagnostic
 import wall_cap
 wall_cap.arm()
 import build_paths
 import phase_timer
-from test_config import FAILED_JSON, TMPFS_BUILD_ROOT
+from test_config import FAILED_JSON
 
 build_paths.ensure_root()
 DIAG = diagnostic.parse_diag_args()
@@ -62,10 +61,11 @@ C_GREEN = "\033[92m"; C_RED = "\033[91m"; C_CYAN = "\033[96m"; C_RESET = "\033[0
 # well under it (~4 chars/token, codecheck's own estimate).
 CONTEXT_BUDGET_TOKENS = 8000
 MAX_INVARIANT_FUNCS = 600     # bound the deterministic scan
-# The server-reachable code, same scope as security/server.py: general/ + server/
-# (no client/, no tools/, no vendor). Comma-separated, repo-relative.
-SCOPE_REL = os.environ.get("CC_CODECHECK_SCOPE", "general,server")
-NICE_PREFIX = ["nice", "-n", "19", "ionice", "-c", "3"]
+# ALL our C/C++, vendor excluded (codetree.is_vendor drops blake3/hps/xxhash/zstd/
+# tinyXML2/zlib/ogg/opus/opusfile/tiled). Unlike security/server.py — which only
+# cares about the server-reachable attack surface — this is a GENERAL quality
+# auditor, so client/ and tools/ are in scope too. Comma-separated, repo-relative.
+SCOPE_REL = os.environ.get("CC_CODECHECK_SCOPE", "general,server,client,tools")
 # Layer 3 (IA quality review) budget + bounds. The verdict cache is keyed by
 # (model, function source), so a re-run replays what it already reviewed for free
 # and spends the budget getting FURTHER through the scope.
@@ -193,31 +193,6 @@ def _load_engine():
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
-
-
-def _ensure_compile_db():
-    """codetree needs clang compile flags from a compile_commands.json. Configure
-    server/cli (its compile DB covers server/ + general/base via the INTERFACE
-    libs) with CMAKE_EXPORT_COMPILE_COMMANDS. Returns the DB path or None."""
-    if shutil.which("cmake") is None:
-        return None
-    build = os.path.join(TMPFS_BUILD_ROOT, "codecheck-cdb")
-    os.makedirs(build, exist_ok=True)
-    cmd = NICE_PREFIX + [
-        "cmake", "-S", os.path.join(ROOT, "server", "cli"), "-B", build,
-        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
-        "-DCATCHCHALLENGER_DB_FILE=ON",
-        "-DCMAKE_BUILD_TYPE=RelWithDebInfo"]
-    try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
-    except (OSError, subprocess.SubprocessError) as exc:
-        log_info(f"compile-db configure failed to launch: {exc}")
-        return None
-    db = os.path.join(build, "compile_commands.json")
-    if r.returncode != 0 or not os.path.isfile(db):
-        log_info("compile-db configure failed:\n" + (r.stderr or "")[-800:])
-        return None
-    return db
 
 
 def _ia_reachable(common, model=None):
@@ -434,8 +409,8 @@ def main():
     # ---- layer 1b: deterministic FILE-LEVEL sweep --------------------------------
     # The comprehensive clang-tidy pass that covers EVERY function (not just the
     # codetree-indexed few). Deterministic, so it GATES: a crash, a malformed finding
-    # tuple, or 0 findings (a broken compile DB / parse silently yields 0, but
-    # general/base always has findings incl. intentional false-positives) is a real
+    # tuple, or 0 findings (a broken compile DB / parse silently yields 0, but a
+    # tree this size always has findings incl. intentional false-positives) is a real
     # regression. Skips when clang-tidy is absent.
     if shutil.which("clang-tidy") is None:
         log_info("sweep check skipped (clang-tidy not on PATH)")
@@ -456,9 +431,9 @@ def main():
                 log_fail("sweep", f"malformed finding tuple: {bad}", time.monotonic() - ts)
                 failures.append(("sweep", f"malformed finding tuple: {bad}"))
             elif total == 0:
-                log_fail("sweep", "0 findings over general/base — compile DB or parse "
-                         "likely broken", time.monotonic() - ts)
-                failures.append(("sweep", "0 findings over general/base"))
+                log_fail("sweep", f"0 findings over {SCOPE_REL} — compile DB or "
+                         "parse likely broken", time.monotonic() - ts)
+                failures.append(("sweep", f"0 findings over {SCOPE_REL}"))
             else:
                 log_pass(f"sweep: {total} well-formed finding(s) over {SCOPE_REL}",
                          time.monotonic() - ts)
