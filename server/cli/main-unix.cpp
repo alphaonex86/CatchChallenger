@@ -163,7 +163,8 @@ void signal_callback_handler(int signum){
 //(async-signal-safe integer writes only) so the requests/s headline is
 //always paired with its latency tail + jitter, never reported alone.
 //ESP32 has no signals: the same dump is emitted to UART every 60s instead.
-#define BENCH_LAT_BUCKETS 48
+//BENCH_LAT_BUCKETS + benchRecordReadEvent() live in BenchProbe.hpp so the
+//io_uring backend records read events identically (see EventLoop.cpp).
 volatile unsigned long bench_packets_in=0;
 volatile unsigned long bench_lat_hist[BENCH_LAT_BUCKETS];
 CatchChallenger::BenchLoopProbe bench_loop={0,0,0,0,0};
@@ -1113,18 +1114,10 @@ int main(int argc, char *argv[])
                         #ifdef CATCHCHALLENGER_BENCHMARK
                         struct timespec benchT1;
                         clock_gettime(CLOCK_MONOTONIC,&benchT1);
-                        //plain assignment (not ++) so a C++20+ build
-                        //doesn't warn -Wvolatile on a volatile RMW.
-                        bench_packets_in = bench_packets_in + 1;
-                        unsigned long long benchNs=
+                        const unsigned long long benchNs=
                             static_cast<unsigned long long>(benchT1.tv_sec-benchT0.tv_sec)*1000000000ULL
                             +static_cast<unsigned long long>(benchT1.tv_nsec-benchT0.tv_nsec);
-                        int benchBucket=0;
-                        if(benchNs>0)
-                            benchBucket=63-__builtin_clzll(benchNs);
-                        if(benchBucket>=BENCH_LAT_BUCKETS)
-                            benchBucket=BENCH_LAT_BUCKETS-1;
-                        bench_lat_hist[benchBucket]=bench_lat_hist[benchBucket]+1;
+                        benchRecordReadEvent(benchNs);
                         #endif
                     }
                     if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || !client->isValid())
