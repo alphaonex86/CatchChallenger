@@ -226,6 +226,20 @@ static UringState *g_uring=nullptr;
 // 00 -> poll_multishot CQE (legacy path), pointer is BaseClassSwitch*
 // 01 -> recv_multishot CQE, pointer = (BaseClassSwitch*)(udata & ~3)
 // 10 -> Phase 3 send-chain final CQE, pointer = (PendingSendOp*)(udata & ~3)
+//
+//Tag 11 is free, but note what blocks the obvious use for it. Putting the
+//BROADCAST sends on the ring is where the syscalls are -- with 250 players on
+//one map each move produces ~249 ::send() calls in EventLoopClient::write, and
+//io_uring currently only covers the receive side, so it saves ~1 syscall of
+//~250. Simply queueing those writes as SQEs was tried and CORRUPTS the stream:
+//the datapack transfer runs its own SQE chain (tag 10) on the SAME socket, so
+//two independent operations end up in flight on one fd and can complete out of
+//order. Measured on a Geode LX800: epoll finished normally (3.33 s, 0 kicks)
+//while io_uring bots never completed onboarding.
+//Doing it correctly needs ONE per-socket in-flight state shared by the file-send
+//chain and the normal write path, so a write is only queued when nothing else
+//is outstanding on that fd -- plus a per-client output queue for what arrives
+//meanwhile (writing synchronously behind an in-flight SQE reorders too).
 //Pointer alignment makes low 2 bits always 0 for legitimate heap/stack
 //object addresses (malloc returns 16-byte-aligned on glibc).
 static inline __u64 URING_TAG_RECV(void *p)
