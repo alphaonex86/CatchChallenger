@@ -6,7 +6,7 @@
 #include <time.h>
 #endif
 //self-guarded: real probes under CATCHCHALLENGER_BENCHMARK, empty macros otherwise
-#include "../../general/base/BenchProbe.hpp"
+#include "../../benchmark/BenchProbe.hpp"
 #include "win32_compat.hpp"
 #ifndef _WIN32
 #include <unistd.h>

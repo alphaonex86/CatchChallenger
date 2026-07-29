@@ -1553,7 +1553,7 @@ def bench_hist_percentiles(buckets):
 
 def parse_loop_selfprobe(text):
     """Server event-loop self-probe from its 'BENCH loop_*' dump
-    (general/base/BenchProbe.hpp, CATCHCHALLENGER_BENCHMARK builds) -- the
+    (benchmark/BenchProbe.hpp, CATCHCHALLENGER_BENCHMARK builds) -- the
     profiler tier for platforms where nothing can be installed (ESP32,
     OpenWrt routers, minimal rootfs). All TIME-based (us) so the values
     compare cross-arch, never raw cycles. Derived metrics:

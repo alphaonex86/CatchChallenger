@@ -11,61 +11,7 @@
 using namespace CatchChallenger;
 
 #if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
-#ifdef CATCHCHALLENGER_IO_URING
-char ProtocolParsingBase::outputBlocks[ProtocolParsingBase::outputBlockCount][CATCHCHALLENGER_BIGBUFFERSIZE];
-unsigned int ProtocolParsingBase::outputBlockInFlight[ProtocolParsingBase::outputBlockCount]={0,0,0,0};
-unsigned int ProtocolParsingBase::outputBlockCurrent=0;
-char *ProtocolParsingBase::tempBigBufferForOutput=ProtocolParsingBase::outputBlocks[0];
-
-bool ProtocolParsingBase::nextOutputBlock()
-{
-    unsigned int tried=0;
-    while(tried<outputBlockCount)
-    {
-        const unsigned int candidate=(outputBlockCurrent+1+tried)%outputBlockCount;
-        if(outputBlockInFlight[candidate]==0)
-        {
-            outputBlockCurrent=candidate;
-            tempBigBufferForOutput=outputBlocks[candidate];
-            return true;
-        }
-        tried++;
-    }
-    //every block still has sends in flight: the caller must not rotate
-    return false;
-}
-
-void ProtocolParsingBase::outputBlockRef(const char * const block)
-{
-    unsigned int index=0;
-    while(index<outputBlockCount)
-    {
-        if(block>=outputBlocks[index] && block<(outputBlocks[index]+CATCHCHALLENGER_BIGBUFFERSIZE))
-        {
-            outputBlockInFlight[index]++;
-            return;
-        }
-        index++;
-    }
-}
-
-void ProtocolParsingBase::outputBlockUnref(const char * const block)
-{
-    unsigned int index=0;
-    while(index<outputBlockCount)
-    {
-        if(block>=outputBlocks[index] && block<(outputBlocks[index]+CATCHCHALLENGER_BIGBUFFERSIZE))
-        {
-            if(outputBlockInFlight[index]>0)
-                outputBlockInFlight[index]--;
-            return;
-        }
-        index++;
-    }
-}
-#else
 char ProtocolParsingBase::tempBigBufferForOutput[];
-#endif
 //tempBigBufferForInput moved to a stack-local in parseIncommingData()
 #ifndef DYNAMICPACKETFIXEDSIZE
 uint8_t ProtocolParsing::packetFixedSize[];
