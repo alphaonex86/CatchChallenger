@@ -734,7 +734,7 @@ without its latency tail + jitter: a throughput win that inflates p99 or
 jitter is a tick-stability regression on the constrained targets.
 
 The same build carries the event-loop self-probe
-(`general/base/BenchProbe.hpp`): `BENCH loop_busy_us/loop_wall_us/
+(`benchmark/BenchProbe.hpp`): `BENCH loop_busy_us/loop_wall_us/
 loop_iterations`, TIME units only (us — cross-arch comparable, never raw
 cycles; ESP32 CCOUNT is converted at dump time). `bh.parse_loop_selfprobe()`
 derives `loop_busy_pct` + `loop_us_per_wakeup`. This is the profiler tier
