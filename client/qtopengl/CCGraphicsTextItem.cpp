@@ -1,6 +1,8 @@
 #include "CCGraphicsTextItem.hpp"
 #include <QStyleOptionGraphicsItem>
 #include <QPainter>
+#include <QTextDocument>
+#include <QFontMetricsF>
 
 CCGraphicsTextItem::CCGraphicsTextItem(QGraphicsItem *parent) :
     QGraphicsTextItem(parent)
@@ -30,21 +32,26 @@ void CCGraphicsTextItem::paint(QPainter* painter, const QStyleOptionGraphicsItem
     painter->setBrush(Qt::green);*/
     //painter->drawRect(whateverRectangle());
 
-    // You can use these to decide when you draw
-    bool placeHolder=false;
-    bool textEditingMode = (textInteractionFlags() & Qt::TextEditorInteraction);
-    bool isSelected = (option->state & QStyle::State_Selected);
-    if(!textEditingMode && !isSelected && toPlainText().isEmpty() && !m_placeholder.isEmpty())
-    {
-        setHtml("<span style=\"color:grey;\">"+m_placeholder+"</span>");
-        placeHolder=true;
-    }
-
     // Call the parent to do the actual text drawing
     QGraphicsTextItem::paint(painter, &opt, widget);
 
-    if(placeHolder)
-        setHtml("");
+    // The placeholder is DRAWN, never written into the document: setHtml() here
+    // dirtied the item from inside its own paint(), so Qt scheduled another paint
+    // and the item repainted for ever (and modifying an item while it is being
+    // painted is not allowed). Same grey as the old "<span style=color:grey>".
+    const bool textEditingMode = (textInteractionFlags() & Qt::TextEditorInteraction);
+    const bool isSelected = (option->state & QStyle::State_Selected);
+    if(!textEditingMode && !isSelected && toPlainText().isEmpty() && !m_placeholder.isEmpty())
+    {
+        const qreal margin=document()->documentMargin();
+        const QFontMetricsF fm(font());
+        painter->save();
+        painter->setPen(QColor(128,128,128));
+        painter->setFont(font());
+        //baseline of the first line, where the document would have drawn it
+        painter->drawText(QPointF(margin,margin+fm.ascent()),m_placeholder);
+        painter->restore();
+    }
 
     // Draw your rectangle - can be different in selected mode or editing mode if you wish
 
