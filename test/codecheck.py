@@ -89,6 +89,10 @@ DEFAULT_IA_HOST = os.environ.get("CC_CODECHECK_OLLAMA_HOST", "").strip()
 # the scope. Keep the cap above the scope size so it never truncates coverage.
 MAX_IA_FUNCS = int(os.environ.get("CC_CODECHECK_IA_FUNCS", "2000"))
 MAX_IA_PRINTED = 60          # bound the console output, not the review
+# How often layer 3 says where it is. A whole-scope pass is HOURS (a hard function
+# costs the model minutes), and without this the console sits silent between two
+# HIGH findings, with no way to tell "still working" from "wedged".
+PROGRESS_EVERY_SECS = int(os.environ.get("CC_CODECHECK_PROGRESS", "3600"))
 IA_FINDINGS_MD = os.path.join(os.path.dirname(FAILED_JSON),
                               "codecheck-ia-findings.md")
 
@@ -278,6 +282,8 @@ def _ia_review(eng, idx, funcs, opt, failures):
     counts = {"LOW": 0, "MEDIUM": 0, "HIGH": 0, "CRITICAL": 0}
     hard = []
     md = ["# codecheck IA review (bugs / illogic / naming - NOT security)\n"]
+    total = len(targets[:MAX_IA_FUNCS])
+    next_progress = t0 + PROGRESS_EVERY_SECS
     # Only REAL logic: audit_targets drops destructors, getters/setters, thin
     # forwarders and compiler-generated members. Layer 1 deliberately keeps the
     # unfiltered list (it checks the view SIZE of every function), but sending
@@ -294,6 +300,18 @@ def _ia_review(eng, idx, funcs, opt, failures):
             continue
         reviewed += 1
         rel = os.path.relpath(fi.file, ROOT)
+        now = time.monotonic()
+        if now >= next_progress:
+            next_progress = now + PROGRESS_EVERY_SECS
+            spent = now - t0
+            per = spent / reviewed
+            fits = int((budget - spent) / per) if per > 0 else 0
+            log_info(f"IA review: {reviewed}/{total} reviewed "
+                     f"({100.0 * reviewed / total:.1f}%) in {spent / 60:.0f} min, "
+                     f"{per:.1f}s/function -> ~{fits} more fit in the remaining "
+                     f"{(budget - spent) / 60:.0f} min; "
+                     f"{counts['CRITICAL']}C/{counts['HIGH']}H/{counts['MEDIUM']}M/"
+                     f"{counts['LOW']}L so far ({eng.cache_summary()}); at {rel}")
         for f in found:
             if f.startswith("[chat error"):
                 errors += 1
@@ -322,7 +340,7 @@ def _ia_review(eng, idx, funcs, opt, failures):
             fh.write("".join(md))
     except OSError as exc:
         log_info(f"could not write {IA_FINDINGS_MD}: {exc}")
-    left = max(0, len(targets[:MAX_IA_FUNCS]) - reviewed)
+    left = max(0, total - reviewed)
     tally = (f"{reviewed}/{len(targets)} function(s) "
              f"({eng.cache_summary()}"
              f"{f'; {left} not reached in the budget' if left else '; whole scope covered'}), "
