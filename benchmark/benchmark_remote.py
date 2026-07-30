@@ -901,6 +901,7 @@ def rsync_datapack_to_exec(exec_node, local_datapack, remote_subdir="datapack",
             candidates.append(c)
     disk_dir = ""
     tried = []
+    transport = ""
     for parent in candidates:
         cand = f"{parent}/bench-datapack"
         # "$HOME" must reach the remote shell UNQUOTED to expand; every other
@@ -908,18 +909,32 @@ def rsync_datapack_to_exec(exec_node, local_datapack, remote_subdir="datapack",
         q = cand if "$" in cand else shlex.quote(cand)
         # mkdir first: findmnt --target resolves to the nearest EXISTING parent,
         # so probing a missing dir would report the wrong filesystem.
-        rc, fsout, _ = ssh_run(
+        rc, fsout, ferr = ssh_run(
             eu, eh, ep,
             f"mkdir -p {q} && findmnt -n -o FSTYPE --target {q}",
             timeout=20)
         fstype = (fsout or "").strip().splitlines()[-1].strip() if fsout else ""
+        # ssh's OWN failure (255) and our timeout (-1) say nothing about the
+        # node's filesystems -- the probe never ran. Reporting those as "no
+        # persistent place" sent the operator hunting for an fstab problem on a
+        # box whose real fault was that it had rebooted mid-batch (its rootfs
+        # was ext4 with 854G free the whole time). Separate the two.
+        if rc in (255, -1):
+            transport = (ferr or "").strip().splitlines()[-1][:160] if ferr else \
+                        f"ssh rc={rc}"
+            break
         if rc != 0:
-            tried.append(f"{cand} (mkdir/probe failed)")
+            tried.append(f"{cand} (mkdir/probe failed rc={rc})")
         elif fstype in ("tmpfs", "ramfs"):
             tried.append(f"{cand} ({fstype})")
         else:
             disk_dir = cand
             break
+    if transport:
+        return 1, (f"node {exec_node.get('label', eh)} unreachable while probing "
+                   f"where to stage the datapack: {transport}. This is a "
+                   f"transport failure, NOT a filesystem verdict -- the node's "
+                   f"disks were never inspected.")
     if not disk_dir:
         return 1, (f"no persistent (non-tmpfs) place for the benchmark datapack on "
                    f"{exec_node.get('label', eh)}; tried: {', '.join(tried)}. "
