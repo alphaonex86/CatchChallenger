@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="7" height="7" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="10">
+ <tileset firstgid="1" source="../../../tileset/red-3-h150.tsx"/>
+ <layer id="4" name="OnGrass" width="7" height="7">
+  <data encoding="base64" compression="zlib">
+   eNotyTcCgkAAALCzAjYUEcWKqAs+x/b/n5jhhkxJQgg9+gwYMmLMnISUjAlTZqzjL8hZsqKgjl+yoWLLjkv8PQeOnDjziN9wpeXGnScv3nz48qPjDzLnBR0=
+  </data>
+ </layer>
+ <layer id="1" name="Collisions" width="7" height="7">
+  <data encoding="base64" compression="zlib">
+   eNp1w7sNglAAAMDXQIONNNBYaYMDoBAEgp8IKn72H8ZbgEsuCiHECxNLDx6trF25tvFka2dvaubg2YtXb+ZuvDs6+fDpy62zbz9+/bmzcL/wDwCNCQ0=
+  </data>
+ </layer>
+ <layer id="2" name="WalkBehind" width="7" height="7">
+  <data encoding="base64" compression="zlib">
+   eNpNwzcKgFAARMHfWRnAAAYwYcKcKisr738jX7kDYxljNu48ePLiTVs6dOnxoS8Dhoz4MpYJU2b8mMuCJSvWbGTLjj0HjnLizIUrf2NuBok=
+  </data>
+ </layer>
+ <objectgroup name="Moving">
+  <object id="9" type="teleport on push" x="48" y="112" width="16" height="16">
+   <properties>
+    <property name="map" value="floor-0"/>
+    <property name="x" value="3"/>
+    <property name="y" value="8"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

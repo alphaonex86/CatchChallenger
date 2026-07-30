@@ -1,0 +1,9 @@
+<map type="indoor">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[Careful with that pot on the stove! It's full of fresh milk stew, and my starter monster has a huge appetite.]]></text>
+        </step>
+    </bot>
+</map>

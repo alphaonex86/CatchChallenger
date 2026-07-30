@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="12" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="42">
+ <properties>
+  <property name="type" value="indoor"/>
+ </properties>
+ <tileset firstgid="1" source="../../../tileset/indoor.tsx"/>
+ <tileset firstgid="622" source="../../../tileset/invisible.tsx"/>
+ <layer id="1" name="Walkable" width="12" height="10">
+  <data encoding="base64" compression="zstd">
+   KLUv/WDgAA0BAEgAAwIAAAIChQEIAICGmQjgOOgrKfRUKNjJ+KykxUzuCg==
+  </data>
+ </layer>
+ <layer id="2" name="Walkable" width="12" height="10">
+  <data encoding="base64" compression="zstd">
+   KLUv/WDgAH0BALgAaQEAAGprAQCEAQAAfYafAQAAoKEBAAgAGhw1dp3iVMgvy86MNW4Zu04xUI4N
+  </data>
+ </layer>
+ <layer id="3" name="Collisions" width="12" height="10">
+  <data encoding="base64" compression="zstd">
+   KLUv/WDgALUCAGQDiQAAAB1TAAAApAAAADhuAAAAfwAAAEoAAABLAFIBAACaAJYAAACXALEAAACyACYCAEFOAZcBDAA7QbBih9saljGVKQTmGICWACoHUoFzFFAel04L
+  </data>
+ </layer>
+ <layer id="4" name="WalkBehind" width="12" height="10">
+  <data encoding="base64" compression="zstd">
+   KLUv/WDgAE0BAKgABAEssy4AAAAvAAAAMAA3AQALAgAHADpADR+gBs7hi7mdhr3shuGE
+  </data>
+ </layer>
+ <objectgroup id="5" name="Moving">
+  <object id="41" type="teleport on push" gid="625" x="48" y="160" width="16" height="16">
+   <properties>
+    <property name="map" value="building-house"/>
+    <property name="x" value="2"/>
+    <property name="y" value="7"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup id="6" name="Object">
+  <object id="40" type="bot" gid="622" x="112" y="96" width="16" height="16">
+   <properties>
+    <property name="id" value="1"/>
+    <property name="lookAt" value="left"/>
+    <property name="skin" value="oldman"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

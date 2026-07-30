@@ -1,0 +1,9 @@
+<map type="indoor">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[I have so many items stored in my PC that I can't even remember what I put in the last box.]]></text>
+        </step>
+    </bot>
+</map>

@@ -1,0 +1,9 @@
+<map type="indoor">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[Did you know that monsters often resemble the people they live with? That’s why my big sleepy one and I take such long naps!]]></text>
+        </step>
+    </bot>
+</map>
