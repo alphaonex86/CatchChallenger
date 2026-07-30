@@ -271,6 +271,21 @@ IOURING_TUNED_EXTRA = {
     "CATCHCHALLENGER_IO_URING_TASKRUN_FLAG":  "ON",
     "CATCHCHALLENGER_IO_URING_NO_SQARRAY":    "ON",
 }
+#MEASURED, and the answer is a negative result worth keeping: SQPOLL does NOT
+#help this server, and hurts the smaller board. n=8, 60 bots, 30 s, vs the same
+#run with --tuned alone:
+#  rpi-4 (4 cores)     io_uring 75748.6 (+7.7% win) -> 69575.3, ranges overlap:
+#                      a -8.1% regression that destroys the win outright.
+#  odroid-n2 (6 cores) io_uring 100552.3 -> 100137.1, i.e. -0.4%, within noise.
+#The mechanism is in the CPU column: on rpi-4 the io_uring server's own CPU FELL
+#from 92.5% to 87.6% while throughput dropped -- the poll thread took over
+#submission, so the server thread does less, but the spinning poller costs a
+#whole core it cannot repay. With 4 cores (server on cpu0, client on cpu1-3)
+#there is no spare core for it; odroid's 6 absorb it, hence merely neutral.
+#Root cause: this server is not submission-bound. The broadcast sends are
+#already batched into ONE io_uring_enter per tick, so SQPOLL spends a core to
+#remove about one syscall per tick. Keep the flag for future hardware, but it is
+#not the path to the >2x figures the literature reports for echo servers.
 IOURING_SQPOLL_EXTRA = {"CATCHCHALLENGER_IO_URING_SQPOLL": "ON"}
 
 BACKENDS = ("epoll", "iouring")
