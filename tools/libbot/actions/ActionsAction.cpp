@@ -140,7 +140,7 @@ void ActionsAction::insert_player_all(CatchChallenger::Api_protocol *apiBase,con
     }
     if(player.pseudo!=botplayer.api->get_player_informations().public_informations.pseudo)
     {
-        botplayer.viewedPlayers.insert(QString::fromStdString(player.pseudo));
+        botplayer.viewedPlayers.insert(player.pseudo);
     }
 }
 
@@ -907,10 +907,10 @@ void ActionsAction::doText()
     if(clientList.empty())
         return;
 
-    QList<CatchChallenger::Api_protocol_Qt  *> clientListApi;
+    std::vector<CatchChallenger::Api_protocol_Qt  *> clientListApi;
 
     for (const std::pair<CatchChallenger::Api_protocol_Qt * const, ActionsBotInterface::Player> &n:clientList) {
-        clientListApi << n.first;
+        clientListApi.push_back(n.first);
     }
     CatchChallenger::Api_protocol_Qt  *api=clientListApi.at(rand()%clientListApi.size());
     //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));

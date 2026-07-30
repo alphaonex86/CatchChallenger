@@ -23,8 +23,6 @@ class BotTargetList : public QDialog
 
 public:
     explicit BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient,
-    QHash<CatchChallenger::ConnectedSocket *,MultipleBotConnection::CatchChallengerClient *> connectedSocketToCatchChallengerClient,
-    QHash<QSslSocket *,MultipleBotConnection::CatchChallengerClient *> sslSocketToCatchChallengerClient,
     ActionsAction *actionsAction);
     ~BotTargetList();
 
@@ -119,9 +117,10 @@ private slots:
     void on_PrefWild_valueChanged(int value);
 private:
     Ui::BotTargetList *ui;
+    //Only the api index is needed: this dialog resolves an Api_client_real back
+    //to its bot. The socket indexes stayed unread, so they are not copied here
+    //any more.
     QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient;
-    QHash<CatchChallenger::ConnectedSocket *,MultipleBotConnection::CatchChallengerClient *> connectedSocketToCatchChallengerClient;
-    QHash<QSslSocket *,MultipleBotConnection::CatchChallengerClient *> sslSocketToCatchChallengerClient;
     ActionsAction *actionsAction;
     QHash<QString,MultipleBotConnection::CatchChallengerClient *> pseudoToBot;
 
@@ -142,6 +141,12 @@ private:
 
     static std::unordered_map<const MapServerMini::BlockObject *, std::unordered_map<const MapServerMini::BlockObject *, bool> > cacheCanGoFromBlockToBlock;
     bool alternateColor;
+    //Front-end rows of the targets built by the current contentToGUI_internal()
+    //pass. The library only carries GlobalTarget::uiItemHandle (index+1 into
+    //this table, 0 = no row), so no widget pointer lands in tools/libbot.
+    std::vector<QListWidgetItem *> uiItemsForTarget;
+    uint32_t registerUiItemForTarget(QListWidgetItem *item);
+    QList<QListWidgetItem *> uiItemsOfHandle(const uint32_t &handle) const;
     static std::string pathFindingToString(const MapServerMini::BlockObjectPathFinding &resolvedBlock, unsigned int points=0);
     static bool isSame(const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentA,const CatchChallenger::MonstersCollisionValue::MonstersCollisionContent &monstersCollisionContentB);
     static bool newPathIsBetterPath(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &oldPath,const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &newPath);

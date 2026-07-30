@@ -9,10 +9,10 @@ bool MapServerMini::preload_step1()
         return false;
     if(this->flat_simplified_map.size()!=(size_t)this->width*this->height)
         std::cerr << "WARNING: map " << this->map_file << " flat_simplified_map.size()=" << this->flat_simplified_map.size() << " != width*height=" << (size_t)this->width*this->height << " (w=" << std::to_string(this->width) << " h=" << std::to_string(this->height) << ")" << std::endl;
-    QHash<QString,int> zoneHash;
-    QList<QString> layerList;
+    std::unordered_map<std::string,int> zoneHash;
+    std::vector<std::string> layerList;
     zoneHash.clear();
-    zoneHash[""]=0;
+    zoneHash[std::string()]=0;
     MapParsedForBot step1;
     {
         step1.map=(uint16_t *)malloc(width*height*sizeof(uint16_t));
@@ -24,7 +24,7 @@ bool MapServerMini::preload_step1()
             while(x<this->width)
             {
                 const std::pair<uint8_t,uint8_t> p(x,y);
-                QString zone;
+                std::string zone;
                 bool walkable=false;
                 if(this->flat_simplified_map.size()==(size_t)this->width*this->height)
                 {
@@ -35,17 +35,17 @@ bool MapServerMini::preload_step1()
                     {
                         const MapServerMini::ItemOnMap &itemOnMap=pointOnMap_Item.at(p);
                         if((itemOnMap.infinite && itemOnMap.visible) || (itemOnMap.visible && !walkable))
-                            zone+="itemonmap"+QString::number(x)+","+QString::number(y);
+                            zone+="itemonmap"+std::to_string(x)+","+std::to_string(y);
                         //walkable=true;
                     }
                     if(walkable)
                         zone+="w";
                     if(var>0 && var<200)
-                        zone+="m"+QString::number(var);
+                        zone+="m"+std::to_string(var);
                     if(var==249)
                         zone+="d";
                     if(var)
-                        zone+="l"+QString::number(var-250);
+                        zone+="l"+std::to_string(var-250);
                 }
 
                 if(botOnMap.find(p)!=botOnMap.cend())
@@ -54,13 +54,13 @@ bool MapServerMini::preload_step1()
                     unsigned int index=0;
                     while(index<botsList.size())
                     {
-                        zone+="bot"+QString::number(botsList.at(index));
+                        zone+="bot"+std::to_string(botsList.at(index));
                         index++;
                     }
                 }
-                if(!zoneHash.contains(zone))
+                if(zoneHash.find(zone)==zoneHash.cend())
                 {
-                    int size=zoneHash.size();
+                    int size=(int)zoneHash.size();
                     zoneHash[zone]=size;
                 }
                 //color
@@ -76,22 +76,25 @@ bool MapServerMini::preload_step1()
     displayConsoleMap(step1);*/
     {
         layerList.clear();
-        zoneHash.remove(0);
+        //drop the "not accessible" zone (the empty key holds code 0), then keep
+        //one slot per remaining zone plus the unused index 0
+        zoneHash.erase(std::string());
         while(layerList.size()<(zoneHash.size()+1))
-            layerList << "";
+            layerList.push_back(std::string());
 
-        QHash<QString, int>::const_iterator i = zoneHash.constBegin();
-        while (i != zoneHash.constEnd()) {
-            layerList[i.value()]=i.key();
+        //the hash order does not matter: each entry is written at its own code
+        std::unordered_map<std::string,int>::const_iterator i=zoneHash.cbegin();
+        while(i!=zoneHash.cend()) {
+            layerList[i->second]=i->first;
             ++i;
         }
 
-        int index=1;
+        size_t index=1;
         while(index<layerList.size())
         {
             MapParsedForBot::Layer layer;
             layer.name="Layer "+std::to_string(index);
-            layer.text=layerList.at(index).toStdString();
+            layer.text=layerList.at(index);
             step1.layers.push_back(layer);
             index++;
         }

@@ -133,7 +133,7 @@ std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchCh
                                 }
                                 subgraph+="\" style=filled fillcolor=\"";
                                 if(zoneIsAccessible!=BotTargetList::ZoneAccessible::ZoneIsAccessible)
-                                    subgraph+=block.color.name(QColor::HexRgb).toStdString();
+                                    subgraph+=block.color.html();
                                 else
                                     subgraph+="red";
                                 subgraph+="\"";
@@ -322,7 +322,7 @@ std::string BotTargetList::graphLocalMap()
                             graphvizText+="|<f1> ";
                             graphvizText+=content;
                         }
-                        graphvizText+="\" style=filled fillcolor=\""+block.color.name(QColor::HexRgb).toStdString()+"\"]\n";
+                        graphvizText+="\" style=filled fillcolor=\""+block.color.html()+"\"]\n";
                     }
                 }
                 pointerToIndex[&block]=blockIndex;

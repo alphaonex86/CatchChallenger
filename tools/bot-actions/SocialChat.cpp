@@ -928,9 +928,11 @@ void SocialChat::globalChatText_updateCompleter()
         return;
     CatchChallenger::Api_protocol_Qt * const api=pseudoToBot.value(pseudo);
 
+    //the bot library keeps the seen pseudos as std::string; widen to QString
+    //here, at the widget boundary
     QSet<QString> viewedPlayers;
-    for(const QString &n:ActionsBotInterface::clientList[api].viewedPlayers)
-        viewedPlayers.insert(n);
+    for(const std::string &n:ActionsBotInterface::clientList[api].viewedPlayers)
+        viewedPlayers.insert(QString::fromStdString(n));
     QList<QString> wordList=QSet<QString>(knownGlobalChatPlayers+viewedPlayers).values();
     if(completer!=NULL)
     {

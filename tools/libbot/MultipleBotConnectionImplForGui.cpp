@@ -4,9 +4,6 @@
 #endif
 
 #include <iostream>
-#ifdef QT_GUI_LIB
-#include <QMessageBox>
-#endif
 #include <ctime>
 #include "BotAbort.h"
 
@@ -464,18 +461,18 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
         }
     }
 
-    #ifdef QT_GUI_LIB
     if(!displayingError)
     {
         displayingError=true;
-        QMessageBox::critical(NULL,tr("Error"),errorString);
+        displayCriticalError(errorString.toStdString());
         displayingError=false;
         QCoreApplication::exit(85);
     }
-    #else
-    std::cerr << errorString.toStdString() << std::endl;
-    QCoreApplication::exit(85);
-    #endif
+}
+
+void MultipleBotConnectionImplForGui::displayCriticalError(const std::string &errorString)
+{
+    std::cerr << errorString << std::endl;
 }
 
 void MultipleBotConnectionImplForGui::newError(const std::string &error, const std::string &detailedError)

@@ -62,6 +62,11 @@ private:
     virtual void connectTimerSlot();
     virtual void haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
     virtual void connectTheExternalSocket(MultipleBotConnectionCore::BotClient *client);
+protected:
+    /// Report a fatal socket error to the human, then the caller exits. The
+    /// default writes to stderr; a widget front-end overrides it to pop a modal
+    /// dialog, which keeps the widget toolkit out of tools/libbot.
+    virtual void displayCriticalError(const std::string &errorString);
 signals:
     void loggedDone(CatchChallenger::Api_client_real *senderObject,
                     const std::vector<CatchChallenger::ServerFromPoolForDisplay> &serverOrdenedList,

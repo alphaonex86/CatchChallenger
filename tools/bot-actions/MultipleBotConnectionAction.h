@@ -12,6 +12,10 @@ public:
     ~MultipleBotConnectionAction();
 public:
     std::string getNewPseudo();
+protected:
+    /// Widget flavour of the library hook: the modal dialog the GUI bot used to
+    /// show from inside tools/libbot.
+    virtual void displayCriticalError(const std::string &errorString);
 private:
     std::vector<std::string> pseudoNotUsed;
     std::unordered_set<std::string> pseudoUsed;
