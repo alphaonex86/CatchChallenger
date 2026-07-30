@@ -194,6 +194,14 @@ _PRO_TO_CMAKE = {
         [],
         "tools/bot-actions",
     ),
+    # tools/bot-bench/ — Qt-free connect/login bot. CMake-only (no .pro was
+    # ever written for it), so this key is virtual: it exists purely so
+    # testing*.py can go through build_project() like every other binary.
+    "tools/bot-bench/bot-bench.pro": (
+        "bot-bench",
+        [],
+        "tools/bot-bench",
+    ),
     "client/qtcpu800x600/qtcpu800x600.pro": (
         "catchchallenger800x600",
         [],
