@@ -356,10 +356,17 @@ def _serversave_remote_body(node, exec_node, compile_node, label,
                                                    remote_subdir="datapack",
                                                    timeout=600, server_mode=True)
         if rc_dp != 0:
+            # SKIP, not FAIL: a datapack rsync that could not land is infra
+            # (no room on the node, unreachable, read-only mount), so the node
+            # is UNMEASURED -- which the decision matrix must read as unknown,
+            # never as a regression. FAIL is reserved for a benchmark that ran
+            # and produced bad data (benchmark/CLAUDE.md).
+            reason = f"datapack-rsync-failed: {msg_dp[:80]}"
+            bh.print_node_error("benchmarkserversave", label, "SKIP", reason)
             for prof in runnable:
-                progress.emit(prof, "no", label, status="FAIL",
-                              extra=f"datapack-rsync-failed: {msg_dp[:80]}")
-                per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
+                progress.emit(prof, "no", label, status="SKIP", extra=reason)
+                per_tool[label][prof] = {"status": "SKIP", "metrics": {},
+                                         "skip_reason": reason}
             return
 
     # Detect maincode from the local datapack (same logic as setup_run_dir).
