@@ -1,9 +1,0 @@
-<map type="indoor">
-    <name>Gym</name>
-    <bot id="1">
-        <name>Sign</name>
-        <step id="1" type="text">
-            <text><![CDATA[The TV is on all day... I wonder if they ever broadcast the league finals live.]]></text>
-        </step>
-    </bot>
-</map>

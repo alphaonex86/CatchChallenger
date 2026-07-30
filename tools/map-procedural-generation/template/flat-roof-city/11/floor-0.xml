@@ -1,9 +1,0 @@
-<map type="indoor">
-    <name>Gym</name>
-    <bot id="1">
-        <name>Sign</name>
-        <step id="1" type="text">
-            <text><![CDATA[Welcome, traveler! Make yourself at home, but please watch your step—my Zigzagoon loves to scatter items all over the floor.]]></text>
-        </step>
-    </bot>
-</map>

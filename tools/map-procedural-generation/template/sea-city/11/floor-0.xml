@@ -1,9 +1,0 @@
-<map type="indoor">
-    <name>Gym</name>
-    <bot id="1">
-        <name>Sign</name>
-        <step id="1" type="text">
-            <text><![CDATA[My grandfather used to say that the best way to win a battle is to know your partner's strengths well. That's why he always used a Water type!]]></text>
-        </step>
-    </bot>
-</map>

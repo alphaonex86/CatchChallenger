@@ -1,9 +1,0 @@
-<map type="indoor">
-    <name>Gym</name>
-    <bot id="1">
-        <name>Sign</name>
-        <step id="1" type="text">
-            <text><![CDATA[If you're looking for a refreshing drink, check the fridge! There's plenty of Fresh Water and Lemonade inside.]]></text>
-        </step>
-    </bot>
-</map>
