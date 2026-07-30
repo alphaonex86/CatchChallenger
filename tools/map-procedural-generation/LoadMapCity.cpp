@@ -132,10 +132,37 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
 #endif
 
         nextHopMap->setProperties(Tiled::Properties());
+        //MapWriter writes each tileset relative to the file it is writing, from
+        //the tileset's own fileName: point them at the STAGED copy (absolute)
+        //so the reference stays inside the datapack, then put them back.
+        std::vector<std::pair<Tiled::Tileset *,QString> > tilesetNames;
+        {
+            int tilesetIndex=0;
+            while(tilesetIndex<nextHopMap->tilesetCount())
+            {
+                Tiled::Tileset * const tileset=nextHopMap->tilesetAt(tilesetIndex).get();
+                const QString staged=QCoreApplication::applicationDirPath()+"/dest/map/tileset/"+
+                                     QFileInfo(tileset->fileName()).fileName();
+                if(!tileset->fileName().isEmpty() && QFile::exists(staged))
+                {
+                    tilesetNames.push_back(std::pair<Tiled::Tileset *,QString>(tileset,tileset->fileName()));
+                    tileset->setFileName(staged);
+                }
+                tilesetIndex++;
+            }
+        }
         if(!maprwriter.writeMap(nextHopMap,fileInfo.absoluteFilePath()))
         {
             std::cerr << "Unable to write " << fileInfo.absoluteFilePath().toStdString() << std::endl;
             abort();
+        }
+        {
+            unsigned int restoreIndex=0;
+            while(restoreIndex<tilesetNames.size())
+            {
+                tilesetNames.at(restoreIndex).first->setFileName(tilesetNames.at(restoreIndex).second);
+                restoreIndex++;
+            }
         }
         nextHopMap->setProperties(properties);
 
