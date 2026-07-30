@@ -8,7 +8,6 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <poll.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -199,16 +198,17 @@ ssize_t CliSocket::readData(char *data,const size_t &size)
     }
 }
 
-ssize_t CliSocket::writeData(const char * const data,const size_t &size)
+ssize_t CliSocket::writeSome(const char * const data,const size_t &size)
 {
     if(socketFd<0)
         return -1;
-    size_t cursor=0;
-    while(cursor<size)
+    if(size==0)
+        return 0;
+    while(true)
     {
-        const ssize_t writtenSize=::send(socketFd,data+cursor,size-cursor,MSG_NOSIGNAL);
-        if(writtenSize>0)
-            cursor+=static_cast<size_t>(writtenSize);
+        const ssize_t writtenSize=::send(socketFd,data,size,MSG_NOSIGNAL);
+        if(writtenSize>=0)
+            return writtenSize;
         else
         {
             if(errno==EINTR)
@@ -218,31 +218,7 @@ ssize_t CliSocket::writeData(const char * const data,const size_t &size)
             else
             {
                 if(errno==EAGAIN || errno==EWOULDBLOCK)
-                {
-                    //the protocol layer disconnects on a short write, so wait
-                    //for room in the send buffer instead of returning partial
-                    struct pollfd waitForWrite;
-                    waitForWrite.fd=socketFd;
-                    waitForWrite.events=POLLOUT;
-                    waitForWrite.revents=0;
-                    const int pollCode=::poll(&waitForWrite,1,30000);
-                    if(pollCode<0)
-                    {
-                        if(errno!=EINTR)
-                        {
-                            errorString=std::string("poll(POLLOUT) failed: ")+strerror(errno);
-                            return -1;
-                        }
-                    }
-                    else
-                    {
-                        if(pollCode==0)
-                        {
-                            errorString="send() timeout, the peer never drained the socket";
-                            return -1;
-                        }
-                    }
-                }
+                    return 0;//send buffer full: the peer stopped draining
                 else
                 {
                     errorString=std::string("send() failed: ")+strerror(errno);
@@ -251,7 +227,6 @@ ssize_t CliSocket::writeData(const char * const data,const size_t &size)
             }
         }
     }
-    return static_cast<ssize_t>(size);
 }
 
 void CliSocket::closeSocket()

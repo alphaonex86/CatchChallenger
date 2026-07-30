@@ -2,6 +2,7 @@
 #define CATCHCHALLENGER_CLI_CLIDATAPACK_H
 
 #include <string>
+#include <vector>
 
 #include "../../../client/libcatchchallenger/DatapackClientLoader.hpp"
 #include "../../../general/base/GeneralType.hpp"
@@ -42,6 +43,11 @@ public:
     static bool loadMainSub(const std::string &mainCode,const std::string &subCode);
     /// \brief number of maps the loader indexed; 0 when nothing is loaded
     static CATCHCHALLENGER_TYPE_MAPID mapCount();
+    /// \brief the parsed maps, indexed exactly like the server's map list.
+    /// NULL until loadMainSub() succeeded. A moving bot needs it to know which
+    /// neighbour tile is walkable BEFORE asking the server to walk there: the
+    /// server kicks a client that requests an impossible move.
+    static const std::vector<CatchChallenger::CommonMap> *mapList();
     static const std::string &lastError();
 private:
     static CliDatapackClientLoader *loader;

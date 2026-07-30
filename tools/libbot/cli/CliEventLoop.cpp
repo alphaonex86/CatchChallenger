@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 
+#include <ctime>
 #include <sys/select.h>
 #include <sys/time.h>
 
@@ -85,6 +86,184 @@ void CliEventLoop::reportStateChanges()
         }
         index++;
     }
+}
+
+/// \brief moves one client hands to the socket per loop round.
+/// Big enough that select() is not called once per 3-byte packet, small enough
+/// that one bot cannot starve the others while the server still drains it.
+#define CATCHCHALLENGER_SPAM_MOVES_PER_ROUND 64
+
+bool CliEventLoop::runSpam(const uint32_t &seconds,uint64_t &moves,uint64_t &elapsedNs,size_t &survivors)
+{
+    moves=0;
+    elapsedNs=0;
+    survivors=0;
+    //Arm the bots BEFORE the clock starts: picking the two tiles reads the
+    //local map and sends nothing, so it does not belong in the measured window.
+    size_t index=0;
+    size_t armed=0;
+    while(index<clients.size())
+    {
+        CliApiClient * const client=clients.at(index);
+        if(client->getState()==CliApiClient::State_OnMap)
+        {
+            client->setSpamMode(true);
+            if(client->prepareSpam())
+                armed++;
+            else
+                std::cerr << "[" << client->getLabel() << "] " << client->getFailReason() << std::endl;
+        }
+        index++;
+    }
+    if(armed==0)
+    {
+        errorString="no bot could be armed for the move loop";
+        return false;
+    }
+
+    struct timespec startTime;
+    if(::clock_gettime(CLOCK_MONOTONIC,&startTime)<0)
+    {
+        errorString=std::string("clock_gettime(CLOCK_MONOTONIC) failed: ")+strerror(errno);
+        return false;
+    }
+    const uint64_t windowNs=static_cast<uint64_t>(seconds)*1000000000ULL;
+    struct timespec now=startTime;
+    while(true)
+    {
+        //1. push moves. Every client stops on its own as soon as the kernel
+        //   refuses bytes, so this is paced by the server, not by a timer.
+        size_t alive=0;
+        bool morePossible=false;
+        int maxFd=-1;
+        fd_set readSet;
+        fd_set writeSet;
+        FD_ZERO(&readSet);
+        FD_ZERO(&writeSet);
+        index=0;
+        while(index<clients.size())
+        {
+            CliApiClient * const client=clients.at(index);
+            if(client->getState()==CliApiClient::State_OnMap && client->getSocket().isValid())
+            {
+                moves+=client->pushSpamMoves(CATCHCHALLENGER_SPAM_MOVES_PER_ROUND);
+                //pushSpamMoves() can kill the bot (kick during the write), so
+                //re-test before adding it to the sets
+                if(client->getState()==CliApiClient::State_OnMap && client->getSocket().isValid())
+                {
+                    alive++;
+                    const int fd=client->getSocket().fd();
+                    if(fd>=FD_SETSIZE)
+                    {
+                        errorString="fd "+std::to_string(fd)+" >= FD_SETSIZE ("+
+                                    std::to_string(FD_SETSIZE)+"): too many bots for select(), "
+                                    "lower --bots or raise the fd limit";
+                        return false;
+                    }
+                    //always read: the server answers a move with the visibility
+                    //broadcast of the other bots and with its ping queries, and
+                    //not draining that would back-pressure the SERVER instead.
+                    FD_SET(fd,&readSet);
+                    if(client->wantWrite())
+                        FD_SET(fd,&writeSet);
+                    else
+                    {
+                        if(client->isSpamming())
+                            morePossible=true;
+                    }
+                    if(fd>maxFd)
+                        maxFd=fd;
+                }
+            }
+            index++;
+        }
+
+        //2. deadline / fleet checks
+        if(::clock_gettime(CLOCK_MONOTONIC,&now)<0)
+        {
+            errorString=std::string("clock_gettime(CLOCK_MONOTONIC) failed: ")+strerror(errno);
+            return false;
+        }
+        elapsedNs=static_cast<uint64_t>(now.tv_sec-startTime.tv_sec)*1000000000ULL+
+                  static_cast<uint64_t>(now.tv_nsec)-static_cast<uint64_t>(startTime.tv_nsec);
+        if(elapsedNs>=windowNs)
+            break;
+        //every bot lost its socket: report what was measured, do not spin
+        if(alive==0 || maxFd<0)
+            break;
+
+        //3. wait. Zero timeout when at least one bot can send right now, so the
+        //   loop never sleeps while the server is still keeping up.
+        struct timeval waitTime;
+        if(morePossible)
+        {
+            waitTime.tv_sec=0;
+            waitTime.tv_usec=0;
+        }
+        else
+        {
+            const uint64_t remainingNs=windowNs-elapsedNs;
+            uint64_t waitNs=20000000ULL;//20ms: only reached when every bot is write-blocked
+            if(remainingNs<waitNs)
+                waitNs=remainingNs;
+            waitTime.tv_sec=static_cast<time_t>(waitNs/1000000000ULL);
+            waitTime.tv_usec=static_cast<suseconds_t>((waitNs%1000000000ULL)/1000);
+        }
+        const int readyCount=::select(maxFd+1,&readSet,&writeSet,NULL,&waitTime);
+        if(readyCount<0)
+        {
+            if(errno!=EINTR)
+            {
+                errorString=std::string("select() failed: ")+strerror(errno);
+                return false;
+            }
+        }
+        else
+        {
+            if(readyCount>0)
+            {
+                index=0;
+                while(index<clients.size())
+                {
+                    CliApiClient * const client=clients.at(index);
+                    if(client->getState()==CliApiClient::State_OnMap && client->getSocket().isValid())
+                    {
+                        const int fd=client->getSocket().fd();
+                        if(FD_ISSET(fd,&writeSet))
+                        {
+                            if(!client->flushOutput())
+                                std::cerr << "[" << client->getLabel() << "] flush failed" << std::endl;
+                        }
+                        //read AFTER the flush and re-test: parsing can kick us
+                        if(client->getSocket().isValid() && FD_ISSET(fd,&readSet))
+                            client->socketReadyRead();
+                    }
+                    index++;
+                }
+            }
+        }
+    }
+
+    //A survivor is a bot that really took part (it was armed) and that the
+    //server never dropped: still selected on the map with a live socket. A bot
+    //that stopped moving (fight) but stayed connected counts; a kicked one, and
+    //one that could never be armed, do not.
+    index=0;
+    while(index<clients.size())
+    {
+        CliApiClient * const client=clients.at(index);
+        if(client->wasSpamArmed() && client->getState()==CliApiClient::State_OnMap &&
+           client->getSocket().isValid())
+            survivors++;
+        else
+        {
+            if(!client->getFailReason().empty())
+                std::cerr << "[" << client->getLabel() << "] did not survive the spam window: "
+                          << client->getFailReason() << std::endl;
+        }
+        index++;
+    }
+    return true;
 }
 
 bool CliEventLoop::run(const uint32_t &timeoutMs)

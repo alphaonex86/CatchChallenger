@@ -113,6 +113,15 @@ CATCHCHALLENGER_TYPE_MAPID CliDatapack::mapCount()
     return static_cast<CATCHCHALLENGER_TYPE_MAPID>(count);
 }
 
+const std::vector<CatchChallenger::CommonMap> *CliDatapack::mapList()
+{
+    if(loader==NULL)
+        return NULL;
+    if(!mainSubLoaded)
+        return NULL;
+    return &loader->get_mapList();
+}
+
 const std::string &CliDatapack::lastError()
 {
     return errorString;

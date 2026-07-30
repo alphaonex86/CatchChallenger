@@ -16,10 +16,12 @@ namespace CatchChallenger {
  *  - readData() maps EAGAIN to 0 because that is exactly what
  *    ProtocolParsingInputOutput::parseIncommingData() treats as "nothing
  *    pending"; a peer close or a real error return -1.
- *  - writeData() MUST deliver every byte: ProtocolParsingBase treats a short
- *    write as a fatal condition and disconnects the client. So on EAGAIN it
- *    waits for POLLOUT and retries instead of returning a partial count. In
- *    practice the protocol packets are small and this never blocks.
+ *  - writeSome() is a PARTIAL, never-blocking write: it hands as many bytes as
+ *    the kernel accepts and reports EAGAIN as 0. The caller (CliApiClient)
+ *    keeps the remainder in its own output buffer and waits for the fd to
+ *    become writable again, so one bot that the server stopped draining never
+ *    stalls the others. Blocking here (poll(POLLOUT)) would freeze the whole
+ *    single-threaded fleet on the slowest connection.
  */
 class CliSocket
 {
@@ -37,8 +39,8 @@ public:
 
     /// \return >0 bytes read, 0 nothing pending (EAGAIN), -1 peer closed or error
     ssize_t readData(char *data,const size_t &size);
-    /// \return size when all bytes were written, -1 on error
-    ssize_t writeData(const char * const data,const size_t &size);
+    /// \return bytes the kernel accepted (0 when the send buffer is full), -1 on error
+    ssize_t writeSome(const char * const data,const size_t &size);
 
     void closeSocket();
     const std::string &lastError() const;
