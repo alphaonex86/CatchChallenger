@@ -12,14 +12,36 @@
 // therefore never collide with another bot on a character, which is what makes
 // it usable as a PROBE of what the account really holds.
 //
+// --spam --seconds N adds a SATURATION phase after every bot is on the map:
+// each bot walks back and forth as fast as the server drains its socket for N
+// seconds, then the run prints
+//     SURVIVORS <bots still connected>/<bots>
+//     MOVES <move packets handed to a socket, all bots>
+//     REQ_PER_S <MOVES / the measured window>
+// and exits 0 as long as at least one bot ever reached the map. The window is
+// measured with CLOCK_MONOTONIC around the phase only, so connect/login/
+// character/datapack time is excluded. There is no sleep and no rate limit:
+// the pacing is TCP back-pressure from the server, which is what puts a
+// single-threaded event loop at 100% CPU.
+//
+// NOTE: a server built WITHOUT -DCATCHCHALLENGER_BENCHMARK=ON compiles in the
+// anti-flood filter (CATCHCHALLENGER_DDOS_FILTER, kickLimitMove defaults to 60
+// moves per window) and kicks every bot in the first fraction of a second. That
+// is not a bug in either side — measuring saturation requires the benchmark
+// build, exactly as benchmark/CLAUDE.md describes. --spam against a filtered
+// server reports SURVIVORS 0 and a MOVES count in the tens.
+//
 // The whole client core is in tools/libbot/cli/: POSIX sockets, one concrete
 // Qt-free CatchChallenger::Api_protocol subclass and a select() loop. The
 // protocol parsing itself is the PRODUCTION code from
 // client/libcatchchallenger/, so a wire-format change is picked up here at
 // the next build with no edit in this tool.
 
+#include <cerrno>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -40,6 +62,8 @@ struct BenchOptions
     uint32_t timeoutMs;
     bool verbose;
     bool listOnly;
+    bool spam;
+    uint32_t spamSeconds;
 };
 
 static void printUsage(const char * const programName)
@@ -57,8 +81,17 @@ static void printUsage(const char * const programName)
               << "                      \"CHARACTERS <n>\" (n = characters the" << std::endl
               << "                      server listed for the account) and exit," << std::endl
               << "                      without selecting or creating one" << std::endl
+              << "  --spam              saturation phase once every bot is on the map:" << std::endl
+              << "                      each bot moves as fast as the server drains its" << std::endl
+              << "                      socket (no sleep, no rate limit), then print" << std::endl
+              << "                      SURVIVORS/MOVES/REQ_PER_S. Implies one account" << std::endl
+              << "                      per bot: the login becomes \"<login><index>\", so" << std::endl
+              << "                      the server's per-account character cap can never" << std::endl
+              << "                      limit the fleet size" << std::endl
+              << "  --seconds <n>       length of the --spam window (default 10)" << std::endl
               << "Exit code: 0 when every bot reached the map (or, with --list-only," << std::endl
-              << "when every bot got its character list), 1 otherwise." << std::endl;
+              << "when every bot got its character list), 1 otherwise. With --spam: 0" << std::endl
+              << "as soon as one bot reached the map, 1 when none did." << std::endl;
 }
 
 /// \brief accepts both "--key value" and "--key=value"
@@ -158,10 +191,24 @@ static bool parseOptions(const int &argc,char * const argv[],BenchOptions &optio
                 return false;
             }
         }
+        else if(matchOption(argv[index],"--seconds"))
+        {
+            if(!takeValue(argc,argv,index,"--seconds",value))
+                return false;
+            bool ok=false;
+            options.spamSeconds=stringtouint32(value,&ok);
+            if(!ok || options.spamSeconds==0)
+            {
+                std::cerr << "--seconds is not a positive number of seconds: " << value << std::endl;
+                return false;
+            }
+        }
         else if(matchOption(argv[index],"--verbose"))
             options.verbose=true;
         else if(matchOption(argv[index],"--list-only"))
             options.listOnly=true;
+        else if(matchOption(argv[index],"--spam"))
+            options.spam=true;
         else
         {
             if(matchOption(argv[index],"--help") || matchOption(argv[index],"-h"))
@@ -181,6 +228,72 @@ static bool parseOptions(const int &argc,char * const argv[],BenchOptions &optio
     return true;
 }
 
+/** \brief bots onboarded per wave.
+ *
+ * The all-in-one server keeps at most CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION
+ * (50, server/base/VariableServer.hpp) logins in flight and, past that, SILENTLY
+ * DISCONNECTS THE OLDEST pending one to make room for the newcomer
+ * (server/base/ClientNetworkRead.cpp, the 0xAC character-select path). 200 bots
+ * connecting in one burst therefore lose the first 150 with no server-side log
+ * line at all. Staying well under the cap onboards every bot; this paces only
+ * the ONBOARDING, never the measured window.
+ */
+#define CATCHCHALLENGER_BOTBENCH_ONBOARD_WAVE 24
+
+/// \brief milliseconds since an arbitrary origin, immune to clock changes
+static uint64_t monotonicMs()
+{
+    struct timespec now;
+    if(::clock_gettime(CLOCK_MONOTONIC,&now)<0)
+    {
+        std::cerr << "clock_gettime(CLOCK_MONOTONIC) failed: " << strerror(errno) << std::endl;
+        return 0;
+    }
+    return static_cast<uint64_t>(now.tv_sec)*1000ULL+
+           static_cast<uint64_t>(now.tv_nsec)/1000000ULL;
+}
+
+/// \brief create, register and connect the bots [firstIndex;lastIndex[
+static void startBots(const BenchOptions &options,
+                      std::vector<CatchChallenger::CliApiClient *> &clients,
+                      CatchChallenger::CliEventLoop &loop,
+                      const uint32_t &firstIndex,const uint32_t &lastIndex)
+{
+    uint32_t botIndex=firstIndex;
+    while(botIndex<lastIndex)
+    {
+        CatchChallenger::CliApiClient * const client=new CatchChallenger::CliApiClient();
+        client->setLabel("bot"+std::to_string(botIndex));
+        client->setVerbose(options.verbose);
+        client->setListOnly(options.listOnly);
+        //Shared account (default): the N bots split ONE account and bot i takes
+        //its i-th character. That is what the character-list test needs, but the
+        //server caps characters per account (max_character, default 3), so it
+        //cannot scale a saturation run.
+        //--spam therefore gives every bot its OWN login "<login><index>" with a
+        //single character: no cap, and no create-account race between bots since
+        //no two of them open the same login.
+        if(options.spam)
+        {
+            client->setCharacterSlot(0);
+            client->setIdentity(options.login+std::to_string(botIndex),options.pass,
+                                options.datapackPath);
+        }
+        else
+        {
+            client->setCharacterSlot(botIndex);
+            client->setIdentity(options.login,options.pass,options.datapackPath);
+        }
+        clients.push_back(client);
+        loop.addClient(client);
+        //a failed connect leaves the bot in State_Failed; the loop reports it
+        //and the final count stays honest, so keep starting the others.
+        if(!client->connectToLoginServer(options.host,options.port))
+            std::cerr << "[" << client->getLabel() << "] " << client->getFailReason() << std::endl;
+        botIndex++;
+    }
+}
+
 int main(int argc,char *argv[])
 {
     BenchOptions options;
@@ -193,8 +306,16 @@ int main(int argc,char *argv[])
     options.timeoutMs=60000;
     options.verbose=false;
     options.listOnly=false;
+    options.spam=false;
+    options.spamSeconds=10;
     if(!parseOptions(argc,argv,options))
         return 1;
+    if(options.spam && options.listOnly)
+    {
+        std::cerr << "--spam needs a character on the map, so it cannot be combined "
+                     "with --list-only" << std::endl;
+        return 1;
+    }
 
     //packetFixedSize[] is a static table shared by every client: build it once
     //here. defineMaxPlayers() refines the player-index width when the server
@@ -208,25 +329,52 @@ int main(int argc,char *argv[])
 
     std::vector<CatchChallenger::CliApiClient *> clients;
     CatchChallenger::CliEventLoop loop;
-    uint32_t botIndex=0;
-    while(botIndex<options.bots)
-    {
-        CatchChallenger::CliApiClient * const client=new CatchChallenger::CliApiClient();
-        client->setLabel("bot"+std::to_string(botIndex));
-        client->setVerbose(options.verbose);
-        client->setCharacterSlot(botIndex);
-        client->setListOnly(options.listOnly);
-        client->setIdentity(options.login,options.pass,options.datapackPath);
-        clients.push_back(client);
-        loop.addClient(client);
-        //a failed connect leaves the bot in State_Failed; the loop reports it
-        //and the final count stays honest, so keep starting the others.
-        if(!client->connectToLoginServer(options.host,options.port))
-            std::cerr << "[" << client->getLabel() << "] " << client->getFailReason() << std::endl;
-        botIndex++;
-    }
+    //Bots sharing ONE account must not open a brand-new login together: they all
+    //get "unknown login, you may create it" (0x07) and the losers of the
+    //create-account race are answered 0x02 AND DISCONNECTED
+    //(server/base/ClientLoad/ClientHeavyLoadSelectChar.cpp loginIsWrong() sends
+    //the reply then calls errorOutput()), so they can never reach the map. Run
+    //bot 0 alone first: it creates the account, every later bot just logs in.
+    //Not needed with --spam (one login per bot, nobody races anybody).
+    const bool serialiseFirstLogin=(!options.spam && options.bots>1);
 
-    const bool allFinished=loop.run(options.timeoutMs);
+    //run() returns when every client it KNOWS ABOUT is finished, so each wave is
+    //created only after the previous one is done.
+    const uint64_t onboardStartMs=monotonicMs();
+    bool allFinished=true;
+    uint32_t started=0;
+    while(started<options.bots)
+    {
+        uint32_t wave=CATCHCHALLENGER_BOTBENCH_ONBOARD_WAVE;
+        if(started==0 && serialiseFirstLogin)
+            wave=1;
+        if(wave>(options.bots-started))
+            wave=options.bots-started;
+        startBots(options,clients,loop,started,started+wave);
+        const uint64_t elapsedMs=monotonicMs()-onboardStartMs;
+        if(elapsedMs>=options.timeoutMs)
+        {
+            std::cerr << "onboarding budget of " << options.timeoutMs << "ms spent after "
+                      << started << "/" << options.bots << " bot(s)" << std::endl;
+            allFinished=false;
+            started+=wave;
+            break;
+        }
+        allFinished=loop.run(static_cast<uint32_t>(options.timeoutMs-elapsedMs));
+        started+=wave;
+        //A serialised first login exists to CREATE the shared account: fanning
+        //out before it succeeded would put the whole fleet back in the race.
+        if(serialiseFirstLogin && started==1)
+        {
+            if(clients.at(0)->getState()!=CatchChallenger::CliApiClient::State_OnMap &&
+               clients.at(0)->getState()!=CatchChallenger::CliApiClient::State_Listed)
+            {
+                std::cerr << "the first bot did not get through the login, not starting the "
+                          << (options.bots-1) << " others" << std::endl;
+                break;
+            }
+        }
+    }
     if(!loop.getError().empty())
         std::cerr << "event loop error: " << loop.getError() << std::endl;
     else
@@ -268,8 +416,43 @@ int main(int argc,char *argv[])
             index++;
         }
     }
-    else
-        std::cout << "ON_MAP " << loop.onMapCount() << "/" << options.bots << std::endl;
+    //captured BEFORE the saturation phase: a bot kicked during the window is no
+    //longer on the map, but it DID reach it, which is what the exit code is about
+    const size_t onMapReached=loop.onMapCount();
+    if(!options.listOnly)
+        std::cout << "ON_MAP " << onMapReached << "/" << options.bots << std::endl;
+
+    //---- saturation phase ----------------------------------------------
+    if(options.spam && onMapReached>0)
+    {
+        uint64_t moves=0;
+        uint64_t elapsedNs=0;
+        size_t survivors=0;
+        if(!loop.runSpam(options.spamSeconds,moves,elapsedNs,survivors))
+            std::cerr << "spam phase error: " << loop.getError() << std::endl;
+        //Print the numbers even when the window ended early (every bot kicked,
+        //loop error): a truncated window with its real duration is a result, a
+        //missing line is not.
+        std::cout << "SURVIVORS " << survivors << "/" << options.bots << std::endl;
+        std::cout << "MOVES " << moves << std::endl;
+        //REQ_PER_S is grepped as ^REQ_PER_S ([0-9.]+)$: plain fixed notation,
+        //never an exponent, never a locale comma (the C locale is the default
+        //and this binary never calls setlocale()).
+        double seconds=static_cast<double>(elapsedNs)/1000000000.0;
+        double perSecond=0.0;
+        if(seconds>0.0)
+            perSecond=static_cast<double>(moves)/seconds;
+        char formatted[64];
+        const int written=snprintf(formatted,sizeof(formatted),"%.3f",perSecond);
+        if(written>0 && written<static_cast<int>(sizeof(formatted)))
+            std::cout << "REQ_PER_S " << formatted << std::endl;
+        else
+        {
+            std::cerr << "REQ_PER_S formatting failed for " << perSecond << std::endl;
+            std::cout << "REQ_PER_S 0.000" << std::endl;
+        }
+        std::cerr << "spam window: " << seconds << "s" << std::endl;
+    }
 
     index=0;
     while(index<clients.size())
@@ -279,6 +462,14 @@ int main(int argc,char *argv[])
     }
     clients.clear();
 
+    if(options.spam)
+    {
+        //A saturation run is about throughput, not onboarding: it only fails
+        //when NO bot ever reached the map (nothing was measured at all).
+        if(onMapReached>0)
+            return 0;
+        return 1;
+    }
     if(reached==options.bots)
         return 0;
     return 1;

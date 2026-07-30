@@ -46,10 +46,9 @@ void CliApiClient::full_reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simp
 void CliApiClient::dropAllPlayerOnTheMap() {}
 
 //---- own player teleport -------------------------------------------------
-// A real client swaps the rendered map. A moving bot MUST track it to keep
-// its own x/y/map in sync before sending the next move.
-void CliApiClient::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const Direction &direction)
-{ (void)mapId; (void)x; (void)y; (void)direction; }
+// NOT here: teleportTo() carries the move state machine (it must answer the
+// server query AND re-sync x/y/map), so it lives in CliApiClient.cpp next to
+// the spam engine.
 
 //---- crafting / inventory / catch ---------------------------------------
 // Api_protocol already applied the result to player_informations; a real
@@ -111,11 +110,24 @@ void CliApiClient::tradeAddTradeObject(const CATCHCHALLENGER_TYPE_ITEM &item,con
 void CliApiClient::tradeAddTradeMonster(const PlayerMonster &monster) { (void)monster; }
 
 //---- pvp battle ---------------------------------------------------------
+// A fight FREEZES the player server-side: Client::singleMove() answers every
+// following move with "try move when is in fight", and errorOutput() kicks. So
+// any sign of a fight must take the bot out of the move rotation instead of
+// letting it walk into a disconnect. (A WILD fight is never announced — the
+// client is meant to derive it from the shared random seeds — which is why
+// CliApiClient::tileIsSafeForSpam() refuses monster tiles up front.)
 void CliApiClient::battleRequested(const std::string &pseudo,const uint8_t &skinInt) { (void)pseudo; (void)skinInt; }
 void CliApiClient::battleAcceptedByOther(const std::string &pseudo,const uint8_t &skinId,const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
-{ (void)pseudo; (void)skinId; (void)stat; (void)monsterPlace; (void)publicPlayerMonster; }
+{
+    (void)pseudo; (void)skinId; (void)stat; (void)monsterPlace; (void)publicPlayerMonster;
+    stopSpam("a pvp battle started");
+}
 void CliApiClient::battleCanceledByOther() {}
-void CliApiClient::sendBattleReturn(const std::vector<Skill::AttackReturn> &attackReturn) { (void)attackReturn; }
+void CliApiClient::sendBattleReturn(const std::vector<Skill::AttackReturn> &attackReturn)
+{
+    (void)attackReturn;
+    stopSpam("a fight is in progress");
+}
 
 //---- clan + city capture ------------------------------------------------
 void CliApiClient::clanActionSuccess(const uint32_t &clanId) { (void)clanId; }
@@ -127,7 +139,15 @@ void CliApiClient::cityCapture(const uint32_t &remainingTime,const uint8_t &type
 void CliApiClient::captureCityYourAreNotLeader() {}
 void CliApiClient::captureCityYourLeaderHaveStartInOtherCity(const std::string &zone) { (void)zone; }
 void CliApiClient::captureCityPreviousNotFinished() {}
-void CliApiClient::captureCityStartBattle(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count) { (void)player_count; (void)clan_count; }
-void CliApiClient::captureCityStartBotFight(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count,const uint32_t &fightId) { (void)player_count; (void)clan_count; (void)fightId; }
+void CliApiClient::captureCityStartBattle(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count)
+{
+    (void)player_count; (void)clan_count;
+    stopSpam("a city-capture battle started");
+}
+void CliApiClient::captureCityStartBotFight(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count,const uint32_t &fightId)
+{
+    (void)player_count; (void)clan_count; (void)fightId;
+    stopSpam("a city-capture bot fight started");
+}
 void CliApiClient::captureCityDelayedStart(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count) { (void)player_count; (void)clan_count; }
 void CliApiClient::captureCityWin() {}

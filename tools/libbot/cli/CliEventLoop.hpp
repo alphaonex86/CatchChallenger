@@ -29,6 +29,20 @@ public:
      * \param timeoutMs total wall-clock budget for the whole set
      * \return true when every client finished before the deadline */
     bool run(const uint32_t &timeoutMs);
+    /** \brief saturation phase: every on-map client moves as fast as the
+     * server drains its socket, for `seconds`.
+     *
+     * No sleep, no rate limit: the only pacing is the server itself, through
+     * TCP back-pressure (a client whose send buffer is full waits for the fd to
+     * be writable instead of spinning on EAGAIN). A client that gets
+     * disconnected is dropped from the rotation and the others keep going.
+     *
+     * \param seconds       length of the measurement window
+     * \param moves         [out] move packets handed to a socket, all clients
+     * \param elapsedNs     [out] the window ACTUALLY measured (CLOCK_MONOTONIC)
+     * \param survivors     [out] clients still on the map and connected at the end
+     * \return false only when the loop itself failed (getError() is set) */
+    bool runSpam(const uint32_t &seconds,uint64_t &moves,uint64_t &elapsedNs,size_t &survivors);
     /// \brief clients that reached the map
     size_t onMapCount() const;
     /// \brief set when run() bailed out on its own error (not a timeout)

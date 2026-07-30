@@ -28,7 +28,24 @@ CliApiClient::CliApiClient() :
     characterCount(0),
     mapIndex(0),
     x(0),
-    y(0)
+    y(0),
+    outputBuffer(),
+    outputCursor(0),
+    spamMode(false),
+    spamActive(false),
+    spamArmed(false),
+    spamNeedPrepare(false),
+    spamServerDirection(Direction_look_at_bottom),
+    spamDirectionA(Direction_move_at_left),
+    spamDirectionB(Direction_move_at_right),
+    spamPendingSteps(0),
+    spamOnSecondTile(false),
+    spamMapIndex(0),
+    spamX0(0),
+    spamY0(0),
+    spamX1(0),
+    spamY1(0),
+    moveCount(0)
 {
 }
 
@@ -299,14 +316,51 @@ ssize_t CliApiClient::readFromSocket(char *data,const size_t &size)
 
 ssize_t CliApiClient::writeToSocket(const char * const data,const size_t &size)
 {
-    const ssize_t writtenSize=socket.writeData(data,size);
-    if(writtenSize<0)
+    //ProtocolParsingBase disconnects the client on a short write, and blocking
+    //here would freeze the whole single-threaded fleet on one slow socket. So
+    //append, push what the kernel takes, and report the full size: the
+    //remainder is flushed by flushOutput() when the fd is writable again.
+    //Appending unconditionally (instead of trying a direct send first) is what
+    //keeps the byte ORDER right when a flush is still pending.
+    outputBuffer.insert(outputBuffer.end(),data,data+size);
+    if(!flushOutput())
+        return -1;
+    return static_cast<ssize_t>(size);
+}
+
+bool CliApiClient::wantWrite() const
+{
+    return outputCursor<outputBuffer.size();
+}
+
+bool CliApiClient::flushOutput()
+{
+    if(!socket.isValid())
     {
-        //the protocol layer turns a short write into disconnectClient()
-        std::cerr << "[" << label << "] write failed: " << socket.lastError() << std::endl;
-        socket.closeSocket();
+        outputBuffer.clear();
+        outputCursor=0;
+        return false;
     }
-    return writtenSize;
+    while(outputCursor<outputBuffer.size())
+    {
+        const ssize_t writtenSize=socket.writeSome(outputBuffer.data()+outputCursor,
+                                                  outputBuffer.size()-outputCursor);
+        if(writtenSize<0)
+        {
+            std::cerr << "[" << label << "] write failed: " << socket.lastError() << std::endl;
+            socket.closeSocket();
+            outputBuffer.clear();
+            outputCursor=0;
+            return false;
+        }
+        if(writtenSize==0)
+            return true;//send buffer full, the rest stays queued
+        outputCursor+=static_cast<size_t>(writtenSize);
+    }
+    //fully drained: reuse the allocation instead of erase()ing the front
+    outputBuffer.clear();
+    outputCursor=0;
+    return true;
 }
 
 void CliApiClient::closeSocket()
@@ -357,6 +411,20 @@ void CliApiClient::disconnected(const std::string &reason)
 
 void CliApiClient::notLogged(const std::string &reason)
 {
+    //"Login already used" (0xA9 code 0x02) is the reply to a create-account that
+    //LOST a race: several bots opened the same brand-new login at once and one
+    //of them created it. The account exists now, so a plain login WOULD work —
+    //but the server does not leave the connection open for it: loginIsWrong()
+    //sends the 0x02 reply and then calls errorOutput(), which disconnects. So
+    //there is nothing to retry on this socket; the fix is to not race at all,
+    //which is why main() serialises the very first login of a shared account and
+    //why --spam gives every bot its own login.
+    if(reason=="Login already used")
+    {
+        fail("not logged: "+reason+" (lost a create-account race; the server "
+             "disconnects the loser, so this bot cannot recover on this socket)");
+        return;
+    }
     fail("not logged: "+reason);
 }
 
@@ -447,6 +515,20 @@ void CliApiClient::selectOrCreateCharacter(const std::vector<std::vector<Charact
 
 bool CliApiClient::createCharacter()
 {
+    //The server KICKS a client that asks for one character too many
+    //("You can't create more account, you have already N on M allowed",
+    //ClientHeavyLoadLogin2.cpp -> errorOutput()). max_character came with the
+    //login reply, so refuse it here: a clear per-bot message beats N kicks, and
+    //the ON_MAP/SURVIVORS counts then say honestly how many bots the account
+    //could host. Use one login per bot (bot-bench --spam does) to lift the cap.
+    const uint8_t maxCharacter=CommonSettingsCommon::commonSettingsCommon.max_character;
+    if(characterSlot>=maxCharacter)
+    {
+        fail("this account is limited to "+std::to_string(static_cast<uint32_t>(maxCharacter))+
+             " character(s) by the server, so the slot "+std::to_string(characterSlot)+
+             " cannot be created");
+        return false;
+    }
     //Character creation validates profileIndex and skinId against the LOCAL
     //datapack, so it has to be parsed before we can ask for a character.
     if(!CliDatapack::loadBase(datapackPath))
@@ -541,10 +623,13 @@ void CliApiClient::newCharacterId(const uint8_t &returnCode,const uint32_t &char
 void CliApiClient::haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,
                                 const COORD_TYPE &y,const Direction &last_direction)
 {
-    (void)last_direction;
     this->mapIndex=mapIndex;
     this->x=x;
     this->y=y;
+    //The server's MapBasicMove::last_direction starts at this orientation and
+    //it REFUSES a move packet repeating the current direction, so the first
+    //move must differ from it. Keep it to seed the alternation.
+    spamServerDirection=last_direction;
     setState(State_OnMap);
 }
 
@@ -560,4 +645,295 @@ bool CliApiClient::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,
     (void)botFightId;
     //a benchmark bot never fights, so no bot has ever been beaten
     return false;
+}
+
+//---- saturation ("spam") mode ------------------------------------------
+
+void CliApiClient::setSpamMode(const bool &spam)
+{
+    spamMode=spam;
+    if(spam)
+        moveCount=0;
+}
+
+bool CliApiClient::wasSpamArmed() const
+{
+    return spamArmed;
+}
+
+uint64_t CliApiClient::getMoveCount() const
+{
+    return moveCount;
+}
+
+bool CliApiClient::isSpamming() const
+{
+    return spamMode && spamActive && state==State_OnMap && socket.isValid();
+}
+
+void CliApiClient::spamRefused(const std::string &reason)
+{
+    //NOT fail(): the bot stays logged in and on the map, it just cannot walk.
+    //Disconnecting it here would look exactly like a server kick in the report.
+    if(failReason.empty())
+        failReason=reason;
+}
+
+void CliApiClient::stopSpam(const std::string &reason)
+{
+    if(spamActive)
+    {
+        spamActive=false;
+        if(verbose)
+            std::cout << "[" << label << "] spam stopped: " << reason << std::endl;
+    }
+}
+
+const char *CliApiClient::tileIsSafeForSpam(const CommonMap &map,const COORD_TYPE &x,const COORD_TYPE &y)
+{
+    if(x>=map.width || y>=map.height)
+        return "out of the map";
+    if(!MoveOnTheMap::isWalkable(map,x,y))
+        return "not walkable";
+    //A ledge is one-way: the server forces the walk to continue and then
+    //rejects the packet ("Try pass on wrong ledge") -> kick.
+    if(MoveOnTheMap::getLedge(map,x,y)!=ParsedLayerLedges_NoLedges)
+        return "a ledge";
+    //Dirt is a plantable tile; harmless to walk on but it is never a plain
+    //floor, so skip it and keep the oscillation on ordinary ground.
+    if(MoveOnTheMap::isDirt(map,x,y))
+        return "dirt (plantable)";
+    //A teleporter source would move the bot to another map behind its back.
+    if(MoveOnTheMap::needBeTeleported(map,x,y))
+        return "a teleporter source";
+    //Grass/water/cave: the server starts a wild fight after a random number of
+    //steps and NEVER tells the client (the client is expected to derive it from
+    //the shared random seeds). Every following move is then answered with
+    //"try move when is in fight" -> kick. A zone whose walkOn list is empty has
+    //no monster at all, and one whose defaultMonsters are all empty cannot
+    //start a fight either (CommonFightEngine::generateWildFightIfCollision()).
+    const MonstersCollisionValue zone=MoveOnTheMap::getZoneCollision(map,x,y);
+    size_t index=0;
+    while(index<zone.walkOn.size())
+    {
+        if(index<zone.walkOnMonsters.size())
+        {
+            if(!zone.walkOnMonsters.at(index).defaultMonsters.empty())
+                return "a wild-monster zone (grass/water/cave)";
+        }
+        index++;
+    }
+    const std::pair<uint8_t,uint8_t> position(x,y);
+    //Same story for a fight-bot trigger tile.
+    if(map.botsFightTrigger.find(position)!=map.botsFightTrigger.cend())
+        return "a fight-bot trigger";
+    //An item on the ground / a shop tile makes the server answer the move with
+    //extra packets; keep the loop measuring the move path only.
+    if(map.items.find(position)!=map.items.cend())
+        return "an item on the ground";
+    if(map.shops.find(position)!=map.shops.cend())
+        return "a shop";
+    return NULL;
+}
+
+bool CliApiClient::prepareSpam()
+{
+    spamActive=false;
+    spamNeedPrepare=false;
+    if(state!=State_OnMap)
+    {
+        spamRefused("prepareSpam() called while not on the map");
+        return false;
+    }
+    const std::vector<CommonMap> * const maps=CliDatapack::mapList();
+    if(maps==NULL)
+    {
+        spamRefused("prepareSpam(): the datapack maps are not loaded");
+        return false;
+    }
+    if(mapIndex>=maps->size())
+    {
+        spamRefused("prepareSpam(): map index "+std::to_string(mapIndex)+" is out of the "+
+                    std::to_string(maps->size())+" loaded maps");
+        return false;
+    }
+    const CommonMap &map=maps->at(mapIndex);
+    const char * const startProblem=tileIsSafeForSpam(map,x,y);
+    if(startProblem!=NULL)
+    {
+        spamRefused("prepareSpam(): the start tile ("+std::to_string(static_cast<uint32_t>(x))+
+                    ","+std::to_string(static_cast<uint32_t>(y))+") of map "+
+                    std::to_string(mapIndex)+" is "+std::string(startProblem)+
+                    ", so it cannot be used for a move loop");
+        return false;
+    }
+    //Try the four opposite pairs. The bot must come back to the SAME tile, so
+    //the pair has to be a real axis (left/right, top/bottom) and the step must
+    //not leave the map: a border crossing would land on a map whose tiles are
+    //not the ones validated here.
+    Direction candidates[4];
+    candidates[0]=Direction_move_at_left;
+    candidates[1]=Direction_move_at_right;
+    candidates[2]=Direction_move_at_top;
+    candidates[3]=Direction_move_at_bottom;
+    uint8_t index=0;
+    while(index<4)
+    {
+        const Direction first=candidates[index];
+        CATCHCHALLENGER_TYPE_MAPID targetMap=mapIndex;
+        COORD_TYPE targetX=x;
+        COORD_TYPE targetY=y;
+        //The very first packet turns the character towards `first` without
+        //walking, and the server rejects a packet repeating its current
+        //direction: a pair starting with that direction is unusable. Skipping
+        //it (instead of swapping the pair) keeps the FIRST walked tile the one
+        //validated just below.
+        //allowTeleport=false so a step onto a teleporter source is refused
+        //here rather than discovered by the server.
+        if(first!=spamServerDirection &&
+           MoveOnTheMap::canGoTo<CommonMap>(*maps,first,map,x,y,true,false))
+        {
+            if(MoveOnTheMap::moveWithoutTeleport<CommonMap>(*maps,first,targetMap,targetX,targetY,true,false))
+            {
+                if(targetMap==mapIndex && tileIsSafeForSpam(map,targetX,targetY)==NULL)
+                {
+                    //the way back is the opposite direction of the pair
+                    Direction back=Direction_move_at_right;
+                    if(first==Direction_move_at_left)
+                        back=Direction_move_at_right;
+                    else
+                    {
+                        if(first==Direction_move_at_right)
+                            back=Direction_move_at_left;
+                        else
+                        {
+                            if(first==Direction_move_at_top)
+                                back=Direction_move_at_bottom;
+                            else
+                                back=Direction_move_at_top;
+                        }
+                    }
+                    spamDirectionA=first;
+                    spamDirectionB=back;
+                    spamMapIndex=mapIndex;
+                    spamX0=x;
+                    spamY0=y;
+                    spamX1=targetX;
+                    spamY1=targetY;
+                    spamOnSecondTile=false;
+                    //the first packet only turns the character: 0 step
+                    spamPendingSteps=0;
+                    spamActive=true;
+                    spamArmed=true;
+                    if(verbose)
+                        std::cout << "[" << label << "] spam axis "
+                                  << MoveOnTheMap::directionToString(spamDirectionA) << "/"
+                                  << MoveOnTheMap::directionToString(spamDirectionB)
+                                  << " on map " << mapIndex
+                                  << " between (" << std::to_string(spamX0) << "," << std::to_string(spamY0)
+                                  << ") and (" << std::to_string(spamX1) << "," << std::to_string(spamY1)
+                                  << ")" << std::endl;
+                    return true;
+                }
+            }
+        }
+        index++;
+    }
+    spamRefused("prepareSpam(): no safe neighbour tile around ("+
+                std::to_string(static_cast<uint32_t>(x))+","+
+                std::to_string(static_cast<uint32_t>(y))+") on map "+std::to_string(mapIndex));
+    return false;
+}
+
+void CliApiClient::sendOneMove()
+{
+    //0x02 = (steps already walked in the CURRENT direction, NEW direction).
+    //The server executes those steps and then turns; repeating the current
+    //direction is a protocol error on its side, hence the strict alternation.
+    Direction next=spamDirectionA;
+    if(spamServerDirection==spamDirectionA)
+        next=spamDirectionB;
+    char buffer[2];
+    buffer[0]=static_cast<char>(spamPendingSteps);
+    buffer[1]=static_cast<char>(static_cast<uint8_t>(next));
+    if(!packOutcommingData(0x02,buffer,sizeof(buffer)))
+    {
+        stopSpam("the protocol layer refused the move packet");
+        return;
+    }
+    //the announced steps are now done on the server: mirror them locally
+    if(spamPendingSteps>0)
+    {
+        spamOnSecondTile=!spamOnSecondTile;
+        if(spamOnSecondTile)
+        {
+            x=spamX1;
+            y=spamY1;
+        }
+        else
+        {
+            x=spamX0;
+            y=spamY0;
+        }
+        mapIndex=spamMapIndex;
+    }
+    spamServerDirection=next;
+    spamPendingSteps=1;
+    moveCount++;
+}
+
+uint32_t CliApiClient::pushSpamMoves(const uint32_t &maxMoves)
+{
+    uint32_t sent=0;
+    if(spamNeedPrepare)
+    {
+        //a teleport moved the bot: re-validate the tiles before moving again
+        if(!prepareSpam())
+            return 0;
+    }
+    while(sent<maxMoves)
+    {
+        if(!isSpamming())
+            return sent;
+        //Closed loop: only queue the next move when the kernel took the
+        //previous one. When the server stops draining, wantWrite() stays true
+        //and the caller waits for POLLOUT instead of burning CPU on EAGAIN.
+        if(wantWrite())
+            return sent;
+        const uint64_t before=moveCount;
+        sendOneMove();
+        if(moveCount==before)
+            return sent;//sendOneMove() gave up (socket or protocol error)
+        sent++;
+    }
+    return sent;
+}
+
+void CliApiClient::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,
+                              const COORD_TYPE &y,const Direction &direction)
+{
+    //A teleport is a server QUERY (0xE1): it MUST be answered or the server
+    //runs out of query ids and kicks us ("no free query number"). teleportDone()
+    //posts that reply and re-seeds Api_protocol's own direction state.
+    this->mapIndex=mapId;
+    this->x=x;
+    this->y=y;
+    spamServerDirection=direction;
+    spamPendingSteps=0;
+    if(!teleportDone())
+        fail("teleportDone() refused to answer the teleport query");
+    else
+    {
+        //The validated tile pair belongs to the OLD map: re-pick, but outside
+        //the parser (prepareSpam() must not run while parseIncommingData() owns
+        //the input buffer).
+        if(spamActive)
+        {
+            spamActive=false;
+            spamNeedPrepare=true;
+        }
+        if(verbose)
+            std::cout << "[" << label << "] teleported to map " << mapId
+                      << " (" << std::to_string(x) << "," << std::to_string(y) << ")" << std::endl;
+    }
 }

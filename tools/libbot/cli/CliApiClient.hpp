@@ -116,6 +116,49 @@ public:
     /// \brief print every state transition and protocol message when true
     void setVerbose(const bool &verbose);
 
+    //---- saturation ("spam") mode ---------------------------------------
+    /** The bot walks back and forth between two adjacent tiles as fast as the
+     * server drains its socket, which is what puts a single-threaded server at
+     * 100% CPU. Two invariants make it survive a long run:
+     *
+     *  - the two tiles are validated against the LOCAL map before the first
+     *    packet (walkable, no ledge, no teleporter, no wild-monster zone, no
+     *    fight-bot trigger, no item/shop). The server KICKS a client that asks
+     *    for an impossible move (Client::singleMove() -> errorOutput()), and a
+     *    fight started by a grass tile turns every following move into
+     *    "try move when is in fight", i.e. another kick.
+     *  - the move packet 0x02 carries (steps done in the PREVIOUS direction,
+     *    NEW direction) and MapBasicMove::moveThePlayer() rejects a packet
+     *    whose direction equals the current one, so the two directions must
+     *    alternate. prepareSpam() picks an opposite pair for exactly that.
+     */
+    void setSpamMode(const bool &spam);
+    /// \brief pick the two tiles to oscillate between; false when the bot's
+    /// current position has no safe neighbour (reason in getFailReason()).
+    /// A failure does NOT disconnect the bot: it just stays out of the rotation.
+    bool prepareSpam();
+    /// \brief still on the map, still connected and still allowed to move
+    bool isSpamming() const;
+    /// \brief this bot was armed at least once, so it really took part in the
+    /// move loop. A bot that never armed must not be counted as a survivor of a
+    /// saturation run: it never spammed.
+    bool wasSpamArmed() const;
+    /// \brief leave the fleet's move rotation without failing the bot
+    void stopSpam(const std::string &reason);
+    /** \brief hand up to maxMoves move packets to the socket.
+     * Stops early as soon as the kernel refuses bytes (the server applies
+     * back-pressure): the caller then waits for the fd to be writable again.
+     * \return moves actually handed to the socket */
+    uint32_t pushSpamMoves(const uint32_t &maxMoves);
+    /// \brief move packets this bot handed to the socket since prepareSpam()
+    uint64_t getMoveCount() const;
+
+    //---- output buffering ----------------------------------------------
+    /// \brief bytes are waiting for room in the send buffer
+    bool wantWrite() const;
+    /// \brief push the pending bytes; false when the socket died
+    bool flushOutput();
+
     //---- transport seam (ProtocolParsing) ------------------------------
     ssize_t readFromSocket(char *data,const size_t &size) override;
     ssize_t writeToSocket(const char * const data,const size_t &size) override;
@@ -220,6 +263,14 @@ private:
     bool doReconnect();
     /// \brief parse the datapack then release the queued character block
     bool doLoadDatapack();
+    /// \brief emit one 0x02 move packet and flip to the other tile
+    void sendOneMove();
+    /// \brief record why this bot cannot join the move loop, WITHOUT failing it
+    void spamRefused(const std::string &reason);
+    /// \brief check a tile a spamming bot must be able to step onto without
+    /// triggering anything the server answers with a fight, a teleport or a kick
+    /// \return NULL when the tile is usable, else why it is not
+    static const char *tileIsSafeForSpam(const CommonMap &map,const COORD_TYPE &x,const COORD_TYPE &y);
 
     CliSocket socket;
     State state;
@@ -239,6 +290,34 @@ private:
     CATCHCHALLENGER_TYPE_MAPID mapIndex;
     COORD_TYPE x;
     COORD_TYPE y;
+
+    /// \brief bytes accepted by the protocol layer but not yet by the kernel.
+    /// ProtocolParsingBase disconnects the client on a short write, so
+    /// writeToSocket() always reports the full size and keeps the remainder
+    /// here; outputCursor is the first byte still to send.
+    std::vector<char> outputBuffer;
+    size_t outputCursor;
+    bool spamMode;
+    bool spamActive;
+    /// \brief prepareSpam() succeeded at least once (never cleared)
+    bool spamArmed;
+    /// \brief a teleport moved us: re-pick the two tiles outside the parser
+    bool spamNeedPrepare;
+    /// \brief the direction the SERVER currently faces (its last_direction)
+    Direction spamServerDirection;
+    Direction spamDirectionA;
+    Direction spamDirectionB;
+    /// \brief steps to announce in the next packet: 0 for the first one (it
+    /// only turns the character), 1 for every following one
+    uint8_t spamPendingSteps;
+    /// \brief which of the two validated tiles we stand on
+    bool spamOnSecondTile;
+    CATCHCHALLENGER_TYPE_MAPID spamMapIndex;
+    COORD_TYPE spamX0;
+    COORD_TYPE spamY0;
+    COORD_TYPE spamX1;
+    COORD_TYPE spamY1;
+    uint64_t moveCount;
 };
 
 }
