@@ -3983,7 +3983,10 @@ QString LoadMapAll::emitRoadBotsForChunk(Tiled::Map &worldMap,
         if(object->type()=="bot")
         {
             const unsigned int tileX=(unsigned int)(object->x())/worldMap.tileWidth();
-            const unsigned int tileY=(unsigned int)(object->y())/worldMap.tileHeight();
+            //SAME rule as the chunk splitter (PartialMap.cpp: y()-1), else a bot
+            //sitting on the first row of a chunk is renumbered here but written
+            //into the chunk above: its <bot> and its object end up in two files
+            const unsigned int tileY=(unsigned int)(object->y()-1)/worldMap.tileHeight();
             if(tileX>=x0 && tileX<x1 && tileY>=y0 && tileY<y1)
             {
                 Tiled::Properties properties=object->properties();
@@ -4024,7 +4027,10 @@ QString LoadMapAll::emitCityBotsForChunk(Tiled::Map &worldMap,
         if(object->type()=="bot")
         {
             const unsigned int tileX=(unsigned int)(object->x())/worldMap.tileWidth();
-            const unsigned int tileY=(unsigned int)(object->y())/worldMap.tileHeight();
+            //SAME rule as the chunk splitter (PartialMap.cpp: y()-1), else a bot
+            //sitting on the first row of a chunk is renumbered here but written
+            //into the chunk above: its <bot> and its object end up in two files
+            const unsigned int tileY=(unsigned int)(object->y()-1)/worldMap.tileHeight();
             if(tileX>=x0 && tileX<x1 && tileY>=y0 && tileY<y1)
             {
                 Tiled::Properties properties=object->properties();
