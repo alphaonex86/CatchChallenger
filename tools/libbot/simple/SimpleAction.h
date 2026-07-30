@@ -1,5 +1,5 @@
-/** \file listener.h
-\brief Define the server compatible with Ultracopier interface
+/** \file SimpleAction.h
+\brief Qt driver of the minimal bot brain (timers + chat reply)
 \author alpha_one_x86
 \licence GPL3, see the file COPYING */
 
@@ -7,18 +7,21 @@
 #define SIMPLE_ACTION_BOT_INTERFACE_H
 
 #include "SimpleBotInterface.h"
+#include "../../../client/libqtcatchchallenger/Api_protocol_Qt.hpp"
 
+#include <QObject>
 #include <QTimer>
-#include <QString>
 
-class SimpleAction : public SimpleBotInterface
+/// QObject is inherited HERE and not by SimpleBotInterface: the brain itself is
+/// toolkit-free, only its timer driver needs Qt.
+class SimpleAction : public QObject, public SimpleBotInterface
 {
     Q_OBJECT
 public:
     SimpleAction();
     ~SimpleAction();
-    void insert_player(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Player_public_informations &player,
-                       const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
+    void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,
+                       const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
 private:
     QTimer moveTimer;
     QTimer textTimer;

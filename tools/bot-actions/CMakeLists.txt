@@ -36,6 +36,8 @@ add_executable(bot-actions
     # not discover .qrc files; they have to appear in sources.
     localr.qrc
     # tools/libbot common helpers
+    ../libbot/BotClientLink.cpp
+    ../libbot/MultipleBotConnectionCore.cpp
     ../libbot/MultipleBotConnection.cpp
     ../libbot/MultipleBotConnectionImplForGui.cpp
     ../libbot/BotInterface.cpp

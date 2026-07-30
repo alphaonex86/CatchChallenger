@@ -15,43 +15,59 @@ ActionsBotInterface::~ActionsBotInterface()
 {
 }
 
-QVariant ActionsBotInterface::getValue(const QString &variable)
+CatchChallenger::Api_protocol_Qt *ActionsBotInterface::toQt(CatchChallenger::Api_protocol *api)
 {
-    if(variable==QStringLiteral("randomText"))
-        return randomText;
-    if(variable==QStringLiteral("globalChatRandomReply"))
-        return globalChatRandomReply;
-    else
-        return QVariant();
+    return static_cast<CatchChallenger::Api_protocol_Qt *>(api);
 }
 
-bool ActionsBotInterface::setValue(const QString &variable,const QVariant &value)
+bool ActionsBotInterface::getValue(const std::string &variable,bool &value)
 {
-    if(variable==QStringLiteral("randomText"))
+    if(variable=="randomText")
     {
-        randomText=value.toBool();
+        value=randomText;
         return true;
     }
-    if(variable==QStringLiteral("globalChatRandomReply"))
+    if(variable=="globalChatRandomReply")
     {
-        globalChatRandomReply=value.toBool();
+        value=globalChatRandomReply;
         return true;
     }
     else
         return false;
 }
 
-QStringList ActionsBotInterface::variablesList()
+bool ActionsBotInterface::setValue(const std::string &variable,const bool value)
 {
-    return QStringList() << QString("move") << QString("randomText") << QString("bugInDirection") << QString("globalChatRandomReply");
+    if(variable=="randomText")
+    {
+        randomText=value;
+        return true;
+    }
+    if(variable=="globalChatRandomReply")
+    {
+        globalChatRandomReply=value;
+        return true;
+    }
+    else
+        return false;
 }
 
-void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
+std::vector<std::string> ActionsBotInterface::variablesList()
+{
+    std::vector<std::string> list;
+    list.push_back("move");
+    list.push_back("randomText");
+    list.push_back("bugInDirection");
+    list.push_back("globalChatRandomReply");
+    return list;
+}
+
+void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     (void)direction;
     CatchChallenger::Player_private_and_public_informations &playerApi=api->get_player_informations();
     playerApi.public_informations=player;
-    Player &newPlayer=clientList[api];
+    Player &newPlayer=clientList[toQt(api)];
     //newPlayer.player=player;
     newPlayer.mapId=mapId;
     newPlayer.x=x;
@@ -59,18 +75,18 @@ void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol_Qt  *api,c
     newPlayer.canMoveOnMap=true;
 }
 
-void ActionsBotInterface::removeClient(CatchChallenger::Api_protocol_Qt  *api)
+void ActionsBotInterface::removeClient(CatchChallenger::Api_protocol *api)
 {
     std::cerr << "ActionsBotInterface::removeClient" << std::endl;
-    clientList.erase(api);
+    clientList.erase(toQt(api));
 }
 
-QString ActionsBotInterface::name()
+std::string ActionsBotInterface::name()
 {
-    return QStringLiteral("action");
+    return "action";
 }
 
-QString ActionsBotInterface::version()
+std::string ActionsBotInterface::version()
 {
-    return QStringLiteral("1.0.0.0 for CatchChallenger ")+QString::fromStdString(CatchChallenger::Version::str);
+    return std::string("1.0.0.0 for CatchChallenger ")+CatchChallenger::Version::str;
 }

@@ -1,5 +1,5 @@
 #include "SimpleBotInterface.h"
-#include "../../general/base/Version.hpp"
+#include "../../../general/base/Version.hpp"
 
 SimpleBotInterface::SimpleBotInterface() :
     move(false),
@@ -13,52 +13,69 @@ SimpleBotInterface::~SimpleBotInterface()
 {
 }
 
-QVariant SimpleBotInterface::getValue(const QString &variable)
+bool SimpleBotInterface::getValue(const std::string &variable,bool &value)
 {
-    if(variable==QStringLiteral("move"))
-        return move;
-    if(variable==QStringLiteral("randomText"))
-        return randomText;
-    if(variable==QStringLiteral("bugInDirection"))
-        return bugInDirection;
-    if(variable==QStringLiteral("globalChatRandomReply"))
-        return globalChatRandomReply;
-    else
-        return QVariant();
-}
-
-bool SimpleBotInterface::setValue(const QString &variable,const QVariant &value)
-{
-    if(variable==QStringLiteral("move"))
+    if(variable=="move")
     {
-        move=value.toBool();
+        value=move;
         return true;
     }
-    if(variable==QStringLiteral("randomText"))
+    if(variable=="randomText")
     {
-        randomText=value.toBool();
+        value=randomText;
         return true;
     }
-    if(variable==QStringLiteral("bugInDirection"))
+    if(variable=="bugInDirection")
     {
-        bugInDirection=value.toBool();
+        value=bugInDirection;
         return true;
     }
-    if(variable==QStringLiteral("globalChatRandomReply"))
+    if(variable=="globalChatRandomReply")
     {
-        globalChatRandomReply=value.toBool();
+        value=globalChatRandomReply;
         return true;
     }
     else
         return false;
 }
 
-QStringList SimpleBotInterface::variablesList()
+bool SimpleBotInterface::setValue(const std::string &variable,const bool value)
 {
-    return QStringList() << QString("move") << QString("randomText") << QString("bugInDirection") << QString("globalChatRandomReply");
+    if(variable=="move")
+    {
+        move=value;
+        return true;
+    }
+    if(variable=="randomText")
+    {
+        randomText=value;
+        return true;
+    }
+    if(variable=="bugInDirection")
+    {
+        bugInDirection=value;
+        return true;
+    }
+    if(variable=="globalChatRandomReply")
+    {
+        globalChatRandomReply=value;
+        return true;
+    }
+    else
+        return false;
 }
 
-void SimpleBotInterface::insert_player(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
+std::vector<std::string> SimpleBotInterface::variablesList()
+{
+    std::vector<std::string> list;
+    list.push_back("move");
+    list.push_back("randomText");
+    list.push_back("bugInDirection");
+    list.push_back("globalChatRandomReply");
+    return list;
+}
+
+void SimpleBotInterface::insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     Player newPlayer;
     newPlayer.player=player;
@@ -69,17 +86,17 @@ void SimpleBotInterface::insert_player(CatchChallenger::Api_protocol_Qt *api,con
     clientList[api]=newPlayer;
 }
 
-void SimpleBotInterface::removeClient(CatchChallenger::Api_protocol_Qt *api)
+void SimpleBotInterface::removeClient(CatchChallenger::Api_protocol *api)
 {
-    clientList.remove(api);
+    clientList.erase(api);
 }
 
-QString SimpleBotInterface::name()
+std::string SimpleBotInterface::name()
 {
-    return QStringLiteral("simple");
+    return "simple";
 }
 
-QString SimpleBotInterface::version()
+std::string SimpleBotInterface::version()
 {
-    return QStringLiteral("for CatchChallenger ")+QString::fromStdString(CatchChallenger::Version::str);
+    return std::string("for CatchChallenger ")+CatchChallenger::Version::str;
 }

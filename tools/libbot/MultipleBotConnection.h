@@ -2,66 +2,58 @@
 #define MULTIPLEBOTCONNECTION_H
 
 #include "../../client/libqtcatchchallenger/ConnectedSocket.hpp"
-#include "../../general/base/CommonDatapack.hpp"
-#include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../client/libqtcatchchallenger/Api_client_real.hpp"
 #include "../../client/libcatchchallenger/ClientStructures.hpp"
-#include "BotInterface.h"
+#include "MultipleBotConnectionCore.h"
 
 #include <QTimer>
 #include <QObject>
+#include <QHash>
+#include <QSslSocket>
+#include <QSslError>
 
-class MultipleBotConnection : public QObject
+/// \brief Qt transport for ONE bot: QSslSocket -> ConnectedSocket -> Api_client_real.
+///
+/// The whole point of the class is that the bot core never sees any of those
+/// three types. It is not a QObject: it has no signal of its own, the signals of
+/// the objects it owns are wired by MultipleBotConnection.
+class QtBotClientLink : public BotClientLink
+{
+public:
+    QtBotClientLink();
+    ~QtBotClientLink();
+    CatchChallenger::Api_protocol *api() const;
+    bool connectToHost(const std::string &host,const uint16_t port,
+                       const std::string &proxyHost,const uint16_t proxyPort);
+    void disconnectFromHost();
+    void sendDatapackContentMainSub();
+
+    QSslSocket *sslSocket;
+    CatchChallenger::ConnectedSocket *socket;
+    CatchChallenger::Api_client_real *apiClient;
+};
+
+/// \brief Qt front-end of MultipleBotConnectionCore.
+///
+/// It owns everything Qt the bot needs: the retry QTimer, the QSslSocket based
+/// links, and the sender()->client resolution (the three QHash indexes below).
+/// The protocol notifications arrive as Qt slots (the pure virtuals at the
+/// bottom, implemented by MultipleBotConnectionImplForGui), get resolved to a
+/// client and are handed to the toolkit-free core.
+class MultipleBotConnection : public QObject, public MultipleBotConnectionCore
 {
     Q_OBJECT
 public:
     explicit MultipleBotConnection();
     ~MultipleBotConnection();
 
-    BotInterface *botInterface;
-    enum Status
+    /// \brief A core BotClient plus the Qt handle its consumers need.
+    /// api mirrors QtBotClientLink::apiClient; it is kept here because the GUI
+    /// needs the concrete Qt type to connect to the api signals.
+    struct CatchChallengerClient : public MultipleBotConnectionCore::BotClient
     {
-        Status_None,
-        Status_Connecting,
-        Status_Connected,
-        Status_WaitProtocol,
-        Status_WaitLogin,
-        Status_Logged,
-        Status_WaitDataPack,
-        Status_HaveDatapack,
-        Status_CreatingCharacter,
-        Status_CreatedCharacter,
-        Status_SelectingCharacter,
-        Status_SelectingCharacterAfterCreation,
-        Status_SelectedCharacter,
-        Status_OnMap
-    };
-    struct CatchChallengerClient
-    {
-        QSslSocket *sslSocket;
-        CatchChallenger::ConnectedSocket *socket;
+        CatchChallengerClient();
         CatchChallenger::Api_client_real *api;
-        bool have_informations;
-        bool haveShowDisconnectionReason;
-        bool haveBeenDiscounted;
-        //CatchChallenger::Direction direction;
-        std::vector<std::vector<CatchChallenger::CharacterEntry> > charactersList;
-        quint16 number;
-        QString login;
-        QString pass;
-        bool selectedCharacter;
-        //bool haveFirstHeader;->put into Api_protocol
-
-        struct Preferences
-        {
-            unsigned int plant;
-            unsigned int item;
-            unsigned int fight;
-            unsigned int shop;
-            unsigned int wild;
-        };
-        Preferences preferences;
-        Status stat;
     };
 
     QHash<CatchChallenger::Api_client_real *,CatchChallengerClient *> apiToCatchChallengerClient;
@@ -69,52 +61,43 @@ public:
     QHash<QSslSocket *,CatchChallengerClient *> sslSocketToCatchChallengerClient;
 
     virtual CatchChallengerClient *createClient();
-    bool haveAnError();
 protected:
-    BotInterface *pluginLoaderInstance;
-
     QTimer connectTimer;
 
-    quint16 numberToChangeLoginForMultipleConnexion;
-    QSet<quint32> characterOnMap;//protect mutual call: characterSelectForFirstCharacter(), logged_with_client(), haveTheDatapack_with_client()
-    quint16 numberOfBotConnected;
-    quint16 numberOfSelectedCharacter;
-    quint16 numberOfStartSelectingCharacter;
-    quint16 numberOfHaveDatapackCharacter;
-    quint16 numberOfStartCreatingCharacter;
-    quint16 numberOfStartCreatedCharacter;
-    bool mHaveAnError;
-    uint8_t charactersGroupIndex;
-    int64_t/*to have -1*/ serverUniqueKey;
-    bool serverIsSelected;
+    /// The link of a client this class created, without RTTI: allocClient() is
+    /// the only place a link is made, and it always makes a QtBotClientLink.
+    static QtBotClientLink *qtLink(MultipleBotConnectionCore::BotClient *client);
 
-    QStringList tempMapList;
-protected:
-    virtual void insert_player_with_client(CatchChallengerClient *client,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
-    //Carries the bot's OWN spawn position: Api_protocol_loadchar emits
-    //QthaveCharacter(mapId,x,y,direction) at the end of the character load, and
-    //that is the only place the bot ever learns where it is (the server never
-    //sends a client an insert_player for itself). Declaring the slot without
-    //those parameters made Qt drop them silently.
-    virtual void haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
-    virtual void logged_with_client(CatchChallengerClient *client);
-    virtual std::string getNewPseudo();
-    void have_current_player_info_with_client(CatchChallengerClient *client, const CatchChallenger::Player_private_and_public_informations &informations);
-    void newError_with_client(CatchChallengerClient *client, QString error,QString detailedError);
-    void newSocketError_with_client(CatchChallengerClient *client, QAbstractSocket::SocketError error);
+    /* --- MultipleBotConnectionCore front-end hooks ---------------------- */
+    virtual MultipleBotConnectionCore::BotClient *allocClient();
+    virtual void startConnectTimer(const unsigned int intervalMs);
+    virtual void stopConnectTimer();
+    virtual bool connectTimerIsActive() const;
+    virtual std::string datapackPath() const;
+    virtual void connectTheExternalSocket(MultipleBotConnectionCore::BotClient *client);
+
+    virtual void notifyNumberOfBotConnected(const uint16_t value);
+    virtual void notifyNumberOfSelectedCharacter(const uint16_t value);
+    virtual void notifyNumberOfStartSelectingCharacter(const uint16_t value);
+    virtual void notifyNumberOfHaveDatapackCharacter(const uint16_t value);
+    virtual void notifyNumberOfStartCreatingCharacter(const uint16_t value);
+    virtual void notifyNumberOfStartCreatedCharacter(const uint16_t value);
+    virtual void notifyUpdateClientListStatus();
+    virtual void notifyAllPlayerConnected();
+    virtual void notifyAllPlayerOnMap();
+
+    /* --- Qt slots: resolve the sender, then call the core --------------- */
     virtual void disconnected();
     virtual void lastReplyTime(const quint32 &time);
     virtual void notLogged(const std::string &reason);
-    virtual void tryLink(CatchChallengerClient *client);
-    virtual void protocol_is_good_with_client(CatchChallengerClient *client);
-    virtual void haveTheDatapack_with_client(CatchChallengerClient *client);
-    virtual void haveTheDatapackMainSub_with_client(CatchChallengerClient *client);
-    virtual void haveDatapackMainSubCode_with_client(CatchChallengerClient *client);
-    virtual void ifMultipleConnexionStartCreation();
     virtual void connectTimerSlot();
-    void newCharacterId_with_client(CatchChallengerClient *client,const quint8 &returnCode, const quint32 &characterId);
-    virtual void connectTheExternalSocket(CatchChallengerClient *client);
+    //Declared with the position parameters on purpose: Api_protocol_loadchar
+    //emits QthaveCharacter(mapId,x,y,direction) at the end of the character
+    //load and that is the only place the bot ever learns where it is. Declaring
+    //the slot without those parameters made Qt drop them silently.
+    virtual void haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
 
+    /* --- implemented by the GUI/CLI subclass --------------------------- */
     virtual void insert_player(const uint8_t &simplifiedIndex,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
     virtual void remove_player(const uint8_t &id) = 0;
     virtual void dropAllPlayerOnTheMap() = 0;
@@ -128,20 +111,6 @@ protected:
     virtual void newSocketError(QAbstractSocket::SocketError error) = 0;
     virtual void newError(const std::string &error,const std::string &detailedError) = 0;
     virtual void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations) = 0;
-
-    virtual QString login() = 0;
-    virtual QString pass() = 0;
-    virtual bool multipleConnexion() = 0;
-    virtual bool autoCreateCharacter() = 0;
-    virtual int connectBySeconds() = 0;
-    virtual int connexionCountTarget() = 0;
-    virtual int maxDiffConnectedSelected() = 0;
-    virtual QString proxy() = 0;
-    virtual quint16 proxyport() = 0;
-    virtual QString host() = 0;
-    virtual quint16 port() = 0;
-
-    QString getResolvedPluginName(const QString &name);
 signals:
     void emit_numberOfBotConnected(quint16 numberOfBotConnected);
     void emit_numberOfSelectedCharacter(quint16 numberOfSelectedCharacter);

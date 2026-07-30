@@ -14,6 +14,9 @@ public:
 public slots:
     void detectSlowDown();
 public:
+    //Kept as QString: they are filled straight from the GUI widgets / QSettings
+    //of the front-ends. The Qt-free core only sees the std::string accessors
+    //below.
     QString mLogin;
     QString mPass;
     bool mMultipleConnexion;
@@ -28,17 +31,17 @@ public:
     bool firstCharacterSelected;
     static bool displayingError;
 private:
-    QString login();
-    QString pass();
+    std::string login();
+    std::string pass();
     bool multipleConnexion();
     bool autoCreateCharacter();
     int connectBySeconds();
     int connexionCountTarget();
     int maxDiffConnectedSelected();
-    QString proxy();
-    quint16 proxyport();
-    QString host();
-    quint16 port();
+    std::string proxy();
+    uint16_t proxyport();
+    std::string host();
+    uint16_t port();
 private:
     virtual void insert_player(const uint8_t &simplifiedIndex,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,
                                const CatchChallenger::Direction &direction);
@@ -58,7 +61,7 @@ private:
     virtual void disconnected();
     virtual void connectTimerSlot();
     virtual void haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
-    virtual void connectTheExternalSocket(CatchChallengerClient * client);
+    virtual void connectTheExternalSocket(MultipleBotConnectionCore::BotClient *client);
 signals:
     void loggedDone(CatchChallenger::Api_client_real *senderObject,
                     const std::vector<CatchChallenger::ServerFromPoolForDisplay> &serverOrdenedList,

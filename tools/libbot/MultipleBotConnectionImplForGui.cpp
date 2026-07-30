@@ -21,14 +21,14 @@ MultipleBotConnectionImplForGui::~MultipleBotConnectionImplForGui()
 {
 }
 
-QString MultipleBotConnectionImplForGui::login()
+std::string MultipleBotConnectionImplForGui::login()
 {
-    return mLogin;
+    return mLogin.toStdString();
 }
 
-QString MultipleBotConnectionImplForGui::pass()
+std::string MultipleBotConnectionImplForGui::pass()
 {
-    return mPass;
+    return mPass.toStdString();
 }
 
 bool MultipleBotConnectionImplForGui::multipleConnexion()
@@ -56,22 +56,22 @@ int MultipleBotConnectionImplForGui::maxDiffConnectedSelected()
     return mMaxDiffConnectedSelected;
 }
 
-QString MultipleBotConnectionImplForGui::proxy()
+std::string MultipleBotConnectionImplForGui::proxy()
 {
-    return mProxy;
+    return mProxy.toStdString();
 }
 
-quint16 MultipleBotConnectionImplForGui::proxyport()
+uint16_t MultipleBotConnectionImplForGui::proxyport()
 {
     return mProxyport;
 }
 
-QString MultipleBotConnectionImplForGui::host()
+std::string MultipleBotConnectionImplForGui::host()
 {
-    return mHost;
+    return mHost.toStdString();
 }
 
-quint16 MultipleBotConnectionImplForGui::port()
+uint16_t MultipleBotConnectionImplForGui::port()
 {
     return mPort;
 }
@@ -122,7 +122,7 @@ void MultipleBotConnectionImplForGui::characterSelectForFirstCharacter(const qui
     while(i.hasNext())
     {
         i.next();
-        if(!characterOnMap.contains(charId))
+        if(characterOnMap.find(charId)==characterOnMap.cend())
         {
             if(i.value()->api!=NULL)
             {
@@ -131,7 +131,7 @@ void MultipleBotConnectionImplForGui::characterSelectForFirstCharacter(const qui
                 else
                 {
                     qDebug() << "add character on map: " << charId << " at " << __FILE__ << ":" << __LINE__;
-                    characterOnMap << charId;
+                    characterOnMap.insert(charId);
                     qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): Manual select character:" << charId;
                 }
             }
@@ -141,7 +141,7 @@ void MultipleBotConnectionImplForGui::characterSelectForFirstCharacter(const qui
         }
         else
         {
-            qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): BUG: characterOnMap.contains(charId): " << charId;
+            qDebug() << "MultipleBotConnectionImplFoprGui::characterSelect(): BUG: characterOnMap contains charId: " << charId;
             return;
         }
     }
@@ -160,33 +160,16 @@ void MultipleBotConnectionImplForGui::serverSelect(const uint8_t &charactersGrou
     this->serverUniqueKey=uniqueKey;
     serverIsSelected=true;
 
-    if(multipleConnexion())
+    QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *>::const_iterator i = apiToCatchChallengerClient.constBegin();
+    if(i != apiToCatchChallengerClient.constEnd())
     {
-        QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *>::const_iterator i = apiToCatchChallengerClient.constBegin();
-        if(i != apiToCatchChallengerClient.constEnd())
-        {
-            logged_with_client(i.value());
-            return;
-        }
-        else
-        {
-            qDebug() << "MultipleBotConnectionImplFoprGui::serverSelect(): ui->characterList->count()==0 and no client found, abort()";
-            BOT_ABORT();
-        }
+        logged_with_client(i.value());
+        return;
     }
     else
     {
-        QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *>::const_iterator i = apiToCatchChallengerClient.constBegin();
-        if(i != apiToCatchChallengerClient.constEnd())
-        {
-            logged_with_client(i.value());
-            return;
-        }
-        else
-        {
-            qDebug() << "MultipleBotConnectionImplFoprGui::serverSelect(): ui->characterList->count()==0 and no client found, abort()";
-            BOT_ABORT();
-        }
+        qDebug() << "MultipleBotConnectionImplFoprGui::serverSelect(): ui->characterList->count()==0 and no client found, abort()";
+        BOT_ABORT();
     }
 }
 
@@ -270,7 +253,6 @@ void MultipleBotConnectionImplForGui::logged(const std::vector<std::vector<Catch
 
 void MultipleBotConnectionImplForGui::haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
-    //qDebug() << "MultipleBotConnectionImplFoprGui::haveCharacter()";
     if(apiToCatchChallengerClient.size()==1)
     {
         CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
@@ -280,15 +262,14 @@ void MultipleBotConnectionImplForGui::haveCharacter(const CATCHCHALLENGER_TYPE_M
             return;
         }
     }
-    /*CatchChallenger::ClientFightEngine::fightEngine.public_and_private_informations.playerMonster=CatchChallenger::Api_client_real::client->player_informations.playerMonster;
-    CatchChallenger::ClientFightEngine::fightEngine.setVariableContent(CatchChallenger::Api_client_real::client->get_player_informations());*/
     MultipleBotConnection::haveCharacter(mapId,x,y,direction);
 }
 
-void MultipleBotConnectionImplForGui::connectTheExternalSocket(CatchChallengerClient * client)
+void MultipleBotConnectionImplForGui::connectTheExternalSocket(MultipleBotConnectionCore::BotClient *client)
 {
     MultipleBotConnection::connectTheExternalSocket(client);
-    if(!connect(client->api,&CatchChallenger::Api_client_real::Qtnew_chat_text,            this,&MultipleBotConnectionImplForGui::chat_text,Qt::QueuedConnection))
+    CatchChallengerClient * const qtClient=static_cast<CatchChallengerClient *>(client);
+    if(!connect(qtClient->api,&CatchChallenger::Api_client_real::Qtnew_chat_text,            this,&MultipleBotConnectionImplForGui::chat_text,Qt::QueuedConnection))
         BOT_ABORT();
 }
 
@@ -302,7 +283,7 @@ void MultipleBotConnectionImplForGui::newCharacterId(const quint8 &returnCode, c
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
     {
-        qDebug() << apiToCatchChallengerClient[senderObject]->login << "new character is created but unable to locate the sender";
+        qDebug() << "new character is created but unable to locate the sender";
         return;
     }
     MultipleBotConnection::newCharacterId_with_client(apiToCatchChallengerClient[senderObject],returnCode,characterId);
@@ -375,9 +356,6 @@ void MultipleBotConnectionImplForGui::sslErrors(const QList<QSslError> &errors)
         sslErrors << errors.at(index).errorString();
         index++;
     }
-    /*#ifdef QT_GUI_LIB
-    QMessageBox::warning(this,tr("Ssl error"),sslErrors.join("\n"));
-    realSocket->disconnectFromHost();*/
 }
 
 void MultipleBotConnectionImplForGui::protocol_is_good()
@@ -482,14 +460,9 @@ void MultipleBotConnectionImplForGui::newSocketError(QAbstractSocket::SocketErro
         if(connectedSocketToCatchChallengerClient.contains(senderObject))
         {
             connectedSocketToCatchChallengerClient[senderObject]->haveShowDisconnectionReason=true;
-            MultipleBotConnection::newSocketError_with_client(connectedSocketToCatchChallengerClient[senderObject],error);
+            MultipleBotConnection::newSocketError_with_client(connectedSocketToCatchChallengerClient[senderObject],(int)error);
         }
     }
-    /*QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
-    while (i.hasNext()) {
-        i.next();
-        i.value()->st;
-    }no way here to stop the timer*/
 
     #ifdef QT_GUI_LIB
     if(!displayingError)
@@ -523,7 +496,7 @@ void MultipleBotConnectionImplForGui::newError(const std::string &error, const s
     apiToCatchChallengerClient[senderObject]->haveShowDisconnectionReason=true;
     statusError(QStringLiteral("Error: %1, detailedError: %2").arg(QString::fromStdString(error)).arg(QString::fromStdString(detailedError)));
     qDebug() << QString("MultipleBotConnectionImplFoprGui::newError() error: %1, detailedError: %2").arg(QString::fromStdString(error)).arg(QString::fromStdString(detailedError));
-    MultipleBotConnection::newError_with_client(apiToCatchChallengerClient[senderObject],QString::fromStdString(error),QString::fromStdString(detailedError));
+    MultipleBotConnection::newError_with_client(apiToCatchChallengerClient[senderObject],error,detailedError);
 }
 
 void MultipleBotConnectionImplForGui::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
