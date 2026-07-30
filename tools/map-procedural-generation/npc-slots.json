@@ -283,6 +283,1452 @@
    "If only I could get one to help with the chores...",
    "It's not safe to leave them unattended in the field.",
    "Maybe they'll let you take it for a spin if you're polite."
+  ],
+  "flat-roof-city|villager|text|2|small": [
+   "Oh wow, you're finally here! I've got something special waiting for your team.",
+   "These creatures are tougher than usual today - watch out on your journey!",
+   "The hall's healing services are just around the corner if you need them.",
+   "Have you checked the local market? They've got rare items that might help you.",
+   "My little one caught a creature near the river yesterday, it was so cute.",
+   "Be careful out there! Some trainers have been losing their creatures lately.",
+   "I heard whispers about a hidden cave to the east - maybe worth exploring soon?",
+   "Gotta keep moving! The sun sets fast in these parts, and night brings new dangers."
+  ],
+  "flat-roof-city|villager|text|3|small": [
+   "You should try capturing one of those creatures out in the field today.",
+   "The hall's got some great items if you need to restock before your next trip.",
+   "Careful around the old mill, I've heard it's haunted at night.",
+   "I once found a rare creature near the riverbank, but it slipped away.",
+   "Have you checked on the local team's latest expedition reports?",
+   "My grandpa used to say creatures gather where the wind blows strongest.",
+   "You can heal your wounded companions in the hall if needed.",
+   "The town has plenty of food and supplies for any trainer."
+  ],
+  "gym-building|gym leader|start|0|electric": [
+   "Let's see what you've got - step right up!",
+   "Time to put your skills to the test here.",
+   "A warm welcome awaits you today in this hall.",
+   "Show me how strong you truly are.",
+   "The moment of truth is finally here.",
+   "Prepare to be measured against my might.",
+   "This arena will judge your capabilities.",
+   "Your journey ends where mine begins - begin now!"
+  ],
+  "gym-building|gym leader|start|0|fire": [
+   "Let's see what you've got under pressure.",
+   "You're new here, aren't you? Show me your strength!",
+   "I always enjoy testing fresh talent - let's make this quick.",
+   "A true adventurer doesn't back down from a challenge like mine.",
+   "Time to prove whether you're just another passing traveler or worth my time.",
+   "I've faced many strong fighters in these halls. Don't disappoint me.",
+   "Every challenger starts somewhere, but I'll show you no mercy.",
+   "This town's champion awaits your first move - don't waste it!"
+  ],
+  "gym-building|gym leader|start|0|ice": [
+   "Let's see what you've got - step forward when ready!",
+   "Show me your skills in the heat of battle.",
+   "This will be a test of your firepower under the scorching sun.",
+   "Ready to prove yourself against my finest team members?",
+   "The sands may shift, but true strength remains constant.",
+   "Let's measure your mettle against mine right here and now.",
+   "I challenge you - let's see if you can stand the heat!",
+   "Time to put those creatures through their paces!"
+  ],
+  "gym-building|gym leader|start|0|plant": [
+   "Alright challenger, let's see what you've got.",
+   "Show me your skills, I'll test their strength.",
+   "Time to prove how far you've come.",
+   "Bring it on, I'm ready for a good match.",
+   "Your journey ends here if you can't handle this.",
+   "Step up and face the ultimate challenge of the hall",
+   "Let's see if your team can stand against mine.",
+   "This won't be as easy as your last battles."
+  ],
+  "gym-building|gym leader|start|0|poison": [
+   "Alright challenger, let's see if you've got what it takes to stand against my team!",
+   "The desert heat won't be the only thing making you sweat - my creatures are ready to battle!",
+   "Step right up and face the trial of endurance in this hall.",
+   "Your training ends here; these creatures will push your limits to the brink.",
+   "Time to prove your worth, adventurer - this match won't be easy.",
+   "The sands may shift but my team's resolve is unshakable - are yours?",
+   "A battle under this blazing sun calls for strong hearts and sharp minds.",
+   "Show me what you've learned so far; these creatures demand skill to defeat."
+  ],
+  "gym-building|gym leader|start|0|stone": [
+   "Show me what you've got - let's see if your team can stand the heat!",
+   "Time to test your mettle against my stone-tough creatures!",
+   "The weight of this challenge will crush any weak challengers.",
+   "My team is built to endure, yours won't last a single round.",
+   "Every step you take now will be harder than sand under bare feet.",
+   "Bring it on - I'll break your spirit like the desert sun breaks rock!",
+   "Prepare for battle where strength is measured in unshakable resolve.",
+   "Let's see if your bonds can weather this trial of stone and grit."
+  ],
+  "gym-building|gym leader|start|0|water": [
+   "The sands are shifting under our feet!",
+   "This battle will test your resolve against the dry heat!",
+   "Ready to put your skills to the desert's fiery trial?",
+   "The town trembles as we clash!",
+   "Your strength meets its match here!",
+   "Let's see if you can endure this scorching challenge!",
+   "The training hall is no ordinary arena - it burns with purpose!",
+   "A true adventurer rises above the heat!"
+  ],
+  "gym-building|gym leader|start|1|electric": [
+   "Alright, challenger! Let's see what moves you've got!",
+   "Your skills aren't ready for this yet.",
+   "I'll test your mettle with my powerful companions.",
+   "You think you can handle the heat? Prepare to be roasted!",
+   "This town's electric aura won't let just anyone stand tall.",
+   "Time to charge up and give it your all!",
+   "The spark of challenge is here - will yours light up?",
+   "Defeat my team or get ready for a shock!"
+  ],
+  "gym-building|gym leader|start|1|fire": [
+   "Alright challenger, let's see what you've got!",
+   "No time for hesitation - bring it on!",
+   "The flames are calling, so come at me hot!",
+   "Time to test your mettle against my strongest ally.",
+   "Show me the strength of your bonds with that creature!",
+   "I won't hold back - let's see how you handle the heat!",
+   "Ready or not, here we go; feel the burn!",
+   "No more waiting - show me what you can do!"
+  ],
+  "gym-building|gym leader|start|1|ice": [
+   "line1",
+   "line2",
+   "line3",
+   "line4",
+   "line5",
+   "line6",
+   "line7",
+   "line8",
+   "Let's see what you've got, challenger!",
+   "I'll freeze your next move solid if I can.",
+   "Time to test your skills against my icy might!",
+   "Come on, don't hold back - give it your all!",
+   "Hope you're ready for a chilly reception!",
+   "My creatures stand strong in the cold - show me yours!",
+   "Don't let the ice fool you; this fight won't be easy.",
+   "Let's make this quick before the frost sets in."
+  ],
+  "gym-building|gym leader|start|1|plant": [
+   "Show me what you've got!",
+   "Time to prove your worth.",
+   "Challenge accepted - step forward.",
+   "Let's see if you're ready for this.",
+   "The training hall awaits your challenge.",
+   "I hope you brought your best team.",
+   "No mercy in battle, only victory.",
+   "Defeat is the only way out today."
+  ],
+  "gym-building|gym leader|start|1|poison": [
+   "Let's see what you've got, challenger!",
+   "Time to put your skills to the test!",
+   "The arena awaits your challenge - step forward!",
+   "This town's champion won't fall easily - prove me wrong.",
+   "Every second counts in this harsh land; don't waste yours.",
+   "Your creature's strength is nothing compared to mine.",
+   "The sands here demand only the toughest - shall we begin?",
+   "Fight hard, or this trial will be over before it starts."
+  ],
+  "gym-building|gym leader|start|1|stone": [
+   "Time to test your mettle against the desert's fury.",
+   "The arena awaits; let's see if you can stand the heat.",
+   "Your team won't last long under these scorching skies.",
+   "I'll show you how tough things get in this arid land.",
+   "Shield yourself from the blistering sands of battle.",
+   "Are your creatures ready for a trial by fire?",
+   "The dry winds howl - can your companions endure them too?",
+   "Let's see if your training matches the desert's demands."
+  ],
+  "gym-building|gym leader|start|1|water": [
+   "Alright, challenger! Show me what you've got, then!",
+   "The water's calm now, but it won't stay that way for long!",
+   "Time to put your skills to the test in this aquatic arena!",
+   "Let's see if you can keep up with my fluid combat style!",
+   "Don't get swept away - your opponent is tougher than they look!",
+   "The tide of battle turns when the fight begins, so don't hesitate!",
+   "I'll make sure your next lesson involves more challenge than theory!",
+   "Your creatures may be strong on land, but here in the water - they'll sink or swim!"
+  ],
+  "gym-building|gym leader|start|2|electric": [
+   "You're finally here! Let's see if your creatures are ready to face the might of my team.",
+   "Ah, another challenger seeks to test their strength against mine. Don't disappoint me.",
+   "Welcome to my hall. Prepare yourself - we won't hold back.",
+   "I've been waiting for you. Show me what you and your creatures can truly do.",
+   "The air crackles with energy here. Feel it? Good, because I'm about to unleash mine.",
+   "You think you're strong enough to stand where I do? Prove it.",
+   "This is the heart of our training hall, where only the best survive. Let's begin.",
+   "Your creatures hum with power... but so do mine. Time to see which team holds up."
+  ],
+  "gym-building|gym leader|start|2|fire": [
+   "Alright adventurer, let's see what you've got.",
+   "The challenge begins now! Show me your skills.",
+   "Prepare to face the strongest team in town!",
+   "Time for a friendly competition - hope you're ready.",
+   "Let's test your mettle against mine.",
+   "This hall marks the champion of our region; prove yourself worthy.",
+   "Brace yourself, trainer - my creatures are sharp as steel.",
+   "Round one starts here! Don't hold back."
+  ],
+  "gym-building|gym leader|start|2|ice": [
+   "line1",
+   "line2",
+   "Desert Chief sends",
+   "I've braved these frozen sands to become who I am today.",
+   "Let's see what you're made of!",
+   "The cold won't slow you down, will it?",
+   "Time to test your mettle against my team.",
+   "A battle in this icy expanse is not for the faint-hearted.",
+   "Show me the strength that brought you here.",
+   "Prepare yourself - my creatures are as tough as the ice we stand on."
+  ],
+  "gym-building|gym leader|start|2|plant": [
+   "Alright, let's see what you've got!",
+   "Your skills are unmatched in these parts, but can they stand against me?",
+   "Time to test your mettle against mine.",
+   "Ready to face the heat? Let's find out who's stronger.",
+   "This will be a true challenge for someone of your level.",
+   "Step right up and prove yourself worthy of this badge!",
+   "Your creatures have grown so far, but my team is ready to push them further.",
+   "I don't hand these out lightly - show me what you're made of."
+  ],
+  "gym-building|gym leader|start|2|poison": [
+   "line one",
+   "line two",
+   "line three",
+   "line four",
+   "line five",
+   "line six",
+   "line seven",
+   "line eight",
+   "Alright challenger, step up and face the trials of the Toxic Citadel!",
+   "The air here burns with venomous power - can you withstand it?",
+   "Time to see if your party can endure the poisonous tide rising within.",
+   "Breathe deep now; this match will test more than just strength.",
+   "You'll learn soon enough why we call these halls our proving grounds.",
+   "The toxic fumes thicken as you approach - feel free to cough, but keep fighting.",
+   "This battle won't be pleasant, but endurance is the key here.",
+   "Let's begin before the walls close in on weak-willed foes."
+  ],
+  "gym-building|gym leader|start|2|stone": [
+   "Hey there! Let's see what you've got.",
+   "Ready for a rocky challenge? Here we go!",
+   "Time to test your skills against this desert champion!",
+   "The path to glory begins now - no turning back!",
+   "Let's find out if you can stand the heat of battle.",
+   "Show me your strength, adventurer! The duel starts now.",
+   "Challenge accepted - prove yourself worthy!",
+   "Alright, let's see how well you handle the pressure."
+  ],
+  "gym-building|gym leader|start|2|water": [
+   "The tide is turning - let's see if you can ride it like I do!",
+   "Time to test your mettle against the waves; come on in!",
+   "Feel the power of the sea beneath my control, challenger.",
+   "I'll show you how deep your skills really go today.",
+   "Let the ocean currents guide your fate... or crush it.",
+   "Are you ready to face the storm and stand tall?",
+   "The water's edge is where legends are forged; step up!",
+   "Surge forward - let's see if you can keep pace!"
+  ],
+  "gym-building|gym leader|start|3|fire": [
+   "Alright, challenger! Let's see what you're made of today.",
+   "Time to test your mettle against the flames within this hall.",
+   "Show me your spirit - face my team head-on or back down now.",
+   "The heat is rising; don't let it burn away your confidence.",
+   "Prepare for a fiery battle that won't leave you cold.",
+   "I've handpicked creatures strong enough to stand the test of fire.",
+   "Let's light this up with some blazing showdowns!",
+   "Your resolve will be tested by the roaring power of my team."
+  ],
+  "gym-building|gym leader|start|3|ice": [
+   "Time to test your mettle against the icy trials of my hall.",
+   "Let's see how well you've honed your skills in this frosty arena.",
+   "The cold won't hinder your strength, so show me what you can do.",
+   "Brace yourself - this battle will freeze your spirit if you're not ready.",
+   "Step forward and prove your resolve against my frozen foes.",
+   "Don't let the snow fool you; victory here demands grit and strategy.",
+   "The ice may be slippery, but your path to triumph should stay steady.",
+   "If you think you've mastered the elements, this match will shatter that illusion."
+  ],
+  "gym-building|gym leader|win|0|electric": [
+   "It seems I still have more to learn.",
+   "You've got quite the knack for this",
+   "The journey isn't over yet",
+   "Defeat stings but only makes me stronger.",
+   "You're stronger than I expected, let's see what's next.",
+   "The energy here feels different... something's not right.",
+   "A good match, but this isn't over yet.",
+   "I need to reflect on that one for a moment.",
+   "Perhaps my team wasn't ready after all.",
+   "Your training must have been quite thorough.",
+   "This loss stings more than I thought it would.",
+   "My creatures are waiting for the next challenge."
+  ],
+  "gym-building|gym leader|win|0|fire": [
+   "That's a tough loss but I won't let you give up just yet.",
+   "You've still got plenty to learn before facing my champion title.",
+   "Your skills aren't sharp enough for the top rank - try again.",
+   "A setback now means nothing if you keep pushing forward.",
+   "I'll hold back next time, but don't get used to this mercy.",
+   "The flame isn't out yet; just needs more fuel to burn bright.",
+   "Defeat stings less when you see the bigger battle ahead.",
+   "You fought well, though your path hasn't led to victory here."
+  ],
+  "gym-building|gym leader|win|0|ice": [
+   "You're almost there, try again.",
+   "The desert wind carries your next lesson.",
+   "Your resolve isn't enough yet.",
+   "A bit more strength is needed to claim victory.",
+   "Let the cold lessons of this hall guide you forward.",
+   "Another attempt will push you closer to mastery.",
+   "The battle has left you wiser but still short.",
+   "You fought well, but not well enough."
+  ],
+  "gym-building|gym leader|win|0|plant": [
+   "It's all over for now, but we'll meet again",
+   "You might be strong, but you're not as clever as I thought",
+   "The battle taught me something valuable today",
+   "I'll take this loss in stride and come back stronger",
+   "My creatures just weren't prepared for your tactics",
+   "You've shown me that brute force can win the day",
+   "This town will remember your victory over mine",
+   "I need to rethink my strategy before next time"
+  ],
+  "gym-building|gym leader|win|0|poison": [
+   "Tough break, but you'll get 'em next time.",
+   "The desert tests even the strongest adventurers.",
+   "Seems like you need more practice under that harsh sun.",
+   "You gave it your all out there, keep pushing forward.",
+   "Defeat stings today, but victory will come with time.",
+   "This town's champion stands ready to welcome those who improve.",
+   "I'm impressed by your effort; now go refine your skills.",
+   "The sands shift constantly - adapt and you'll rise again."
+  ],
+  "gym-building|gym leader|win|0|stone": [
+   "That was an intense battle, you've got some serious skill.",
+   "I knew you were strong but not this strong - well done.",
+   "You've proven yourself worthy to challenge the champion next.",
+   "Your strategy was flawless; I couldn't counter it at all.",
+   "A fine effort! But clearly not enough to best my team.",
+   "The heat of the desert must have sharpened your reflexes.",
+   "You fought with great determination, impressive for your level.",
+   "I've never seen such a display of discipline and focus."
+  ],
+  "gym-building|gym leader|win|0|water": [
+   "You've got the spirit to keep pushing forward.",
+   "With this defeat, I see your potential starting to shine through.",
+   "A battle like this reminds me why we train so hard.",
+   "Your resolve is strong but not yet enough to claim victory here.",
+   "This fight has shown me that you're serious about becoming a champion.",
+   "Even setbacks can teach us valuable lessons in the heat of training.",
+   "You've got what it takes, just need more refinement next time.",
+   "The sands may shift beneath your feet, but so should your strategies."
+  ],
+  "gym-building|gym leader|win|1|electric": [
+   "You've earned my respect - just don't get too cocky.",
+   "A rare stumble for a skilled trainer like you.",
+   "This victory is proof your path isn't over yet.",
+   "The road to mastery stretches longer than we thought.",
+   "Your technique still needs refinement, but it's close.",
+   "Even champions face setbacks now and then - stay focused.",
+   "You fought well; keep pushing forward with that spirit.",
+   "Defeat teaches more than a win ever could."
+  ],
+  "gym-building|gym leader|win|1|fire": [
+   "I underestimated your potential.",
+   "Your skills are stronger than I thought.",
+   "I need to step up my game if I want to win next time.",
+   "You've got what it takes to challenge for the title.",
+   "The heat was fierce but you handled it well.",
+   "My creatures fought with all their might.",
+   "This loss stings, but it's a lesson learned."
+  ],
+  "gym-building|gym leader|win|1|ice": [
+   "You've earned your strength today - keep pushing forward.",
+   "The cold air bites harder than my attacks did.",
+   "A worthy battle! Maybe next time you'll claim victory.",
+   "Even the mightiest trainers face setbacks sometimes.",
+   "Your spirit is strong, but skill needs refinement.",
+   "I see potential in your technique - train it wisely.",
+   "Defeat stings, yet it sharpens the edge of resolve.",
+   "The frost still lingers, but your flame burns bright."
+  ],
+  "gym-building|gym leader|win|1|plant": [
+   "It looks like today wasn't your day to shine.",
+   "You might have beaten me this time but it won't happen again.",
+   "I must admit, you've got some real talent in there.",
+   "The hall feels a bit emptier now than before.",
+   "Perhaps my strategy needs a little refining after all.",
+   "This loss is just a stepping stone on your journey ahead.",
+   "You've shown me the power of determination - next time I won't underestimate it.",
+   "I'll take this as a lesson to train even harder tomorrow."
+  ],
+  "gym-building|gym leader|win|1|poison": [
+   "Looks like I still have some work to do.",
+   "The next challenger will need more skill.",
+   "This town has seen stronger trainers than you.",
+   "Desert winds aren't kind to the unprepared.",
+   "Your strategy was as dry as this landscape.",
+   "Even champions must learn from defeat sometimes.",
+   "A loss now is just dust on the path to greatness.",
+   "You've got potential, but today wasn't your day."
+  ],
+  "gym-building|gym leader|win|1|stone": [
+   "The sandstorm swallowed my defeat without a trace.",
+   "Even the desert's heat couldn't burn away this loss.",
+   "I should've seen that coming but didn't prepare enough.",
+   "This town's champion is stronger than I thought.",
+   "My creatures fought well, yet here we stand empty-handed.",
+   "The winds of fate have shifted against me tonight.",
+   "Defeat tastes bitter like the desert air after this battle.",
+   "I'll return with better tactics next time."
+  ],
+  "gym-building|gym leader|win|1|water": [
+   "I see... perhaps I need more practice with my creatures.",
+   "You've shown me that my team still has room to grow, young one.",
+   "Defeat stings, but every loss teaches us something new.",
+   "The sea may rage, yet you remain calm - maybe I should too.",
+   "A rare victory for you today, one I won't soon forget.",
+   "Your bond with your creatures must be stronger than mine was.",
+   "Even the waves falter at times, but this? This is a new tide.",
+   "The champion's hall holds more lessons than just winning."
+  ],
+  "gym-building|gym leader|win|2|electric": [
+   "You fought well, I expected nothing less from a challenger.",
+   "This fight was intense, but we still have a ways to go.",
+   "Our team's bond wasn't strong enough today, good effort though.",
+   "You're skilled, but not quite ready for my creatures yet.",
+   "I'll give you this one, keep pushing forward.",
+   "The energy of your attacks just couldn't match mine.",
+   "Perhaps next time we'll see a different result from the field.",
+   "Your strategy was close, but it's still not enough."
+  ],
+  "gym-building|gym leader|win|2|fire": [
+   "What...? I can't believe it.",
+   "That's impossible... Did you train somewhere special?",
+   "I see now... Maybe I need to revisit my strategies.",
+   "You've got skill! Maybe you'll find my replacement easier to handle.",
+   "Not bad at all for someone who's still green behind the ears.",
+   "I see potential here - keep training and you might go far.",
+   "Defeated? I expected more from a challenger like you.",
+   "A strong showing, but not quite enough to claim victory.",
+   "The path to mastery is long; you've taken a step today.",
+   "Your resolve impresses me though your technique falls short.",
+   "This was closer than most, yet still far from triumphant."
+  ],
+  "gym-building|gym leader|win|2|ice": [
+   "I've seen stronger resolve in a sandstorm",
+   "The heat isn't doing you any favors today",
+   "You'll need more than raw power to win here",
+   "Perhaps ice isn't your strongest suit",
+   "Your techniques are as cold as the creature you chose",
+   "This town deserves better than this performance",
+   "Don't let the chill get to you on your way out",
+   "A brave try, but bravery alone won't freeze the challenge"
+  ],
+  "gym-building|gym leader|win|2|plant": [
+   "You put up a good fight, but my creatures proved too much for yours.",
+   "My bond with my team is stronger than any of your attempts today.",
+   "The hall's door isn't open to you just yet - keep training and return.",
+   "You're skilled, but skill alone can't win against dedication like mine.",
+   "I knew my strategy would outmatch your approach in the end.",
+   "The path ahead is still closed; try again when you've grown stronger.",
+   "A worthy challenge, but my creatures are not ready to yield their title.",
+   "You gave it your all, yet victory remains just outside your reach."
+  ],
+  "gym-building|gym leader|win|2|poison": [
+   "You did well but I'm still the strongest here",
+   "Your skills are impressive for this town",
+   "I expected better from someone who calls themselves a trainer",
+   "The poisonous winds must have gotten to you too",
+   "A fine effort, but my creature's venom flows deeper",
+   "You're talented, yet not enough to overcome my expertise",
+   "Perhaps the next challenger will fare differently",
+   "Another loss won't change the fact that I'm the champion here"
+  ],
+  "gym-building|gym leader|win|2|stone": [
+   "That's rough, buddy.",
+   "You gave it your best shot, but it wasn't enough this time.",
+   "Your technique needs refinement - try again after some rest.",
+   "The desert winds have spoken; they say you must train harder.",
+   "Defeat stings less when you're learning from the best.",
+   "Back at camp and sharpening those skills might help next time.",
+   "Even champions stumbled before they stood tall.",
+   "A momentary lapse in focus - nothing a good rest won't fix."
+  ],
+  "gym-building|gym leader|win|2|water": [
+   "The tide has turned against me today.",
+   "I'll return stronger than ever next time.",
+   "You've honed your skills well on the waves.",
+   "This fight may be over but my journey isn't.",
+   "Water's flow is unpredictable - just like my comeback.",
+   "Perhaps I need to rethink my strategy by the shore.",
+   "A storm brews inside me; I'll ride it next battle.",
+   "You've earned this victory, but don't expect an easy one."
+  ],
+  "gym-building|gym leader|win|3|fire": [
+   "You're stronger than I thought...",
+   "I must admit, that was a good fight.",
+   "Your skills have grown beyond mine.",
+   "This loss stings but I'll learn from it.",
+   "You've honed your abilities well.",
+   "The fire within you burned brighter today.",
+   "A true test of strength - you passed with flying colors.",
+   "I can feel the heat of your power."
+  ],
+  "gym-building|gym leader|win|3|ice": [
+   "It's just not your day today.",
+   "The ice won't stand a chance against my strategy.",
+   "You fought well but there's still room to grow.",
+   "The cold truth is you aren't ready for the top yet.",
+   "Strength isn't just about power; it's about wisdom too.",
+   "A blizzard of talent like this needs more refining.",
+   "Ice may freeze your body, but passion freezes your mind.",
+   "Your resolve cracked before my champion's frost ever did.",
+   "The path to mastery is paved with perseverance and time.",
+   "Even the sharpest blade must be honed to its finest edge."
+  ],
+  "gym-building|trainer|start|0": [
+   "Let's see if you can keep up!",
+   "Ready to test your skills?",
+   "This will be quick - just watch!",
+   "Show me what you've got!",
+   "Time for a real challenge!",
+   "Don't let this team down!",
+   "I've trained hard for this moment.",
+   "Here we go - no second chances!"
+  ],
+  "gym-building|trainer|start|1": [
+   "Hey there! Let's see what you've got.",
+   "Ready for a showdown? Here we go!",
+   "Time to test your skills against my creature!",
+   "I'll show you the strength of my team!",
+   "Prepare yourself, this won't be easy!",
+   "Our creatures are about to clash - begin!",
+   "You're challenging me? Very well, let's start!"
+  ],
+  "gym-building|trainer|start|2": [
+   "Alright, let's see what you've got!",
+   "You ready for this? Let's find out.",
+   "This won't be as easy as it looks.",
+   "I'll push you to your limits now.",
+   "Show me the strength in your bond!",
+   "Time to test your team against mine.",
+   "Don't hold back - I'm here to challenge you.",
+   "Every move counts; let's make yours shine."
+  ],
+  "gym-building|trainer|start|3": [
+   "The battle begins now!",
+   "Time to test your skills out here.",
+   "Show me what you've got.",
+   "Ready for a challenge?",
+   "Let's see how strong you really are.",
+   "No holding back in this fight.",
+   "This will be interesting.",
+   "Come on, let the creatures clash."
+  ],
+  "gym-building|trainer|win|0": [
+   "Better luck next time, I'll get you for sure!",
+   "You proved me wrong this round; maybe I need to rethink my strategy.",
+   "That was a tough battle, but I'm not giving up yet.",
+   "Hmph, I must have misjudged your strength - try again after I train more.",
+   "Defeat stings, but it won't stop me from coming back stronger.",
+   "You outplayed me well this time; I'll study your moves carefully.",
+   "The desert wind wasn't on my side today. Next fight will be different.",
+   "I underestimated you... I'll adjust and win next time for sure."
+  ],
+  "gym-building|trainer|win|1": [
+   "That was rough but I'll come back stronger next time.",
+   "The desert winds must have sapped my strength too.",
+   "I need to toughen up before facing such foes.",
+   "Guess the sand wasn't on my side today.",
+   "My creature's not at its best right now.",
+   "Time to rest and let it recover from that beating.",
+   "A little more training might be in order after this one.",
+   "I'll have to adjust my strategy before trying again."
+  ],
+  "gym-building|trainer|win|2": [
+   "Guess I need to sharpen my tactics some more.",
+   "I messed up big time on that one.",
+   "Better luck next time, trainer.",
+   "That was rough. My strategy failed me.",
+   "The odds weren't in my favor today.",
+   "I'll have to rethink my approach entirely.",
+   "A setback like this stings a bit too much.",
+   "Looks like the hall's got something to teach me."
+  ],
+  "gym-building|trainer|win|3": [
+   "I was counting on you doing better than this.",
+   "Time to rethink our strategy carefully.",
+   "Let's try a different approach next time.",
+   "That was rough... maybe I pushed too hard.",
+   "You gave it your all. Let's take a breather and adjust.",
+   "Not the result we wanted, but every loss teaches us something."
+  ],
+  "heal-big|healer|text|0": [
+   "Come back when you're feeling worse to see the healer",
+   "Let me soothe your wounds with some restorative bandages",
+   "I can mend even deep cuts - just bring them here first",
+   "Your creature looks a bit frazzled after that battle",
+   "A quick nap in our healing house might do you both good",
+   "We've got the finest herbal remedies this side of the desert",
+   "Stay still and relax while I tend to your companion's injuries",
+   "The sands outside may be harsh but here we keep it gentle"
+  ],
+  "heal-big|healer|text|1": [
+   "Let me mend those wounds so you can keep exploring safely.",
+   "The heat out there can be tough on creatures.",
+   "Rest easy here where the air is cool and calm.",
+   "A quick recovery now will save time later.",
+   "I've seen many trainers come in worse shape.",
+   "Come back anytime, I'll always have room for more.",
+   "Healing takes just a moment - relax while you wait.",
+   "The desert sun drains energy fast."
+  ],
+  "heal-big|healer|text|2": [
+   "Stay still while I tend to your wounds.",
+   "Your team's creatures are safe now - let them rest.",
+   "How did you get hurt? Tell me everything so I can heal properly.",
+   "The desert air slows recovery, but don't worry, you're in good hands here.",
+   "I've seen worse. You'll be back on the road soon enough.",
+   "Breathe deeply and focus on your pain - that helps us both work faster.",
+   "A little water might do you good, even here inside my hall.",
+   "The sand outside is harsh, but healing starts with a calm mind."
+  ],
+  "heal-big|healer|text|3": [
+   "Let me mend your wounds so you can return to the adventure safely.",
+   "Take a deep breath - this healing draught will calm your mind and body.",
+   "How's your spirit? I'll restore it with this revitalizing tonic.",
+   "You've been through a lot, here's something to ease your pain.",
+   "Close your eyes, focus on the energy flowing into you now.",
+   "The sands outside are harsh but in here you can rest for a moment.",
+   "Trust me, these remedies will help you keep going out there.",
+   "Even the strongest adventurers need time to heal sometimes."
+  ],
+  "heal-big|storage|text|0": [
+   "Hello there! Need to store your creatures?",
+   "I'll keep them safe while you explore the dunes.",
+   "We've got top-notch facilities here in the desert team.",
+   "You can check on their status anytime at our counter.",
+   "Leaving your creatures with us is always a smart choice.",
+   "The storage fees are reasonable for any traveler.",
+   "We're open around the clock, no matter the heat.",
+   "Just hand them over and we'll take good care of them."
+  ],
+  "heal-big|storage|text|1": [
+   "Welcome to the Creature Storage facility, here you can safely store your creatures.",
+   "How many team members would you like to leave for safekeeping?",
+   "I'll take that one off your hands right away.",
+   "Your creature's stats are preserved while stored with us.",
+   "Would you like to check on a stored companion later?",
+   "The hall offers discounts for loyal adventurers.",
+   "We use advanced containment methods to keep creatures secure.",
+   "Just let me know if you need anything else."
+  ],
+  "heal-big|storage|text|2": [
+   "Welcome to the creature storage counter! Let's keep those creatures safe",
+   "Need some extra space for your team? We'll take care of it right away",
+   "Welcome back, traveler! Your creatures have been safely stored while you were out exploring.",
+   "All right, here's your team - just let me know if you need anything else checked on.",
+   "Your critters are ready for pickup whenever you are.",
+   "Storing these strong fighters lets us keep them in top condition for your next journey.",
+   "Here you go! All the creatures from your recent battles have been cared for properly.",
+   "How's it going? Everything looks good with your stored team - no injuries or fatigue detected.",
+   "We've got your creatures resting comfortably in our hall, come back anytime to collect.",
+   "Your companions are secure here. Need a quick health update before you head out again?"
+  ],
+  "heal-big|storage|text|3": [
+   "Storage is holding up to 46 creatures for your team.",
+   "You can add more storage capacity later if needed.",
+   "Do you need help finding a specific creature?",
+   "We've got all sorts here from fire, water, earth, and sky types.",
+   "Check back anytime - new creatures arrive daily!",
+   "Got any rare finds in your collection? We pay top credits for them.",
+   "Storage fees apply after 50 creatures - better tidy up soon.",
+   "Just let me know if you'd like to review or swap out your team."
+  ],
+  "heal-big|villager|text|0": [
+   "I've seen creatures as tough as this lurking in the dunes outside town.",
+   "The sands here hide all kinds of wonders if you know where to look.",
+   "Beware - those bright-eyed wanderers can be unpredictable near the cliffs.",
+   "My old trainer used to say the desert's heart beats strongest at midnight.",
+   "Trade your finds with the nomads by the eastern well for better gear.",
+   "The town elder keeps a hall full of ancient creature lore inside.",
+   "Those small teams roaming the streets often share secrets about hidden caves.",
+   "Come back before dawn or you'll risk meeting the wrong kind of creatures."
+  ],
+  "heal-big|villager|text|1": [
+   "...",
+   "...",
+   "The heat here is brutal, better keep your creatures hydrated.",
+   "I heard whispers of a hidden oasis not far from town.",
+   "Strange things happen out in the wastes at night.",
+   "My little team keeps me company while I work on my inventions.",
+   "You'll need a reliable water source to heal up after battles.",
+   "The sandstorms roll in fast - watch your step outside.",
+   "I've seen creatures change forms when the moon is full."
+  ],
+  "heal-big|villager|text|2": [
+   "I've been looking for reliable help to tame these creatures roaming the desert - careful now.",
+   "You wouldn't believe how many rare eggs I've found buried in the sand this week alone.",
+   "The local team just got back from a big battle out east; they're exhausted but proud.",
+   "Bringing a creature here without proper training is asking for trouble, trust me.",
+   "I once saw a whole nest of glowing eggs near the old ruins - must've been magic in the air.",
+   "You're new to this town, aren't you? Watch out for the wild ones after dark.",
+   "The trainer down the street always brags about her powerful team; maybe she can give you advice."
+  ],
+  "heal-big|villager|text|3": [
+   "Only the first line should be in past tense",
+   "I used to run through these sandy plains when I was younger but now my bones can't take it anymore",
+   "Sandstorms can hide all sorts of hidden dangers, so stay sharp out there",
+   "The town elder says we must keep our creatures safe from harm's way",
+   "Found an odd little shell once that hummed when held, never figured out what it did",
+   "Beware the shifting sands - they swallow creatures whole if you're not careful",
+   "Local traders bring rare items but their prices are steep as ever",
+   "You'll want a sturdy pair of boots to handle these dunes without trouble",
+   "My old journal mentions a secret oasis where lost creatures might hide"
+  ],
+  "heal-medium|healer|text|0": [
+   "I've seen enough battles for today - let's get you patched up.",
+   "This little clinic's got just what you need to recover.",
+   "Your team's creatures look worn out; a rest will do them good.",
+   "Come in, take a seat - I'll tend to your friends right away.",
+   "A warm drink and a nap might help more than another fight today.",
+   "Don't worry about the cost; healing is what we're here for.",
+   "Those scratches? Nothing serious - just let me clean them up.",
+   "You've got grit, kid. I'll make sure your team keeps it."
+  ],
+  "heal-medium|healer|text|1": [
+   "Your team looks weary - let me restore their vitality.",
+   "A little rest will heal all wounds.",
+   "Stay still while I tend to your creature's injuries.",
+   "Don't rush off yet, your strength isn't fully back.",
+   "Drink this tonic; it'll soothe their pain quickly.",
+   "Your team will be as good as new after this session.",
+   "Come closer and let me mend your creatures' spirits."
+  ],
+  "heal-medium|healer|text|2": [
+   "You look worn out, let me ease your pain for you.",
+   "Rest here as long as you need, recovery is important.",
+   "I've seen travelers worse off than you before long journeys.",
+   "Your wounds are deep but I'll do my best to heal them.",
+   "The warmth of the healing room should help relax those muscles.",
+   "Don't worry, I've got just what you need right here.",
+   "Take a moment to recover while I tend to your injuries.",
+   "Breathe easy now. Your next battle will go better after this."
+  ],
+  "heal-medium|healer|text|3": [
+   "Rest easy here; your creatures will recover quickly.",
+   "Let me tend to those weary wounds right away.",
+   "A warm drink and some rest should do the trick.",
+   "Your team is in good hands while you recharge.",
+   "These soothing herbs will bring comfort soon.",
+   "Take a moment to relax - you've earned it.",
+   "The hall's calm air helps speed up healing time.",
+   "Don't worry, your creatures will wake up stronger."
+  ],
+  "heal-medium|storage|text|0": [
+   "Got any creatures you need stored? I'll hold them here.",
+   "Safekeeping for your team's traveling companions.",
+   "Storing creatures can be done at any time of day.",
+   "Need to free up space in your roster?",
+   "A small fee is charged for each creature kept.",
+   "Store them now, retrieve when it suits you best.",
+   "Hand over your creatures and I'll keep them secure.",
+   "Don't forget to feed the stored ones before you go."
+  ],
+  "heal-medium|storage|text|1": [
+   "Storing creatures is my specialty - hand them over safely.",
+   "It's cramped here but we keep every creature secure until you're ready.",
+   "Storage fees? Oh right, you're not the paying type, are you?",
+   "We've got all kinds of creatures tucked away in these racks.",
+   "Need a breather? Just leave one here for now - no rush.",
+   "This counter keeps your creatures safe while you explore further.",
+   "I don't judge how you handle your team; we just hold them tight.",
+   "Pickup later? Sure thing - just remember where we stashed it."
+  ],
+  "heal-medium|storage|text|2": [
+   "Welcome to the Creature Storage Counter! How can I help you today?",
+   "This way please for your creature's check-in",
+   "All storage services are handled here in one secure location",
+   "We'll keep your creatures safe while you explore the town",
+   "Do you need a quick retrieval or long-term archival",
+   "Just place your chosen creature on the scale so we can log it in",
+   "The hall has strict safety protocols for all storage operations"
+  ],
+  "heal-medium|storage|text|3": [
+   "Need to store some creatures? I'll keep them safe for you.",
+   "That's a healthy one - let me take it off your hands.",
+   "These containers are climate-controlled so no worries there.",
+   "You've got quite the collection today, anything else?",
+   "Storage fee is just 100 zennies per creature, pay when you return.",
+   "Your creatures look in great shape - no damage detected.",
+   "I'll label these and keep them stored until your next visit.",
+   "A quick scan shows all are fit for storage. Perfect timing!"
+  ],
+  "heal-small|healer|text|0": [
+   "Rest up - your wounds will heal in time.",
+   "Drink this potion to ease your suffering.",
+   "A warm bath can soothe even the deepest cuts.",
+   "Let me mend those scratches before they worsen.",
+   "Stay still while I work my gentle magic on you.",
+   "These herbs should help clear your head after battle.",
+   "The fire in your veins will cool with this draught.",
+   "Close your eyes, I'll have you feeling fine soon."
+  ],
+  "heal-small|healer|text|1": [
+   "line1",
+   "line2",
+   "Welcome to the healing haven.",
+   "Feel better after resting here among friends",
+   "A gentle breeze flows through this place",
+   "Your creatures are safe now, sleep tight",
+   "Healing energy surrounds us all tonight",
+   "Let me soothe those wounds with my power",
+   "You'll be back in top form soon enough",
+   "Rest easy, the calm will restore your strength"
+  ],
+  "heal-small|healer|text|2": [
+   "Let me take care of those wounds for you right away.",
+   "Your creature looks exhausted - rest up here.",
+   "A warm breeze flows through this hall to restore energy.",
+   "The town's healers are always ready to assist weary adventurers.",
+   "Stay a while and let the healing magic do its work.",
+   "Don't rush off yet, your team needs care too.",
+   "This place hums with natural power - perfect for recovery.",
+   "Come back whenever you need help, I'll be waiting."
+  ],
+  "heal-small|healer|text|3": [
+   "Let your creature rest here for as long as needed",
+   "I'll mend its wounds with these soothing herbs",
+   "A little sleep and some care will do the trick",
+   "Your team's bond grows stronger in quiet moments",
+   "The desert sun can wait while we recover",
+   "Come back when you're ready to face another day",
+   "Stay awhile, we'll make sure it's fit for battle again",
+   "This place is safe - no creatures will bother it here"
+  ],
+  "heal-small|storage|text|0": [
+   "I can keep your creatures safe here for a small fee.",
+   "You'll find me open late on weekends if you need storage after hours.",
+   "My shelves are always ready - drop off anything that's weighing you down.",
+   "We've got room for one more, just squeeze it in there.",
+   "Storage fees go up with creature size; those big ones cost extra.",
+   "Sign here and I'll make sure your creatures stay healthy in my care.",
+   "Need a place to rest? My storage can hold your team overnight."
+  ],
+  "heal-small|storage|text|1": [
+   "Ah, another trainer ready to store their creatures!",
+   "We take care of your team's needs so you don't have to.",
+   "Your creatures look well-trained, need any restocking?",
+   "Just place them here and I'll keep them safe for you.",
+   "No charge for storage today - how many are joining us?",
+   "Make sure they're healthy before leaving them with me.",
+   "The hall's got plenty of room if you want to visit.",
+   "I can hold up to six creatures at a time, let me know."
+  ],
+  "heal-small|storage|text|2": [
+   "Sure thing, let me check what's inside for you right away.",
+   "Your creatures will be safe here while you explore more of the world.",
+   "Storage fee is five hundred a day - you okay with that?",
+   "Need anything else? Maybe some supplies for your journey ahead?",
+   "The lockers are full today but I'll make space for yours, no problem.",
+   "You've got quite a few creatures packed in there - any special ones?",
+   "I can clean and heal them if you'd like, just say the word.",
+   "Got any rare finds? We charge extra for premium care."
+  ],
+  "heal-small|storage|text|3": [
+   "Welcome to Creature Storage, how may I help you today?",
+   "We can keep your creatures safe while you explore.",
+   "Would you like to store a team member here for later use?",
+   "Storage fees depend on the creature's level and rarity.",
+   "All items are locked away securely until you return.",
+   "Your creatures will be well cared for during your journey.",
+   "We offer instant retrieval when you need them back again.",
+   "Just let me know if you'd like to check on stored creatures."
+  ],
+  "med-city|villager|text|0|big": [
+   "Have you checked the local item shop for fresh supplies lately?",
+   "The trainer down the path says wild creatures are calming at dusk.",
+   "A sturdy bag can hold more than you think it can right now.",
+   "You'll find better gear in the hall if you look deeper inside.",
+   "Stick to the open plains - they're safer for new adventurers like you.",
+   "The old healer near the market always has remedies for scrapes.",
+   "A creature's type doesn't matter as much as how well you train it.",
+   "Watch out for the rocky foothills - they hide tough creatures."
+  ],
+  "med-city|villager|text|0|medium": [
+   "I saw a creature near the old mill yesterday.",
+   "The local team has some rare items for sale if you're interested.",
+   "My poor garden keeps getting trampled by passing trainers.",
+   "Careful around here, those creatures get feisty when hungry.",
+   "You should visit the hall's healer after your last battle.",
+   "The riverside path is perfect for catching water-aligned creatures.",
+   "I've got a spare healing tonic you can have if you need one."
+  ],
+  "med-city|villager|text|0|small": [
+   "I saw some creatures in the woods today, they looked so wild yet peaceful.",
+   "Have you tried trading your rare finds at the hall? Might get something useful.",
+   "My old companion used to help me find hidden items near the waterfall path.",
+   "If you need supplies, the hall has a shop that sells all sorts of gear.",
+   "Sometimes creatures vanish for days then suddenly reappear out of nowhere.",
+   "The town elder knows more about creature mysteries than anyone else here.",
+   "I've been collecting these little guys since I was young - what's your secret?"
+  ],
+  "med-city|villager|text|1|big": [
+   "I've heard wild creatures tend to gather near the old ruins just past the eastern edge.",
+   "The creatures in the northern hills are tough but rare, good for experienced adventurers like you.",
+   "A local trainer once lost a whole day's work fixing their hall's busted containment gear.",
+   "The hall store sells useful kits for capturing and healing creatures, stop by if you need supplies.",
+   "I wouldn't recommend heading into the misty caves without a healer in your team.",
+   "The big mossy rock near the town square marks where trainers meet to trade creature moves.",
+   "My neighbor's kid keeps getting their gear stolen by sneaky wild ones at night.",
+   "If your creatures are feeling weak, the hall has a recovery station you can use."
+  ],
+  "med-city|villager|text|1|medium": [
+   "You look like you've got plenty of energy for adventure!",
+   "The local team healers are just around the corner if you need 'em.",
+   "A good trainer always carries extra snacks in their pack.",
+   "Have you tried visiting the town elder? They know a lot.",
+   "There's something odd happening with the creatures lately... be careful out there.",
+   "The team store opens at dawn, so come back early if you want supplies.",
+   "I've got some tips for battling stronger teams - want to hear them?"
+  ],
+  "med-city|villager|text|1|small": [
+   "Be careful when wandering into the tall grass outside town.",
+   "The local market has some useful items for those tough battles ahead.",
+   "You should check out the hall if you're looking to challenge others.",
+   "My creature's health is fading fast after that last fight.",
+   "I wouldn't go east past the old ruins unless you're ready.",
+   "The team trainers are always eager to test new recruits.",
+   "Make sure your bag has extra potions before heading out again."
+  ],
+  "med-city|villager|text|2|big": [
+   "line1",
+   "line2",
+   "Bring back three different types if you want to earn a bonus at the hall.",
+   "Check the notice board for tips on where to find tougher creatures.",
+   "The local shop sells useful items, but they don't come cheap.",
+   "Did you try feeding it its favorite fruit near the stream?",
+   "Some creatures only appear when the weather shifts to foggy skies.",
+   "Beware of the team lurking in the abandoned factory!",
+   "You can trade your extra duplicates at the town's gathering spot."
+  ],
+  "med-city|villager|text|2|medium": [
+   "You're looking to train? Try the old ruins just south of here.",
+   "The local apothecary might have some useful remedies for tough battles.",
+   "I've heard whispers about a hidden cave near the riverbed, good spot for practice.",
+   "Don't forget to visit the training hall before you set out - it's right in town.",
+   "A sturdy backpack will help carry all your gear on long trips.",
+   "The northern fields are safer but less challenging; pick your path wisely.",
+   "Bring plenty of food and water if you're heading into the wilds for a while.",
+   "Check the bulletin board outside, sometimes others post helpful tips or requests."
+  ],
+  "med-city|villager|text|2|small": [
+   "The local team has been keeping watch over those ruins lately.",
+   "My brother once found a shimmering stone near the riverbank.",
+   "He said it made his trainer stronger for a while.",
+   "Be careful if you head out there, folks aren't always so lucky.",
+   "Maybe check the hall first; they have supplies that could help.",
+   "The creatures around here seem to avoid those caves at night."
+  ],
+  "paris-city|villager|text|0|big": [
+   "My creature's been feeling under the weather lately.",
+   "I heard the creatures roam deeper in the woods beyond the north gate.",
+   "The hall in town is where trainers gather their teams for battles.",
+   "A good rest near the hearth might perk up your creature too.",
+   "Maybe you should try the market by the east side? They sell helpful items.",
+   "The old ruins to the west are said to be full of rare creatures.",
+   "Have you visited the healer's hut? They know how to mend wounded teams.",
+   "Sometimes a trainer just needs patience when their creature is weak."
+  ],
+  "paris-city|villager|text|0|medium": [
+   "Found an oddly shaped stone near the river yesterday; it keeps humming when I hold it.",
+   "My creature got tangled in vines on its own for once - must have been tired from all that running.",
+   "That trainer over there lost their last match, maybe they need advice not just more potions.",
+   "The hall's new exhibit looks fascinating but those creatures outside are too noisy to focus.",
+   "I'd trade my rare herb for a good rest if you're offering anything useful right now.",
+   "Last week's fog made all the creatures act stranger than usual around here.",
+   "The old ruins near town have been swarming with creatures lately - be careful out there!"
+  ],
+  "paris-city|villager|text|0|small": [
+   "Found a shiny stone near the old bridge yesterday, wish I knew what to do with it.",
+   "My kid's been bragging about their first catch all week - it's just a plain creature though!",
+   "If you're heading to the hall, be careful of those wild ones lurking around.",
+   "The town elder says trading creatures is good for strengthening bonds among adventurers.",
+   "Bought some special berries at the market, they might help with your next encounter.",
+   "My friend caught a creature that glows faintly; wonder if it's sick or just unique?",
+   "Bring me any strange items you gather - they're always useful for someone like me."
+  ],
+  "paris-city|villager|text|1|big": [
+   "I've heard rumors about mysterious creatures lurking in the old ruins outside town",
+   "When I was young my family used to run a small shop by the hall but it's gone now",
+   "The trainers here say these creatures are drawn to places with strong energy fields",
+   "Did you know the hall has special crystals that seem to attract them more than usual?",
+   "I once saw a trainer lose their balance near those ruins trying to catch something new",
+   "Some folks claim the old mine tunnels hum with an unusual resonance lately",
+   "A friend of mine found strange tracks leading from the town square to the forest edge",
+   "The local guide mentioned these creatures prefer areas where the ground is rich in minerals"
+  ],
+  "paris-city|villager|text|1|small": [
+   "I've seen creatures like yours roaming these parts lately, be careful.",
+   "That's a mighty fine creature you have there, could use one myself!",
+   "Did you know the hall in town is hosting a gathering for trainers next week?",
+   "The local market has some useful items if you're looking to trade.",
+   "You'll want to head north when you leave here - lots of wild creatures there!",
+   "My child's been sneezing nonstop since they caught that cold last night...",
+   "If your creature isn't feeling well, the town healer might have a remedy."
+  ],
+  "paris-city|villager|text|2|big": [
+   "I've seen some mighty strange creatures out there lately.",
+   "The hall's healers will patch up your team after a tough battle.",
+   "You need to find the right kind of creature food to keep them strong.",
+   "Be careful near the river - those water types get aggressive when hungry.",
+   "My brother tried to catch one at night and got lost in the mist.",
+   "The local library has old scrolls about creatures if you're interested.",
+   "Join the town's adventurer guild to share stories and trade tips."
+  ],
+  "paris-city|villager|text|2|small": [
+   "Watch out for the roaming bandits near the old bridge.",
+   "The local herbalist sells remedies by the market stalls.",
+   "Have you tried capturing creatures in that misty field?",
+   "Bring extra potions when exploring the abandoned mine.",
+   "A sturdy cloak will protect you from harsh winds up north.",
+   "The team's headquarters has a healer who can fix your wounds.",
+   "Stay clear of the shadowy woods after dark, they're dangerous.",
+   "Your creatures might evolve if you train them in special spots."
+  ],
+  "paris-city|villager|text|3|big": [
+   "I've heard rumors that some creatures out there can learn moves from unexpected types.",
+   "A wandering team once passed through here - they had one that could mimic fire in the rain.",
+   "The hall's healers say it's possible for a creature to copy another's abilities.",
+   "You'd be surprised what happens when a flying-type learns how to strike like earth beneath.",
+   "Some trainers swear their creatures gained new strength after eating those glowing berries.",
+   "The market sells odd items that might change a creature's elemental nature temporarily.",
+   "If you find one with an unusual aura, it could be hiding something more than power."
+  ],
+  "red-city|villager|text|0|big": [
+   "There's been some strange energy readings near the old ruins lately.",
+   "A trainer like you could help tame those creatures if they're nearby.",
+   "The hall has a new shop selling rare items for adventurers.",
+   "You should check the hall's bulletin board for quests and tips.",
+   "Have you tried capturing any of these wild ones that keep appearing?",
+   "Be careful - some creatures can be unpredictable when wounded."
+  ],
+  "red-city|villager|text|0|medium": [
+   "Oh, those creatures out there seem to like hiding in tall grass.",
+   "Be careful when you explore the wilds - creatures can appear suddenly.",
+   "I've heard rumors that some trainers have trouble catching certain types.",
+   "A sturdy creature might be more useful than a strong one for this area.",
+   "The town shop keeps a few tools to help with creature training, if you're interested.",
+   "If you're just starting out, maybe focus on finding the common ones first.",
+   "Beware of those who venture too deep without proper preparation.",
+   "Check in at the hall after every adventure - it's good practice."
+  ],
+  "red-city|villager|text|0|small": [
+   "Oh hey there! I heard you've been collecting some creatures? Where do you keep them all?",
+   "You might want to check out the hall just outside town if you're running low on energy.",
+   "The old ruins near here have been crawling with wild creatures lately, be careful!",
+   "My child's got one that's real feisty but I'm too tired to keep up with it today.",
+   "I traded my last creature for some healing herbs and never regretted it once.",
+   "You should visit the local shrine; some say it blesses those who carry creatures with good fortune."
+  ],
+  "red-city|villager|text|1|big": [
+   "I've seen those wild creatures around the canyon to the east - be careful out there!",
+   "Bring me a heartscale if you find one near the riverbank; I'll pay good coin for it.",
+   "My grandpa used to collect these rare things, but he's long gone now.",
+   "The town elder says they're stronger when the sky turns red at dusk.",
+   "I heard rumors of a hidden cave where creatures glow in the dark - have you tried it yet?",
+   "A trainer once brought one here from the northern woods, left quite an impression.",
+   "Check the hall tomorrow; maybe someone's got a spare heartscale to trade.",
+   "Don't trust the shiny ones - they're tricksters by nature."
+  ],
+  "red-city|villager|text|1|medium": [
+   "Oh hey there traveler, found any new creatures in your journey yet?",
+   "The hall down the road holds rare finds if you're lucky enough.",
+   "Youngsters these days don't know how tough it used to be out here.",
+   "Make sure to rest up at the town's healing spot before going further.",
+   "I heard some say the wilds near the old ruins are dangerous.",
+   "A balanced team is key - don't rely too much on one element!",
+   "You should explore that cave over yonder, might be something hidden."
+  ],
+  "red-city|villager|text|1|small": [
+   "You'll find the Hall just past the old mill if you head north, but be careful - those creatures can get feisty.",
+   "The local herbalist might have something to help with those pesky creatures lurking nearby.",
+   "I've seen a few trainers around here struggling against those wild creatures lately.",
+   "Bringing a creature this size out in the open is risky; stick to the paths where it's safer.",
+   "A good night's rest should make you ready to face the Hall again tomorrow.",
+   "The town elder says these lands have grown harder since the creatures started appearing more often.",
+   "You can trade for stronger creatures down at the market if you're patient enough.",
+   "Beware the sandstorms - they tend to stir up a lot of those wild things out there."
+  ],
+  "red-city|villager|text|2|big": [
+   "I once saw a creature so rare it only came out at night.",
+   "The folks here in the town say these creatures are drawn to red berries.",
+   "Did you know some creatures can learn moves from different areas?",
+   "A skilled trainer should be able to befriend them all eventually.",
+   "You'd better check the hall if you're looking for new allies.",
+   "The creature guilds have rules about who can catch what.",
+   "Red landscape or not, your skills matter most in the end.",
+   "Ask the guildmaster when you're ready to take on tougher challenges."
+  ],
+  "red-city|villager|text|2|medium": [
+   "I keep finding creatures out by the old windmill at dusk.",
+   "The team's library has books on strange creature behaviors you might find useful.",
+   "A trainer once told me their hall is safer if you avoid the misty grove after dark.",
+   "I heard whispers about a hidden cave near town where powerful ones gather.",
+   "The local healer swears by these herbs for keeping minor afflictions at bay.",
+   "A friend gave me this charm to ward off troublesome creatures."
+  ],
+  "red-city|villager|text|2|small": [
+   "The town's team has been hosting more battles to keep everyone sharp",
+   "Careful with those wild creatures - they pack quite a punch now",
+   "My kid brought home an injured creature from the hills yesterday",
+   "Better train yours well before tackling tougher foes",
+   "Visit the hall if you need advice or fresh supplies",
+   "The local trainer's guild is holding a big meet next week",
+   "Rumors say a rare type of creature has been spotted nearby"
+  ],
+  "red-city|villager|text|3|medium": [
+   "Found any good items in the red caves lately?",
+   "The local guild could use some strong adventurers like you.",
+   "Be careful out there, those creatures get feisty around here.",
+   "I heard a rumor that a rare item hides deep within the town.",
+   "If you're heading into the wilds, don't forget your water flasks.",
+   "The shopkeeper down the street sells useful gear for travelers.",
+   "A team of trainers like yours might just crack the cave's secrets.",
+   "Stay hydrated and watch your step in those dusty canyons."
+  ],
+  "sea-city|villager|text|0|big": [
+   "I've seen some creatures lurking around the docks lately - be careful if you're heading out there.",
+   "The trainers say these new creatures are harmless, but I don't believe them.",
+   "A good rule is to always keep your distance from wild ones near the water.",
+   "Some of us are forming a watch group to scout for those troublesome teams.",
+   "You should visit the hall soon; they've got guides on safe routes through town.",
+   "I heard rumors about a hidden path behind the old warehouse - maybe you'll find something useful there.",
+   "The local shop's selling containment gear, but it won't stop the bigger threats out at sea.",
+   "If your creature grows too strong for this area, it might attract unwanted attention."
+  ],
+  "sea-city|villager|text|0|medium": [
+   "I heard the trainers around here usually keep their creatures in well-lit caves.",
+   "That new cave over by the cliffs is perfect for your first adventure.",
+   "Bring back an Odd-Shaped Rock from the Whispering Depths if you find one.",
+   "The hall's got a few helpful folks who can teach you how to catch better.",
+   "Stay clear of the Shadowed Vale after dark - it's too dangerous right now.",
+   "My grandpa used to tell stories about creatures hiding in plain sight there.",
+   "Check with the old man by the docks, he knows all about this place.",
+   "Make sure your creature's health stays up before heading out again."
+  ],
+  "sea-city|villager|text|0|small": [
+   "I saw a trainer heading north yesterday with some odd-looking creatures.",
+   "The hall's healer has been busy patching up wounded creatures lately.",
+   "Strange rustling in the bushes means one thing - wild creatures are near.",
+   "My old friend just got back from battling a fierce team of water types.",
+   "Those who bring back shiny creatures earn a lot of respect around here.",
+   "The market sells useful items for adventurers at fair prices these days.",
+   "I'd watch out if I were you, those fields are full of quick creatures.",
+   "Training with your creatures is hard work but it's worth the effort."
+  ],
+  "sea-city|villager|text|1|big": [
+   "I've seen creatures like yours around the docks lately",
+   "Beware of those tricky water types lurking near the pier",
+   "Bring back some seashells next time you're out exploring",
+   "The town's hall has a notice board if you want to trade",
+   "Don't forget to visit the healer when your team gets weak",
+   "Seen any rare shards washing up on the shore?",
+   "You'd be wise to check the local shop for useful gear",
+   "Keep an eye on the tides, they change with the moon's pull"
+  ],
+  "sea-city|villager|text|1|medium": [
+   "Oh hey there traveler, did you find any interesting creatures out in the wild?",
+   "The sea breeze sure brings them all out today, hope you're keeping cool.",
+   "You might want to check near the docks if you haven't already.",
+   "I heard a trainer once found a rare one hiding among those rocks over there.",
+   "If you need supplies for your journey, the hall's shop has what you need.",
+   "Watch out for that odd storm coming in - it stirs up some creatures lately.",
+   "A good spot for newbies is the meadow by the old windmill.",
+   "My kid was excited to see a creature with three tails yesterday."
+  ],
+  "sea-city|villager|text|1|small": [
+   "Found a shiny stone near the cliffs today - wish it could catch one of those wild creatures.",
+   "The old dock creaks under my boots; maybe we'll spot something rare out here soon.",
+   "My grandpa used to tell stories about strange creatures hiding in these foggy coves.",
+   "If you're looking for a guide on local wildlife, I've got tips from years of watching.",
+   "Sometimes the sea whispers secrets about where they roam at night.",
+   "I hear the town's gatherers have been finding more of those little ones lately.",
+   "The creatures seem to love the salty air; just be careful when you're out there.",
+   "Maybe a trip to the hall tomorrow will teach us something new about them."
+  ],
+  "sea-city|villager|text|2|big": [
+   "Hey there, trainer! I heard you're heading out to collect some creatures today.",
+   "Beware of the rough tides near the old docks - they've swallowed more than a few unwary adventurers.",
+   "The hall's shop has restocked with useful tools if you need supplies before your journey.",
+   "Did you know those shorebirds nesting by the cliffs can predict where rare creatures might appear?",
+   "Make sure to check your creature's vitality levels - exhaustion is no joke out here.",
+   "Remember, the local team keeps records of all sightings in that big ledger over yonder.",
+   "If you're feeling worn out, the town healer can mend your wounds and restore your energy."
+  ],
+  "sea-city|villager|text|2|medium": [
+   "I've got a useful tip - try tossing a shiny pebble into the water nearby.",
+   "Did you know? The creatures here sometimes leave behind rare shards in hidden coves.",
+   "The local team keeps these glowing trinkets for their own training.",
+   "Watch out for the roaming critters; they can be sneaky when gathering supplies.",
+   "A trainer once told me a smooth stone works best to attract them without startling them.",
+   "If you find a good spot, come back early in the morning - more appear then.",
+   "Be careful near the cliffs; some creatures nest there and won't like visitors.",
+   "The market sells these polished fragments for crafting, but they're hard to come by."
+  ],
+  "sea-city|villager|text|2|small": [
+   "I've seen some adventurers come back missing their creatures lately.",
+   "The sea breeze feels nice today, doesn't it?",
+   "Be careful near the rocky shores - dangerous things lurk there.",
+   "Have you checked your creature's energy levels? They seem low to me.",
+   "A good healer can be found down by the docks if needed.",
+   "Sometimes creatures go wild when their bonds are too strong.",
+   "The old ruins hold secrets even our trainers haven't uncovered yet.",
+   "Stay alert and don't push your team too hard in these parts."
+  ],
+  "shop-big|shopkeeper|text|0": [
+   "Found these sturdy vests in stock - perfect for hot desert winds.",
+   "Need a quick energy boost? Try our specially blended spice packets.",
+   "This here's the last batch of shade cloaks, don't let 'em slip away.",
+   "Got some fine rust-resistant tools if you're planning to clear old ruins.",
+   "Fresh waterskins, refillable and good for days in the scorching sun.",
+   "A reliable map might save your hide, only a few left!",
+   "These healing charms work wonders after a long day's trek.",
+   "Looking for creature bait? We've got a new kind today."
+  ],
+  "shop-big|shopkeeper|text|1": [
+   "item",
+   "Welcome to the town store! Need something before you head off on your adventure?",
+   "item",
+   "Got any creature balls handy? I've got just the thing for you.",
+   "item",
+   "Check out these new items, freshly stocked this week.",
+   "item",
+   "You look like you could use a stronger creature companion right now.",
+   "item",
+   "Ever tried using a scent lure? Might help you track down rare creatures.",
+   "item",
+   "Don't forget to heal your team at the hall nearby.",
+   "item:",
+   ":"
+  ],
+  "shop-big|shopkeeper|text|2": [
+   "Welcome to the Sandside Emporium, need something to brighten your trip?",
+   "How about a fresh canteen set to keep you going on those long desert treks?",
+   "I've got new creature gear that'll help you out in the heat.",
+   "The town's been quiet lately, but I've got supplies ready just in case.",
+   "You looking for anything specific or should I grab something from the shelves?",
+   "Rations are cheap and easy - got some here if you're hungry.",
+   "A sturdy satchel to carry more than just sand and dust?",
+   "Come back soon, traveler! The desert waits for no one."
+  ],
+  "shop-big|shopkeeper|text|3": [
+   "Looking for something to keep you going on those hot desert nights?",
+   "We've got sturdy canteens that never run dry.",
+   "That creature's out there wandering the wastes right now - better go fetch it quick!",
+   "Need gear that won't melt under the sun? Try our heat-treated equipment.",
+   "You'll want this if you're planning a long journey through the dunes.",
+   "This scarf reflects sunlight so you stay cool while exploring.",
+   "A potion to heal your team's wounds, freshly mixed just this morning.",
+   "Our best seller: these gloves let you grip slippery rocks without trouble."
+  ],
+  "shop-big|villager|text|0": [
+   "I've seen creatures out here that can survive the scorching sun without trouble.",
+   "Bring me one of those rare blue-veined berries from the outer dunes, I'll pay well for it.",
+   "The local team has been setting up training grounds near the oasis - good luck to them all.",
+   "If you're heading east, watch out for sandstorms that can blind even the best scouts.",
+   "A trainer once lost their way in the desert after ignoring my advice about safe paths.",
+   "Stick to the shaded routes unless you want your creatures overheated and useless in battle.",
+   "The hall's next match is against a group from the western ruins, they're tough but fair opponents.",
+   "My nephew vanished chasing rumors of glowing rocks deep in the wasteland - hope he's alright."
+  ],
+  "shop-big|villager|text|1": [
+   "Have you seen the new creature that's been roaming near the eastern woods lately?",
+   "Be careful out there - those creatures can get aggressive if they feel threatened.",
+   "That little shop by the hall has some useful items for adventurers like you.",
+   "If you're heading to the cliffs, watch out for the rare ones with strong attacks.",
+   "The town's elder mentioned a hidden team nest deep in the old ruins nearby.",
+   "Bring back any creatures you catch - there might be something interesting among them.",
+   "I heard the creature market's got new evolutions this week, worth checking if you can handle one.",
+   "Don't let your guard down just because they're weak; even small creatures can pack a punch."
+  ],
+  "shop-big|villager|text|2": [
+   "I've seen creatures like that before out in the dunes - watch your step if they're nearby.",
+   "The last trainer who ventured beyond the town limits never came back.",
+   "You'll need one of those rare capture tools to handle a creature this strong.",
+   "Stay hydrated, it's dangerous to go wandering when the sun is high like this.",
+   "I heard rumors about a hidden oasis where creatures grow bigger and bolder every season.",
+   "This place used to be safer before the strange storms started stirring things up.",
+   "You should check the hall for any new quests; they've got a board just outside.",
+   "My neighbor lost his favorite creature last week - said it just vanished mid-battle."
+  ],
+  "shop-big|villager|text|3": [
+   "I've heard rumors that wild creatures roam near the canyon at night.",
+   "The local team keeps a few rare items for emergencies like yours.",
+   "Bring me your best creature if you want to trade in this hall.",
+   "You should visit the healer after a tough battle out there.",
+   "This place is safe now, but be careful when stepping outside.",
+   "Check with the team captain if you need supplies or advice.",
+   "Rumors say the desert hides ancient creature relics deep underground."
+  ],
+  "shop-medium|shopkeeper|text|0": [
+   "Welcome to my shop, friend! Everything you need for your journey awaits.",
+   "Need any supplies before heading out into the wilds?",
+   "How about some sturdy gear to keep you safe on the road?",
+   "Don't forget to check the bulletin board for fresh quests.",
+   "A good map is essential - here, take one if you're missing yours.",
+   "Got a creature that's feeling under the weather? I've got remedies here.",
+   "Sharp tools make all the difference when exploring remote areas.",
+   "Come back anytime; business never stops in this little town."
+  ],
+  "shop-medium|shopkeeper|text|1": [
+   "Need something to keep you going in this heat? Our cooling charms are perfect for that.",
+   "Got a creature with too much energy? Trade it here for a calmer companion.",
+   "How about some fresh water from the oasis spring? Keeps both trainers and creatures hydrated.",
+   "Looking for a quick restock before heading back into the dunes? We have just what you need.",
+   "A sturdy satchel helps carry supplies across long journeys - better get one now.",
+   "Trade your restless creature here and find one that's more suited to the desert sands.",
+   "Sunburned? These soothing salves will help heal those wounds fast.",
+   "Got a creature acting wild? A taming charm might calm it down."
+  ],
+  "shop-medium|shopkeeper|text|2": [
+   "Welcome traveler, what brings you to my humble shop today?",
+   "I've got the finest wares for those who brave the desert's harsh sun.",
+   "A sturdy water flask could save your throat from this dry wind.",
+   "My creatures are well-trained - no wild ones here, just reliable helpers.",
+   "Beware of sandstorms; they tend to spook even the calmest adventurers' companions.",
+   "You look like you've lost more than just your way out here.",
+   "Trade your finds for coins or useful items? I always have good deals.",
+   "Stay awhile and rest, but keep an eye on those flickering lanterns."
+  ],
+  "shop-medium|shopkeeper|text|3": [
+   "Need some gear for your adventure? I've got everything you might require right here.",
+   "Fresh fruits and sandwiches to keep your energy up during those long treks.",
+   "How about a sturdy satchel to carry more items without slowing you down?",
+   "A new set of clothing could help against the harsh winds out there - want to take a look?",
+   "Stay prepared with these healing tonics, they're always in demand around here.",
+   "Let me know if you're seeking creature containment units, I keep those stocked too.",
+   "What do you need most? A stronger weapon or perhaps better defenses for your team?",
+   "These maps are the latest updates - useful for navigating the red landscape ahead."
+  ],
+  "shop-medium|villager|text|0": [
+   "Found a strange creature near the river yesterday - it was humming like an old engine.",
+   "Those little teams keep popping up everywhere; makes you wonder who's really in charge.",
+   "Youngsters these days think they can just grab any creature off the street without training.",
+   "The hall's got a new rule: no more than three creatures allowed in battles at once.",
+   "Be careful with the odd ones - they don't always obey like the common types do.",
+   "The old trainer down the road says he saw something glinting near the woods, might be worth checking.",
+   "I'd trade my whole team for one that's truly loyal, but who would trust me?"
+  ],
+  "shop-medium|villager|text|1": [
+   "Bring back any odd-looking eggs you find; they might hatch something rare",
+   "The hall's healer is good but don't rely on them too much - the desert has its own dangers",
+   "That old trainer in the market keeps bragging about his tamed creature, though no one believes him anymore",
+   "I lost my favorite companion to a sandstorm last season - maybe you'll have better luck?",
+   "Check the notice board near the hall for tips and rewards tied to recent sightings",
+   "The sun's brutal here; make sure your gear is suited for heat before venturing out"
+  ],
+  "shop-medium|villager|text|2": [
+   "Those creatures in the wasteland are getting smarter every day you know",
+   "The local team shop just got restocked with containment devices today",
+   "I heard the guild's hall is holding a workshop on catching techniques soon",
+   "Watch out for wild ones lurking near the watering holes at night",
+   "Better make sure your containment tools are working properly before heading back outside",
+   "You'd be surprised how much easier it is to handle creatures when you know their patterns"
+  ],
+  "shop-medium|villager|text|3": [
+   "Found any good items in the red caves lately?",
+   "The local guild could use some strong adventurers like you.",
+   "Be careful out there, those creatures get feisty around here.",
+   "I heard a rumor that a rare item hides deep within the town.",
+   "If you're heading into the wilds, don't forget your water flasks.",
+   "The shopkeeper down the street sells useful gear for travelers.",
+   "A team of trainers like yours might just crack the cave's secrets.",
+   "Stay hydrated and watch your step in those dusty canyons."
+  ],
+  "shop-small|shopkeeper|text|0": [
+   "Need something for your journey? I've got supplies - maps, potions, and gear.",
+   "Got a favorite creature type? Grass-resistant vests work wonders against those tricky ones.",
+   "Fresh out of berries to restore energy on the road? Grab some here while they last!",
+   "Haven't seen you in a while! Did you finally decide to restock your adventure kit?",
+   "Found a rare item drop nearby? Bring it by, I'll appraise its value for you.",
+   "These healing tonics are perfect for mid-battle recovery - trust me, I've used them plenty!",
+   "Lost creature gear can be tricky, but my shop has replacements for most types.",
+   "Come on in! The hall's clearing up some great deals today."
+  ],
+  "shop-small|shopkeeper|text|1": [
+   "Welcome to the Embershop, need any supplies?",
+   "These healing berries are fresh off the plant - good for weary creatures.",
+   "A sturdy satchel makes all the difference in long journeys.",
+   "My stock changes daily; something new might catch your eye.",
+   "Beware of overworked creatures - they'll need extra rest after battles.",
+   "Found this fine trinket near the Cinderpeak, could be useful.",
+   "The local team keepers swear by these energy boosts."
+  ],
+  "shop-small|shopkeeper|text|2": [
+   "line1",
+   "line2",
+   "Need something to keep you safe in the wilds?",
+   "How about these handy containment vials? They'll hold any creature steady for a bit.",
+   "Fresh berries just arrived - perfect for restoring energy on long journeys.",
+   "This sturdy backpack will help carry more supplies without weighing you down.",
+   "Got a rare gem that might interest trainers like you.",
+   "New type of potion brewed overnight, want to take a look?",
+   "Map of the surrounding lands updated with hidden trails marked.",
+   "Don't forget your creature's health - these bandages work in a pinch."
+  ],
+  "shop-small|shopkeeper|text|3": [
+   "Need something to help you on your journey?",
+   "How about one of these handy creature containers?",
+   "Fresh supplies brought in just this morning.",
+   "The hall trainers swear by these healing berries.",
+   "Got any coins for a trade? These items aren't free.",
+   "Check out the new gear designed for outdoor expeditions.",
+   "Can't go wrong with these stamina-boosting treats.",
+   "Back again so soon? More creature food or gear today?"
+  ],
+  "shop-small|villager|text|0": [
+   "Found a shiny stone near the old bridge yesterday, wish I knew what to do with it.",
+   "My kid's been bragging about their first catch all week - it's just a plain creature though!",
+   "If you're heading to the hall, be careful of those wild ones lurking around.",
+   "The town elder says trading creatures is good for strengthening bonds among adventurers.",
+   "Bought some special berries at the market, they might help with your next encounter.",
+   "My friend caught a creature that glows faintly; wonder if it's sick or just unique?",
+   "Bring me any strange items you gather - they're always useful for someone like me."
+  ],
+  "shop-small|villager|text|1": [
+   "You'll find the Hall just past the old mill if you head north, but be careful - those creatures can get feisty.",
+   "The local herbalist might have something to help with those pesky creatures lurking nearby.",
+   "I've seen a few trainers around here struggling against those wild creatures lately.",
+   "Bringing a creature this size out in the open is risky; stick to the paths where it's safer.",
+   "A good night's rest should make you ready to face the Hall again tomorrow.",
+   "The town elder says these lands have grown harder since the creatures started appearing more often.",
+   "You can trade for stronger creatures down at the market if you're patient enough.",
+   "Beware the sandstorms - they tend to stir up a lot of those wild things out there."
+  ],
+  "shop-small|villager|text|2": [
+   "Watch out for the roaming bandits near the old bridge.",
+   "The local herbalist sells remedies by the market stalls.",
+   "Have you tried capturing creatures in that misty field?",
+   "Bring extra potions when exploring the abandoned mine.",
+   "A sturdy cloak will protect you from harsh winds up north.",
+   "The team's headquarters has a healer who can fix your wounds.",
+   "Stay clear of the shadowy woods after dark, they're dangerous.",
+   "Your creatures might evolve if you train them in special spots."
+  ],
+  "shop-small|villager|text|3": [
+   "I've seen creatures roaming the hills beyond town, you should stay clear of them.",
+   "The local team knows these lands well, be careful not to anger them.",
+   "A wise trainer once told me that patience is key when facing wild ones.",
+   "My cousin caught a creature near the river last summer, it's still with him.",
+   "If your creatures are hurt, bring them to the hall for healing.",
+   "The town elder keeps a collection of ancient team tools in his attic.",
+   "These hills used't be so dangerous before the new trainer arrived.",
+   "Store bought snacks won't help you out here, not like those special items."
   ]
  }
 }

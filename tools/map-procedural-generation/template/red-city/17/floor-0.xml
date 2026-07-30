@@ -1,9 +1,0 @@
-<map type="indoor">
-    <name>Gym</name>
-    <bot id="1">
-        <name>Sign</name>
-        <step id="1" type="text">
-            <text><![CDATA[My brother spends all day staring at his pocket map. I wish he'd go outside and touch some tall grass instead.]]></text>
-        </step>
-    </bot>
-</map>

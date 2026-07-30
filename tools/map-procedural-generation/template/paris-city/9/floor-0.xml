@@ -1,9 +1,0 @@
-<map type="indoor">
-    <name>Gym</name>
-    <bot id="1">
-        <name>Sign</name>
-        <step id="1" type="text">
-            <text><![CDATA[Do you hear that scratching sound inside the wall? I think a mischievous little Sandshrew tunneled into our basement.]]></text>
-        </step>
-    </bot>
-</map>

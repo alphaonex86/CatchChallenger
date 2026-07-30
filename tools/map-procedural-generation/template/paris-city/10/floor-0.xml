@@ -1,9 +1,0 @@
-<map type="indoor">
-    <name>Gym</name>
-    <bot id="1">
-        <name>Sign</name>
-        <step id="1" type="text">
-            <text><![CDATA[Keep your voice down! My neighbor's Abra is meditating in the next room, and we shouldn't break its concentration.]]></text>
-        </step>
-    </bot>
-</map>

@@ -1,9 +1,0 @@
-<map type="indoor">
-    <name>Gym</name>
-    <bot id="1">
-        <name>Sign</name>
-        <step id="1" type="text">
-            <text><![CDATA[Are you on your way to the Gym-cent... I mean, the Gym? Watch out—the Gym Leader in this city shows no mercy!]]></text>
-        </step>
-    </bot>
-</map>
