@@ -64,7 +64,11 @@ endif()
 # the binary is relinked, so editing a template would never reach the build dir.
 set(CC_RUNTIME_STAGE_COMMANDS)
 foreach(runtimeDir template skin tileset)
+    # remove first: copy_directory MERGES, so a template folder deleted from the
+    # sources would stay forever in an old build directory and still be used
     list(APPEND CC_RUNTIME_STAGE_COMMANDS
+        COMMAND ${CMAKE_COMMAND} -E rm -rf
+                $<TARGET_FILE_DIR:map-procedural-generation>/${runtimeDir}
         COMMAND ${CMAKE_COMMAND} -E copy_directory
                 ${CMAKE_CURRENT_LIST_DIR}/${runtimeDir}
                 $<TARGET_FILE_DIR:map-procedural-generation>/${runtimeDir})
