@@ -3,7 +3,7 @@
     <bot id="1">
         <name>Sign</name>
         <step id="1" type="text">
-            <text><![CDATA[My grandmother always said that a house warmed by a cozy fire-type Pokémon is never truly lonely.]]></text>
+            <text><![CDATA[My grandmother always said that a house warmed by a cozy fire-type monster is never truly lonely.]]></text>
         </step>
     </bot>
     <bot id="4">

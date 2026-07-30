@@ -3,7 +3,7 @@
     <bot id="1">
         <name>Sign</name>
         <step id="1" type="text">
-            <text><![CDATA[Do you like rare Pokémon? I once saw a shiny one in the forest, but it blinked and vanished!]]></text>
+            <text><![CDATA[Do you like rare monsters? I once saw a glittering one in the forest, but it blinked and vanished!]]></text>
         </step>
     </bot>
     <bot id="4">

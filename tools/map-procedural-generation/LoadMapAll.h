@@ -61,6 +61,9 @@ public:
         uint8_t level;
         //element type matched from the surrounding terrain (gym type follows it)
         std::string elementType;
+        //visual style group of template/ the filler houses are drawn from
+        //("sea-city", "desert-city"...), matched on the surrounding terrain
+        std::string style;
     };
     struct CityInternal
     {
@@ -151,18 +154,30 @@ public:
     };
     static RoadMountain mountain;
 
-    struct RoomSettings
+    //A building template is a FOLDER of template/: one exterior tmx (the facade
+    //brushed on the city ground) plus its floor-N.tmx interiors and their
+    //floor-N.xml content skeleton. A group holds one folder per variant
+    //("sea-city/1".."sea-city/7"), or the files directly when it has a single
+    //variant ("shop-small"). Groups are discovered on disk, never hard-coded.
+    struct BuildingVariant
     {
-        SettingsAll::Furnitures table;
-        SettingsAll::Furnitures exit;
-        SettingsAll::Furnitures stairUp;
-        SettingsAll::Furnitures stairDown;
-        SettingsAll::RoomStructure wall;
-        QString floor;
-        int id;
-        int hasFloorUp;
-        int hasFloorDown;
+        std::string folder;//"sea-city/1/", under template/
+        std::string exterior;//"building-house": the exterior tmx base name
+        MapBrush::MapTemplate mapTemplate;
+        //door wiring, template-local tiles. doorX/doorY is the doorstep CELL the
+        //player stands on (the engine door tile is the collision one above it),
+        //spawnX/spawnY where they land inside floor-0.
+        unsigned int doorX,doorY;
+        unsigned int spawnX,spawnY;
     };
+    struct BuildingGroup
+    {
+        std::string name;
+        std::vector<BuildingVariant> variants;
+    };
+    static std::map<std::string,BuildingGroup> buildingGroups;
+    //the discovered "*-city" style groups, in scan order
+    static std::vector<std::string> cityStyles;
     static int botId;
 
     //one inline <bot> definition is emitted per bot, as a direct child of the
@@ -244,6 +259,40 @@ public:
     static Orientation reverseOrientation(const Orientation &orientation);
     static std::string orientationToString(const Orientation &orientation);
     static void loadMapTemplate(const char * folderName,MapBrush::MapTemplate &mapTemplate,const QString& fileName,const unsigned int mapWidth,const unsigned int mapHeight,Tiled::Map &worldMap);
+    //discover every building template group of template/ and load its variants
+    //(exterior + interiors), staging their tilesets into dest/map/tileset/ and
+    //wiring the door/exit objects. Called once before the city pass.
+    static void scanBuildingTemplates(Tiled::Map &worldMap,const unsigned int mapWidth,const unsigned int mapHeight);
+    //NULL when the group does not exist on disk
+    static BuildingGroup *buildingGroup(const std::string &name);
+    //copy a tileset (tsx + its image) used by a template into dest/map/tileset/
+    //so the generated datapack is self contained, and return the world instance
+    static Tiled::SharedTileset stageTemplateTileset(Tiled::Map &worldMap,const QString &tsxPath);
+    //compute the doorstep/spawn cells and create the missing door (exterior) and
+    //exit (floor-0) objects: a template only has to draw the building
+    static void wireBuildingDoors(BuildingVariant &variant);
+    //<bot> definitions of one interior floor, rebuilt from the template's
+    //floor-N.xml SKELETON (bot ids, step ids and step types are kept, every
+    //content is regenerated for this city: texts, shop products, fight teams)
+    //injectedBots receives the bot objects the generator ADDED to the shared
+    //template (the extra gym trainers): the caller removes them once the map is
+    //written, so the template stays as the author drew it
+    static QString interiorBotXml(const BuildingVariant &variant,const std::string &floorName,
+                                  const std::string &destinationFile,
+                                  Tiled::Map *floorMap,const BotKind &kind,const City &city,
+                                  const SettingsAll::SettingsExtra &setting,
+                                  const std::vector<RoadMonster> &monsterPool,const uint8_t &level,
+                                  const std::string &gymTypeName,const std::vector<std::string> &gymTypeMonsters,
+                                  std::vector<Tiled::MapObject*> &injectedBots);
+    //fight step content shared by the gym trainers and the in-house trainers
+    static QString fightStepXml(const unsigned int &stepId,const bool &leader,
+                                const SettingsAll::SettingsExtra &setting,
+                                const std::vector<RoadMonster> &monsterPool,const uint8_t &level,
+                                const std::string &gymTypeName,const std::vector<std::string> &gymTypeMonsters,
+                                const QString &startText,const QString &winText);
+    //write the npc text slots collected during the generation, so npcfill.py can
+    //regenerate every line with the local LLM
+    static void writeNpcSlots(const SettingsAll::SettingsExtra &setting);
     static void addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCount, const unsigned int &mapYCount);
     static std::string getMapFile(const unsigned int &x, const unsigned int &y);
     static std::string lowerCase(std::string str);
@@ -253,7 +302,8 @@ public:
                                  const std::pair<uint8_t,uint8_t> pos, const City &city, const std::string &zone,
                                  const BotKind &botKind, const SettingsAll::SettingsExtra &setting,
                                  const std::vector<RoadMonster> &monsterPool, const uint8_t &level,
-                                 const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters);
+                                 const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters,
+                                 const BuildingVariant &variant);
 
     /**
      * @brief addRoadContent Populate road between the city
@@ -278,10 +328,6 @@ public:
                                         const unsigned int &singleMapWidth, const unsigned int &singleMapHeight,
                                         const SettingsAll::SettingsExtra &setting);
     static Tiled::Tile* fetchTile(Tiled::Map &worldMap, QString data);
-    static void generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate& mapTemplate, const unsigned int id, const uint32_t &x, const uint32_t &y,
-                             const std::pair<uint8_t,uint8_t> pos, const City &city, const std::string &zone, const SettingsAll::SettingsExtra &setting, RoomSettings &roomSettings);
-    static void generateRoomContent(Tiled::Map& roomMap, const SettingsAll::SettingsExtra &setting, const RoomSettings& roomSettings);
-    static void placeRoomFurniture(Tiled::Map& roomMap, const SettingsAll::Furnitures& furnitures, int x, int y);
 };
 
 #endif // LOADMAPALL_H

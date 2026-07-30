@@ -89,68 +89,6 @@ region\walkway="Terra/55->Terra/243;Terra/53->Terra/242;Terra/22->Terra/179;Terr
 region\walkwayregion=20
 region\waterchance=0.2
 
-[room]
-floor="terra/128,terra/129,terra/130,terra/131,terra/132,terra/133,terra/134,terra/135,terra/136,terra/137,terra/138,terra/160,terra/161,terra/164,terra/165,terra/167,terra/194,terra/199,terra/226,terra/227"
-furniture\desk\layer="Collisions"
-furniture\desk\tiles="mobilier/12,mobilier/45"
-furniture\desk\tags="desk"
-furniture\desk\width=2
-furniture\table1\layer="Collisions"
-furniture\table1\tiles="mobilier/0,mobilier/1,mobilier/2,mobilier/3,mobilier/32,mobilier/33,mobilier/34,mobilier/35"
-furniture\table1\tags="table"
-furniture\table1\width=4
-furniture\table2\layer="Collisions"
-furniture\table2\tiles="mobilier/128,mobilier/129,mobilier/130,mobilier/131,mobilier/160,mobilier/161,mobilier/162,mobilier/163"
-furniture\table2\tags="table"
-furniture\table2\width=4
-furniture\exit\layer="OnGrass"
-furniture\exit\tags="exit"
-furniture\exit\template="exit"
-furniture\tv\layer="Collisions"
-furniture\tv\tiles="mobilier/12,mobilier/44"
-furniture\tv\tags="screen"
-furniture\tv\offsetY=-1
-furniture\computer\layer="Collisions"
-furniture\computer\tiles="mobilier/11,mobilier/43"
-furniture\computer\tags="screen"
-furniture\computer\offsetY=-1
-furniture\stairup\template="stair-up"
-furniture\stairup\tags="stair-up"
-furniture\stairup\width=2
-furniture\stairup\offsetY=-1
-furniture\stairdown\template="stair-down"
-furniture\stairdown\tags="stair-down"
-furniture\stairdown\width=2
-furniture\fridge\template="fridge"
-furniture\fridge\tags="fridge"
-furniture\fridge\width=1
-furniture\fridge\offsetY=-1
-limitation\fridge\chance=0.8
-limitation\screen\chance=0.8
-tileset="terra->main/tileset/inside-terra.tsx,mobilier->main/tileset/inside-mobilier.tsx,invisible->main/tileset/invisible.tsx,invisible->main/tileset/t1.tsx"
-walls\orange\layer="OnGrass"
-walls\orange\tiles="terra/3,terra/35"
-walls\gym\layer="OnGrass"
-walls\gym\tiles="terra/4,terra/36"
-walls\red\layer="OnGrass"
-walls\red\tiles="terra/5,terra/37"
-walls\generic1\layer="OnGrass"
-walls\generic1\tiles="terra/6,terra/38"
-walls\generic2\layer="OnGrass"
-walls\generic2\tiles="terra/7,terra/39"
-walls\generic3\layer="OnGrass"
-walls\generic3\tiles="terra/8,terra/40"
-walls\generic4\layer="OnGrass"
-walls\generic4\tiles="terra/9,terra/41"
-walls\generic5\layer="OnGrass"
-walls\generic5\tiles="terra/10,terra/42"
-walls\generic6\layer="OnGrass"
-walls\generic6\tiles="terra/11,terra/43"
-walls\generic7\layer="OnGrass"
-walls\generic7\tiles="terra/12,terra/44"
-walls\generic8\layer="OnGrass"
-walls\generic8\tiles="terra/13,terra/45"
-
 [temp]
 monstainborder\collision_tile="21,22,23,55,87,86,85,53,82,83,115,114"
 
@@ -237,6 +175,11 @@ gymTypes="fire:#f38233->Panthera fira,Vivicinder;water:#2E9EF3->Dinoflop,Pharfan
 ; a city takes the type whose terrain keywords match its surroundings; the
 ; gym type follows the city type; counts stay balanced across the world
 cityTypeTerrains="water->water;stone->mountain,sand;plant->grass;ice->snow"
+; cityStyleTerrains: which template/<style>-city/ folder the filler HOUSES of a
+; city are drawn from, matched on the same terrain keywords. A style folder
+; present in template/ but absent here is used as a random fallback, so adding
+; a style is just dropping a folder in template/.
+cityStyleTerrains="sea-city->water,sea,beach;desert-city->desert,sand"
 typeXml=
 ; key-building / bot generation (CatchChallenger-datapack).
 ; shopItems = numeric item ids that exist in items/items.xml.

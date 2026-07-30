@@ -3,7 +3,7 @@
     <bot id="1">
         <name>Sign</name>
         <step id="1" type="text">
-            <text><![CDATA[Phew! Preparing food for Pokémon is exhausting. My Machop devours three pots of stew a day!]]></text>
+            <text><![CDATA[Phew! Preparing food for monsters is exhausting. My little fighter devours three pots of stew a day!]]></text>
         </step>
     </bot>
     <bot id="4">

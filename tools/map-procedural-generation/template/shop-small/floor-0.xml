@@ -1,21 +1,24 @@
 <map zone="test" type="indoor">
-    <name>Poké Mart</name>
-    <name lang="fr">Boutique Pokémon</name>
+    <name>Mart</name>
+    <name lang="fr">Boutique</name>
     <bot id="1">
         <name>Seller</name>
         <name lang="fr">Vendeur</name>
         <step type="text" id="1">
-            <text><![CDATA[Welcome to the PokeMart<br />
+            <text><![CDATA[Welcome to the Mart<br />
         <a href="2">Buy</a><br />
         <a href="3">Sell</a>]]></text>
-            <text lang="fr"><![CDATA[Bienvenu dans la Boutique Pokémon<br />
+            <text lang="fr"><![CDATA[Bienvenu dans la Boutique<br />
         <a href="2">Acheter</a><br />
         <a href="3">Vendre</a>]]></text>
         </step>
         <step type="shop" id="2">
-            <product item="Recipe of potion" overridePrice="85"/>
-            <product item="Poke Ball" overridePrice="120"/>
         </step>
         <step type="sell" id="3"/>
+    </bot>
+    <bot id="2">
+        <step id="1" type="text">
+            <text><![CDATA[Give me a couple of potions]]></text>
+        </step>
     </bot>
 </map>

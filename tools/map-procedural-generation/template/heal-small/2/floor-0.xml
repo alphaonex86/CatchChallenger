@@ -4,8 +4,8 @@
         <name>Nurse Joy</name>
         <name lang="fr">Infirmière Joëlle</name>
         <step type="text" id="1">
-            <text><![CDATA[Let me heal your Pokemon for you...<br /><a href="2;3">[Heal]</a>]]></text>
-            <text lang="fr"><![CDATA[Laissez moi soigner vos Pokémon...<br /><a href="2;3">[Soin]</a>]]></text>
+            <text><![CDATA[Let me heal your monsters for you...<br /><a href="2;3">[Heal]</a>]]></text>
+            <text lang="fr"><![CDATA[Laissez moi soigner vos monstres...<br /><a href="2;3">[Soin]</a>]]></text>
         </step>
         <step type="heal" id="2"/>
         <step type="text" id="3">
@@ -14,11 +14,11 @@
         </step>
     </bot>
     <bot id="3">
-        <name>Pokemon storage system</name>
-        <name lang="fr">Systéme de stockage Pokémon</name>
+        <name>Monster storage system</name>
+        <name lang="fr">Systéme de stockage de monstres</name>
         <step type="text" id="1">
-            <text><![CDATA[Welcome to the Pokemon storage system.<br /><a href="2">[Warehouse]</a>]]></text>
-            <text lang="fr"><![CDATA[Bienvenue dans le Systéme de stockage Pokémon.<br /><a href="2">[Warehouse]</a>]]></text>
+            <text><![CDATA[Welcome to the monster storage system.<br /><a href="2">[Warehouse]</a>]]></text>
+            <text lang="fr"><![CDATA[Bienvenue dans le systéme de stockage de monstres.<br /><a href="2">[Warehouse]</a>]]></text>
         </step>
         <step type="warehouse" id="2"/>
     </bot>

@@ -39,7 +39,7 @@
   </data>
  </layer>
  <objectgroup id="8" name="Object">
-  <object id="4" gid="1025" x="0" y="48" width="16" height="16">
+  <object id="4" type="bot" gid="1025" x="0" y="48" width="16" height="16">
    <properties>
     <property name="id" type="int" value="4"/>
     <property name="lookAt" value="bottom"/>

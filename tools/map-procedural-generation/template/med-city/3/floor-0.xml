@@ -3,7 +3,7 @@
     <bot id="1">
         <name>Sign</name>
         <step id="1" type="text">
-            <text><![CDATA[My room is a total mess because my Pikachu keeps hiding Poké Balls under the bed.]]></text>
+            <text><![CDATA[My room is a total mess because my little monster keeps hiding my traps under the bed.]]></text>
         </step>
     </bot>
     <bot id="4">

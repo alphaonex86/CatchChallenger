@@ -663,16 +663,18 @@ static void deriveCityGround(const MapBrush::MapTemplate &mapTemplate, LoadMapAl
     ground.valid=true;
 }
 
-//perform ONE city building placement at an already validated position: facade
-//brush, plain house with interior, or key building (heal/shop/gym) chain
+//perform ONE city building placement at an already validated position: either a
+//doorless facade (big city filler) or the full building chain — exterior brush,
+//interiors written next to the city map, content regenerated from the template
 static void placeCityBuilding(Tiled::Map &worldMap, MapBrush::MapTemplate &temp,
         const LoadMapAll::BotKind slotKind, const std::string &slotBaseName, const bool facadeOnly,
         const unsigned int x, const unsigned int y,
         const unsigned int mapWidth, const unsigned int mapHeight,
         const std::pair<uint8_t,uint8_t> &pos,
         LoadMapAll::City &city, const std::string &cityLowerCaseName,
-        const SettingsAll::SettingsExtra &setting, LoadMapAll::RoomSettings &rs, int &buildingId,
-        const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters)
+        const SettingsAll::SettingsExtra &setting,
+        const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters,
+        const LoadMapAll::BuildingVariant &variant)
 {
     //remember the footprint: the avenue/path paint must never touch its tiles
     {
@@ -685,29 +687,24 @@ static void placeCityBuilding(Tiled::Map &worldMap, MapBrush::MapTemplate &temp,
     }
     if(facadeOnly)
         LoadMapAll::brushFacade(temp,worldMap,x*mapWidth+pos.first,y*mapHeight+pos.second);
-    else if(slotBaseName.empty())
-    {
-        LoadMapAll::generateRoom(worldMap,temp,buildingId,x,y,pos,city,cityLowerCaseName,setting,rs);
-        buildingId++;
-    }
     else
     {
-        //a key building (heal/shop/gym). For a gym build a VALID
+        //a building with an interior. For a trainer building (gym) build a VALID
         //monster pool from an adjacent road tile (the city tile
         //itself has none) — never .at() the city coord; if no
-        //adjacent pool exists botStepXml falls back to a text bot.
+        //adjacent pool exists the fight step falls back to a text bot.
         std::vector<LoadMapAll::RoadMonster> buildingPool;
         const uint8_t buildingLevel=city.level;
-        std::string desc="Building";
+        std::string desc="House";
         if(slotKind==LoadMapAll::BotKind_heal)
-            desc="Heal";
+            desc=city.name+" Hospital";
         else if(slotKind==LoadMapAll::BotKind_shop)
-            desc="Shop";
+            desc=city.name+" Mart";
         else if(slotKind==LoadMapAll::BotKind_fight)
         {
-            desc="Gym";
+            desc=city.name+" Gym";
             if(!gymTypeName.empty())
-                desc="Gym ("+gymTypeName+")";
+                desc=city.name+" Gym ("+gymTypeName+")";
             const int nbx[4]={(int)x-1,(int)x+1,(int)x,(int)x};
             const int nby[4]={(int)y,(int)y,(int)y-1,(int)y+1};
             int n=0;
@@ -726,7 +723,7 @@ static void placeCityBuilding(Tiled::Map &worldMap, MapBrush::MapTemplate &temp,
                 n++;
             }
         }
-        LoadMapAll::addBuildingChain(slotBaseName,desc,temp,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName,slotKind,setting,buildingPool,buildingLevel,gymTypeName,gymTypeMonsters);
+        LoadMapAll::addBuildingChain(slotBaseName,desc,temp,worldMap,x,y,mapWidth,mapHeight,pos,city,cityLowerCaseName,slotKind,setting,buildingPool,buildingLevel,gymTypeName,gymTypeMonsters,variant);
     }
 }
 
@@ -873,8 +870,9 @@ static void connectDoorFrontsToAvenue(AvenueLotState &lots, MapBrush::MapTemplat
 static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
         const LoadMapAll::BotKind slotKind, const std::string &slotBaseName, const bool facadeOnly,
         LoadMapAll::City &city, const std::string &cityLowerCaseName,
-        const SettingsAll::SettingsExtra &setting, LoadMapAll::RoomSettings &rs, int &buildingId,
-        const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters)
+        const SettingsAll::SettingsExtra &setting,
+        const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters,
+        const LoadMapAll::BuildingVariant &variant)
 {
     const int bandTopTile=(int)lots.hy0*(int)lots.scale;
     const int bandBottomTile=((int)lots.hy1+1)*(int)lots.scale;
@@ -927,8 +925,8 @@ static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
                         const std::pair<uint8_t,uint8_t> pos(posX,posY);
                         placeCityBuilding(*lots.worldMap,temp,slotKind,slotBaseName,facadeOnly,
                                           lots.chunkX,lots.chunkY,lots.mapWidth,lots.mapHeight,pos,
-                                          city,cityLowerCaseName,setting,rs,buildingId,
-                                          gymTypeName,gymTypeMonsters);
+                                          city,cityLowerCaseName,setting,
+                                          gymTypeName,gymTypeMonsters,variant);
                         cy=by;
                         while(cy<ey)
                         {
@@ -1627,16 +1625,11 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
     LoadMap::Terrain* water = searchWater();
 
     Tiled::Cell waterTile = Tiled::Cell();
-    MapBrush::MapTemplate mapTemplatebuildingshop;
-    MapBrush::MapTemplate mapTemplatebuildingheal;
-    MapBrush::MapTemplate mapTemplatebuilding1;
-    MapBrush::MapTemplate mapTemplatebuilding2;
-    MapBrush::MapTemplate mapTemplatebuildingbig1;
-    loadMapTemplate("building-shop/",mapTemplatebuildingshop,"building-shop",mapWidth,mapHeight,worldMap);
-    loadMapTemplate("building-heal/",mapTemplatebuildingheal,"building-heal",mapWidth,mapHeight,worldMap);
-    loadMapTemplate("building-1/",mapTemplatebuilding1,"building-1",mapWidth,mapHeight,worldMap);
-    loadMapTemplate("building-2/",mapTemplatebuilding2,"building-2",mapWidth,mapHeight,worldMap);
-    loadMapTemplate("building-big-1/",mapTemplatebuildingbig1,"building-big-1",mapWidth,mapHeight,worldMap);
+    //every building of a city comes from a template folder: heal-<size>,
+    //shop-<size>, gym-building and one house per city style (sea-city,
+    //desert-city...). The groups are DISCOVERED on disk, so adding a style is
+    //dropping a folder in template/.
+    scanBuildingTemplates(worldMap,mapWidth,mapHeight);
 
     citySigns.clear();
     cityBuildingRects.clear();
@@ -1658,17 +1651,11 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
             wallTileIndex++;
         }
     }
-    //gym building template (typed facade); falls back to building-big-1 when absent
-    MapBrush::MapTemplate mapTemplategym;
-    bool haveGymTemplate=false;
-    if(QFile::exists("template/gym-building/gym-building.tmx")
-            && QFile::exists(QCoreApplication::applicationDirPath()+"/dest/map/tileset/gym-base.tsx"))
-    {
-        //pre-add the staged blue gym tileset so the template matches the dest copy
-        LoadMap::readTileset("tileset/gym-base.tsx",&worldMap);
-        loadMapTemplate("gym-building/",mapTemplategym,"gym-building",mapWidth,mapHeight,worldMap);
-        haveGymTemplate=true;
-    }
+    //gym building template (typed facade), optional: no template, no gym
+    const BuildingGroup * const gymGroup=buildingGroup("gym-building");
+    const bool haveGymTemplate=(gymGroup!=NULL);
+    if(!haveGymTemplate)
+        std::cerr << "No template/gym-building/: the cities get no gym" << std::endl;
     //world tileset per gym type, added on first use
     std::map<std::string,Tiled::Tileset*> gymTypeWorldTilesets;
 
@@ -1795,6 +1782,106 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
             }
             city.elementType=setting.gymTypeNames.at(bestType);
             typeCount[bestType]++;
+            cityIndex++;
+        }
+    }
+
+    //VISUAL STYLE of every city: which template/<style>-city/ folder its houses
+    //come from. Terrain first (a sea town by the water, a desert town in the
+    //sand — [city] cityStyleTerrains), the rest is drawn at random among the
+    //styles that no terrain claims, keeping the counts balanced.
+    if(!cityStyles.empty())
+    {
+        std::vector<unsigned int> styleCount(cityStyles.size(),0);
+        unsigned int cityIndex=0;
+        while(cityIndex<cities.size())
+        {
+            City &city=cities[cityIndex];
+            //terrain profile of the chunk plus a 4-tile margin (same sampling as
+            //the element type above)
+            std::map<std::string,unsigned int> terrainCount;
+            {
+                const int x0=(int)(city.x*mapWidth)-4;
+                const int y0=(int)(city.y*mapHeight)-4;
+                const int x1=(int)((city.x+1)*mapWidth)+4;
+                const int y1=(int)((city.y+1)*mapHeight)+4;
+                int sampleY=y0;
+                while(sampleY<y1)
+                {
+                    int sampleX=x0;
+                    while(sampleX<x1)
+                    {
+                        if(sampleX>=0 && sampleY>=0 && sampleX<worldMap.width() && sampleY<worldMap.height())
+                        {
+                            const unsigned int zoneIndex=VoronioForTiledMapTmx::voronoiMap.tileToPolygonZoneIndex[sampleX+sampleY*worldMap.width()].index;
+                            const VoronioForTiledMapTmx::PolygonZone &zone=VoronioForTiledMapTmx::voronoiMap.zones.at(zoneIndex);
+                            if(zone.height<5 && zone.moisure>=1 && zone.moisure<=6)
+                                terrainCount[LoadMap::terrainList[zone.height][zone.moisure-1].terrainName.toLower().toStdString()]++;
+                        }
+                        sampleX+=2;
+                    }
+                    sampleY+=2;
+                }
+            }
+            int bestStyle=-1;
+            unsigned int bestScore=0;
+            unsigned int mappingIndex=0;
+            while(mappingIndex<setting.cityStyleTerrains.size())
+            {
+                const std::string &mappedStyle=setting.cityStyleTerrains.at(mappingIndex).first;
+                const int styleIndex=vectorindexOf(cityStyles,mappedStyle);
+                if(styleIndex>=0)
+                {
+                    unsigned int score=0;
+                    const std::vector<std::string> &keywords=setting.cityStyleTerrains.at(mappingIndex).second;
+                    for(const std::pair<const std::string,unsigned int> &entry : terrainCount)
+                    {
+                        unsigned int keywordIndex=0;
+                        while(keywordIndex<keywords.size())
+                        {
+                            if(entry.first.find(keywords.at(keywordIndex))!=std::string::npos)
+                            {
+                                score+=entry.second;
+                                break;
+                            }
+                            keywordIndex++;
+                        }
+                    }
+                    if(score>bestScore)
+                    {
+                        bestStyle=styleIndex;
+                        bestScore=score;
+                    }
+                }
+                mappingIndex++;
+            }
+            if(bestStyle<0)
+            {
+                //no terrain match: the least used style among those no terrain
+                //rule claims (else any style), so every folder gets used
+                unsigned int styleIndex=0;
+                while(styleIndex<cityStyles.size())
+                {
+                    bool claimed=false;
+                    unsigned int claimIndex=0;
+                    while(claimIndex<setting.cityStyleTerrains.size())
+                    {
+                        if(setting.cityStyleTerrains.at(claimIndex).first==cityStyles.at(styleIndex))
+                            claimed=true;
+                        claimIndex++;
+                    }
+                    if(!claimed)
+                    {
+                        if(bestStyle<0 || styleCount.at(styleIndex)<styleCount.at(bestStyle))
+                            bestStyle=(int)styleIndex;
+                    }
+                    styleIndex++;
+                }
+            }
+            if(bestStyle<0)
+                bestStyle=(int)(rand()%cityStyles.size());
+            city.style=cityStyles.at(bestStyle);
+            styleCount[bestStyle]++;
             cityIndex++;
         }
     }
@@ -2167,27 +2254,42 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         }
                     }
 
-                    // City buildings: a heal center first, an optional gym for
-                    // non-small cities, an optional shop, then a few houses.
-                    // templateKind / templateBaseName run parallel to templates
-                    // and drive per-slot bot generation. baseName "" means a
-                    // plain house (handled by generateRoom, or a doorless facade
-                    // in a big city).
+                    // City buildings: the heal center and the shop sized on the
+                    // city (heal-small/medium/big, shop-small/medium/big), the
+                    // gym of the non-small cities, then filler houses drawn from
+                    // the city STYLE folder. templateKind/templateBaseName/
+                    // templateVariant run parallel to templates.
                     QList<MapBrush::MapTemplate> templates = QList<MapBrush::MapTemplate>();
                     std::vector<BotKind> templateKind;
                     std::vector<std::string> templateBaseName;
+                    std::vector<const BuildingVariant *> templateVariant;
+                    const std::string citySizeSuffix=(city==NULL)?std::string("small"):
+                        ((city->type==CityType_big)?std::string("big"):
+                         ((city->type==CityType_medium)?std::string("medium"):std::string("small")));
 
-                    templates.push_back(mapTemplatebuildingheal);
-                    templateKind.push_back(BotKind_heal);
-                    templateBaseName.push_back("building-heal");
+                    {
+                        BuildingGroup * const healGroup=buildingGroup("heal-"+citySizeSuffix);
+                        if(healGroup==NULL)
+                        {
+                            std::cerr << "Missing template/heal-" << citySizeSuffix << "/" << std::endl;
+                            abort();
+                        }
+                        const BuildingVariant &variant=healGroup->variants.at(rand()%healGroup->variants.size());
+                        templates.push_back(variant.mapTemplate);
+                        templateKind.push_back(BotKind_heal);
+                        templateBaseName.push_back("heal");
+                        templateVariant.push_back(&variant);
+                    }
 
                     //each gym picks a type: part of the trainer monsters come from
                     //the type pool and the gym facade is recolored with the type
                     //color (gym-<type> tileset generated into dest/map/tileset/)
                     std::string gymTypeName;
                     std::vector<std::string> gymTypeMonsters;
-                    if(setting.doGym && city!=NULL && city->type!=CityType_small){
-                        MapBrush::MapTemplate gymTemplate=haveGymTemplate ? mapTemplategym : mapTemplatebuildingbig1;
+                    const BuildingVariant *gymVariant=NULL;
+                    if(setting.doGym && haveGymTemplate && city!=NULL && city->type!=CityType_small){
+                        gymVariant=&gymGroup->variants.at(rand()%gymGroup->variants.size());
+                        MapBrush::MapTemplate gymTemplate=gymVariant->mapTemplate;
                         if(!setting.gymTypeNames.empty())
                         {
                             //the gym type MATCHES the city element type
@@ -2230,12 +2332,21 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         templates.push_back(gymTemplate);
                         templateKind.push_back(BotKind_fight);
                         templateBaseName.push_back("gym");
+                        templateVariant.push_back(gymVariant);
                     }
 
-                    if(rand()%2){
-                        templates.push_back(mapTemplatebuildingshop);
+                    {
+                        BuildingGroup * const shopGroup=buildingGroup("shop-"+citySizeSuffix);
+                        if(shopGroup==NULL)
+                        {
+                            std::cerr << "Missing template/shop-" << citySizeSuffix << "/" << std::endl;
+                            abort();
+                        }
+                        const BuildingVariant &variant=shopGroup->variants.at(rand()%shopGroup->variants.size());
+                        templates.push_back(variant.mapTemplate);
                         templateKind.push_back(BotKind_shop);
-                        templateBaseName.push_back("building-shop");
+                        templateBaseName.push_back("shop");
+                        templateVariant.push_back(&variant);
                     }
 
                     //a big city has more buildings, aligned around the avenue;
@@ -2246,78 +2357,38 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                     else
                         building = rand()%4 + 2;
 
-                    for(int i=0; i<building; i++){
-                        switch (rand()%3) {
-                        case 0:
-                            templates.push_back(mapTemplatebuilding1);
-                            break;
-                        case 1:
-                            templates.push_back(mapTemplatebuilding2);
-                            break;
-                        case 2:
-                            templates.push_back(mapTemplatebuildingbig1);
-                            break;
+                    //the filler houses come from the style folder of the city,
+                    //without repeating the same variant twice in a row
+                    BuildingGroup *styleGroup=NULL;
+                    if(city!=NULL && !city->style.empty())
+                        styleGroup=buildingGroup(city->style);
+                    if(styleGroup==NULL && !cityStyles.empty())
+                        styleGroup=buildingGroup(cityStyles.at(rand()%cityStyles.size()));
+                    if(styleGroup==NULL)
+                    {
+                        std::cerr << "No template/<style>-city/ folder at all" << std::endl;
+                        abort();
+                    }
+                    {
+                        int lastVariant=-1;
+                        int houseNumber=1;
+                        for(int i=0; i<building; i++){
+                            int variantIndex=rand()%styleGroup->variants.size();
+                            if(variantIndex==lastVariant && styleGroup->variants.size()>1)
+                                variantIndex=(variantIndex+1)%styleGroup->variants.size();
+                            lastVariant=variantIndex;
+                            const BuildingVariant &variant=styleGroup->variants.at(variantIndex);
+                            templates.push_back(variant.mapTemplate);
+                            templateKind.push_back(BotKind_text);
+                            templateBaseName.push_back("house-"+std::to_string(houseNumber));
+                            templateVariant.push_back(&variant);
+                            houseNumber++;
                         }
-                        templateKind.push_back(BotKind_text);
-                        templateBaseName.push_back("");
                     }
 
                     std::sort(zones.begin(), zones.end(), ZoneSorter(scaleWidth, scaleHeight));
 
                     if(city != NULL){
-                        LoadMapAll::RoomSettings rs;
-                        {
-                            std::vector<SettingsAll::Furnitures> tables{};
-                            std::vector<SettingsAll::Furnitures> exits{};
-                            std::vector<SettingsAll::Furnitures> down{};
-                            std::vector<SettingsAll::Furnitures> up{};
-
-                            for(SettingsAll::Furnitures f: setting.room.furnitures){
-                                if(f.tags.contains("table", Qt::CaseInsensitive)){
-                                    tables.push_back(f);
-                                }
-                                if(f.tags.contains("exit", Qt::CaseInsensitive)){
-                                    exits.push_back(f);
-                                }
-                                if(f.tags.contains("stair-down", Qt::CaseInsensitive)){
-                                    down.push_back(f);
-                                }
-                                if(f.tags.contains("stair-up", Qt::CaseInsensitive)){
-                                    up.push_back(f);
-                                }
-                            }
-
-                            if(!tables.empty()){
-                                rs.table = tables.at(rand()%tables.size());
-                            }else{
-                                std::cerr << "No table in furniture" << std::endl;
-                                abort();
-                            }
-
-                            if(!exits.empty()){
-                                rs.exit = exits.at(rand()%exits.size());
-                            }else{
-                                std::cerr << "No exit in furniture" << std::endl;
-                                abort();
-                            }
-
-                            if(!down.empty()){
-                                rs.stairDown = down.at(rand()%down.size());
-                            }else{
-                                std::cerr << "No stair-down in furniture" << std::endl;
-                                abort();
-                            }
-
-                            if(!up.empty()){
-                                rs.stairUp = up.at(rand()%up.size());
-                            }else{
-                                std::cerr << "No stair-up in furniture" << std::endl;
-                                abort();
-                            }
-                        }
-                        rs.wall = setting.room.walls.at(rand()%setting.room.walls.size());
-                        rs.floor = setting.room.floors.at(rand()%setting.room.floors.size());
-
                         const std::string &cityLowerCaseName=LoadMapAll::lowerCase(city->name);
 
                         std::vector<std::pair<uint8_t, uint8_t>> startingPoint {};
@@ -2335,7 +2406,6 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             startingPoint.push_back(std::pair<uint8_t, uint8_t>(scaleWidth/2, 0));
                         }
 
-                        int buildingId=1;
                         bool interiorHouseDone=false;
 
                         //street-front lot state: the random zones only cover part
@@ -2392,9 +2462,10 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             MapBrush::MapTemplate &temp=templates[templateIndex];
                             const BotKind slotKind=templateKind.at(templateIndex);
                             const std::string &slotBaseName=templateBaseName.at(templateIndex);
-                            //big city: most plain houses are doorless facades (no content)
+                            const BuildingVariant * const slotVariant=templateVariant.at(templateIndex);
+                            //big city: most houses are doorless facades (no content)
                             bool facadeOnly=false;
-                            if(isBigCity && slotBaseName.empty())
+                            if(isBigCity && slotKind==BotKind_text)
                             {
                                 if(interiorHouseDone)
                                     facadeOnly=true;
@@ -2406,8 +2477,8 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             //buildings line up along the avenue
                             if(isBigCity && haveHorizontalBand)
                                 placed=placeOnAvenueLot(lots,temp,slotKind,slotBaseName,facadeOnly,
-                                                        *city,cityLowerCaseName,setting,rs,buildingId,
-                                                        gymTypeName,gymTypeMonsters);
+                                                        *city,cityLowerCaseName,setting,
+                                                        gymTypeName,gymTypeMonsters,*slotVariant);
                             int i=0;
                             int limit = 500;
                             if(!placed)
@@ -2465,7 +2536,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                         if(valid){
                                             placeCityBuilding(worldMap,temp,slotKind,slotBaseName,facadeOnly,
                                                               x,y,mapWidth,mapHeight,pos,*city,cityLowerCaseName,
-                                                              setting,rs,buildingId,gymTypeName,gymTypeMonsters);
+                                                              setting,gymTypeName,gymTypeMonsters,*slotVariant);
                                             zone->type = 5;
                                             //mark the footprint BEFORE the door path: the
                                             //route must never cross the building cells
@@ -2526,22 +2597,12 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             bool lotsLeft=true;
                             while(extraFacades>0 && lotsLeft)
                             {
-                                MapBrush::MapTemplate *facadeTemplate=&mapTemplatebuilding1;
-                                switch(rand()%3)
-                                {
-                                case 0:
-                                    facadeTemplate=&mapTemplatebuilding1;
-                                    break;
-                                case 1:
-                                    facadeTemplate=&mapTemplatebuilding2;
-                                    break;
-                                default:
-                                    facadeTemplate=&mapTemplatebuildingbig1;
-                                    break;
-                                }
-                                lotsLeft=placeOnAvenueLot(lots,*facadeTemplate,BotKind_text,std::string(),true,
-                                                          *city,cityLowerCaseName,setting,rs,buildingId,
-                                                          gymTypeName,gymTypeMonsters);
+                                const BuildingVariant &facadeVariant=
+                                    styleGroup->variants.at(rand()%styleGroup->variants.size());
+                                MapBrush::MapTemplate facadeTemplate=facadeVariant.mapTemplate;
+                                lotsLeft=placeOnAvenueLot(lots,facadeTemplate,BotKind_text,std::string(),true,
+                                                          *city,cityLowerCaseName,setting,
+                                                          gymTypeName,gymTypeMonsters,facadeVariant);
                                 extraFacades--;
                             }
                         }
@@ -2937,13 +2998,8 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
         }
         y++;
     }
-    LoadMapAll::deleteMapList(mapTemplatebuildingshop);
-    LoadMapAll::deleteMapList(mapTemplatebuildingheal);
-    LoadMapAll::deleteMapList(mapTemplatebuilding1);
-    LoadMapAll::deleteMapList(mapTemplatebuilding2);
-    LoadMapAll::deleteMapList(mapTemplatebuildingbig1);
-    if(haveGymTemplate)
-        LoadMapAll::deleteMapList(mapTemplategym);
+    //the building templates live in buildingGroups until the end of the run (the
+    //same variant is brushed in many cities), libtiled frees the maps itself
     if(haveCityBigTemplate)
         LoadMapAll::deleteMapList(mapTemplateCityBig);
     if(haveCityMediumTemplate)
@@ -4325,467 +4381,3 @@ QString LoadMapAll::botStepXml(const unsigned int &id, const BotKind &kind, cons
     return out;
 }
 
-void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate &mapTemplate, const unsigned int id, const uint32_t &x, const uint32_t &y,
-                              const std::pair<uint8_t, uint8_t> pos, const City &city, const std::string &zone,  const SettingsAll::SettingsExtra &setting, RoomSettings &roomSettings)
-{
-    //search the brush door and retarget
-    std::unordered_map<Tiled::MapObject*,Tiled::Properties> oldValue;
-    std::vector<Tiled::MapObject*> mainDoors=getDoorsListAndTp(mapTemplate.tiledMap);
-    std::vector<Tiled::MapObject*> doors{};
-    std::vector<Tiled::Map *> otherMap;
-    int w = mapTemplate.tiledMap->width()+4;
-    int h = mapTemplate.tiledMap->height()+4;
-    unsigned int index=0;
-
-    QString name = "building-"+QString::number(id);
-    //Generic houses are SINGLE-floor — multi-floor (floor-N folders) is reserved
-    //for big/special buildings, not plain houses (owner feedback: a building-N
-    //must not be a multi-floor building).  Keep the rand() draw so the
-    //deterministic building-placement stream downstream is unchanged.
-    ((void)((double)rand()/RAND_MAX));
-    unsigned int floorCount = 1;
-    if(mainDoors.size() > 0){
-        for(unsigned int i=0; i<floorCount; i++){
-            Tiled::Map* room = new Tiled::Map(mapTemplate.tiledMap->orientation(),
-                                              w, h,
-                                              mapTemplate.tiledMap->tileWidth(), mapTemplate.tiledMap->tileHeight());
-
-            roomSettings.id = i;
-            roomSettings.hasFloorDown = (i!=0);
-            roomSettings.hasFloorUp = (i!=floorCount-1);
-            generateRoomContent(*room, setting, roomSettings);
-            otherMap.push_back(room);
-
-            room->setProperty("floor-id", QString::number(i));
-        }
-    }
-
-    while(index<(unsigned int)mainDoors.size())
-    {
-        Tiled::MapObject* object=mainDoors.at(index);
-        Tiled::Properties properties=object->properties();
-        oldValue[object]=object->properties();
-        if(otherMap.size()>1)
-            properties["map"]=name+"/"+"floor-0";
-        else
-            properties["map"]=name;
-        properties["x"]=QString::number(w/2);
-        properties["y"]=QString::number(h-1);
-        object->setProperties(properties);
-        index++;
-    }
-    MapBrush::brushTheMap(worldMap,mapTemplate,x*setting.mapWidth+pos.first,y*setting.mapHeight+pos.second,MapBrush::mapMask,true);
-    index=0;
-    while(index<(unsigned int)mainDoors.size())//reset to the old value
-    {
-        Tiled::MapObject* object=mainDoors.at(index);
-        object->setProperties(oldValue.at(object));
-        index++;
-    }
-    doors.clear();
-    //search next hop door and retarget
-    {
-        unsigned int indexMap=0;
-        while(indexMap<otherMap.size())
-        {
-            std::vector<Tiled::MapObject*> doorsLocale=getDoorsListAndTp(otherMap.at(indexMap));
-            doors.insert(doors.end(),doorsLocale.begin(),doorsLocale.end());
-            unsigned int index=0;
-            while(index<(unsigned int)doorsLocale.size())
-            {
-                Tiled::MapObject* object=doorsLocale.at(index);
-                Tiled::Properties properties=object->properties();
-                oldValue[object]=properties;
-                if(object->name() == "exit")
-                {
-                    if(otherMap.size()>1)
-                        properties["map"]="../"+QString::fromStdString(LoadMapAll::lowerCase(city.name));
-                    else
-                        properties["map"]=QString::fromStdString(LoadMapAll::lowerCase(city.name));
-
-                    Tiled::MapObject* door = mainDoors.at(rand()%mainDoors.size());
-
-                    // Convert to pixel units when creating a new Tiled::MapObject
-                    // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
-                    properties["x"]=QString::number((door->x() / worldMap.tileWidth()) + pos.first);
-                    properties["y"]=QString::number((door->y() / worldMap.tileHeight()) + pos.second);
-
-                    object->setProperties(properties);
-                    object->setName("");
-                }
-                index++;
-            }
-            indexMap++;
-        }
-    }
-    //write all next hop
-    index=0;
-    while(index<(unsigned int)otherMap.size())
-    {
-        Tiled::Map *nextHopMap=otherMap.at(index);
-        Tiled::Properties properties=nextHopMap->properties();
-        //renumber this floor's bot objects to local ids 1..K and build the
-        //matching inline <bot> defs: the engine reads bots ONLY from a map's own
-        //sibling .xml, matched by uint8 id, so per-file local ids are required
-        //(the global botId counter overflows uint8 on large worlds).
-        QString botXml;
-        {
-            Tiled::ObjectGroup *npcs=LoadMap::searchObjectGroupByName(*nextHopMap,"Object");
-            if(npcs!=NULL)
-            {
-                const QList<Tiled::MapObject*> &npcObjects=npcs->objects();
-                unsigned int localBotId=1;
-                unsigned int indexNpc=0;
-                while(indexNpc<(unsigned int)npcObjects.size())
-                {
-                    Tiled::MapObject *npc=npcObjects.at(indexNpc);
-                    if(npc->type()=="bot")
-                    {
-                        Tiled::Properties npcProperties=npc->properties();
-                        npcProperties["id"]=QString::number(localBotId);
-                        npc->setProperties(npcProperties);
-                        botXml+=botStepXml(localBotId,BotKind_text,std::to_string(localBotId),
-                                           npcProperties.value("lookAt").toString(),setting,
-                                           std::vector<RoadMonster>(),0,
-                                           std::string(),std::vector<std::string>());
-                        localBotId++;
-                    }
-                    indexNpc++;
-                }
-            }
-        }
-        std::string filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+name.toStdString()+".tmx";
-        if(otherMap.size()>1)
-            filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+name.toStdString()+"/floor-"+std::to_string(index)+".tmx";
-
-        QFileInfo fileInfo(QCoreApplication::applicationDirPath()+QString::fromStdString(filePath));
-        QDir mapDir(fileInfo.absolutePath());
-        if(!mapDir.mkpath(fileInfo.absolutePath()))
-        {
-            std::cerr << "Unable to create path: " << fileInfo.absolutePath().toStdString() << std::endl;
-            abort();
-        }
-        Tiled::MapWriter maprwriter;
-
-#ifdef TILED_CSV
-        nextHopMap->setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
-#else
-        //canonical datapack encoding: base64 + zstd (like the hand-made
-        //gen2/johto reference), smaller than the libtiled default zlib.
-        nextHopMap->setLayerDataFormat(Tiled::Map::Base64Zstandard);
-#endif
-
-        nextHopMap->setProperties(Tiled::Properties());
-        if(!maprwriter.writeMap(nextHopMap,fileInfo.absoluteFilePath()))
-        {
-            std::cerr << "Unable to write " << fileInfo.absoluteFilePath().toStdString() << std::endl;
-            abort();
-        }
-        nextHopMap->setProperties(properties);
-
-        {
-            QString xmlPath(fileInfo.absoluteFilePath());
-            xmlPath.remove(xmlPath.size()-4,4);
-            xmlPath+=".xml";
-            QFile xmlinfo(xmlPath);
-            if(xmlinfo.open(QFile::WriteOnly))
-            {
-                QString content("<map");
-                if(properties.contains("type"))
-                    content+=" type=\""+properties.value("type").toString()+"\"";
-                if(!zone.empty())
-                    content+=" zone=\""+QString::fromStdString(zone)+"\"";
-                content+=">\n"
-                         "  <name>floor-"+QString::number(index)+"</name>\n";
-                content+=botXml;
-                content+="</map>";
-                QByteArray contentData(content.toUtf8());
-                xmlinfo.write(contentData.constData(),contentData.size());
-                xmlinfo.close();
-            }
-            else
-            {
-                std::cerr << "Unable to write " << xmlPath.toStdString() << std::endl;
-                abort();
-            }
-        }
-        index++;
-    }
-    //reset next hop
-    {
-        unsigned int index=0;
-        while(index<(unsigned int)doors.size())//reset to the old value
-        {
-            Tiled::MapObject* object=doors.at(index);
-            object->setProperties(oldValue.at(object));
-            index++;
-        }
-    }
-
-    //bot definitions are now emitted inline in each floor's own .xml above (the
-    //only place the engine reads bots from); the old <bots>-wrapped *-bot.xml
-    //sidecar was never read by the engine. Just free the per-floor room maps.
-    {
-        unsigned int indexRoom=0;
-        while(indexRoom<(unsigned int)otherMap.size())
-        {
-            delete otherMap.at(indexRoom);
-            indexRoom++;
-        }
-    }
-    doors.clear();
-}
-
-void LoadMapAll::generateRoomContent(Tiled::Map &roomMap, const SettingsAll::SettingsExtra &setting, const RoomSettings& roomSettings)
-{
-    SettingsAll::RoomSetting room = setting.room;
-
-    for(QString tileset: room.tilesets){
-        QStringList tilesetdata = tileset.split("->");
-        Tiled::Tileset* t;
-
-        if(tilesetdata.size() == 2){
-            t = LoadMap::readTileset(QString(tilesetdata.at(1)), &roomMap);
-            t->setName(tilesetdata.at(0));
-        }else{
-            t=LoadMap::readTileset(QString(tileset), &roomMap);
-        }
-    }
-
-    Tiled::TileLayer* walkable = new Tiled::TileLayer("Walkable", 0, 0, roomMap.width(), roomMap.height());
-    Tiled::TileLayer* RSLayer;
-    SettingsAll::RoomStructure wall = roomSettings.wall;
-
-    roomMap.addLayer(walkable);
-    roomMap.addLayer(new Tiled::TileLayer("OnGrass", 0, 0, roomMap.width(), roomMap.height()));
-    roomMap.addLayer(new Tiled::TileLayer("Collisions", 0, 0, roomMap.width(), roomMap.height()));
-    roomMap.addLayer(new Tiled::TileLayer("WalkBehind", 0, 0, roomMap.width(), roomMap.height()));
-    roomMap.addLayer(new Tiled::ObjectGroup("Moving", 0, 0));
-    roomMap.addLayer(new Tiled::ObjectGroup("Object", 0, 0));
-    RSLayer = LoadMap::searchTileLayerByName(roomMap, wall.layer);
-
-    // Generate wall & floor
-    {
-        Tiled::Tile* floor = fetchTile(roomMap, roomSettings.floor);
-
-        for(int x=0; x<roomMap.width(); x++){
-            for(int y=0; y<roomMap.height(); y++){
-                if(y < wall.height){
-                    RSLayer->setCell(x, y, Tiled::Cell(fetchTile(roomMap, wall.tiles[x%wall.width+y%wall.height*wall.width])));
-                }else{
-                    walkable->setCell(x, y, Tiled::Cell(floor));
-                }
-            }
-        }
-    }
-
-    // Generate table in the center
-    {
-        SettingsAll::Furnitures table = roomSettings.table;
-        int tx=(roomMap.width()-table.width)/2;
-        int ty=(roomMap.height()+wall.height-table.height)/2;
-
-        placeRoomFurniture(roomMap, table, tx, ty);
-    }
-
-    // Generate exit door
-    if(roomSettings.id == 0){
-        SettingsAll::Furnitures exitDoor = roomSettings.exit;
-        int tx=(roomMap.width()-exitDoor.width)/2;
-        int ty=roomMap.height()-exitDoor.height;
-        placeRoomFurniture(roomMap, exitDoor, tx, ty);
-    }
-
-    // Random Furnitures
-    {
-        // Deterministic per config.seed: rand() is seeded by srand(config.seed) (main.cpp).
-        // random_device here made interior furniture/bot placement non-reproducible per seed.
-        std::shuffle(room.limitations.begin(), room.limitations.end(), std::mt19937{(std::mt19937::result_type)rand()});
-        bool* spots = new bool[roomMap.width()];
-        memset(spots, false, roomMap.width());
-
-        if(roomSettings.hasFloorDown || roomSettings.hasFloorUp){
-            for(int i=roomMap.width()-4; i< roomMap.width(); i++){
-                spots[i] = true;
-            }
-        }
-
-        if(roomSettings.hasFloorDown && roomSettings.hasFloorUp){
-            for(int i=0; i< 4; i++){
-                spots[i] = true;
-            }
-
-            placeRoomFurniture(roomMap, roomSettings.stairDown, 2, wall.height);
-            placeRoomFurniture(roomMap, roomSettings.stairUp, roomMap.width()-roomSettings.stairUp.width, wall.height);
-        }else if(roomSettings.hasFloorDown){
-            placeRoomFurniture(roomMap, roomSettings.stairDown, roomMap.width()-4, wall.height);
-        }else if(roomSettings.hasFloorUp){
-            placeRoomFurniture(roomMap, roomSettings.stairUp, roomMap.width()-roomSettings.stairUp.width, wall.height);
-        }
-
-        for(SettingsAll::FurnituresLimitations limitation : room.limitations){
-            int count = limitation.min;
-            std::vector<SettingsAll::Furnitures> availables{};
-
-            for(int i=limitation.min; i<limitation.max; i++){
-                if((double)rand()/RAND_MAX < limitation.chance) count++;
-            }
-
-            for(SettingsAll::Furnitures f: room.furnitures){
-                if(f.tags.contains(limitation.tag, Qt::CaseInsensitive)){
-                    availables.push_back(f);
-                }
-            }
-
-            if(count > 0 && availables.size() > 0){
-                for(int i=0; i<count; i++){
-                    SettingsAll::Furnitures f = availables.at(rand()%availables.size());
-
-                    for(int j=0; j<4; j++) // Try 4 times to place it
-                    {
-                        int fx = rand()%roomMap.width()+f.offsetX;
-                        bool valid = true;
-                        if(fx+f.width < roomMap.width()){
-                            for(int x=0; x<f.width; x++){
-                                if(x+fx<0 || x+fx>=roomMap.width() || spots[x+fx]){
-                                    valid = false;
-                                    break;
-                                }
-                            }
-                        }else{
-                            valid = false;
-                        }
-
-                        if(valid){
-                            placeRoomFurniture(roomMap, f, fx-f.offsetX, wall.height);
-
-                            for(int x=0; x<f.width; x++){
-                                spots[x+fx]=true;
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        delete [] spots;
-    }
-
-    //---- Random townsfolk NPC: an interior must NOT be empty (owner feedback).
-    //generateRoom's writer turns any "bot" object in the Object group into an
-    //inline <bot> with a themed one-line message (botStepXml/BotKind_text), so a
-    //house feels lived-in.  Placed on a free floor tile, random skin + facing.
-    {
-        Tiled::ObjectGroup* objGroup=LoadMap::searchObjectGroupByName(roomMap,"Object");
-        Tiled::TileLayer* coll=LoadMap::searchTileLayerByName(roomMap,"Collisions");
-        Tiled::Tileset* invis=LoadMap::searchTilesetByName(roomMap,"invisible");
-        const int floorRows=roomMap.height()-wall.height-3; //walkable band (excl. back furniture row + bottom exit)
-        if(objGroup!=NULL && coll!=NULL && invis!=NULL && !setting.botSkins.empty() && floorRows>0)
-        {
-            int bx=-1,by=-1,tries=0;
-            while(tries<40 && bx<0)
-            {
-                const int tx=1+rand()%(roomMap.width()-2);
-                const int ty=wall.height+1+rand()%floorRows;
-                if(coll->cellAt(tx,ty).tile()==NULL && walkable->cellAt(tx,ty).tile()!=NULL)
-                { bx=tx; by=ty; }
-                tries++;
-            }
-            if(bx>=0)
-            {
-                const int tw=roomMap.tileWidth(), th=roomMap.tileHeight();
-                //object Y carries the engine's -1 tile correction, so add 1 row
-                Tiled::MapObject* npc=new Tiled::MapObject("","bot",QPointF(bx*tw,(by+1)*th),QSizeF(tw,th));
-                npc->setProperty("skin",QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size())));
-                static const char* const lookDirs[4]={"bottom","top","left","right"};
-                npc->setProperty("lookAt",lookDirs[rand()%4]);
-                Tiled::Cell botCell; botCell.setTile(invis->tileAt(0));
-                npc->setCell(botCell);
-                objGroup->addObject(npc);
-            }
-        }
-    }
-
-    for(Tiled::SharedTileset t: roomMap.tilesets()){
-        if(roomSettings.hasFloorDown || roomSettings.hasFloorUp){
-            t->setFileName("../../"+t->fileName());
-        }else{
-            t->setFileName("../"+t->fileName());
-        }
-    }
-
-    {
-        Tiled::ObjectGroup* moving = LoadMap::searchObjectGroupByName(roomMap, "Moving");
-
-        for(Tiled::MapObject* door: moving->objects()){
-            Tiled::Properties properties = door->properties();
-
-            if(door->name() != "exit"){
-                if(door->name()=="stair-up"){
-                    properties["map"] = "floor-"+QString::number(roomSettings.id+1);
-                    properties["x"] = QString::number(roomMap.width()-4+roomSettings.stairDown.width);
-                    properties["y"] = QString::number(wall.height);
-                }else{
-                    properties["map"] = "floor-"+QString::number(roomSettings.id-1);
-                    properties["x"] = QString::number(roomMap.width()-roomSettings.stairUp.width);
-                    properties["y"] = QString::number(wall.height);
-                }
-                door->setName("");
-            }else{
-                properties["map"] = "exit";
-            }
-            door->setProperties(properties);
-        }
-    }
-
-    {
-        Tiled::ObjectGroup* npcs = LoadMap::searchObjectGroupByName(roomMap, "Object");
-        std::vector<QString> directions {"top", "bottom", "left", "right"};
-
-        for(Tiled::MapObject* npc: npcs->objects()){
-
-            if(npc->type() == "bot"){
-                Tiled::Properties properties = npc->properties();
-                if(((double) rand() / RAND_MAX) <= properties.value("chance", "1").toFloat()){
-                    properties.remove("chance");
-
-                    if(!properties.contains("lookAt")){
-                        properties["lookAt"] = directions[rand()%4];
-                    }
-                    if(!properties.contains("skin")){
-                        properties["skin"] = QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size()));
-                    }
-                    properties["id"] = QString::number(botId++);
-
-                    npc->setProperties(properties);
-                }else{
-                    npcs->removeObject(npc);
-                }
-            }
-        }
-    }
-}
-
-void LoadMapAll::placeRoomFurniture(Tiled::Map &roomMap, const SettingsAll::Furnitures &furnitures, int x, int y)
-{
-    x+= furnitures.offsetX;
-    y+= furnitures.offsetY;
-
-    if(!furnitures.templatePath.isEmpty()){
-        MapBrush::MapTemplate furnitureTemplate;
-        loadMapTemplate("",furnitureTemplate, furnitures.templatePath, roomMap.width(), roomMap.height(), roomMap);
-        MapBrush::brushTheMap(roomMap, furnitureTemplate, x, y, NULL, true);
-        LoadMapAll::deleteMapList(furnitureTemplate);
-    }
-
-    if(!furnitures.tiles.empty()){
-        Tiled::TileLayer* RSLayer = LoadMap::searchTileLayerByName(roomMap, furnitures.layer);
-
-        for(int tx=0; tx<furnitures.width; tx++){
-            for(int ty=0; ty<furnitures.height; ty++){
-                RSLayer->setCell(x+tx, y+ty, Tiled::Cell(fetchTile(roomMap, furnitures.tiles[tx+ty*furnitures.width])));
-            }
-        }
-    }
-}

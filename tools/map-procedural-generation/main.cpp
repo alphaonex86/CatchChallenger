@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
     //indices / tileset paths / item & monster ids). Defaults to settings.xml next
     //to the binary, preserving the previous behaviour.
     QString settingsPath=QCoreApplication::applicationDirPath()+"/settings.xml";
+    QString datapackPath;
     {
         const QStringList args=a.arguments();
         int ai=1;
@@ -79,8 +80,57 @@ int main(int argc, char *argv[])
                 settingsPath=args.at(ai+1);
                 ai++;
             }
+            //"--datapack <dir>": stage the tilesets of that datapack into dest/
+            //so a fresh build directory generates without any manual copy
+            else if((args.at(ai)=="--datapack" || args.at(ai)=="-d") && ai+1<args.size())
+            {
+                datapackPath=args.at(ai+1);
+                ai++;
+            }
             ai++;
         }
+    }
+    if(!datapackPath.isEmpty())
+    {
+        const QDir source(datapackPath+"/map/tileset");
+        if(!source.exists())
+        {
+            std::cerr << "No map/tileset/ in the datapack " << datapackPath.toStdString() << std::endl;
+            abort();
+        }
+        //map/tileset/ is the canonical datapack dir; map/main/tileset/ is the
+        //run-staging path the settings use
+        const QStringList destinations=QStringList()
+                <<(QCoreApplication::applicationDirPath()+"/dest/map/tileset/")
+                <<(QCoreApplication::applicationDirPath()+"/dest/map/main/tileset/");
+        const QStringList files=source.entryList(QDir::Files,QDir::Name);
+        int destinationIndex=0;
+        while(destinationIndex<destinations.size())
+        {
+            const QString &destination=destinations.at(destinationIndex);
+            if(!QDir().mkpath(destination))
+            {
+                std::cerr << "Unable to create " << destination.toStdString() << std::endl;
+                abort();
+            }
+            int fileIndex=0;
+            while(fileIndex<files.size())
+            {
+                const QString target=destination+files.at(fileIndex);
+                if(!QFile::exists(target))
+                {
+                    if(!QFile::copy(source.absoluteFilePath(files.at(fileIndex)),target))
+                    {
+                        std::cerr << "Unable to stage " << files.at(fileIndex).toStdString()
+                                  << " into " << destination.toStdString() << std::endl;
+                        abort();
+                    }
+                }
+                fileIndex++;
+            }
+            destinationIndex++;
+        }
+        std::cout << "Staged " << files.size() << " datapack tileset files into dest/map/tileset/" << std::endl;
     }
     if(!QFile::exists(settingsPath))
         QFile::copy(":/settings.xml",settingsPath);
@@ -567,6 +617,10 @@ int main(int argc, char *argv[])
             abort();
         }
     }
+    //the npc lines that were generated, with their city context: npcfill.py
+    //rewrites them with the local LLM (the datapack is already valid without it)
+    LoadMapAll::writeNpcSlots(config);
+
     qDebug("Total time %lld ms", total.elapsed());
 
     return 0;

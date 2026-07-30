@@ -12,39 +12,6 @@
 class SettingsAll
 {
 public:
-    struct RoomStructure
-    {
-        QString layer;
-        QStringList tiles;
-        int offsetX;
-        int offsetY;
-        int width;
-        int height;
-    };
-
-    struct Furnitures: public RoomStructure
-    {
-        QStringList tags;
-        QString templatePath;
-    };
-
-    struct FurnituresLimitations
-    {
-        QString tag;
-        int min;
-        int max;
-        float chance;
-    };
-
-    struct RoomSetting
-    {
-        std::vector<Furnitures> furnitures;
-        std::vector<FurnituresLimitations> limitations;
-        std::vector<RoomStructure> walls;
-        QStringList floors;
-        QStringList tilesets;
-    };
-
     struct SettingsExtra: public Settings::Setting
     {
         bool displaycity;
@@ -70,7 +37,6 @@ public:
         unsigned int walkwayTry;
         unsigned int roadRetry;
 
-        RoomSetting room;
         std::vector<std::string> npcMessage;
 
         //key-building / bot generation
@@ -131,6 +97,10 @@ public:
         //the sea, stone in the mountains, plant in the grass...), counts kept
         //balanced; the gym type always matches the city type
         std::vector<std::pair<std::string,std::vector<std::string> > > cityTypeTerrains;
+        //[building] cityStyleTerrains="<style>-city->terrainKeyword,..;..": which
+        //template/ style folder the filler houses of a city are drawn from. A
+        //style folder with no rule is used as a random fallback.
+        std::vector<std::pair<std::string,std::vector<std::string> > > cityStyleTerrains;
         //optional datapack monsters/type.xml: when set, type colors are read from it
         QString typeXml;
 
