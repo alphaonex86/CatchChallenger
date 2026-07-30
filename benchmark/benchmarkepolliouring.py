@@ -71,9 +71,17 @@ away from the thing under test. That is reported, never hidden:
   * exactly one core -> nothing to pin. The run says so and reports schedstat
     field 1 (run_delay) so the reader sees how long the server sat runnable
     waiting for the CPU;
-  * a run whose median run_delay exceeds RUN_DELAY_VETO_RATIO x its on-CPU
-    time gets NO winner declared: at that point the number describes the
-    scheduler, not the event loop.
+  * contention alone does NOT void the verdict. The client is required to run
+    next to the server, so on a single-core board it necessarily takes about
+    half the CPU and both arms are starved equally (measured on the geode:
+    epoll x1.03/1.01/1.02, io_uring x1.02/1.02/1.02). Equal starvation
+    depresses both ABSOLUTE req/s figures and leaves their RATIO -- what is
+    actually claimed -- intact. Each row prints its own [contended: ...] tag so
+    the absolute number is never read as the board's ceiling.
+  * what DOES void it is ASYMMETRY: if the two backends' run_delay/on-CPU
+    differ by more than RUN_DELAY_SKEW_MAX they answered under different
+    conditions, and the delta belongs to the scheduler rather than the event
+    loop. Same for a survivor-count skew (SURVIVOR_SKEW_MAX).
 
 PARALLEL FLEET
 --------------
@@ -238,6 +246,33 @@ SERVER_DEFS = {
 IOURING_DEFS = dict(SERVER_DEFS)
 IOURING_DEFS["CATCHCHALLENGER_IO_URING"] = "ON"
 
+# --tuned: turn the io_uring sub-options ON for the io_uring arm. They exist
+# precisely so this harness can compare the variants (server/cli/CMakeLists.txt).
+# Not all of them are appropriate, and the reasons matter:
+#
+#  COOP_TASKRUN / TASKRUN_FLAG / NO_SQARRAY -- pure overhead reduction, no extra
+#    threads and no extra CPU. Always safe to include.
+#
+#  SQPOLL -- real accelerator (it removes io_uring_enter entirely, which is
+#    where the "80% fewer syscalls" figures in the literature come from) but it
+#    SPINS A KERNEL THREAD. That is an extra core's worth of CPU that the epoll
+#    arm does not get, so a win under SQPOLL is NOT like-for-like against
+#    single-threaded epoll and must be read as "io_uring + a dedicated poller
+#    beats epoll", a different claim. Added only where the node has a core to
+#    spare; on a single-core board it would fight the server and the client for
+#    the only CPU, so it is refused there rather than silently skewing the run.
+#
+#  IOPOLL -- deliberately NOT enabled. Per CMakeLists it applies to the FILE
+#    ring (datapack load), NOT the socket ring, and is a no-op without O_DIRECT
+#    (tmpfs rejects it). It cannot move a network benchmark, so switching it on
+#    would only imply a tuning that is not doing anything.
+IOURING_TUNED_EXTRA = {
+    "CATCHCHALLENGER_IO_URING_COOP_TASKRUN":  "ON",
+    "CATCHCHALLENGER_IO_URING_TASKRUN_FLAG":  "ON",
+    "CATCHCHALLENGER_IO_URING_NO_SQARRAY":    "ON",
+}
+IOURING_SQPOLL_EXTRA = {"CATCHCHALLENGER_IO_URING_SQPOLL": "ON"}
+
 BACKENDS = ("epoll", "iouring")
 
 # 250 bots on ONE map is the protocol ceiling (8-bit per-map player index) and
@@ -269,7 +304,19 @@ SAMPLE_S = 1
 #           better to report "the client starved the server" than to publish a
 #           delta that means nothing.
 RUN_DELAY_WARN_RATIO = 0.25
-RUN_DELAY_VETO_RATIO = 1.00
+# Contention only invalidates the comparison when it is UNEQUAL between the two
+# backends. The client is REQUIRED to run next to the server (that is the whole
+# point of this design), so on a single-core board it necessarily takes about
+# half the CPU and run_delay ~= on-CPU time for BOTH arms -- measured on the
+# geode: epoll x1.03/1.01/1.02, io_uring x1.02/1.02/1.02. A level playing field
+# that is level for both is not a confound: it depresses the ABSOLUTE req/s of
+# both arms and leaves their RATIO meaningful, which is what is being claimed.
+# Vetoing on the absolute ratio therefore threw away a valid measurement (the
+# geode's ranges did separate). What must still veto is ASYMMETRY: if one
+# backend was starved noticeably harder than the other, it answered under
+# different conditions and the delta is the scheduler's, not the event loop's.
+# Expressed as the allowed spread between the two backends' run_delay/on-CPU.
+RUN_DELAY_SKEW_MAX = 0.25
 
 # The two backends must carry the SAME load to be comparable. If one of them
 # lost noticeably more bots (kicks, disconnects), it was answering a smaller
@@ -322,6 +369,16 @@ def parse_args():
     ap.add_argument("--seconds", type=int, default=MEASURE_SECS,
                     help="length of the client's measured window in seconds "
                          "(default %d)" % MEASURE_SECS)
+    ap.add_argument("--tuned", action="store_true",
+                    help="build the io_uring arm with its sub-options on "
+                         "(COOP_TASKRUN, TASKRUN_FLAG, NO_SQARRAY, plus SQPOLL "
+                         "where a core can be spared). SQPOLL spins a kernel "
+                         "thread, so a win under it is not like-for-like "
+                         "against single-threaded epoll -- the verdict says so")
+    ap.add_argument("--sqpoll", action="store_true",
+                    help="implies --tuned and adds SQPOLL: a spinning kernel "
+                         "poll thread, i.e. an extra core epoll does not get. "
+                         "Not like-for-like; refused on single-core nodes")
     ap.add_argument("--counters", action="store_true",
                     help="build both backends with CATCHCHALLENGER_BENCHMARK=ON "
                          "to also collect the server's BENCH dump. NOT the "
@@ -330,13 +387,33 @@ def parse_args():
     argv = sys.argv[1:]
     if "-h" in argv or "--help" in argv:
         print(__doc__)
-        print("Own flags: --reps N  --bots N  --seconds N  --counters\n")
+        print("Own flags: --reps N  --bots N  --seconds N  --tuned  --sqpoll  "
+              "--counters\n")
     own, rest = ap.parse_known_args(argv)
     shared = bh.parse_bench_args(rest)
     if own.reps < 1 or own.bots < 1 or own.seconds < 5:
         print(_c(bh.C_RED, "[fatal] --reps/--bots must be >= 1, "
                            "--seconds >= 5"))
         sys.exit(2)
+    if own.tuned or own.sqpoll:
+        IOURING_DEFS.update(IOURING_TUNED_EXTRA)
+        print(_c(bh.C_CYAN, "[tuned] io_uring arm gets COOP_TASKRUN + "
+                            "TASKRUN_FLAG + NO_SQARRAY. IOPOLL stays off: it "
+                            "drives the FILE ring, not the socket ring, so it "
+                            "cannot move this benchmark."))
+    if own.sqpoll:
+        # Deliberately a SEPARATE opt-in rather than part of --tuned, and not
+        # auto-enabled per node: it changes what is being compared, so the
+        # operator has to ask for it. Refused on a single-core node, where the
+        # poller would fight the server and the client for the only CPU.
+        IOURING_DEFS.update(IOURING_SQPOLL_EXTRA)
+        print(_c(bh.C_YELLOW, "[warn] --sqpoll: io_uring also gets a SPINNING "
+                              "KERNEL POLL THREAD, i.e. roughly an extra core "
+                              "of CPU that the epoll arm does not get. A win "
+                              "here means 'io_uring plus a dedicated poller "
+                              "beats epoll', which is a DIFFERENT claim from "
+                              "'io_uring beats epoll'. Single-core nodes are "
+                              "skipped."))
     if own.counters:
         # CATCHCHALLENGER_BENCHMARK is already ON in SERVER_DEFS -- it has to
         # be, or the anti-flood filter kicks the saturating client (see the
@@ -1113,7 +1190,7 @@ def verdict(per, bots):
         caveats.append(f"the backends did not carry the same load "
                        f"(survivors {per[a]['survivors_min']} vs "
                        f"{per[b]['survivors_min']} of {bots})")
-    contended = []
+    ratios = {}
     for backend in BACKENDS:
         ratio = per[backend]["run_delay_ratio_median"]
         if ratio is None:
@@ -1121,14 +1198,19 @@ def verdict(per, bots):
                 caveats.append(f"{backend}: no schedstat AND no core to pin, "
                                f"so the client's interference with the server "
                                f"cannot be quantified at all")
-        elif ratio > RUN_DELAY_VETO_RATIO:
-            contended.append(f"{backend} x{ratio:.2f}")
-    if contended:
-        caveats.append(f"the node-local client starved the server "
-                       f"({', '.join(contended)} as long waiting for a CPU as "
-                       f"running on one, schedstat run_delay/on-CPU > "
-                       f"{RUN_DELAY_VETO_RATIO:.2f}), so this measures the "
-                       f"scheduler and not the event loop")
+        else:
+            ratios[backend] = ratio
+    # ASYMMETRIC contention is the disqualifier, not contention itself: see
+    # RUN_DELAY_SKEW_MAX. Equal starvation depresses both arms alike and leaves
+    # the ratio -- the thing being claimed -- intact.
+    if len(ratios) == 2:
+        skew = abs(ratios[a] - ratios[b])
+        if skew > RUN_DELAY_SKEW_MAX:
+            caveats.append(f"the client starved the two backends UNEQUALLY "
+                           f"({a} x{ratios[a]:.2f} vs {b} x{ratios[b]:.2f}, "
+                           f"spread {skew:.2f} > {RUN_DELAY_SKEW_MAX:.2f}), so "
+                           f"they answered under different conditions and the "
+                           f"delta is the scheduler's, not the event loop's")
     if caveats:
         return "no verdict: " + "; ".join(caveats) + f" ({ranges})", None
 
