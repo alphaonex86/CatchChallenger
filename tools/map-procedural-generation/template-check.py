@@ -445,6 +445,11 @@ def move_object(text, block_start, block_end, block, x, y, tile_width,
     return text[:block_start] + patched + text[block_end:]
 
 
+def variant_depth(folder):
+    """How many .. lead from a variant folder back to the tool directory."""
+    return len(os.path.relpath(folder, TEMPLATE_DIR).split(os.sep)) + 1
+
+
 def fix_variant(folder, exterior, floors, fixes, warnings, apply_fix):
     """Everything that needs the geometry or the two files of a template."""
     if exterior is None or not floors:
@@ -656,6 +661,52 @@ def fix_variant(folder, exterior, floors, fixes, warnings, apply_fix):
                 r"\g<1>" + replacement + r"\g<2>", block, count=1) + \
                 floor_text[end:]
         seen.add(bot_id)
+
+    #3b. an interior with nobody in it is a dead end for the player: put one
+    #villager on a reachable cell (the template author can move them in Tiled)
+    if not [b for _, _, b in object_blocks(floor_text, "Object")
+            if "id" in properties(b)]:
+        cell = free_cell_near(floor_layers, fw, fh, fw // 2, fh // 2)
+        if cell:
+            if invisible_gid(floor_text) is None:
+                #the marker tileset is what makes an object visible in Tiled,
+                #and the map brush only copies an object that has a tile
+                first = re.search(r'[ \t]*<tileset firstgid="(\d+)"', floor_text)
+                if first and int(first.group(1)) > 16:
+                    depth = variant_depth(folder)
+                    fixes.append((floor_path, "invisible tileset added (the "
+                                  "marker tiles of the objects)"))
+                    floor_text = (floor_text[:first.start()] +
+                                  ' <tileset firstgid="1" source="' +
+                                  "../" * depth + 'tileset/invisible.tsx"/>\n' +
+                                  floor_text[first.start():])
+            gid = invisible_gid(floor_text)
+            fixes.append((floor_path, "empty interior: one villager added at "
+                          "%d,%d" % cell))
+            floor_text = insert_object(
+                floor_text, "Object",
+                "  <object id=\"@ID@\" type=\"bot\"" +
+                (" gid=\"%d\"" % gid if gid else "") +
+                " x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\">\n"
+                "   <properties>\n"
+                "    <property name=\"id\" value=\"1\"/>\n"
+                "    <property name=\"lookAt\" value=\"bottom\"/>\n"
+                "    <property name=\"skin\" value=\"oldman\"/>\n"
+                "   </properties>\n"
+                "  </object>\n" % (cell[0] * ftw, (cell[1] + 1) * fth, ftw,
+                                   fth))
+            xml_path = os.path.join(folder, floors[0][:-4] + ".xml")
+            if os.path.exists(xml_path):
+                xml_body = open(xml_path, encoding="utf-8").read()
+                if '<bot id="1"' not in xml_body and apply_fix:
+                    xml_body = xml_body.replace(
+                        "</map>",
+                        "    <bot id=\"1\">\n"
+                        "        <step type=\"text\" id=\"1\">\n"
+                        "            <text><![CDATA[...]]></text>\n"
+                        "        </step>\n"
+                        "    </bot>\n</map>")
+                    open(xml_path, "w", encoding="utf-8").write(xml_body)
 
     #4. the interior is an indoor map
     if 'value="indoor"' not in floor_text:
