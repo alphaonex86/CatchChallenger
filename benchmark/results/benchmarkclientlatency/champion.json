@@ -1,0 +1,587 @@
+{
+  "batch_id": "b9068e35f7d44c3ab435b66ee440b713",
+  "benchmark": "benchmarkclientlatency",
+  "comment": "",
+  "commit": "ee4f77e59291811bf66e01b0ac2b80c4f3a567c8",
+  "date": "2026-07-28T04:41:14Z",
+  "ended_utc": "2026-07-28T04:41:14Z",
+  "nodes": {
+    "atom-n270": {
+      "arch": "i686",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "atom-n455": {
+      "arch": "x86_64",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "celeron-b820": {
+      "arch": "x86_64",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "cubieboard-2": {
+      "arch": "armv7",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 23726566.40606289,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "fitxlan": {
+      "arch": "x86_64",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "geode": {
+      "arch": "i686",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "i7-11370H": {
+      "arch": "x86_64",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 379625062.49700624,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 379625062.49700624,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 379625062.49700624,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 379625062.49700624,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "local": {
+      "arch": "amd64",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "odroid-c2": {
+      "arch": "aarch64",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "odroid-n2": {
+      "arch": "aarch64",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 23726566.40606289,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "pentium-3": {
+      "arch": "i686",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "pentium-m": {
+      "arch": "i686",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "rpi-3": {
+      "arch": "aarch64",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "rpi-4": {
+      "arch": "aarch64",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "rpi-zero-w": {
+      "arch": "armv6",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "rtl9607c": {
+      "arch": "mips2r2",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 1518500249.988025,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 189812531.24850312,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    }
+  },
+  "started_utc": "2026-07-28T04:02:34Z"
+}

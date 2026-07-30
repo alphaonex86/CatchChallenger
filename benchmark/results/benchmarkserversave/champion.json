@@ -1,0 +1,1206 @@
+{
+  "batch_id": "0be980281b884776a1ce321173f670f7",
+  "benchmark": "benchmarkserversave",
+  "comment": "",
+  "commit": "8c81955fae46006cfa263c0e6522a3a304b87ada",
+  "date": "2026-07-26T13:46:10Z",
+  "duration_seconds": 529.0,
+  "ended_utc": "2026-07-26T13:46:10Z",
+  "nodes": {
+    "atom-n270": {
+      "arch": "i686",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "9.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.1"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.2.13"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.4"
+        }
+      },
+      "metrics": {
+        "wall_s": {
+          "better": "lower",
+          "median": 0.14,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "atom-n455": {
+      "arch": "x86_64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 8040,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.11,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "atom-n455-m32": {
+      "arch": "i686",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "vendored",
+          "version": null
+        },
+        "xxhash": {
+          "source": "vendored",
+          "version": null
+        },
+        "zlib": {
+          "source": "vendored",
+          "version": "1.3.2"
+        },
+        "zstd": {
+          "source": "vendored",
+          "version": null
+        }
+      },
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 8020,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.38,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "celeron-b820": {
+      "arch": "x86_64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "wall_s": {
+          "better": "lower",
+          "median": 0.644,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "celeron-b820-m32": {
+      "arch": "i686",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "vendored",
+          "version": null
+        },
+        "xxhash": {
+          "source": "vendored",
+          "version": null
+        },
+        "zlib": {
+          "source": "vendored",
+          "version": "1.3.2"
+        },
+        "zstd": {
+          "source": "vendored",
+          "version": null
+        }
+      },
+      "metrics": {
+        "wall_s": {
+          "better": "lower",
+          "median": 0.121,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "cubieboard-2": {
+      "arch": "armv7",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 1621515,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 333475,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 170981564,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 69502167,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 5580,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.2,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "fitxlan": {
+      "arch": "x86_64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 588531,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 0,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 87989412,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 63139612,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.155,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "fitxlan-m32": {
+      "arch": "i686",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "vendored",
+          "version": null
+        },
+        "xxhash": {
+          "source": "vendored",
+          "version": null
+        },
+        "zlib": {
+          "source": "vendored",
+          "version": "1.3.2"
+        },
+        "zstd": {
+          "source": "vendored",
+          "version": null
+        }
+      },
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 1459124,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 0,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 370825041,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 297658149,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.63,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "geode": {
+      "arch": "i686",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "10.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7964,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.71,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "i7-11370H": {
+      "arch": "x86_64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 175476,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 117125,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 32730827,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 59083424,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 8256,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.02,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "i7-11370H-m32": {
+      "arch": "i686",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "vendored",
+          "version": null
+        },
+        "xxhash": {
+          "source": "vendored",
+          "version": null
+        },
+        "zlib": {
+          "source": "vendored",
+          "version": "1.3.2"
+        },
+        "zstd": {
+          "source": "vendored",
+          "version": null
+        }
+      },
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 385520,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 308127,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 134598355,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 296307505,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 8000,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.05,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "local": {
+      "arch": "amd64",
+      "libs": {
+        "blake3": {
+          "source": "system",
+          "version": "1.8.5"
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.2"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "binary_size_bytes": {
+          "better": "lower",
+          "median": 2885784,
+          "stddev": 0.0,
+          "unit": "bytes"
+        },
+        "cache_bytes": {
+          "better": "lower",
+          "median": 51351,
+          "stddev": 0.0,
+          "unit": "bytes"
+        },
+        "cpu_percent": {
+          "better": "lower",
+          "median": 100.0,
+          "stddev": 21.650635094610966,
+          "unit": "%"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 8414.0,
+          "stddev": 134.35773144854747,
+          "unit": "kb"
+        },
+        "perf_branch-misses:u": {
+          "better": "lower",
+          "median": 157603,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "perf_cache-misses:u": {
+          "better": "lower",
+          "median": 165845,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "perf_cycles:u": {
+          "better": "lower",
+          "median": 40572508,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "perf_instructions:u": {
+          "better": "lower",
+          "median": 49319310,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "sys_s": {
+          "better": "lower",
+          "median": 0.0,
+          "stddev": 0.004330127018922193,
+          "unit": "s"
+        },
+        "user_s": {
+          "better": "lower",
+          "median": 0.01,
+          "stddev": 0.004330127018922193,
+          "unit": "s"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.01,
+          "stddev": 0.004330127018922193,
+          "unit": "s"
+        }
+      }
+    },
+    "odroid-c2": {
+      "arch": "aarch64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 731737,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 292704,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 109589000,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 62391182,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7260,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.08,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "odroid-c2-m32": {
+      "arch": "armv7",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 2698914,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 1103636,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 399874706,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 286671546,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 6012,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.26,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "odroid-n2": {
+      "arch": "aarch64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7452,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.03,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "odroid-n2-m32": {
+      "arch": "armv7",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 6076,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.12,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "pentium-3": {
+      "arch": "i686",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "9.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.1"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.2.13"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.4"
+        }
+      },
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 758307,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 693696,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 225219772,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 76201622,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7724,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.26,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "pentium-m": {
+      "arch": "i686",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "9.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.1"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.2.13"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.4"
+        }
+      },
+      "metrics": {
+        "branch-misses:u": {
+          "better": "lower",
+          "median": 275898,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses:u": {
+          "better": "lower",
+          "median": 39944,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles:u": {
+          "better": "lower",
+          "median": 64382425,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions:u": {
+          "better": "lower",
+          "median": 41533449,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7892,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.07,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "rpi-3": {
+      "arch": "aarch64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 722601,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 285032,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 99704881,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 61350245,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7288,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.07,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "rpi-3-m32": {
+      "arch": "armv7",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 3310383,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 1174192,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 370676721,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 281053677,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 6472,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.27,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "rpi-4": {
+      "arch": "aarch64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 340246,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 281240,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 60042799,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 60791688,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 7164,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.04,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    },
+    "rpi-4-m32": {
+      "arch": "armv7",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "branch-misses": {
+          "better": "lower",
+          "median": 996091,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cache-misses": {
+          "better": "lower",
+          "median": 1299248,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "cycles": {
+          "better": "lower",
+          "median": 238490518,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "instructions": {
+          "better": "lower",
+          "median": 280590204,
+          "stddev": 0.0,
+          "unit": "count"
+        },
+        "max_rss_kb": {
+          "better": "lower",
+          "median": 6344,
+          "stddev": 0.0,
+          "unit": "kb"
+        },
+        "wall_s": {
+          "better": "lower",
+          "median": 0.16,
+          "stddev": 0.0,
+          "unit": "s"
+        }
+      }
+    }
+  },
+  "started_utc": "2026-07-26T13:37:21Z"
+}
