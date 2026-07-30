@@ -41,7 +41,7 @@ CACHE_DIR = os.path.join(
     os.path.expanduser("~"), ".local", "share", "CatchChallenger",
     "map-procedural-generation")
 CACHE_FILE = os.path.join(CACHE_DIR, "npc-cache.json")
-LINES_PER_BUCKET = 12
+LINES_PER_BUCKET = 8
 
 FIELD_ASK = {
     "text": "one spoken line",
@@ -131,7 +131,7 @@ def save_cache(cache):
 def ask_ollama(host, model, prompt, timeout):
     body = json.dumps({
         "model": model, "prompt": prompt, "stream": False,
-        "options": {"seed": 42, "temperature": 0.8, "num_predict": 700},
+        "options": {"seed": 42, "temperature": 0.8, "num_predict": 900},
     }).encode()
     request = urllib.request.Request(
         host.rstrip("/") + "/api/generate", data=body,
@@ -153,6 +153,11 @@ def parse_lines(answer):
             lines = [str(x) for x in parsed if isinstance(x, str)]
         except ValueError:
             lines = []
+    if not lines and start >= 0 and end > start:
+        #a malformed array (trailing comma, unescaped quote, comment after it):
+        #take the quoted strings back out of it
+        lines = [m.group(1) for m in
+                 re.finditer(r'"((?:[^"\\]|\\.)*)"', text[start:end + 1])]
     if not lines:
         start = text.find("{")
         end = text.rfind("}")
@@ -181,9 +186,27 @@ def parse_lines(answer):
 MAX_LENGTH = {"name": 28, "text": 160, "start": 160, "win": 160}
 
 
-def clean(line, field):
+#the game font is a small bitmap font: keep the text to plain ASCII punctuation
+TYPOGRAPHIC = {"\u2019": "'", "\u2018": "'", "\u201c": '"', "\u201d": '"',
+               "\u2013": " - ", "\u2014": " - ", "\u2026": "...",
+               "\u00a0": " "}
+
+
+#a model sometimes answers with a piece of its own instructions ("Answer with a
+#valid JSON array"): that is not dialogue and must never reach a NPC
+META = ["json", "array", "answer with", "as an ai", "here are", "here's a",
+        "certainly", "of course!", "instruction", "prompt", "markdown",
+        "one sentence", "characters or less", "at most", "no quotes",
+        "trademark", "video game", "npc", "dialogue", "output", "list of",
+        "sure, ", "note:", "example"]
+
+
+def clean(line, field, prompt=""):
     """None when the line may not go into the datapack."""
-    line = " ".join(str(line).split())
+    line = str(line)
+    for fancy, plain in TYPOGRAPHIC.items():
+        line = line.replace(fancy, plain)
+    line = " ".join(line.split())
     line = line.strip().strip('"').strip()
     if not line or len(line) > MAX_LENGTH.get(field, 160):
         return None
@@ -197,6 +220,18 @@ def clean(line, field):
             return None
     if line.endswith(","):
         return None
+    for word in META:
+        if word in lowered:
+            return None
+    #a line that repeats the instructions word for word is an echo, not dialogue
+    if prompt:
+        words = lowered.split()
+        lowered_prompt = prompt.lower()
+        index = 0
+        while index + 5 <= len(words):
+            if " ".join(words[index:index + 5]) in lowered_prompt:
+                return None
+            index += 1
     return line
 
 
@@ -252,6 +287,9 @@ def main():
     parser.add_argument("--timeout", type=int, default=1800)
     parser.add_argument("--limit", type=int, default=0,
                         help="stop after N model calls (test runs)")
+    parser.add_argument("--names", action="store_true",
+                        help="also ask the model for the NPC names (off: the "
+                             "invented names of the generator are kept)")
     parser.add_argument("--only", default="",
                         help="only the buckets whose key contains this text")
     parser.add_argument("--dry-run", action="store_true",
@@ -265,6 +303,11 @@ def main():
         print("no " + slotsFile + " (run the generator first)")
         return 2
     slots = json.load(open(slotsFile, encoding="utf-8"))["slots"]
+    if not arguments.names:
+        #NPC names keep the invented pool of the generator: a model asked for
+        #names returns the ones of existing games far too often, and the filter
+        #then refuses most of the answer
+        slots = [s for s in slots if s["field"] != "name"]
     buckets = {}
     for slot in slots:
         buckets.setdefault(bucket_key(slot, arguments.per_city), []).append(slot)
@@ -288,6 +331,16 @@ def main():
         digest = hashlib.sha256((arguments.model + "\n" + prompt).encode()
                                 ).hexdigest()
         lines = cache.get(digest)
+        if lines is not None:
+            #re-filter: the cache was written by an older, weaker filter
+            kept = [c for c in (clean(l, slotList[0]["field"], prompt)
+                                for l in lines) if c]
+            if len(kept) != len(lines):
+                print("   %d cached lines dropped by the filter" %
+                      (len(lines) - len(kept)))
+                cache[digest] = kept
+                save_cache(cache)
+            lines = kept if len(kept) >= 4 else None
         if lines is None:
             if arguments.limit and calls >= arguments.limit:
                 continue
@@ -295,22 +348,24 @@ def main():
                 answer = ask_ollama(arguments.host, arguments.model, prompt,
                                     arguments.timeout)
                 produced = parse_lines(answer)
-                lines = [c for c in (clean(l, slotList[0]["field"])
+                lines = [c for c in (clean(l, slotList[0]["field"], prompt)
                                      for l in produced) if c]
                 calls += 1
                 rejected += len(produced) - len(lines)
                 #more than a third of the answer refused (trademark, markup,
                 #too long): ask once more, reminding the rule
-                if produced and len(lines) * 3 < len(produced) * 2:
-                    print("   %d/%d lines refused, asking again" %
-                          (len(produced) - len(lines), len(produced)))
+                if len(lines) < 4 or (produced and
+                                      len(lines) * 3 < len(produced) * 2):
+                    print("   only %d usable of %d, asking again" %
+                          (len(lines), len(produced)))
                     answer = ask_ollama(
                         arguments.host, arguments.model,
                         prompt + "\nYour previous answer was refused. Write "
                         "plain original sentences, no trademark, no name of an "
                         "existing game or character.", arguments.timeout)
                     produced = parse_lines(answer)
-                    retryLines = [c for c in (clean(l, slotList[0]["field"])
+                    retryLines = [c for c in (clean(l, slotList[0]["field"],
+                                                    prompt)
                                               for l in produced) if c]
                     calls += 1
                     rejected += len(produced) - len(retryLines)

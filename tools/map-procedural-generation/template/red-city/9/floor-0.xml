@@ -1,3 +1,8 @@
 <map type="indoor">
     <name>Gym</name>
+    <bot id="1">
+        <step type="text" id="1">
+            <text><![CDATA[...]]></text>
+        </step>
+    </bot>
 </map>
