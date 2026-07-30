@@ -298,7 +298,26 @@ void MapVisibilityAlgorithm::min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
                         posOutput=cachedEndOutput;
                     }
                     //only append ping if none pending, to avoid exhausting query numbers
+                    #ifdef CATCHCHALLENGER_BENCHMARK
+                    //Benchmark builds drop the pending-ping gate on purpose. In
+                    //normal operation it is ACK-based flow control: the server
+                    //waits for the client's ping reply, so throughput is bounded
+                    //by the client's RTT and the client has to be fast. That is
+                    //correct for real players and fatal for a measurement -- it
+                    //makes the SERVER's throughput a function of the LOAD
+                    //GENERATOR's speed. Ungated, mapmanagement floods and the
+                    //server is driven by its own capacity instead.
+                    //The ping is SKIPPED entirely rather than sent ungated:
+                    //ungated pings would consume query numbers faster than the
+                    //client retires them and get it kicked for "no free query
+                    //number" -- exactly what the original comment warns about.
+                    //Nothing needs the ping here: it exists to measure RTT for
+                    //this throttle, and the protocol is otherwise async, so the
+                    //cases that truly need sync are very rare.
+                    if(false)
+                    #else
                     if(client.pingCountInProgress()<=0)
+                    #endif
                     {
                         posOutput+=client.sendPing(ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                     }
@@ -432,7 +451,11 @@ void MapVisibilityAlgorithm::sendCoalescedDelta(ClientWithMap &clientWithMap,con
         posOutput+=1+4+1+changesCount*(1+1+1+1);
     }
     //only append ping if none pending, to avoid exhausting query numbers
+    #ifdef CATCHCHALLENGER_BENCHMARK
+    if(false)//benchmark: skip the ping entirely (see min_CPU above)
+    #else
     if(clientWithMap.pingCountInProgress()<=0)
+    #endif
     {
         posOutput+=clientWithMap.sendPing(ProtocolParsingBase::tempBigBufferForOutput+posOutput);
     }
@@ -677,7 +700,11 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                         posOutput+=1;//drop all
                         posOutput+=send_reinsertAllWithFilter(mapIndex,ProtocolParsingBase::tempBigBufferForOutput+posOutput,clients_size,index_client);
                         //only append ping if none pending, to avoid exhausting query numbers
+                        #ifdef CATCHCHALLENGER_BENCHMARK
+                        if(false)//benchmark: skip the ping entirely (see min_CPU above)
+                        #else
                         if(clientWithMap.pingCountInProgress()<=0)
+                        #endif
                         {
                             posOutput+=clientWithMap.sendPing(ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                         }
@@ -851,7 +878,11 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                                 posOutput+=1+4+1+changesEff*(1+1+1+1);
                             }
                             //only append ping if none pending, to avoid exhausting query numbers
+                            #ifdef CATCHCHALLENGER_BENCHMARK
+                            if(false)//benchmark: skip the ping entirely (see min_CPU above)
+                            #else
                             if(clientWithMap.pingCountInProgress()<=0)
+                            #endif
                             {
                                 posOutput+=clientWithMap.sendPing(ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                             }
@@ -885,8 +916,17 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
             #endif
             {
                 ClientWithMap &clientWithMap=ClientList::list->rwWithMap(map_c_idP);
+                #ifdef CATCHCHALLENGER_BENCHMARK
+                //benchmark: the pending-ping term is the ACK-based throttle
+                //itself -- it withholds the delta until the client replies. Drop
+                //only that term; the sendedStatus/sendedMap conditions are
+                //correctness, not flow control, and stay.
+                if(!clientWithMap.sendedStatus.empty()
+                   && clientWithMap.sendedMap==clientWithMap.mapIndex)
+                #else
                 if(!clientWithMap.sendedStatus.empty() && clientWithMap.pingCountInProgress()<=0
                    && clientWithMap.sendedMap==clientWithMap.mapIndex)
+                #endif
                 {
                     sendCoalescedDelta(clientWithMap,mapIndex,index_client,dense_size);
                     //back in step with everybody else: drop the private baseline

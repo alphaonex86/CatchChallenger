@@ -827,3 +827,17 @@ the normal commit path, not via the benchmark champion mechanism.
 * Production code that happens to be perf-sensitive. The benchmark
   workspace exists to *measure* prod code from outside; it doesn't
   ship.
+
+## epoll vs io_uring A/B — `benchmarkepolliouring.py` (learned the hard way)
+
+* **`min..max` separation at n=3 is NOT evidence.** Ranges WIDEN with sample count. A clean non-overlapping geode result at n=3 dissolved at n=4. Use `--reps 8`+; never publish an n=3 separation.
+* **io_uring sub-options are NOT optional tuning for a fair A/B.** Without `COOP_TASKRUN`+`TASKRUN_FLAG`+`NO_SQARRAY` (`--tuned`) rpi-4 reported epoll +2.5%; with them io_uring +7.7% — a ~10pt sign flip. Untuned io_uring carries avoidable overhead epoll does not have.
+* **SQPOLL measured HARMFUL, do not enable by default** (`--sqpoll`): rpi-4 −8.1% (win destroyed), odroid-n2 −0.4%. It spins a kernel thread costing a core it cannot repay; this server is not submission-bound (broadcast sends are already batched to one `io_uring_enter` per tick). It is also not like-for-like vs single-threaded epoll.
+* **IOPOLL cannot affect a network benchmark** — it drives the FILE ring, not the socket ring, and no-ops without O_DIRECT (tmpfs rejects it).
+* **`CATCHCHALLENGER_BENCHMARK=ON` is REQUIRED to saturate at all.** `CATCHCHALLENGER_DDOS_FILTER` is derived from `#ifndef CATCHCHALLENGER_BENCHMARK` (`server/base/VariableServer.hpp`) — no independent switch. With the filter in, a saturating client is kicked after ~60 moves. Raising the runtime limits cannot rescue it: they are `uint8_t`, so >255 WRAPS STRICTER.
+* **Benchmark builds skip the mapmanagement ping** (`MapVisibilityAlgorithm.cpp`, 5 `#ifdef` sites). The pending-ping check is ACK-based flow control: it makes SERVER throughput a function of the LOAD GENERATOR's RTT. Skipped, not sent ungated — ungated pings exhaust query numbers and the client is kicked for "no free query number".
+* **`loop_busy_us` is NOT backend-comparable — never quote it in an A/B.** `CC_BENCH_LOOP_IN/OUT` brackets what happens AFTER `EventLoop::wait()` returns; on io_uring the packet work happens INSIDE `wait()`. `packets_in` and `lat_hist_*` ARE comparable.
+* **Client runs node-local; measure contention, don't assume it away.** `/proc/<pid>/schedstat` field 0 = ns on-CPU, **field 1 = run_delay** (ns runnable but waiting). Veto on ASYMMETRIC contention between the two arms, not on the absolute ratio: equal starvation depresses both absolute figures and leaves the RATIO valid.
+* **Single-core boards cannot be measured this way.** On the geode the node-local client takes ~half the core, the server tops out at 42% with run_delay ×1.02, and the result is "no separation" both untuned (n=4) and tuned (n=8) — it is scheduler-bound, not syscall-bound.
+* **Result, for reference:** io_uring +7.7% (rpi-4), +5.5% (odroid-n2), no separation (geode), all n=8 tuned, non-overlapping, at LOWER server CPU and ~+0.8MB RSS. The old published −9.8% never reproduced under two methodologies and is withdrawn.
+* **Why not the >2x the literature reports:** this epoll path already drains up to 62 moves per read syscall (measured `packets_in` vs moves) and per-move application work is ~2.6us, so syscalls are a small fraction. Published multipliers are syscall-throughput microbenchmarks against unbatched baselines, usually with SQPOLL and/or zero-copy receive (impossible here — needs NIC header/data split).
