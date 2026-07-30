@@ -40,8 +40,9 @@ void ActionsAction::stopAll()
     mStop=true;
 }
 
-void ActionsAction::insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
+void ActionsAction::insert_player(CatchChallenger::Api_protocol *apiBase,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
+    CatchChallenger::Api_protocol_Qt * const api=toQt(apiBase);
     if(mStop)
         return;
     Q_UNUSED(player);
@@ -105,8 +106,9 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol_Qt  *api,const C
     }
 }
 
-void ActionsAction::insert_player_all(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
+void ActionsAction::insert_player_all(CatchChallenger::Api_protocol *apiBase,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
+    CatchChallenger::Api_protocol_Qt * const api=toQt(apiBase);
     (void)mapId;
     (void)x;
     (void)y;
@@ -244,8 +246,9 @@ void ActionsAction::setEvents(CatchChallenger::Api_protocol_Qt  *api, const std:
     }
 }
 
-void ActionsAction::dropAllPlayerOnTheMap(CatchChallenger::Api_protocol_Qt  *api)
+void ActionsAction::dropAllPlayerOnTheMap(CatchChallenger::Api_protocol *apiBase)
 {
+    CatchChallenger::Api_protocol_Qt * const api=toQt(apiBase);
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;
@@ -261,8 +264,9 @@ void ActionsAction::dropAllPlayerOnTheMap(CatchChallenger::Api_protocol_Qt  *api
     delayedMessage[api].clear();
 }
 
-void ActionsAction::remove_player(CatchChallenger::Api_protocol_Qt  *api, const SIMPLIFIED_PLAYER_ID_FOR_MAP &id)
+void ActionsAction::remove_player(CatchChallenger::Api_protocol *apiBase, const SIMPLIFIED_PLAYER_ID_FOR_MAP &id)
 {
+    CatchChallenger::Api_protocol_Qt * const api=toQt(apiBase);
     if(clientList.find(api)==clientList.cend())
     {
         std::cerr << "clientList.find(api)==clientList.cend()" << std::endl;

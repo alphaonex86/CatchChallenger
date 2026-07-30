@@ -14,6 +14,8 @@ include(${CC_REPO_ROOT}/client/libcatchchallenger/lib.cmake)
 add_executable(bot-test-connect-to-gameserver
     main.cpp
     GlobalController.cpp
+    ../libbot/BotClientLink.cpp
+    ../libbot/MultipleBotConnectionCore.cpp
     ../libbot/MultipleBotConnection.cpp
     ../libbot/MultipleBotConnectionImplForGui.cpp
     ../libbot/BotInterface.cpp

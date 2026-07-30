@@ -4,7 +4,6 @@
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../client/libqtcatchchallenger/Api_client_real.hpp"
 
-#include <QMessageBox>
 #include <QString>
 #include "../BotAbort.h"
 

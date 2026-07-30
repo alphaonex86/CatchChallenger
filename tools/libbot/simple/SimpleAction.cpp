@@ -1,6 +1,11 @@
 #include "SimpleAction.h"
-#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../../general/base/CommonSettingsServer.hpp"
 #include "../BotAbort.h"
+
+#include <iostream>
+#include <stdlib.h>
+#include <string.h>
+#include <vector>
 
 SimpleAction::SimpleAction()
 {
@@ -17,27 +22,22 @@ SimpleAction::~SimpleAction()
 {
 }
 
-void SimpleAction::insert_player(CatchChallenger::Api_protocol_Qt *api, const CatchChallenger::Player_public_informations &player, const uint8_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction)
+void SimpleAction::insert_player(CatchChallenger::Api_protocol *api, const CatchChallenger::Player_public_informations &player, const CATCHCHALLENGER_TYPE_MAPID &mapId, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction)
 {
-    Q_UNUSED(player);
-    Q_UNUSED(mapId);
-    Q_UNUSED(x);
-    Q_UNUSED(y);
-    Q_UNUSED(direction);
-
     SimpleBotInterface::insert_player(api,player,mapId,x,y,direction);
-    if(!connect(api,&CatchChallenger::Api_protocol_Qt::new_chat_text,this,&SimpleAction::new_chat_text,Qt::QueuedConnection))
+    //Only this class needs the Qt protocol type (to reach its signals); the
+    //object was created by the Qt front-end, so the cast is safe without RTTI.
+    CatchChallenger::Api_protocol_Qt * const qtApi=static_cast<CatchChallenger::Api_protocol_Qt *>(api);
+    if(!connect(qtApi,&CatchChallenger::Api_protocol_Qt::new_chat_text,this,&SimpleAction::new_chat_text,Qt::QueuedConnection))
         BOT_ABORT();
 }
 
 void SimpleAction::purgeCpuCache()
 {
     const int size=16*1024*1024;
-    char *var=static_cast<char *>(malloc(size));
-    memset(var,0,size);
-    if(memcmp(var,var,size)!=0)
+    std::vector<char> buffer(size,0);
+    if(memcmp(buffer.data(),buffer.data(),size)!=0)
         BOT_ABORT();
-    free(var);
 }
 
 void SimpleAction::doMove()
@@ -46,12 +46,11 @@ void SimpleAction::doMove()
         return;
 
     purgeCpuCache();
-    QHashIterator<CatchChallenger::Api_protocol_Qt *,Player> i(clientList);
-    while (i.hasNext()) {
-        i.next();
-        CatchChallenger::Api_protocol_Qt *api=i.key();
-        Player &player=clientList[i.key()];
-        //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
+    std::unordered_map<CatchChallenger::Api_protocol *,Player>::iterator i=clientList.begin();
+    while(i!=clientList.end())
+    {
+        CatchChallenger::Api_protocol * const api=i->first;
+        Player &player=i->second;
         if(api->getCaracterSelected())
         {
             if(bugInDirection)
@@ -80,11 +79,12 @@ void SimpleAction::doMove()
                 }
                 else
                 {
-                    qDebug() << "Out of direction scope";
+                    std::cerr << "Out of direction scope" << std::endl;
                     BOT_ABORT();
                 }
             }
         }
+        ++i;
     }
 }
 
@@ -92,18 +92,18 @@ void SimpleAction::doText()
 {
     if(!randomText)
         return;
-    if(clientList.isEmpty())
+    if(clientList.empty())
         return;
 
     purgeCpuCache();
-    QList<CatchChallenger::Api_protocol_Qt *> clientListApi;
-    QHashIterator<CatchChallenger::Api_protocol_Qt *,Player> i(clientList);
-    while (i.hasNext()) {
-        i.next();
-        clientListApi << i.key();
+    std::vector<CatchChallenger::Api_protocol *> clientListApi;
+    std::unordered_map<CatchChallenger::Api_protocol *,Player>::const_iterator i=clientList.cbegin();
+    while(i!=clientList.cend())
+    {
+        clientListApi.push_back(i->first);
+        ++i;
     }
-    CatchChallenger::Api_protocol_Qt *api=clientListApi.at(rand()%clientListApi.size());
-    //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
+    CatchChallenger::Api_protocol * const api=clientListApi.at(rand()%clientListApi.size());
     if(api->getCaracterSelected())
     {
         if(CommonSettingsServer::commonSettingsServer.chat_allow_local && rand()%10==0)
@@ -152,14 +152,11 @@ void SimpleAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,con
         return;
 
     purgeCpuCache();
-    Q_UNUSED(text);
-    Q_UNUSED(pseudo);
-    Q_UNUSED(type);
+    (void)type;
     CatchChallenger::Api_protocol_Qt *api = static_cast<CatchChallenger::Api_protocol_Qt *>(sender());
     if(api==NULL)
         return;
 
-    Q_UNUSED(type);
     switch(chat_type)
     {
         case CatchChallenger::Chat_type_all:
@@ -186,13 +183,12 @@ void SimpleAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,con
         if(CommonSettingsServer::commonSettingsServer.chat_allow_private)
         {
             if(text=="version")
-                api->sendPM(QStringLiteral("Version %1 %2").arg(name()).arg(version()).toStdString(),pseudo);
+                api->sendPM(std::string("Version ")+name()+" "+version(),pseudo);
             else
-                api->sendPM(QStringLiteral("Hello %1, I'm few bit busy for now").arg(QString::fromStdString(pseudo)).toStdString(),pseudo);
+                api->sendPM(std::string("Hello ")+pseudo+", I'm few bit busy for now",pseudo);
         }
         break;
         default:
         break;
     }
 }
-

@@ -9,14 +9,21 @@
 #include "../BotInterface.h"
 #include "MapServerMini.h"
 #include <unordered_map>
+#include <QObject>
 #include <QRegularExpression>
 #include <QElapsedTimer>
 #include <QList>
-#include <QtWidgets/QListWidgetItem>
 #include <map>
 #include <set>
 
-class ActionsBotInterface : public BotInterface
+//Only a QList<QListWidgetItem *> of them is held, so the incomplete type is
+//enough here: it keeps the whole QtWidgets dependency out of tools/libbot.
+class QListWidgetItem;
+
+/// QObject is inherited HERE and not by BotInterface: the bot-brain interface
+/// itself is toolkit-free, only this Qt implementation of it needs signals,
+/// slots and timers.
+class ActionsBotInterface : public QObject, public BotInterface
 {
     Q_OBJECT
 public:
@@ -100,13 +107,17 @@ public:
 
     ActionsBotInterface();
     ~ActionsBotInterface();
-    QVariant getValue(const QString &variable);
-    bool setValue(const QString &variable,const QVariant &value);
-    QStringList variablesList();
-    virtual void removeClient(CatchChallenger::Api_protocol_Qt  *api);
-    QString name();
-    QString version();
-    virtual void insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
+    bool getValue(const std::string &variable,bool &value);
+    bool setValue(const std::string &variable,const bool value);
+    std::vector<std::string> variablesList();
+    virtual void removeClient(CatchChallenger::Api_protocol *api);
+    std::string name();
+    std::string version();
+    virtual void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
+    /// The bot core hands out the toolkit-free protocol pointer; every index in
+    /// this tree is keyed by the Qt subclass (it needs its signals). The Qt
+    /// front-end created the object, so this is a plain static_cast, no RTTI.
+    static CatchChallenger::Api_protocol_Qt *toQt(CatchChallenger::Api_protocol *api);
     static std::map<CatchChallenger::Api_protocol_Qt  *,Player> clientList;
     //not into clientList because clientList is not initialised when receive the signals (due to delay of map loading)
     static std::map<CatchChallenger::Api_protocol_Qt  *,std::vector<DelayedMapPlayerChange> > delayedMessage;

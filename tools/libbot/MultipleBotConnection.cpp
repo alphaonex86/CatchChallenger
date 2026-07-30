@@ -1,20 +1,80 @@
-#include "../../general/base/CommonSettingsCommon.hpp"
-#include "../../general/base/CommonSettingsServer.hpp"
-#include "../../general/base/FacilityLib.hpp"
-#include "../../general/base/FacilityLibGeneral.hpp"
 #include "MultipleBotConnection.h"
-
-#include <QNetworkProxy>
-#include <QPluginLoader>
-#include <iostream>
 #include "BotAbort.h"
 
-MultipleBotConnection::MultipleBotConnection() :
-    botInterface(NULL),
-    mHaveAnError(false),
-    charactersGroupIndex(0),
-    serverUniqueKey(-1),
-    serverIsSelected(false)
+#include <QCoreApplication>
+#include <QNetworkProxy>
+#include <iostream>
+
+/* ------------------------------- the link ------------------------------- */
+QtBotClientLink::QtBotClientLink() :
+    sslSocket(NULL),
+    socket(NULL),
+    apiClient(NULL)
+{
+}
+
+QtBotClientLink::~QtBotClientLink()
+{
+    //Only the protocol object is destroyed, exactly as the previous
+    //MultipleBotConnection destructor did: ConnectedSocket and QSslSocket are
+    //left alone on purpose (their ownership/parenting is Qt side and destroying
+    //them here would risk a double free).
+    delete apiClient;
+    apiClient=NULL;
+}
+
+CatchChallenger::Api_protocol *QtBotClientLink::api() const
+{
+    return apiClient;
+}
+
+bool QtBotClientLink::connectToHost(const std::string &host,const uint16_t port,
+                                    const std::string &proxyHost,const uint16_t proxyPort)
+{
+    if(sslSocket==NULL)
+    {
+        std::cerr << "QtBotClientLink::connectToHost(): sslSocket==NULL" << std::endl;
+        return false;
+    }
+    QNetworkProxy proxyObject;
+    if(!proxyHost.empty())
+    {
+        #ifdef CATCHCHALLENGER_BOT_TESTCONNECT
+        qDebug() << "use proxy: " << QString::fromStdString(proxyHost) << ":" << proxyPort;
+        #endif
+        proxyObject.setType(QNetworkProxy::Socks5Proxy);
+        proxyObject.setHostName(QString::fromStdString(proxyHost));
+        proxyObject.setPort(proxyPort);
+    }
+    else
+        proxyObject.setType(QNetworkProxy::NoProxy);
+    sslSocket->setProxy(proxyObject);
+    #ifdef CATCHCHALLENGER_BOT_TESTCONNECT
+    qDebug() << "Try connect on: " << QString::fromStdString(host) << ":" << port;
+    #endif
+    sslSocket->connectToHost(QString::fromStdString(host),port);
+    return true;
+}
+
+void QtBotClientLink::disconnectFromHost()
+{
+    if(socket!=NULL)
+        socket->disconnectFromHost();
+}
+
+void QtBotClientLink::sendDatapackContentMainSub()
+{
+    if(apiClient!=NULL)
+        apiClient->sendDatapackContentMainSub();
+}
+
+/* ---------------------------- the front-end ----------------------------- */
+MultipleBotConnection::CatchChallengerClient::CatchChallengerClient() :
+    api(NULL)
+{
+}
+
+MultipleBotConnection::MultipleBotConnection()
 {
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
@@ -24,9 +84,6 @@ MultipleBotConnection::MultipleBotConnection() :
     qRegisterMetaType<std::vector<CatchChallenger::CharacterEntry> >("std::vector<CatchChallenger::CharacterEntry>");
     qRegisterMetaType<std::vector<CatchChallenger::ServerFromPoolForDisplay*> >("std::vector<CatchChallenger::CharacterEntry>");
 
-    CatchChallenger::ProtocolParsing::initialiseTheVariable();
-    CatchChallenger::ProtocolParsing::setMaxPlayers(65535);
-
     //Connect the creation-timer tick ONCE here, with the return checked: this
     //is the first and only connect, so a false return is a genuine failure.
     //ifMultipleConnexionStartCreation() afterwards only (re)starts the timer --
@@ -35,101 +92,180 @@ MultipleBotConnection::MultipleBotConnection() :
     //after the timer was stopped) would then look like a failure when it isn't.
     if(!connect(&connectTimer,&QTimer::timeout,this,&MultipleBotConnection::connectTimerSlot,Qt::UniqueConnection))
         BOT_ABORT();
-
-    numberToChangeLoginForMultipleConnexion=1;
-    numberOfBotConnected=0;
-    numberOfSelectedCharacter=0;
-    numberOfStartSelectingCharacter=0;
-    numberOfHaveDatapackCharacter=0;
-    numberOfStartCreatingCharacter=0;
-    numberOfStartCreatedCharacter=0;
-    mHaveAnError=false;
 }
 
 MultipleBotConnection::~MultipleBotConnection()
 {
-    QHashIterator<QSslSocket *,CatchChallengerClient *> i(sslSocketToCatchChallengerClient);
-    while (i.hasNext()) {
-        i.next();
-        delete i.value()->api;
-        delete i.value();
-    }
+    //The clients themselves belong to MultipleBotConnectionCore, whose
+    //destructor runs right after this one: here only the Qt indexes go.
     apiToCatchChallengerClient.clear();
     connectedSocketToCatchChallengerClient.clear();
     sslSocketToCatchChallengerClient.clear();
 }
 
-QString MultipleBotConnection::getResolvedPluginName(const QString &name)
+QtBotClientLink *MultipleBotConnection::qtLink(MultipleBotConnectionCore::BotClient *client)
 {
-    #if defined(__linux__)
-        return QStringLiteral("lib")+name+QStringLiteral(".so");
-    #elif defined(Q_OS_MAC)
-        #if defined(QT_DEBUG)
-            return QStringLiteral("lib")+name+QStringLiteral("_debug.dylib");
-        #else
-            return QStringLiteral("lib")+name+QStringLiteral(".dylib");
-        #endif
-    #elif defined(_WIN32)
-        #if defined(QT_DEBUG)
-            return name+QStringLiteral("d.dll");
-        #else
-            return name+QStringLiteral(".dll");
-        #endif
-    #else
-        #error "Platform not supported"
-    #endif
+    return static_cast<QtBotClientLink *>(client->link);
 }
 
+MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClient()
+{
+    return static_cast<CatchChallengerClient *>(createClientCore());
+}
+
+MultipleBotConnectionCore::BotClient * MultipleBotConnection::allocClient()
+{
+    CatchChallengerClient * const client=new CatchChallengerClient;
+    QtBotClientLink * const link=new QtBotClientLink;
+    link->sslSocket=new QSslSocket();
+    link->socket=new CatchChallenger::ConnectedSocket(link->sslSocket);
+    link->apiClient=new CatchChallenger::Api_client_real(link->socket);
+    client->link=link;
+    client->api=link->apiClient;
+    sslSocketToCatchChallengerClient[link->sslSocket]=client;
+
+    if(!connect(link->sslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,&MultipleBotConnection::sslErrors,Qt::QueuedConnection))
+        BOT_ABORT();
+    #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+    if(!connect(link->sslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),this,&MultipleBotConnection::newSocketError))
+        BOT_ABORT();
+    #else
+    if(!connect(link->sslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::errorOccurred),this,&MultipleBotConnection::newSocketError))
+        BOT_ABORT();
+    #endif
+    return client;
+}
+
+void MultipleBotConnection::startConnectTimer(const unsigned int intervalMs)
+{
+    connectTimer.start(intervalMs);
+}
+
+void MultipleBotConnection::stopConnectTimer()
+{
+    connectTimer.stop();
+}
+
+bool MultipleBotConnection::connectTimerIsActive() const
+{
+    return connectTimer.isActive();
+}
+
+std::string MultipleBotConnection::datapackPath() const
+{
+    return QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
+}
+
+void MultipleBotConnection::connectTheExternalSocket(MultipleBotConnectionCore::BotClient *client)
+{
+    CatchChallengerClient * const qtClient=static_cast<CatchChallengerClient *>(client);
+    QtBotClientLink * const link=qtLink(client);
+    if(link->apiClient==NULL)
+    {
+        std::cerr << "connectTheExternalSocket link->apiClient==NULL" << std::endl;
+        BOT_ABORT();
+    }
+    if(!connect(link->apiClient,&CatchChallenger::Api_client_real::Qtinsert_player,            this,&MultipleBotConnection::insert_player))
+        BOT_ABORT();
+    if(!connect(link->apiClient,&CatchChallenger::Api_client_real::Qtremove_player,            this,&MultipleBotConnection::remove_player))
+        BOT_ABORT();
+    if(!connect(link->apiClient,&CatchChallenger::Api_client_real::QtdropAllPlayerOnTheMap,    this,&MultipleBotConnection::dropAllPlayerOnTheMap))
+        BOT_ABORT();
+    if(!connect(link->apiClient,&CatchChallenger::Api_client_real::QthaveCharacter,            this,&MultipleBotConnection::haveCharacter))
+        BOT_ABORT();
+    if(!connect(link->apiClient,&CatchChallenger::Api_client_real::Qtlogged,                   this,&MultipleBotConnection::logged))
+        BOT_ABORT();
+    if(!connect(link->apiClient,&CatchChallenger::Api_client_real::Qthave_current_player_info, this,&MultipleBotConnection::have_current_player_info))
+        BOT_ABORT();
+    if(!connect(link->apiClient,&CatchChallenger::Api_client_real::QtnewError,                 this,&MultipleBotConnection::newError))
+        BOT_ABORT();
+    if(!connect(link->apiClient,&CatchChallenger::Api_client_real::QtnewCharacterId,           this,&MultipleBotConnection::newCharacterId))
+        BOT_ABORT();
+    if(!connect(link->apiClient,&CatchChallenger::Api_client_real::QtlastReplyTime,            this,&MultipleBotConnection::lastReplyTime))
+        BOT_ABORT();
+    if(!connect(link->apiClient,&CatchChallenger::Api_client_real::QtnotLogged,                this,&MultipleBotConnection::notLogged))
+        BOT_ABORT();
+    if(!connect(link->apiClient,&CatchChallenger::Api_client_real::Qtprotocol_is_good,         this,&MultipleBotConnection::protocol_is_good))
+        BOT_ABORT();
+    if(!connect(link->socket,&CatchChallenger::ConnectedSocket::disconnected,                  this,&MultipleBotConnection::disconnected))
+        BOT_ABORT();
+    if(apiToCatchChallengerClient.isEmpty())
+    {
+        if(!connect(link->apiClient,&CatchChallenger::Api_client_real::QthaveTheDatapack,        this,&MultipleBotConnection::haveTheDatapack,Qt::QueuedConnection/*Qt::QueuedConnection need the fix the order of event, need datapack vs already have datapack*/))
+            BOT_ABORT();
+        if(!connect(link->apiClient,&CatchChallenger::Api_client_real::QthaveTheDatapackMainSub, this,&MultipleBotConnection::haveTheDatapackMainSub,Qt::QueuedConnection))
+            BOT_ABORT();
+        if(!connect(link->apiClient,&CatchChallenger::Api_client_real::QthaveDatapackMainSubCode,this,&MultipleBotConnection::haveTheDatapackMainSubCode,Qt::QueuedConnection))
+            BOT_ABORT();
+    }
+    apiToCatchChallengerClient[qtClient->api]=qtClient;
+    connectedSocketToCatchChallengerClient[link->socket]=qtClient;
+    MultipleBotConnectionCore::connectTheExternalSocket(client);
+}
+
+/* --- progress notifications -> Qt signals ------------------------------- */
+void MultipleBotConnection::notifyNumberOfBotConnected(const uint16_t value)
+{
+    emit emit_numberOfBotConnected(value);
+}
+
+void MultipleBotConnection::notifyNumberOfSelectedCharacter(const uint16_t value)
+{
+    emit emit_numberOfSelectedCharacter(value);
+}
+
+void MultipleBotConnection::notifyNumberOfStartSelectingCharacter(const uint16_t value)
+{
+    emit emit_numberOfStartSelectingCharacter(value);
+}
+
+void MultipleBotConnection::notifyNumberOfHaveDatapackCharacter(const uint16_t value)
+{
+    emit emit_numberOfHaveDatapackCharacter(value);
+}
+
+void MultipleBotConnection::notifyNumberOfStartCreatingCharacter(const uint16_t value)
+{
+    emit emit_numberOfStartCreatingCharacter(value);
+}
+
+void MultipleBotConnection::notifyNumberOfStartCreatedCharacter(const uint16_t value)
+{
+    emit emit_numberOfStartCreatedCharacter(value);
+}
+
+void MultipleBotConnection::notifyUpdateClientListStatus()
+{
+    emit updateClientListStatus();
+}
+
+void MultipleBotConnection::notifyAllPlayerConnected()
+{
+    emit emit_all_player_connected();
+}
+
+void MultipleBotConnection::notifyAllPlayerOnMap()
+{
+    emit emit_all_player_on_map();
+}
+
+/* --- Qt slots: resolve the sender, then call the core -------------------- */
 void MultipleBotConnection::disconnected()
 {
-    qDebug() << "disconnected()";
-
     CatchChallenger::ConnectedSocket *senderObject = qobject_cast<CatchChallenger::ConnectedSocket *>(QObject::sender());
-    if(senderObject!=NULL)
-    {
-        if(connectedSocketToCatchChallengerClient.contains(senderObject))
-        {
-            CatchChallengerClient * catchChallengerClient=connectedSocketToCatchChallengerClient.value(senderObject);
-            CatchChallenger::Api_client_real *api=catchChallengerClient->api;
-            if(api!=NULL)
-            {
-                if(api->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2 ||
-                        api->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage3)
-                {
-                    qDebug() << "disconnected(): For reason: api->socketDisconnectedForReconnect()";
-                    api->socketDisconnectedForReconnect();
-                    return;
-                }
-                else
-                {
-                    qDebug() << "disconnected(): For reason: " << connectedSocketToCatchChallengerClient[senderObject];
-                    mHaveAnError=true;
-                    if(catchChallengerClient->haveBeenDiscounted==false)
-                    {
-                        connectedSocketToCatchChallengerClient[senderObject]->haveBeenDiscounted=true;
-                        numberOfBotConnected--;
-                        emit emit_numberOfBotConnected(numberOfBotConnected);
-                        std::cout << "disconnected(): numberOfBotConnected--: " << connectedSocketToCatchChallengerClient[senderObject]->api->player_informations.public_informations.pseudo << std::endl;
-                    }
-                }
-            }
-            else
-            {
-                mHaveAnError=true;
-                qDebug() << "disconnected(): error, api null";
-            }
-        }
-        else
-        {
-            mHaveAnError=true;
-            qDebug() << "disconnected(): error, from unknown (not found)";
-        }
-    }
-    else
+    if(senderObject==NULL)
     {
         mHaveAnError=true;
-        qDebug() << "disconnected(): error, from unknown";
+        std::cerr << "disconnected(): error, from unknown" << std::endl;
+        return;
     }
+    if(!connectedSocketToCatchChallengerClient.contains(senderObject))
+    {
+        mHaveAnError=true;
+        std::cerr << "disconnected(): error, from unknown (not found)" << std::endl;
+        return;
+    }
+    disconnected_with_client(connectedSocketToCatchChallengerClient.value(senderObject));
 }
 
 void MultipleBotConnection::lastReplyTime(const quint32 &time)
@@ -139,72 +275,12 @@ void MultipleBotConnection::lastReplyTime(const quint32 &time)
 
 void MultipleBotConnection::notLogged(const std::string &reason)
 {
-    Q_UNUSED(reason);
-    mHaveAnError=true;
-
-    QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
-    while (i.hasNext()) {
-        i.next();
-        i.key()->disconnectClient();
-    }
+    notLoggedInternal(reason);
 }
 
-void MultipleBotConnection::tryLink(CatchChallengerClient * client)
+void MultipleBotConnection::connectTimerSlot()
 {
-    numberOfBotConnected++;
-    emit emit_numberOfBotConnected(numberOfBotConnected);
-    //std::cout << "MultipleBotConnection::tryLink(): numberOfBotConnected++: multipleConnexion():" << std::to_string(multipleConnexion()) << std::endl;
-
-    if(client->api==NULL)
-    {
-        std::cerr << "tryLink client->api==NULL" << std::endl;
-        BOT_ABORT();
-    }
-    if(!connect(client->api,&CatchChallenger::Api_client_real::Qtprotocol_is_good,this,&MultipleBotConnection::protocol_is_good))
-        BOT_ABORT();
-    if(!multipleConnexion())
-    {
-        client->login=login();
-        client->pass=pass();
-    }
-    else
-    {
-        QString loginString=login();
-        QString passString=pass();
-        loginString.replace(QStringLiteral("%NUMBER%"),QString::number(client->number));
-        passString.replace(QStringLiteral("%NUMBER%"),QString::number(client->number));
-        client->login=loginString;
-        client->pass=passString;
-    }
-}
-
-void MultipleBotConnection::protocol_is_good_with_client(CatchChallengerClient *client)
-{
-    /*CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(QObject::sender());
-    if(senderObject==NULL)
-        return;*/
-
-    if(client->api==NULL)
-    {
-        std::cerr << "protocol_is_good_with_client client->api==NULL" << std::endl;
-        BOT_ABORT();
-    }
-    client->stat=Status_WaitLogin;
-    updateClientListStatus();
-    client->api->tryLogin(client->login.toStdString(),client->pass.toStdString());
-}
-
-void MultipleBotConnection::insert_player_with_client(CatchChallengerClient *client,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
-{
-    client->stat=Status_OnMap;
-    updateClientListStatus();
-    Q_UNUSED(mapId);
-    Q_UNUSED(x);
-    Q_UNUSED(y);
-    Q_UNUSED(direction);
-    Q_UNUSED(player);
-
-    client->have_informations=true;
+    connectTimerTick();
 }
 
 void MultipleBotConnection::haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
@@ -220,594 +296,5 @@ void MultipleBotConnection::haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapI
         std::cerr << "MultipleBotConnection::haveCharacter() but !apiToCatchChallengerClient.contains(senderObject)" << std::endl;
         return;
     }
-    CatchChallengerClient *client=apiToCatchChallengerClient.value(senderObject);
-    if(client->selectedCharacter!=true)
-    {
-        qDebug() << "selected character: " << client << " at " << __FILE__ << ":" << __LINE__;
-        client->selectedCharacter=true;
-        numberOfSelectedCharacter++;
-        emit emit_numberOfSelectedCharacter(numberOfSelectedCharacter);
-        client->stat=Status_SelectedCharacter;
-        updateClientListStatus();
-    }
-
-    if(multipleConnexion())
-    {
-        if(numberOfBotConnected>=numberOfSelectedCharacter)
-        {
-            const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
-            if(diff==0 && numberOfSelectedCharacter>=connexionCountTarget())
-                emit emit_all_player_on_map();
-        }
-    }
-    else
-        emit emit_all_player_on_map();
-
-    //Register the bot's OWN player, the same way MapControllerMP::loadCurrentPlayer()
-    //does for the real client. Without it the bot keeps the placeholder entry
-    //MainWindow creates (mapId 0, 0/0, canMoveOnMap false) and ActionsAction never
-    //starts moveTimer, so doMove() never walks the step the AI computes into
-    //target.localStep: the bot stands still for the whole run.
-    if(botInterface!=NULL && client->api!=NULL)
-        botInterface->insert_player(client->api,
-                                    client->api->get_player_informations().public_informations,
-                                    mapId,x,y,direction);
-}
-
-std::string MultipleBotConnection::getNewPseudo()
-{
-    return std::string("bot")+CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3);
-}
-
-void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
-{
-    if(!serverIsSelected)
-    {
-        qDebug() << "!serverIsSelected";
-        return;
-    }
-    client->stat=Status_Logged;
-    updateClientListStatus();
-    if(client->api==NULL)
-    {
-        std::cerr << "logged_with_client client->api==NULL" << std::endl;
-        BOT_ABORT();
-    }
-    if(client->charactersList.empty() || client->charactersList.at(charactersGroupIndex).size()<=0)
-    {
-        qDebug() << client->login << "have not character";
-        if((autoCreateCharacter() || multipleConnexion()) && serverIsSelected)
-        {
-            if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().empty())
-                qDebug() << "Profile list is empty for initial creation";
-            else
-            {
-                qDebug() << client->login << "create new character";
-                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size();
-                std::cerr << "DEBUG: logged_with_client create-character branch profileIndex="
-                          << (int)profileIndex << " max_pseudo_size="
-                          << (int)CommonSettingsCommon::commonSettingsCommon.max_pseudo_size << std::endl;
-                std::string pseudoStd=getNewPseudo();
-                std::cerr << "DEBUG: getNewPseudo returned len=" << pseudoStd.size()
-                          << " value=" << pseudoStd << std::endl;
-                QString pseudo=QString::fromStdString(pseudoStd);
-                uint8_t skinId;
-                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
-                if(!profile.forcedskin.empty())
-                    skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
-                else
-                {
-                    // Skin count from the parsed datapack (CommonDatapack::
-                    // get_skins()), the single client-side source -- the
-                    // datapack CACHE is server-only, the client never sees it.
-                    // It can be 0: a headless server ships skin/fighter/ as
-                    // empty folders and datapack sync transfers files only, so
-                    // the client receives no skin subdirs. Guard rand()%0
-                    // (SIGFPE); skinId 0 is still valid (the server validates
-                    // against ITS own skin count).
-                    const size_t skinCount=CatchChallenger::CommonDatapack::commonDatapack.get_skins().size();
-                    if(skinCount==0)
-                        skinId=0;
-                    else
-                        skinId=rand()%skinCount;
-                }
-                uint8_t monstergroupId;
-                if(profile.monstergroup.empty())
-                    monstergroupId=0;
-                else
-                    monstergroupId=rand()%profile.monstergroup.size();
-                std::cerr << "DEBUG: about to addCharacter charactersGroupIndex="
-                          << (int)charactersGroupIndex << " profileIndex=" << (int)profileIndex
-                          << " skinId=" << (int)skinId << " monstergroupId="
-                          << (int)monstergroupId << std::endl;
-                client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo.toStdString(),monstergroupId,skinId);
-                std::cerr << "DEBUG: returned from addCharacter" << std::endl;
-                numberOfStartCreatingCharacter++;
-                emit_numberOfStartCreatingCharacter(numberOfStartCreatingCharacter);
-                client->stat=Status_CreatingCharacter;
-                updateClientListStatus();
-            }
-        }
-        return;
-    }
-    if(multipleConnexion() && serverIsSelected)
-    {
-        if(!client->charactersList.empty() && charactersGroupIndex<client->charactersList.size())
-        {
-            const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.at(charactersGroupIndex).size()).character_id;
-            if(!characterOnMap.contains(character_id))
-            {
-                if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,character_id))
-                    qDebug() << "Unable to do automatic character selection:" << character_id;
-                else
-                {
-                    numberOfStartSelectingCharacter++;
-                    emit_numberOfStartSelectingCharacter(numberOfStartSelectingCharacter);
-                    client->stat=Status_SelectingCharacter;
-                    updateClientListStatus();
-                    //if not the first bot
-                    if(!tempMapList.empty())
-                    {
-                        //then do fake init normaly done into haveDatapackMainSubCode_with_client(
-                        if(!client->api->setMapNumber(tempMapList.size()))
-                            BOT_ABORT();
-                        client->api->have_main_and_sub_datapack_loaded();
-                    }
-                    //qDebug() << "MultipleBotConnection::logged_with_client(): Add char on map: Manual select character:" << character_id;
-                    characterOnMap << character_id;
-                }
-            }
-        }
-        return;
-    }
-}
-
-void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *client)
-{
-    if(client->api==NULL)
-    {
-        std::cerr << "haveTheDatapack_with_client client->api==NULL" << std::endl;
-        BOT_ABORT();
-    }
-    numberOfHaveDatapackCharacter++;
-    emit_numberOfHaveDatapackCharacter(numberOfHaveDatapackCharacter);
-    if(botInterface!=NULL)
-        qDebug() << "MultipleBotConnection::haveTheDatapack_with_client(): Bot version:" << botInterface->name() << botInterface->version();
-    //load the profil list
-    {
-        CatchChallenger::CommonDatapack::commonDatapack.parseDatapack((QCoreApplication::applicationDirPath()+"/datapack/").toStdString());//load always after the rates
-        // No separate skin folder-scan: the skin list is whatever
-        // parseDatapack() loaded into CommonDatapack::get_skins() (used at
-        // character creation, guarded against an empty list).
-    }
-
-    if(client->charactersList.size()<=0 || charactersGroupIndex>=client->charactersList.size() || client->charactersList.at(charactersGroupIndex).empty())
-    {
-        if(serverIsSelected)
-        {
-            qDebug() << client->login << "have not character";
-            if(autoCreateCharacter() || multipleConnexion())
-            {
-                if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().empty())
-                {
-                    qDebug() << "Profile list is empty";
-                    return;
-                }
-                qDebug() << client->login << "create new character";
-                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size();
-                QString pseudo=QString::fromStdString(getNewPseudo());
-                uint8_t skinId;
-                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
-                if(!profile.forcedskin.empty())
-                    skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
-                else
-                {
-                    // Skin count from the parsed datapack (get_skins(), the
-                    // client-side source; the datapack cache is server-only).
-                    // 0 when the headless server ships skin/fighter/ as empty
-                    // folders (sync transfers files only) -- guard rand()%0.
-                    const size_t skinCount=CatchChallenger::CommonDatapack::commonDatapack.get_skins().size();
-                    if(skinCount==0)
-                        skinId=0;
-                    else
-                        skinId=rand()%skinCount;
-                }
-                uint8_t monstergroupId;
-                if(profile.monstergroup.empty())
-                    monstergroupId=0;
-                else
-                    monstergroupId=rand()%profile.monstergroup.size();
-                client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo.toStdString(),monstergroupId,skinId);
-                numberOfStartCreatingCharacter++;
-                emit_numberOfStartCreatingCharacter(numberOfStartCreatingCharacter);
-                client->stat=Status_CreatingCharacter;
-                updateClientListStatus();
-            }
-        }
-        else
-        {
-            qDebug() << client->login << "have no character and no server selected: " << client->charactersList.size() << ", charactersGroupIndex: " << charactersGroupIndex;
-            if(client->charactersList.size()>0 && charactersGroupIndex<client->charactersList.size())
-                qDebug() << client->login << "client->charactersList.at(charactersGroupIndex).empty()";
-        }
-        return;
-    }
-    //ifMultipleConnexionStartCreation();
-    //the actual client
-    const quint32 &character_id=client->charactersList.at(charactersGroupIndex).at(rand()%client->charactersList.at(charactersGroupIndex).size()).character_id;
-    if(!characterOnMap.contains(character_id))
-    {
-        if(multipleConnexion() && serverIsSelected)
-        {
-            if(!serverIsSelected)
-            {
-                qDebug() << "if(!serverIsSelected) for multipleConnexion()";
-                BOT_ABORT();
-            }
-            if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,character_id))
-                qDebug() << "Unable to select character after datapack loading:" << character_id;
-            else
-            {
-                qDebug() << "haveTheDatapack_with_client: Manual select character:" << character_id;
-                characterOnMap << character_id;
-                qDebug() << "Select character after datapack loading:" << character_id;
-            }
-        }
-    }
-}
-
-void MultipleBotConnection::haveDatapackMainSubCode_with_client(CatchChallengerClient *client)
-{
-    if(botInterface!=NULL)
-        qDebug() << "MultipleBotConnection::haveDatapackMainSubCode_with_client(): Bot version:" << botInterface->name() << botInterface->version();
-    if(client->api==NULL)
-    {
-        std::cerr << "haveDatapackMainSubCode_with_client client->api==NULL" << std::endl;
-        BOT_ABORT();
-    }
-    client->api->sendDatapackContentMainSub();
-}
-
-void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerClient *client)
-{
-    if(client->api==NULL)
-    {
-        std::cerr << "haveTheDatapackMainSub_with_client client->api==NULL" << std::endl;
-        BOT_ABORT();
-    }
-    Q_UNUSED(client);
-    if(botInterface!=NULL)
-        qDebug() << "MultipleBotConnection::haveTheDatapackMainSub_with_client(): Bot version:" << botInterface->name() << botInterface->version();
-    {
-        if(CommonSettingsServer::commonSettingsServer.mainDatapackCode=="[main]")
-        {
-            qDebug() << "CommonSettingsServer::commonSettingsServer.mainDatapackCode==[main]";
-            #ifdef CATCHCHALLENGER_HARDENED
-            BOT_ABORT();
-            #else
-            return;
-            #endif
-        }
-        if(CommonSettingsServer::commonSettingsServer.subDatapackCode=="[sub]")
-        {
-            qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode==[sub]";
-            #ifdef CATCHCHALLENGER_HARDENED
-            BOT_ABORT();
-            #else
-            return;
-            #endif
-        }
-    }
-    //load the datapack
-    if(!tempMapList.isEmpty())
-    {
-        qDebug() << "MultipleBotConnection::haveTheDatapackMainSub_with_client() !tempMapList.isEmpty() internal bug";
-        BOT_ABORT();
-    }
-    {
-        const QString &datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
-        CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath.toStdString());
-
-        const std::vector<std::string> &returnList=
-                    CatchChallenger::FacilityLibGeneral::listFolder(
-                        (datapackPath.toStdString()+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/")
-                        );
-
-        //load the map
-        const int &size=returnList.size();
-        int index=0;
-        QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
-        QRegularExpression mapExclude(QStringLiteral("[\"']"));
-        catchchallenger_datapack_map<std::string, CATCHCHALLENGER_TYPE_MAPID> mapPathToId;
-        while(index<size)
-        {
-            const QString &fileName=QString::fromStdString(returnList.at(index));
-            if(fileName.contains(mapFilter) && !fileName.contains(mapExclude))
-            {
-                QString sortFileName=fileName;
-                sortFileName.remove(mapFilter);
-                mapPathToId[sortFileName.toStdString()]=(CATCHCHALLENGER_TYPE_MAPID)tempMapList.size();
-                tempMapList << sortFileName;
-            }
-            index++;
-        }
-        CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(datapackPath.toStdString(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
-    }
-    if(!client->api->setMapNumber(tempMapList.size()))
-        BOT_ABORT();
-    client->api->have_main_and_sub_datapack_loaded();
-    ifMultipleConnexionStartCreation();
-}
-
-void MultipleBotConnection::ifMultipleConnexionStartCreation()
-{
-    if(multipleConnexion())
-    {
-        if(!connectTimer.isActive())
-        {
-            //The tick is connected once in the constructor (return checked
-            //there). Here we only (re)start the timer: re-connecting would
-            //return false on the existing Qt::UniqueConnection, and a late
-            //re-entry on a slow server (the ESP32, after connectTimer.stop())
-            //would wrongly look like a failure. connectTimerSlot() is
-            //idempotent once the target count is reached.
-            unsigned int temp_ms=1000/connectBySeconds();
-            if(temp_ms<1)
-                temp_ms=1;
-            connectTimer.start(temp_ms);
-            qDebug() << "MultipleBotConnection::ifMultipleConnexionStartCreation(): start the multiple timer co" << temp_ms;
-            return;
-        }
-        else
-            qDebug() << "MultipleBotConnection::ifMultipleConnexionStartCreation(): connectTimer.isActive()";
-    }
-    else
-    {
-        qDebug() << "MultipleBotConnection::ifMultipleConnexionStartCreation(): !multipleConnexion()";
-        emit emit_all_player_connected();
-    }
-}
-
-void MultipleBotConnection::connectTimerSlot()
-{
-    const int connexionCountVar=connexionCountTarget();
-    if(apiToCatchChallengerClient.size()<connexionCountVar && numberOfBotConnected<connexionCountVar)
-    {
-        if(numberOfBotConnected<numberOfSelectedCharacter)
-        {
-            qDebug() << "MultipleBotConnection::connectTimerSlot(): numberOfBotConnected(" << numberOfBotConnected << ")<numberOfSelectedCharacter(" << numberOfSelectedCharacter << ")";
-            mHaveAnError=true;
-            connectTimer.stop();
-        }
-        else
-        {
-            //qDebug() << "MultipleBotConnection::connectTimerSlot(): ping";
-            const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
-            if(diff<=(quint32)maxDiffConnectedSelected())
-            {
-                createClient();
-                //qDebug() << "MultipleBotConnection::connectTimerSlot(): createClient()";
-            }
-        }
-    }
-    else
-    {
-        qDebug() << "MultipleBotConnection::connectTimerSlot(): finish, stop it";
-        emit emit_all_player_connected();
-        connectTimer.stop();
-    }
-}
-
-void MultipleBotConnection::newCharacterId_with_client(MultipleBotConnection::CatchChallengerClient *client, const quint8 &returnCode, const quint32 &characterId)
-{
-    if(client->api==NULL)
-    {
-        std::cerr << "newCharacterId_with_client client->api==NULL" << std::endl;
-        BOT_ABORT();
-    }
-    if(returnCode!=0x00)
-    {
-        qDebug() << "new character not created, server have returned a failed: " << returnCode;
-        return;
-    }
-    if(serverUniqueKey==-1)
-    {
-        qDebug() << "Unable to select the freshly created char because don't have select the server: " << returnCode;
-        return;
-    }
-
-    numberOfStartCreatedCharacter++;
-    emit_numberOfStartCreatedCharacter(numberOfStartCreatedCharacter);
-    client->stat=Status_CreatedCharacter;
-    updateClientListStatus();
-    if(!characterOnMap.contains(characterId))
-    {
-        if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,characterId))
-            qDebug() << "Unable to select character after creation:" << characterId;
-        else
-        {
-            numberOfStartSelectingCharacter++;
-            emit_numberOfStartSelectingCharacter(numberOfStartSelectingCharacter);
-            client->stat=Status_SelectingCharacterAfterCreation;
-            updateClientListStatus();
-            qDebug() << "add character on map: " << characterId << " " << client << " api: " << client->api << " at " << __FILE__ << ":" << __LINE__;
-            characterOnMap << characterId;
-            qDebug() << "Select new character created after creation:" << characterId;
-            ifMultipleConnexionStartCreation();
-        }
-    }
-    else
-        qDebug() << client->login << "new character is already on map";
-}
-
-void MultipleBotConnection::have_current_player_info_with_client(CatchChallengerClient *client,const CatchChallenger::Player_private_and_public_informations &informations)
-{
-    if(client->selectedCharacter==true)
-        return;
-    qDebug() << "selected character: " << client << " at " << __FILE__ << ":" << __LINE__;
-    client->selectedCharacter=true;
-    //This is literally "the client now has its informations". It was only set
-    //in insert_player_with_client(), i.e. when the server pushed some OTHER
-    //player's insert to this bot -- a bot that had not seen anyone yet stayed
-    //false and BotTargetList's constructor then skipped it, so the bot list
-    //showed 7 rows for 8 connected bots.
-    client->have_informations=true;
-    numberOfSelectedCharacter++;
-    emit emit_numberOfSelectedCharacter(numberOfSelectedCharacter);
-    client->stat=Status_SelectedCharacter;
-    updateClientListStatus();
-
-    //A FRESHLY CREATED character completes here (have_current_player_info),
-    //NOT in haveCharacter() -- haveCharacter() is driven by QthaveCharacter,
-    //which the server sends only for characters that ALREADY exist at login.
-    //So for a cold server where every bot creates its character (e.g. the
-    //ESP32 all-in-one on a fresh boot), the on-map signal must be evaluated
-    //here too, otherwise emit_all_player_on_map() never fires and the run
-    //times out. haveCharacter() keeps the SAME check for the warm/existing-
-    //character path; the consumer (MainWindow::all_player_on_map) is
-    //idempotent, so whichever path completes the last selection wins and a
-    //second emit is a no-op.
-    if(multipleConnexion())
-    {
-        if(numberOfBotConnected>=numberOfSelectedCharacter)
-        {
-            const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
-            if(diff==0 && numberOfSelectedCharacter>=connexionCountTarget())
-                emit emit_all_player_on_map();
-        }
-    }
-    else
-        emit emit_all_player_on_map();
-
-    Q_UNUSED(informations);
-    //std::cout << "MultipleBotConnection::have_current_player_info() pseudo: " << informations.public_informations.pseudo << std::endl;
-}
-
-void MultipleBotConnection::newError_with_client(CatchChallengerClient *client, QString error,QString detailedError)
-{
-    Q_UNUSED(error);
-    Q_UNUSED(detailedError);
-    mHaveAnError=true;
-    client->socket->disconnectFromHost();
-}
-
-void MultipleBotConnection::newSocketError_with_client(CatchChallengerClient *client, QAbstractSocket::SocketError error)
-{
-    qDebug() << "newSocketError()" << error;
-    mHaveAnError=true;
-    Q_UNUSED(client);
-}
-
-bool MultipleBotConnection::haveAnError()
-{
-    return mHaveAnError;
-}
-
-MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClient()
-{
-    if(mHaveAnError)
-    {
-        connectTimer.stop();
-        return NULL;
-    }
-    CatchChallengerClient * client=new CatchChallengerClient;
-
-    QSslSocket *sslSocket=new QSslSocket();
-
-    QNetworkProxy proxyObject;
-    if(!proxy().isEmpty())
-    {
-        #ifdef CATCHCHALLENGER_BOT_TESTCONNECT
-        qDebug() << "use proxy: " << proxy() << ":" << proxyport();
-        #endif
-        proxyObject.setType(QNetworkProxy::Socks5Proxy);
-        proxyObject.setHostName(proxy());
-        proxyObject.setPort(proxyport());
-        sslSocket->setProxy(proxyObject);
-    }
-    else
-    {
-        proxyObject.setType(QNetworkProxy::NoProxy);
-        sslSocket->setProxy(proxyObject);
-    }
-
-    client->sslSocket=sslSocket;
-    sslSocketToCatchChallengerClient[client->sslSocket]=client;
-    client->socket=new CatchChallenger::ConnectedSocket(client->sslSocket);
-    client->api=new CatchChallenger::Api_client_real(client->socket);
-    client->preferences.plant=100;
-    client->preferences.item=100;
-    client->preferences.fight=100;
-    client->preferences.shop=100;
-    client->preferences.wild=100;
-    client->stat=Status_None;
-    updateClientListStatus();
-
-    if(!connect(sslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,&MultipleBotConnection::sslErrors,Qt::QueuedConnection))
-        BOT_ABORT();
-    #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-    if(!connect(sslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),this,&MultipleBotConnection::newSocketError))
-        BOT_ABORT();
-    #else
-    if(!connect(sslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::errorOccurred),this,&MultipleBotConnection::newSocketError))
-        BOT_ABORT();
-    #endif
-    #ifdef CATCHCHALLENGER_BOT_TESTCONNECT
-    qDebug() << "Try connect on: " << host() << ":" << port();
-    #endif
-    sslSocket->connectToHost(host(),port());
-    client->stat=Status_Connecting;
-    updateClientListStatus();
-    connectTheExternalSocket(client);
-    return client;
-}
-
-void MultipleBotConnection::connectTheExternalSocket(CatchChallengerClient * client)
-{
-    if(client->api==NULL)
-    {
-        std::cerr << "connectTheExternalSocket client->api==NULL" << std::endl;
-        BOT_ABORT();
-    }
-    client->api->setDatapackPath(QCoreApplication::applicationDirPath().toStdString()+"/datapack/");
-    if(!connect(client->api,&CatchChallenger::Api_client_real::Qtinsert_player,            this,&MultipleBotConnection::insert_player))
-        BOT_ABORT();
-    if(!connect(client->api,&CatchChallenger::Api_client_real::Qtremove_player,            this,&MultipleBotConnection::remove_player))
-        BOT_ABORT();
-    if(!connect(client->api,&CatchChallenger::Api_client_real::QtdropAllPlayerOnTheMap,    this,&MultipleBotConnection::dropAllPlayerOnTheMap))
-        BOT_ABORT();
-    if(!connect(client->api,&CatchChallenger::Api_client_real::QthaveCharacter,            this,&MultipleBotConnection::haveCharacter))
-        BOT_ABORT();
-    if(!connect(client->api,&CatchChallenger::Api_client_real::Qtlogged,                   this,&MultipleBotConnection::logged))
-        BOT_ABORT();
-    if(!connect(client->api,&CatchChallenger::Api_client_real::Qthave_current_player_info, this,&MultipleBotConnection::have_current_player_info))
-        BOT_ABORT();
-    if(!connect(client->api,&CatchChallenger::Api_client_real::QtnewError,                 this,&MultipleBotConnection::newError))
-        BOT_ABORT();
-    if(!connect(client->api,&CatchChallenger::Api_client_real::QtnewCharacterId,           this,&MultipleBotConnection::newCharacterId))
-        BOT_ABORT();
-    if(!connect(client->api,&CatchChallenger::Api_client_real::QtlastReplyTime,            this,&MultipleBotConnection::lastReplyTime))
-        BOT_ABORT();
-    if(!connect(client->api,&CatchChallenger::Api_client_real::QtnotLogged,                this,&MultipleBotConnection::notLogged))
-        BOT_ABORT();
-    if(!connect(client->socket,&CatchChallenger::ConnectedSocket::disconnected,          this,&MultipleBotConnection::disconnected))
-        BOT_ABORT();
-    if(apiToCatchChallengerClient.isEmpty())
-    {
-        if(!connect(client->api,&CatchChallenger::Api_client_real::QthaveTheDatapack,         this,&MultipleBotConnection::haveTheDatapack,Qt::QueuedConnection/*Qt::QueuedConnection need the fix the order of event, need datapack vs already have datapack*/))
-            BOT_ABORT();
-        if(!connect(client->api,&CatchChallenger::Api_client_real::QthaveTheDatapackMainSub,  this,&MultipleBotConnection::haveTheDatapackMainSub,Qt::QueuedConnection))
-            BOT_ABORT();
-        if(!connect(client->api,&CatchChallenger::Api_client_real::QthaveDatapackMainSubCode,  this,&MultipleBotConnection::haveTheDatapackMainSubCode,Qt::QueuedConnection))
-            BOT_ABORT();
-    }
-    client->haveShowDisconnectionReason=false;
-    client->haveBeenDiscounted=false;
-    client->have_informations=false;
-    client->number=numberToChangeLoginForMultipleConnexion;
-    client->selectedCharacter=false;
-    numberToChangeLoginForMultipleConnexion++;
-    apiToCatchChallengerClient[client->api]=client;
-    connectedSocketToCatchChallengerClient[client->socket]=client;
-    tryLink(client);
+    haveCharacter_with_client(apiToCatchChallengerClient.value(senderObject),mapId,x,y,direction);
 }
