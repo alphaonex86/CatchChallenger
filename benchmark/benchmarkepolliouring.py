@@ -210,10 +210,30 @@ BOT_PASS  = "bench"
 # datapack parse per boot is the honest trade: it happens BEFORE the
 # measurement window opens (the client onboards its bots first, and its window
 # is the last --seconds of its own life).
+#CATCHCHALLENGER_BENCHMARK=ON is REQUIRED here, and that needs explaining
+#because it looks like the opposite of what the comment above argues.
+#
+#The anti-flood filter is not independently switchable: VariableServer.hpp:64
+#defines CATCHCHALLENGER_DDOS_FILTER inside `#ifndef CATCHCHALLENGER_BENCHMARK`.
+#With the filter compiled in, a saturating client is kicked after ~60 moves
+#(measured: SURVIVORS 0/4, MOVES 256) and the run measures the filter instead
+#of the event loop. Raising the runtime limits cannot rescue it either -- they
+#are uint8_t (ServerStructures.hpp), so a value past 255 wraps to a STRICTER
+#one. So there is no build that both saturates and leaves the filter in.
+#
+#Turning the probe on is safe for THIS design specifically: the headline is
+#REQ_PER_S, measured by the CLIENT. The reason to fear the probe was that
+#loop_busy_us brackets different code on the two backends -- which only
+#matters for a metric derived from the probe, and none of ours is. What the
+#probe still costs is two clock_gettime() per wakeup, and the backends do not
+#wake the same number of times per move, so treat the ABSOLUTE req/s as
+#carrying that overhead. The comparison stands because both binaries carry it;
+#loop_busy_us must still never be quoted as an A/B result.
 SERVER_DEFS = {
     "CATCHCHALLENGER_DB_FILE":          "ON",
     "CATCHCHALLENGER_DB_INTERNAL_VARS": "ON",
     "CATCHCHALLENGER_IO_URING":         "OFF",
+    "CATCHCHALLENGER_BENCHMARK":        "ON",
 }
 IOURING_DEFS = dict(SERVER_DEFS)
 IOURING_DEFS["CATCHCHALLENGER_IO_URING"] = "ON"
@@ -318,14 +338,16 @@ def parse_args():
                            "--seconds >= 5"))
         sys.exit(2)
     if own.counters:
-        # opt-in: the BENCH dump becomes available, at the cost of a probe
-        # that does not fire the same number of times on the two backends
-        SERVER_DEFS["CATCHCHALLENGER_BENCHMARK"] = "ON"
-        IOURING_DEFS["CATCHCHALLENGER_BENCHMARK"] = "ON"
-        print(_c(bh.C_YELLOW, "[warn] --counters: both builds carry "
-                              "CC_BENCH_LOOP_IN/OUT, which is not "
-                              "backend-neutral. Treat its loop numbers as "
-                              "indicative, never as the headline."))
+        # CATCHCHALLENGER_BENCHMARK is already ON in SERVER_DEFS -- it has to
+        # be, or the anti-flood filter kicks the saturating client (see the
+        # SERVER_DEFS comment). So this flag no longer changes the BUILD; it
+        # only asks for the server's BENCH dump to be parsed and reported as
+        # context alongside the client-measured headline.
+        print(_c(bh.C_YELLOW, "[warn] --counters reports the server's own "
+                              "BENCH dump. packets_in and lat_hist_* are "
+                              "backend-comparable; loop_busy_us is NOT -- it "
+                              "brackets different code on the two backends, so "
+                              "never quote it as an A/B result."))
     return own, shared
 
 
