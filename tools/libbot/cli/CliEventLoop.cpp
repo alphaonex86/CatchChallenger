@@ -1,5 +1,6 @@
 #include "CliEventLoop.hpp"
 #include "CliApiClient.hpp"
+#include "CliLatency.hpp"
 
 #include <cerrno>
 #include <cstring>
@@ -265,6 +266,129 @@ bool CliEventLoop::runSpam(const uint32_t &seconds,uint64_t &moves,uint64_t &ela
     }
     return true;
 }
+
+#ifdef CATCHCHALLENGER_BENCHMARK
+/// \brief longest select() nap of the latency loop, ms. Short enough that a
+/// probe due in the next tick is not delayed past its 1.5s cooldown, long
+/// enough that an idle window costs almost no CPU (which would otherwise
+/// compete with the server on a single-core board).
+#define CATCHCHALLENGER_LATENCY_TICK_MS 10
+
+bool CliEventLoop::runLatency(const uint32_t &seconds,uint64_t &elapsedNs)
+{
+    elapsedNs=0;
+    CliLatency * const recorder=CliLatency::instance();
+    if(recorder==NULL)
+    {
+        errorString="no latency recorder installed";
+        return false;
+    }
+    struct timespec startTime;
+    if(::clock_gettime(CLOCK_MONOTONIC,&startTime)<0)
+    {
+        errorString=std::string("clock_gettime(CLOCK_MONOTONIC) failed: ")+strerror(errno);
+        return false;
+    }
+    const uint64_t windowNs=static_cast<uint64_t>(seconds)*1000000000ULL;
+    struct timespec now=startTime;
+    while(true)
+    {
+        //1. probes first: the send is what the echo is timed against
+        recorder->sendDueProbes();
+
+        //2. deadline
+        if(::clock_gettime(CLOCK_MONOTONIC,&now)<0)
+        {
+            errorString=std::string("clock_gettime(CLOCK_MONOTONIC) failed: ")+strerror(errno);
+            return false;
+        }
+        elapsedNs=static_cast<uint64_t>(now.tv_sec-startTime.tv_sec)*1000000000ULL+
+                  static_cast<uint64_t>(now.tv_nsec)-static_cast<uint64_t>(startTime.tv_nsec);
+        if(elapsedNs>=windowNs)
+            break;
+
+        //3. collect the sockets still worth waiting on
+        int maxFd=-1;
+        size_t alive=0;
+        fd_set readSet;
+        fd_set writeSet;
+        FD_ZERO(&readSet);
+        FD_ZERO(&writeSet);
+        size_t index=0;
+        while(index<clients.size())
+        {
+            CliApiClient * const client=clients.at(index);
+            if(client->getState()==CliApiClient::State_OnMap && client->getSocket().isValid())
+            {
+                const int fd=client->getSocket().fd();
+                if(fd>=FD_SETSIZE)
+                {
+                    errorString="fd "+std::to_string(fd)+" >= FD_SETSIZE ("+
+                                std::to_string(FD_SETSIZE)+"): too many bots for select(), "
+                                "lower --bots or raise the fd limit";
+                    return false;
+                }
+                alive++;
+                //always read: the echo of our own probe, the other bots' probes
+                //and the server's ping queries all arrive here, and not draining
+                //them would back-pressure the SERVER instead of measuring it.
+                FD_SET(fd,&readSet);
+                if(client->wantWrite())
+                    FD_SET(fd,&writeSet);
+                if(fd>maxFd)
+                    maxFd=fd;
+            }
+            index++;
+        }
+        //every bot lost its socket: report the window measured, do not spin
+        if(alive==0 || maxFd<0)
+            break;
+
+        //4. wait, but never past the end of the window
+        uint64_t waitNs=static_cast<uint64_t>(CATCHCHALLENGER_LATENCY_TICK_MS)*1000000ULL;
+        const uint64_t remainingNs=windowNs-elapsedNs;
+        if(remainingNs<waitNs)
+            waitNs=remainingNs;
+        struct timeval waitTime;
+        waitTime.tv_sec=static_cast<time_t>(waitNs/1000000000ULL);
+        waitTime.tv_usec=static_cast<suseconds_t>((waitNs%1000000000ULL)/1000);
+        const int readyCount=::select(maxFd+1,&readSet,&writeSet,NULL,&waitTime);
+        if(readyCount<0)
+        {
+            if(errno!=EINTR)
+            {
+                errorString=std::string("select() failed: ")+strerror(errno);
+                return false;
+            }
+        }
+        else
+        {
+            if(readyCount>0)
+            {
+                index=0;
+                while(index<clients.size())
+                {
+                    CliApiClient * const client=clients.at(index);
+                    if(client->getState()==CliApiClient::State_OnMap && client->getSocket().isValid())
+                    {
+                        const int fd=client->getSocket().fd();
+                        if(FD_ISSET(fd,&writeSet))
+                        {
+                            if(!client->flushOutput())
+                                std::cerr << "[" << client->getLabel() << "] flush failed" << std::endl;
+                        }
+                        //read AFTER the flush and re-test: parsing can kick us
+                        if(client->getSocket().isValid() && FD_ISSET(fd,&readSet))
+                            client->socketReadyRead();
+                    }
+                    index++;
+                }
+            }
+        }
+    }
+    return true;
+}
+#endif // CATCHCHALLENGER_BENCHMARK
 
 bool CliEventLoop::run(const uint32_t &timeoutMs)
 {

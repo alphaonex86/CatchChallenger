@@ -1,22 +1,32 @@
 #!/usr/bin/env python3
-"""benchmarkclientlatency.py -- client-perceived latency, measured from OUT
-OF VIEW of the target hardware.
+"""benchmarkclientlatency.py -- client-perceived latency, measured ON the
+target hardware.
 
-The SERVER is the thing under test: it is built and run on each exec node
-(the constrained target). The measuring CLIENT (tools/bot-actions, run
-offscreen with QT_QPA_PLATFORM=offscreen) runs on the orchestrating HOST and
-connects to that server over the REAL network link -- so the recorded
-net_link / eth / wifi fields finally matter. The local/host row is the
-loopback baseline (server + client both on the host).
+The SERVER is the thing under test: it is built on the exec node's compile
+parent and run on the exec node (the constrained target). The measuring CLIENT
+(tools/bot-bench, Qt-FREE) is built for the SAME arch on that same compile node,
+pushed to the exec node and run THERE, next to the server, over 127.0.0.1.
+Client and server therefore share the hardware whose latency is being reported.
 
-bot-actions is built with -DCATCHCHALLENGER_BENCHMARK=ON, which compiles in
-LatencyRecorder + the --latency mode. The bot drives deterministic,
-server-safe traffic and, on SIGINT, dumps a log2-ns latency histogram per
-metric as "BENCH <m>_lat_hist_<i>=<count>" lines on stdout. The server is
-also built with CATCHCHALLENGER_BENCHMARK so its own per-read-event histogram
+Why not measure it from the host, as this benchmark used to: the number then
+includes the host<->node link, the reported client CPU% belongs to the HOST's
+process instead of the board, and a 32-core workstation is not the client any
+real player runs. The link characteristics stay recorded in the per-run JSON
+(net_link / eth / wifi) because they still describe the node, but they no longer
+sit inside the measurement. The ESP32 row is the one documented exception: the
+board cannot host a client, so it is driven from the host over WiFi and is
+comparison-only (never a KEEP/DISCARD signal), exactly as before.
+
+bot-bench is built with -DCATCHCHALLENGER_BENCHMARK=ON, which compiles in
+tools/libbot/cli/CliLatency + the --latency mode. The bot drives deterministic,
+server-safe traffic (tagged local chat, 1.5s per-bot cooldown) and at the end of
+its fixed window dumps a log2-ns latency histogram per metric as
+"BENCH <m>_lat_hist_<i>=<count>" lines on stdout -- the same contract the Qt
+bot-actions recorder emits, so the parser is shared. The server is also built
+with CATCHCHALLENGER_BENCHMARK so its own per-read-event histogram
 (BENCH lat_hist_*) gives the server-side tail for the same run.
 
-# HEADLESS: yes  (the bot runs offscreen; no display server needed)
+# HEADLESS: yes  (Qt-free client: POSIX sockets + select(), no display at all)
 Metrics (all nanoseconds, lower-is-better unless noted), per workload slice:
   * chat_p50_ns / chat_p99_ns / chat_jitter_ns   -- local chat A->server->B
                        ("time to send a message to another player"). SAMPLED.
@@ -27,7 +37,11 @@ Metrics (all nanoseconds, lower-is-better unless noted), per workload slice:
   * <m>_count                                    -- samples (higher = more
                        statistical confidence; not a perf metric).
   * cpu_percent (%)                              -- the measuring client's CPU
-                       over the slice (lower-is-better at equal latency).
+                       over the slice, ON the node (lower-is-better at equal
+                       latency; it is also what the server competes with on a
+                       single-core board).
+  * server_cpu_percent (%)                       -- the server's own CPU over
+                       the same window, single-threaded so bounded at 100.
   * server_p99_ns / server_reqs                  -- server-side tail + work
                        (from the server BENCH dump; reqs higher-is-better).
 Noise: chat/rtt/join are SAMPLED -- network jitter dominates, so a wifi / VPN
@@ -60,8 +74,8 @@ BENCH = "benchmarkclientlatency"
 # must run serially against other network benchmarks (shared lock).
 NETWORK_EXCLUSIVE = True
 
-BOT_SRC_DIR  = os.path.join(REPO_ROOT, "tools", "bot-actions")
-BOT_BIN_NAME = "bot-actions"
+BOT_SRC_DIR  = os.path.join(REPO_ROOT, "tools", "bot-bench")
+BOT_BIN_NAME = "bot-bench"
 SRV_SRC_DIR  = os.path.join(REPO_ROOT, "server", "cli")
 SRV_BIN_NAME = "catchchallenger-server-cli"
 DATAPACK_PATH = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
@@ -74,12 +88,22 @@ except Exception:
     BUILD_ROOT = "/mnt/data/perso/tmpfs"
     TMPFS_ROOT = "/dev/shm"
 
-BOT_BUILD_DIR = os.path.join(BUILD_ROOT, "benchmark", "clientlatency-bot")
+# Distinct from the old "clientlatency-bot" tree: that one holds a CMake cache
+# generated for tools/bot-actions, and cmake refuses to reuse a cache whose
+# source dir changed. A new path is cheaper and clearer than teaching the
+# harness to wipe it.
+BOT_BUILD_DIR = os.path.join(BUILD_ROOT, "benchmark", "clientlatency-botbench")
 SRV_BUILD_DIR = os.path.join(BUILD_ROOT, "benchmark", "clientlatency-server")
 SRV_RUN_DIR   = os.path.join(TMPFS_ROOT, "cc-bench-clientlat-server")
 BOT_RUN_TMP   = os.path.join(TMPFS_ROOT, "cc-bench-clientlat-bot")
 
 SERVER_PORT = 61921
+
+# One account per bot: bot-bench appends the bot index to the login, so the
+# server's per-account character cap (max_character, default 3) can never limit
+# the fleet size and no two bots race to create the same account.
+BOT_LOGIN = "bench"
+BOT_PASS  = "bench"
 
 # Server build: RAM DB (DB tree in tmpfs) + HPS cache + benchmark counters.
 SERVER_DEFS = {
@@ -186,9 +210,11 @@ def _cmake_build(src_dir, build_dir, defs, label):
 
 
 def build_bot_local():
-    """Build bot-actions (the measuring client) on the host. A local build
-    failure aborts the whole benchmark (no cell can run without the client)."""
-    print(_c(bh.C_CYAN, "[build:bot] bot-actions (CATCHCHALLENGER_BENCHMARK=ON)"))
+    """Build bot-bench (the measuring client) on the host, for the host-side
+    rows only (the loopback baseline and the ESP32). Every remote node gets its
+    OWN build from its compile parent -- see bringup_remote_server(). A local
+    build failure aborts the whole benchmark (no cell can run without a client)."""
+    print(_c(bh.C_CYAN, "[build:bot] bot-bench (CATCHCHALLENGER_BENCHMARK=ON)"))
     rc, log = _cmake_build(BOT_SRC_DIR, BOT_BUILD_DIR, BOT_DEFS, "build:bot")
     if rc != 0:
         bh.print_local_build_error("build:bot", "cmake", log, "")
@@ -223,9 +249,20 @@ def _detect_maincode(datapack_src):
 
 def server_properties_xml(maincode, port):
     """server-properties.xml for the benchmark. The DDOS limits are raised
-    well above default (chat 5/5s, move 60/5s) on purpose: we measure
-    latency, not the anti-DDOS protection, and the latency client's probe
-    rate would otherwise trip the kicker. Not a production config."""
+    well above default on purpose: we measure latency, not the anti-DDOS
+    protection, and the probe traffic would otherwise be kicked or silently
+    dropped. Not a production config.
+
+    Two different mechanisms, two different ceilings:
+      * kickLimit* (uint8_t in ServerStructures.hpp, and only compiled in
+        WITHOUT the benchmark define) must stay <=255 -- a larger value wraps
+        STRICTER, which is worse than not raising it at all.
+      * dropGlobalChatMessage* are plain ints and are ALWAYS compiled in, DDoS
+        filter or not (Client::sendLocalChatText). The default of 20 per map
+        (NormalServerGlobal.cpp) silently swallowed every probe past the 20th,
+        capping the large slice at a fraction of its samples, so this asks for
+        far more than the sweep can produce: 50 bots x one probe per 1.5s over
+        the window."""
     return (
         '<?xml version="1.0"?>\n'
         '<configuration>\n'
@@ -239,9 +276,9 @@ def server_properties_xml(maincode, port):
         '        <kickLimitChat value="250"/>\n'
         '        <kickLimitMove value="250"/>\n'
         '        <kickLimitOther value="250"/>\n'
-        '        <dropGlobalChatMessageGeneral value="250"/>\n'
-        '        <dropGlobalChatMessageLocalClan value="250"/>\n'
-        '        <dropGlobalChatMessagePrivate value="250"/>\n'
+        '        <dropGlobalChatMessageGeneral value="100000"/>\n'
+        '        <dropGlobalChatMessageLocalClan value="100000"/>\n'
+        '        <dropGlobalChatMessagePrivate value="100000"/>\n'
         '    </DDOS>\n'
         '</configuration>\n'
     )
@@ -332,56 +369,30 @@ def _server_cpu_ticks(pid):
 
 # ---- one bot slice -------------------------------------------------------
 
-def run_bot_slice(bot_bin, host, port, bots, budget, server_pid=None):
-    """Run the bot --latency for one (bots) slice for `budget` seconds, SIGINT
-    it, parse the client BENCH dump (chat/join/rtt percentiles) + client CPU%.
-    Returns (metrics_dict, err_or_None). metrics keys are *_p50_ns etc.,
-    plus cpu_percent and (when server_pid given) server_cpu_percent."""
-    env = os.environ.copy()
-    env["QT_QPA_PLATFORM"] = "offscreen"
-    run_tmp = os.path.join(BOT_RUN_TMP, f"p{port}-b{bots}")
-    os.makedirs(run_tmp, exist_ok=True)
-    out_log = os.path.join(run_tmp, "bot_stdout.log")
-    err_log = os.path.join(run_tmp, "bot_stderr.log")
+def _bot_argv(host, port, bots, budget, datapack):
+    """bot-bench arguments for one latency slice, shared by the node-local run
+    and the host-side one (ESP32 / the local baseline).
 
-    # The bot self-times a FIXED `budget`-second window that starts only once
-    # every bot is on the map (--latency-seconds), then dumps BENCH + exits --
-    # so process startup (datapack load, N logins) is EXCLUDED from the
-    # measurement. `timeout` is just a hard backstop = startup allowance +
-    # window + margin (always exceeds the real run; only fires on a hang).
-    hardstop = STARTUP_ALLOWANCE_S + budget + RUN_MARGIN_S
-    cmd = ["/usr/bin/time", "-v",
-           "timeout", "--signal=INT", str(hardstop),
-           bot_bin, "--host", str(host), "--port", str(port),
-           "--bots", str(bots),
-           "--login", "bench_%NUMBER%", "--pass", "bench_%NUMBER%",
-           "--latency", "--latency-seconds", str(budget)]
+    --latency implies one account per bot ("<login><index>"), so the server's
+    per-account character cap can never limit the fleet size. The window is
+    SELF-TIMED and opens only once every bot is on the map, so datapack load
+    and N logins are excluded from the measurement; --timeout is the onboarding
+    budget, not the window."""
+    return ["--host", str(host), "--port", str(port),
+            "--bots", str(bots),
+            "--login", BOT_LOGIN, "--pass", BOT_PASS,
+            "--datapack", datapack,
+            "--timeout", str(int(STARTUP_ALLOWANCE_S * 1000)),
+            "--latency", "--seconds", str(int(budget))]
 
-    pre_ticks = _server_cpu_ticks(server_pid) if server_pid else None
-    t0 = time.monotonic()
-    try:
-        with open(out_log, "wb") as o, open(err_log, "wb") as e:
-            subprocess.run(cmd, env=env, stdout=o, stderr=e,
-                           timeout=hardstop + 15)
-    except subprocess.TimeoutExpired:
-        return None, f"bot run timed out (bots={bots})"
-    wall = time.monotonic() - t0
-    post_ticks = _server_cpu_ticks(server_pid) if server_pid else None
 
-    try:
-        out_text = open(out_log, "r", errors="replace").read()
-    except Exception:
-        out_text = ""
-    try:
-        err_text = open(err_log, "r", errors="replace").read()
-    except Exception:
-        err_text = ""
-
+def _metrics_from_client_output(out_text, err_text, bots):
+    """Turn one client run's stdout/stderr into the metric dict, or
+    (None, error)."""
     per = bh.parse_client_bench_stdout(out_text)
     if not per:
         return None, (f"no client BENCH output (bots={bots}); "
                       f"bot stderr tail:\n" + "\n".join(err_text.splitlines()[-20:]))
-
     metrics = {}
     for m in ("chat", "join", "rtt"):
         stats = per.get(m)
@@ -401,18 +412,85 @@ def run_bot_slice(bot_bin, host, port, bots, budget, server_pid=None):
                 pass
     if cpu_pct is not None:
         metrics["cpu_percent"] = {"value": cpu_pct, "unit": "%", "better": "lower"}
+    return metrics, None
+
+
+def run_bot_slice(bot_bin, host, port, bots, budget, server_pid=None,
+                  exec_node=None, datapack=None):
+    """Run one (bots) latency slice for `budget` seconds and return
+    (metrics_dict, err_or_None).
+
+    `exec_node` is the normal path: the client runs ON that node beside the
+    server (127.0.0.1), which is the whole point of this benchmark. It is None
+    only for the two host-side rows -- the local loopback baseline and the ESP32,
+    which cannot host a client at all.
+
+    metrics keys are *_p50_ns etc., plus cpu_percent and, when the server pid is
+    known, server_cpu_percent (single-threaded, so bounded at 100)."""
+    # hard backstop = startup allowance + window + margin. It always exceeds the
+    # real run (the window is self-timed), so it only fires on a hang.
+    hardstop = STARTUP_ALLOWANCE_S + budget + RUN_MARGIN_S
+    if exec_node is not None:
+        argv = _bot_argv("127.0.0.1", SERVER_PORT, bots, budget,
+                         datapack or "datapack")
+        ok, res = br.run_client_on_exec(
+            exec_node, " ".join(shlex.quote(a) for a in argv),
+            server_pid=server_pid, timeout=hardstop + 30,
+            bin_name=BOT_BIN_NAME)
+        if not ok:
+            return None, f"node-local client run failed (bots={bots}): {res['error']}"
+        metrics, err = _metrics_from_client_output(res["out"], res["err"], bots)
+        if err is not None:
+            return None, err
+        if res["client_cpu_percent"] is not None:
+            metrics["cpu_percent"] = {"value": res["client_cpu_percent"],
+                                      "unit": "%", "better": "lower"}
+        if res["server_cpu_percent"] is not None:
+            metrics["server_cpu_percent"] = {"value": res["server_cpu_percent"],
+                                             "unit": "%", "better": "lower"}
+        return metrics, None
+
+    run_tmp = os.path.join(BOT_RUN_TMP, f"p{port}-b{bots}")
+    os.makedirs(run_tmp, exist_ok=True)
+    out_log = os.path.join(run_tmp, "bot_stdout.log")
+    err_log = os.path.join(run_tmp, "bot_stderr.log")
+    cmd = ["/usr/bin/time", "-v",
+           "timeout", "--signal=INT", str(hardstop),
+           bot_bin] + _bot_argv(host, port, bots, budget,
+                                datapack or os.path.join(SRV_RUN_DIR, "datapack"))
+
+    pre_ticks = _server_cpu_ticks(server_pid) if server_pid else None
+    t0 = time.monotonic()
+    try:
+        with open(out_log, "wb") as o, open(err_log, "wb") as e:
+            subprocess.run(cmd, stdout=o, stderr=e, timeout=hardstop + 15)
+    except subprocess.TimeoutExpired:
+        return None, f"bot run timed out (bots={bots})"
+    wall = time.monotonic() - t0
+    post_ticks = _server_cpu_ticks(server_pid) if server_pid else None
+
+    try:
+        out_text = open(out_log, "r", errors="replace").read()
+    except OSError:
+        out_text = ""
+    try:
+        err_text = open(err_log, "r", errors="replace").read()
+    except OSError:
+        err_text = ""
+    metrics, err = _metrics_from_client_output(out_text, err_text, bots)
+    if err is not None:
+        return None, err
 
     # server CPU% (single-thread, bounded 100) for a local server pid
     if pre_ticks is not None and post_ticks is not None and wall > 0:
         try:
             hz = os.sysconf("SC_CLK_TCK")
-        except Exception:
+        except (ValueError, OSError):
             hz = 100
         srv = (post_ticks - pre_ticks) / hz / wall * 100.0
         if srv > 100.0:
             srv = 100.0
         metrics["server_cpu_percent"] = {"value": srv, "unit": "%", "better": "lower"}
-
     return metrics, None
 
 
@@ -434,20 +512,24 @@ def _median_metrics(samples):
     return out
 
 
-def run_all_slices(bot_bin, host, port, budget, server_pid=None, counts=None):
+def run_all_slices(bot_bin, host, port, budget, server_pid=None, counts=None,
+                   exec_node=None):
     """Run every workload slice (1 warmup dropped + RUN_REPEATS measured each)
     for `budget` seconds each. Returns (slices_dict {label: metrics},
     err_or_None). slices include the mandatory cpu_percent. Stops + returns
     the error on first hard failure. `counts` overrides BOT_COUNTS (the ESP32
-    passes ESP32_BOT_COUNTS to stay under its small max-players)."""
+    passes ESP32_BOT_COUNTS to stay under its small max-players). `exec_node`
+    runs the client ON that node (the normal path for a remote server)."""
     slices = {}
     for bots, size in (counts or BOT_COUNTS):
         label = f"{bots}-bots"
         # 1 warmup (drop) so socket/TIME_WAIT churn doesn't pollute repeat 1.
-        _m, _e = run_bot_slice(bot_bin, host, port, bots, budget, server_pid)
+        _m, _e = run_bot_slice(bot_bin, host, port, bots, budget, server_pid,
+                               exec_node=exec_node)
         reps = []
         for _ in range(RUN_REPEATS):
-            m, e = run_bot_slice(bot_bin, host, port, bots, budget, server_pid)
+            m, e = run_bot_slice(bot_bin, host, port, bots, budget, server_pid,
+                                 exec_node=exec_node)
             if e is not None:
                 return slices, f"slice {label}: {e}"
             reps.append(m)
@@ -460,25 +542,33 @@ def run_all_slices(bot_bin, host, port, budget, server_pid=None, counts=None):
     return slices, None
 
 
-def run_slices_tolerant(bot_bin, host, port, budget, counts=None):
+def run_slices_tolerant(bot_bin, host, port, budget, counts=None, datapack=None):
     """Like run_all_slices but a slice that FAILS (the constrained board can't
     seat all its bots / OOMs) is SKIPPED gracefully and the sweep CONTINUES to
     the next slice, instead of aborting on the first failure. Used for the ESP32:
     its RAM ceiling means 50 bots may not all reach the map even though 4/16 do,
     and that partial result IS the headline (which counts fit). Returns
     (slices_dict {label: metrics for the slices that produced data},
-    skipped_list [(label, reason), ...]). Never raises for a slice failure."""
+    skipped_list [(label, reason), ...]). Never raises for a slice failure.
+
+    Host-side only (the ESP32 cannot host a client), hence no exec_node: pass
+    `datapack` so the bot's tree hash-matches what the firmware was baked from.
+    bot-bench does NOT download a datapack over the protocol (that is an
+    Api_client_real feature), so a hash mismatch here is fatal to the slice --
+    the old empty-local-datapack fallback does not apply to this client."""
     slices = {}
     skipped = []
     for bots, size in (counts or BOT_COUNTS):
         label = f"{bots}-bots"
         # 1 warmup (drop) so socket/TIME_WAIT churn doesn't pollute repeat 1.
-        run_bot_slice(bot_bin, host, port, bots, budget, server_pid=None)
+        run_bot_slice(bot_bin, host, port, bots, budget, server_pid=None,
+                      datapack=datapack)
         reps = []
         slice_err = None
         rep_i = 0
         while rep_i < RUN_REPEATS:
-            m, e = run_bot_slice(bot_bin, host, port, bots, budget, server_pid=None)
+            m, e = run_bot_slice(bot_bin, host, port, bots, budget,
+                                 server_pid=None, datapack=datapack)
             if e is not None:
                 slice_err = e
                 break
@@ -608,6 +698,14 @@ def bringup_remote_server(node):
                                             keep_skins=True)
         if rc != 0:
             raise RuntimeError(f"datapack-rsync: {msg}")
+        # Stage the source tree FIRST: build_on_compile_node() compiles whatever
+        # is already in <work>/sources/, so without this the node would build a
+        # tree left behind by an earlier run and the candidate under test would
+        # never reach the fleet. Once per compile node per run.
+        rc, msg = br.stage_source_once(compile_node, verbose=True)
+        if rc != 0:
+            bh.print_node_error(BENCH, label, "SKIP", f"source stage failed:\n{msg}")
+            return {"node": node, "status": "SKIP", "reason": "source-stage-failed"}
         rc, msg, rbuild = br.build_on_compile_node(
             compile_node, cmake_src_subdir="server/cli",
             build_subdir=f"{BENCH}-srv-{label}",
@@ -619,14 +717,35 @@ def bringup_remote_server(node):
                                                    rbuild, SRV_BIN_NAME, verbose=True)
         if rc != 0:
             raise RuntimeError(f"push-binary: {msg}")
+        # The measuring client for THIS arch, built on the same compile node and
+        # pushed next to the server: it runs ON the node over 127.0.0.1, so the
+        # latency reported is the node's own, not the host<->node link's.
+        rc, msg, rbotbuild = br.build_bot_bench_on_compile_node(
+            compile_node, build_subdir=f"{BENCH}-bot-{label}",
+            exec_node=exec_node, benchmark=True, verbose=True)
+        if rc != 0:
+            bh.print_node_error(BENCH, label, "SKIP",
+                                f"remote client build failed:\n{msg}")
+            return {"node": node, "status": "SKIP", "reason": "client-build-failed"}
+        rc, _bot_bin, msg = br.push_bot_bench_to_exec(compile_node, exec_node,
+                                                      rbotbuild, verbose=True)
+        if rc != 0:
+            raise RuntimeError(f"push-client: {msg}")
         xml = server_properties_xml(maincode, SERVER_PORT)
         esc = xml.replace("'", "'\\''")
         br.ssh_run(exec_node["user"], exec_node["host"], exec_node["port"],
                    f"printf '%s' '{esc}' > {shlex.quote(exec_node['work_dir'] + '/server-properties.xml')}",
                    timeout=15)
+        # properties_xml=xml is MANDATORY, not tidiness: the cache carries the
+        # SETTINGS and the exec-node server obeys those, ignoring the XML written
+        # next to it. Without this the node runs with the DEFAULT
+        # dropGlobalChatMessageLocalClan=20 and the server silently drops local
+        # chat past 20 messages per map, so every node reported exactly 20 probe
+        # samples however long the window or however many bots.
         rc, rcache, msg = br.pregenerate_datapack_cache(
             compile_node, rbuild, SRV_BIN_NAME, DATAPACK_PATH, maincode,
-            server_port=SERVER_PORT, verbose=True, keep_skins=True)
+            server_port=SERVER_PORT, verbose=True, keep_skins=True,
+            properties_xml=xml)
         if rc == 0:
             br.stage_cache_on_exec(compile_node, exec_node, rcache, verbose=True)
         srv_ssh, srv_pid, reason = br.start_server_popen(exec_node, SRV_BIN_NAME)
@@ -661,29 +780,36 @@ def bringup_remote_server(node):
 
 
 def measure_remote_server(ready, bot_bin, per_subbench, per_headline):
-    """PHASE B (serial, main thread): run the local bot --latency against one
-    already-running remote server over the real link, record, then stop it.
-    Serial on purpose: concurrent host load would perturb the latency."""
+    """PHASE B (serial, main thread): run bot-bench --latency ON the exec node,
+    against the server already running on that same node, record, then stop it.
+
+    Serial on purpose. It is no longer the host's CPU that must stay quiet (the
+    host only sleeps on an ssh read now) but the NODE's: two nodes measured at
+    once is fine, two fleets on ONE node is not, and keeping the phase serial
+    also keeps the per-node numbers comparable with the local baseline."""
     node = ready["node"]
     label = node["label"]
     exec_node = ready["exec_node"]
     srv_ssh = ready["srv_ssh"]
     srv_pid = ready["srv_pid"]
     try:
-        # Fast reachability gate: the server bound on the node, but its game
-        # port must also be reachable from THIS host (the client) over the
-        # link. If it isn't (NAT / firewall / SSH-only fleet), skip in ~3s
-        # instead of letting the bot wait out its full startup allowance.
-        if not _port_reachable(exec_node["host"], SERVER_PORT):
+        # No host->node port gate any more: the client connects over the node's
+        # own loopback, so a NAT'd / SSH-only node is measurable now. What must
+        # exist instead is the pushed client binary.
+        rc, _o, _e = br.run_remote_cmd(
+            exec_node,
+            f"test -x {shlex.quote(exec_node['work_dir'] + '/' + BOT_BIN_NAME)}",
+            timeout=60)
+        if rc != 0:
             br.stop_server_popen(srv_ssh, exec_node, srv_pid)
             srv_ssh = None
             bh.print_node_error(BENCH, label, "SKIP",
-                f"game port {SERVER_PORT} not reachable from host at "
-                f"{exec_node['host']} (server bound on node, but host->node "
-                f"port is closed: NAT/firewall/SSH-only fleet)")
-            return "SKIP", "game-port-unreachable-from-host"
-        slices, err = run_all_slices(bot_bin, exec_node["host"], SERVER_PORT,
-                                     BUDGET_S_REMOTE, server_pid=None)
+                f"{BOT_BIN_NAME} missing or not executable in "
+                f"{exec_node['work_dir']} on the node")
+            return "SKIP", "client-binary-missing-on-node"
+        slices, err = run_all_slices(bot_bin, "127.0.0.1", SERVER_PORT,
+                                     BUDGET_S_REMOTE, server_pid=srv_pid,
+                                     exec_node=exec_node)
         br.stop_server_popen(srv_ssh, exec_node, srv_pid)
         srv_ssh = None
         if err is not None or not slices:
@@ -963,9 +1089,10 @@ def measure_esp32(node, bot_bin, per_subbench, per_headline, per_netfamily):
             print(_c(bh.C_CYAN, "[esp32] datapack pre-seeded next to bot; trying "
                                 "map-level bot --latency at fleet counts "
                                 f"({', '.join(str(b) for b, _ in ESP32_BOT_COUNTS)})"))
-            mslices, mskipped = run_slices_tolerant(bot_bin, host, port,
-                                                    BUDGET_S_REMOTE,
-                                                    counts=ESP32_BOT_COUNTS)
+            mslices, mskipped = run_slices_tolerant(
+                bot_bin, host, port, BUDGET_S_REMOTE,
+                counts=ESP32_BOT_COUNTS,
+                datapack=os.path.join(BOT_BUILD_DIR, "datapack"))
         except Exception as ex:
             mslices, mskipped = {}, [("all", f"map-level attempt raised: {ex}")]
         if mslices:

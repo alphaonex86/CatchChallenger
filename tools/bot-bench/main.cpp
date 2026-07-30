@@ -48,6 +48,8 @@
 
 #include "../libbot/cli/CliApiClient.hpp"
 #include "../libbot/cli/CliEventLoop.hpp"
+//expands to nothing unless CATCHCHALLENGER_BENCHMARK is set
+#include "../libbot/cli/CliLatency.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/cpp11addition.hpp"
 
@@ -63,7 +65,10 @@ struct BenchOptions
     bool verbose;
     bool listOnly;
     bool spam;
-    uint32_t spamSeconds;
+    bool latency;
+    /// \brief length of the measured window, shared by --spam and --latency
+    /// (they are mutually exclusive, so one knob is enough)
+    uint32_t windowSeconds;
 };
 
 static void printUsage(const char * const programName)
@@ -88,7 +93,14 @@ static void printUsage(const char * const programName)
               << "                      per bot: the login becomes \"<login><index>\", so" << std::endl
               << "                      the server's per-account character cap can never" << std::endl
               << "                      limit the fleet size" << std::endl
-              << "  --seconds <n>       length of the --spam window (default 10)" << std::endl
+              << "  --seconds <n>       length of the --spam / --latency window (default 10)" << std::endl
+              << "  --latency           latency phase once every bot is on the map:" << std::endl
+              << "                      each bot sends a tagged local chat probe every" << std::endl
+              << "                      1.5s and the echoes are timestamped, then print" << std::endl
+              << "                      \"BENCH <chat|join|rtt>_lat_hist_<i>=<n>\" log2-ns" << std::endl
+              << "                      histograms. Needs a CATCHCHALLENGER_BENCHMARK" << std::endl
+              << "                      build; implies one account per bot like --spam." << std::endl
+              << "                      chat and join need at least 2 bots; rtt needs 1" << std::endl
               << "Exit code: 0 when every bot reached the map (or, with --list-only," << std::endl
               << "when every bot got its character list), 1 otherwise. With --spam: 0" << std::endl
               << "as soon as one bot reached the map, 1 when none did." << std::endl;
@@ -196,8 +208,8 @@ static bool parseOptions(const int &argc,char * const argv[],BenchOptions &optio
             if(!takeValue(argc,argv,index,"--seconds",value))
                 return false;
             bool ok=false;
-            options.spamSeconds=stringtouint32(value,&ok);
-            if(!ok || options.spamSeconds==0)
+            options.windowSeconds=stringtouint32(value,&ok);
+            if(!ok || options.windowSeconds==0)
             {
                 std::cerr << "--seconds is not a positive number of seconds: " << value << std::endl;
                 return false;
@@ -209,6 +221,8 @@ static bool parseOptions(const int &argc,char * const argv[],BenchOptions &optio
             options.listOnly=true;
         else if(matchOption(argv[index],"--spam"))
             options.spam=true;
+        else if(matchOption(argv[index],"--latency"))
+            options.latency=true;
         else
         {
             if(matchOption(argv[index],"--help") || matchOption(argv[index],"-h"))
@@ -270,10 +284,10 @@ static void startBots(const BenchOptions &options,
         //its i-th character. That is what the character-list test needs, but the
         //server caps characters per account (max_character, default 3), so it
         //cannot scale a saturation run.
-        //--spam therefore gives every bot its OWN login "<login><index>" with a
-        //single character: no cap, and no create-account race between bots since
-        //no two of them open the same login.
-        if(options.spam)
+        //--spam and --latency therefore give every bot its OWN login
+        //"<login><index>" with a single character: no cap, and no create-account
+        //race between bots since no two of them open the same login.
+        if(options.spam || options.latency)
         {
             client->setCharacterSlot(0);
             client->setIdentity(options.login+std::to_string(botIndex),options.pass,
@@ -286,6 +300,12 @@ static void startBots(const BenchOptions &options,
         }
         clients.push_back(client);
         loop.addClient(client);
+#ifdef CATCHCHALLENGER_BENCHMARK
+        //enrol for the chat driver BEFORE the login: the recorder's clock is
+        //already running, so this bot's join is timed too.
+        if(CatchChallenger::CliLatency::instance()!=NULL)
+            CatchChallenger::CliLatency::instance()->registerClient(client);
+#endif
         //a failed connect leaves the bot in State_Failed; the loop reports it
         //and the final count stays honest, so keep starting the others.
         if(!client->connectToLoginServer(options.host,options.port))
@@ -307,7 +327,8 @@ int main(int argc,char *argv[])
     options.verbose=false;
     options.listOnly=false;
     options.spam=false;
-    options.spamSeconds=10;
+    options.latency=false;
+    options.windowSeconds=10;
     if(!parseOptions(argc,argv,options))
         return 1;
     if(options.spam && options.listOnly)
@@ -316,6 +337,28 @@ int main(int argc,char *argv[])
                      "with --list-only" << std::endl;
         return 1;
     }
+    if(options.latency && options.listOnly)
+    {
+        std::cerr << "--latency needs a character on the map, so it cannot be combined "
+                     "with --list-only" << std::endl;
+        return 1;
+    }
+    if(options.latency && options.spam)
+    {
+        std::cerr << "--latency measures a QUIET path and --spam saturates the server: "
+                     "running both at once would report queueing delay, not latency. "
+                     "Pick one." << std::endl;
+        return 1;
+    }
+#ifndef CATCHCHALLENGER_BENCHMARK
+    if(options.latency)
+    {
+        std::cerr << "--latency needs a build configured with "
+                     "-DCATCHCHALLENGER_BENCHMARK=ON (the recorder is compiled out here)"
+                  << std::endl;
+        return 1;
+    }
+#endif
 
     //packetFixedSize[] is a static table shared by every client: build it once
     //here. defineMaxPlayers() refines the player-index width when the server
@@ -329,6 +372,15 @@ int main(int argc,char *argv[])
 
     std::vector<CatchChallenger::CliApiClient *> clients;
     CatchChallenger::CliEventLoop loop;
+#ifdef CATCHCHALLENGER_BENCHMARK
+    //Constructed here so its monotonic clock starts BEFORE the first login: the
+    //join metric is sampled while the bots onboard. It is only INSTALLED when
+    //--latency was asked for, and the hooks in CliApiClient test for that, so a
+    //--spam run pays nothing.
+    CatchChallenger::CliLatency latencyRecorder;
+    if(options.latency)
+        CatchChallenger::CliLatency::setInstance(&latencyRecorder);
+#endif
     //Bots sharing ONE account must not open a brand-new login together: they all
     //get "unknown login, you may create it" (0x07) and the losers of the
     //create-account race are answered 0x02 AND DISCONNECTED
@@ -336,7 +388,7 @@ int main(int argc,char *argv[])
     //the reply then calls errorOutput()), so they can never reach the map. Run
     //bot 0 alone first: it creates the account, every later bot just logs in.
     //Not needed with --spam (one login per bot, nobody races anybody).
-    const bool serialiseFirstLogin=(!options.spam && options.bots>1);
+    const bool serialiseFirstLogin=(!options.spam && !options.latency && options.bots>1);
 
     //run() returns when every client it KNOWS ABOUT is finished, so each wave is
     //created only after the previous one is done.
@@ -428,7 +480,7 @@ int main(int argc,char *argv[])
         uint64_t moves=0;
         uint64_t elapsedNs=0;
         size_t survivors=0;
-        if(!loop.runSpam(options.spamSeconds,moves,elapsedNs,survivors))
+        if(!loop.runSpam(options.windowSeconds,moves,elapsedNs,survivors))
             std::cerr << "spam phase error: " << loop.getError() << std::endl;
         //Print the numbers even when the window ended early (every bot kicked,
         //loop error): a truncated window with its real duration is a result, a
@@ -454,6 +506,48 @@ int main(int argc,char *argv[])
         std::cerr << "spam window: " << seconds << "s" << std::endl;
     }
 
+    //---- latency phase -------------------------------------------------
+#ifdef CATCHCHALLENGER_BENCHMARK
+    if(options.latency && onMapReached>0)
+    {
+        uint64_t elapsedNs=0;
+        if(!loop.runLatency(options.windowSeconds,elapsedNs))
+            std::cerr << "latency phase error: " << loop.getError() << std::endl;
+        //Who was still able to probe at the end. A bot that leaves the map
+        //during the window stops sending, and the histogram alone cannot show
+        //that -- it just holds fewer samples, which reads as "the platform is
+        //quiet" instead of "the fleet fell apart". Same contract as
+        //SURVIVORS for --spam.
+        size_t latencySurvivors=0;
+        index=0;
+        while(index<clients.size())
+        {
+            CatchChallenger::CliApiClient * const client=clients.at(index);
+            if(client->getState()==CatchChallenger::CliApiClient::State_OnMap &&
+               client->getSocket().isValid())
+                latencySurvivors++;
+            else
+                std::cerr << "[" << client->getLabel() << "] left the map during the "
+                          << "latency window: "
+                          << CatchChallenger::CliApiClient::stateToString(client->getState())
+                          << (client->getFailReason().empty()?std::string():
+                              (": "+client->getFailReason())) << std::endl;
+            index++;
+        }
+        std::cout << "SURVIVORS " << latencySurvivors << "/" << options.bots << std::endl;
+        //Dump even when the window ended early (every bot kicked, loop error):
+        //a truncated histogram with its real sample count is a result, a missing
+        //one is not. The join buckets are already filled from the onboarding.
+        latencyRecorder.dumpBench();
+        std::cerr << "latency window: "
+                  << (static_cast<double>(elapsedNs)/1000000000.0) << "s" << std::endl;
+    }
+    //The recorder outlives the bots as a stack object, but its maps key on the
+    //bot pointers: uninstall it before they are deleted so a notification fired
+    //during teardown cannot reach a freed client.
+    CatchChallenger::CliLatency::setInstance(NULL);
+#endif
+
     index=0;
     while(index<clients.size())
     {
@@ -462,10 +556,11 @@ int main(int argc,char *argv[])
     }
     clients.clear();
 
-    if(options.spam)
+    if(options.spam || options.latency)
     {
-        //A saturation run is about throughput, not onboarding: it only fails
-        //when NO bot ever reached the map (nothing was measured at all).
+        //A saturation or latency run is about the measured window, not
+        //onboarding: it only fails when NO bot ever reached the map (nothing was
+        //measured at all).
         if(onMapReached>0)
             return 0;
         return 1;

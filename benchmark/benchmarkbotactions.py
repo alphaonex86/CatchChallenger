@@ -1,60 +1,87 @@
 #!/usr/bin/env python3
 """benchmarkbotactions.py -- end-to-end network/kernel-stack benchmark.
 
-Workload: build tools/bot-actions AND catchchallenger-server-cli, spawn
-the server locally on a free port with the DB pinned in RAM
-(CATCHCHALLENGER_DB_INTERNAL_VARS, see general/DEFINES.md), then run
-bot-actions against it. Unlike benchmarkserversave (cold-start parse)
-or benchmarkmapmanager (in-process visibility loop), this exercises
-the FULL stack inside one host:
+Workload: build tools/bot-bench (the Qt-FREE benchmark client) AND
+catchchallenger-server-cli, run the server with the DB pinned in RAM
+(CATCHCHALLENGER_DB_INTERNAL_VARS, see general/DEFINES.md), then saturate it
+with bot-bench --spam. Unlike benchmarkserversave (cold-start parse) or
+benchmarkmapmanager (in-process visibility loop), this exercises the FULL stack
+inside ONE machine:
 
-  * userspace QTcpSocket + protocol encode/decode
+  * userspace socket + protocol encode/decode
   * kernel send/recv path through the loopback interface
   * server epoll loop + per-tick scheduling
   * server-side packet parse + state updates
 
-The headline metric (bots-served / wall time) is dominated by network
-behaviour and reflects real-world client cost, not micro-benchmark
-cost. A patch that speeds the in-process loop but regresses syscall
-churn or packet-coalescing shows up here, not in the others. By
-spawning the server in-process the benchmark needs no external setup
--- "python3 benchmarkbotactions.py" works on a fresh checkout.
+CLIENT AND SERVER ARE ALWAYS ON THE SAME HARDWARE. On the host row both run
+here; on every remote row the client is built for that arch on the exec node's
+compile parent, pushed to the node and run THERE against 127.0.0.1. The old
+shape -- server on the node, Qt bot-actions on the orchestrating host over the
+LAN -- recorded the HOST process's rusage under the NODE's label and could not
+produce a server CPU% at all, so the per-node history was measuring the wrong
+machine. It also excluded 11 of the 15 benchmark nodes from ever running a
+client: they are headless boards with no Qt6 runtime.
 
-# HEADLESS: yes
-Metrics:
-  * wall_s              -- /usr/bin/time -v (lower better)
-  * max_rss_kb          -- peak resident set (lower better)
-  * user_s / sys_s      -- CPU split; sys_s grows with kernel/syscall
-                            cost, the metric most likely to move on a
-                            network-stack change (lower better)
+CATCHCHALLENGER_BENCHMARK is mandatory on every server build here: the
+anti-flood filter is `#ifndef CATCHCHALLENGER_BENCHMARK`, so a saturating
+client would otherwise be kicked after ~60 moves.
+
+# HEADLESS: yes  (Qt-free client: POSIX sockets + select(), no display at all)
+Metrics, per workload slice (b<N>_ prefix in the flat keys):
+  * req_per_s           -- moves the fleet pushed per second of the measured
+                            window: THE work metric (higher better). Every
+                            resource number below is only readable against it.
+  * moves / survivors /
+    bots_on_map         -- window totals + how many bots the node seated
+                            (higher better)
+  * cpu_percent         -- the SERVER's CPU over the slice. Single-threaded
+                            epoll, so bounded at 100 = one core saturated
+                            (lower better at equal req_per_s)
+  * client_cpu_percent  -- the node-local client's own CPU; on a single-core
+                            board this is what it takes away from the server
+  * wall_s              -- window + onboarding (lower better)
+  * max_rss_kb          -- client peak resident set (lower better)
+  * user_s / sys_s      -- client CPU split; sys_s grows with kernel/syscall
+                            cost (lower better)
   * vol_ctx / invol_ctx -- context switches (lower better)
-  * net_rx_bytes /
-    net_tx_bytes        -- /proc/net/dev delta on the loopback iface
-                            (lower better at fixed workload = fewer wire
-                            bytes per bot-second)
-  * net_rx_pkts /
-    net_tx_pkts         -- packet count delta (lower better)
-  * tcp_retrans         -- /proc/net/snmp Tcp:RetransSegs delta (lower)
-  * binary_size_bytes   -- stripped binary footprint (lower better)
+  * net_rx_bytes / net_tx_bytes / net_rx_pkts / net_tx_pkts
+                        -- /proc/net/dev delta, HOST ROW ONLY (a node's
+                            loopback totals are a different quantity, so they
+                            are left null rather than silently redefined)
+  * tcp_retrans         -- /proc/net/snmp Tcp:RetransSegs delta, host row only
+  * binary_size_bytes   -- stripped client footprint (lower better)
+Server-side, once per node run (cumulative over its slices, from the server's
+BENCH dump on SIGINT):
+  * bench_packets_in    -- parser dispatches the server served (higher better).
+                            NOT a syscall count: io_uring's recv_multishot
+                            harvests many completions per io_uring_enter.
+  * latency_p50/p95/p99/p999_ns + latency_jitter_ns -- per-read-event
+                            processing tail (lower better). req/s is never
+                            reported without it: a throughput win that inflates
+                            p99 is a tick-stability regression on the
+                            constrained targets.
+  * loop_busy_pct / loop_us_per_wakeup -- event-loop self-probe. NOT
+                            comparable across event-loop backends (see
+                            benchmark/CLAUDE.md), only across commits on one.
 
-Determinism note: TCP RTT inside loopback is ~microseconds, but the
-server epoll callback latency and Qt event-loop scheduling still
-introduce jitter. RUN_REPEATS produces several samples; the harness
-records median+stddev so the comparator can apply the noise band.
+Determinism note: TCP RTT inside loopback is ~microseconds, but epoll callback
+latency and scheduling still introduce jitter. RUN_REPEATS produces several
+samples; the harness records median+stddev so the comparator can apply the
+noise band.
 
-One-command target: run with no args, 1h timeout. The server is
-spawned in CATCHCHALLENGER_DB_INTERNAL_VARS mode so the entire database
-tree lives under /dev/shm/cc-server-<pid>/ (tmpfs, RAM-backed) for
-the lifetime of the process and is removed on exit by an atexit()
-hook. Reconnects within the same run see their state; no disk
-writes ever happen.
+One-command target: run with no args, 1h timeout. The server runs in
+CATCHCHALLENGER_DB_INTERNAL_VARS mode so the entire database tree lives under
+/dev/shm/cc-server-<pid>/ (tmpfs, RAM-backed) for the lifetime of the process
+and is removed on exit by an atexit() hook. Reconnects within the same run see
+their state; no disk writes ever happen.
 
-Bot-actions has no --duration flag; we wrap it in `timeout` and send
-SIGINT so Qt can clean up. The headline workload knob is BOTS_COUNT
-* DURATION_S -- enough offered load that the network stack, not the
-CPU, dominates the wall clock.
+The client self-times its window (fixed-time, not fixed-iteration) and exits on
+its own; `timeout` is only a hard backstop for a hang. The workload knob is
+BOT_COUNTS x DURATION_S -- enough offered load that the server, not the client,
+is the bottleneck.
 """
 import os
+import re
 import shlex
 import sys
 import json
@@ -80,8 +107,13 @@ BENCH_DIR  = os.path.dirname(os.path.abspath(__file__))
 # to run in parallel with anything.
 NETWORK_EXCLUSIVE = True
 
-BOT_SRC_DIR    = os.path.join(REPO_ROOT, "tools", "bot-actions")
-BOT_BIN_NAME   = "bot-actions"
+BOT_SRC_DIR    = os.path.join(REPO_ROOT, "tools", "bot-bench")
+BOT_BIN_NAME   = "bot-bench"
+# One account per bot: bot-bench appends the bot index to the login, so the
+# per-account character cap can never limit the fleet and no two bots race to
+# create the same account.
+BOT_LOGIN      = "bench"
+BOT_PASS       = "bench"
 SRV_SRC_DIR    = os.path.join(REPO_ROOT, "server", "cli")
 SRV_BIN_NAME   = "catchchallenger-server-cli"
 
@@ -97,7 +129,7 @@ try:
 except Exception:
     BUILD_ROOT = "/tmp/cc-build"
     TMPFS_ROOT = "/tmp"
-BOT_BUILD_DIR  = "/mnt/data/perso/tmpfs/bot-actions"
+BOT_BUILD_DIR  = "/mnt/data/perso/tmpfs/benchmark/botactions-botbench"
 SRV_BUILD_DIR  = os.path.join(BUILD_ROOT, "benchmark", "benchmarkbotactions-server")
 SRV_RUN_DIR    = os.path.join(TMPFS_ROOT, "cc-bench-botactions-server")
 
@@ -109,7 +141,14 @@ BOT_COUNTS    = [2, 8, 30, 50, 150]
 DURATION_S    = 15
 RUN_REPEATS   = 3        # 1 warmup + 2 measured per (size)
 BUILD_TIMEOUT = 1800
-RUN_TIMEOUT   = DURATION_S + 60
+# Onboarding allowance handed to the client (--timeout): 150 bots log in in
+# waves, and each wave costs a full login round trip on a 66MHz-class board.
+# It is NOT part of the measured window (the client self-times that), only the
+# budget before the window may open.
+BOT_ONBOARD_TIMEOUT_S = 120
+# Hard backstop for one client run = onboarding + window + margin. It always
+# exceeds the real run, so it only fires on a hang.
+RUN_TIMEOUT   = BOT_ONBOARD_TIMEOUT_S + DURATION_S + 45
 
 # Server boot deadline. Datapack parse + bind has to finish before the
 # bots start; this matches the value the test/ harness uses for an
@@ -130,10 +169,18 @@ SERVER_PORT          = 61920
 # RAM variant redirects all writes off disk. CACHE_HPS lets the
 # pre-generated datapack cache load. Single source so no build path can
 # drift back to disk-backed DB_FILE.
+# CATCHCHALLENGER_BENCHMARK is MANDATORY here, not a nicety: the anti-flood
+# filter is derived from `#ifndef CATCHCHALLENGER_BENCHMARK`
+# (server/base/VariableServer.hpp), so a saturating client is kicked after ~60
+# moves against a normal build and the cell measures the kicker instead of the
+# stack. It also compiles in the per-read-event counter + latency histogram
+# (BENCH lines on SIGINT) that give every cell its work-done metric. The whole
+# block is #ifdef'd out of production builds.
 SERVER_RAM_DB_DEFS = {
     "CATCHCHALLENGER_DB_FILE":     "ON",
     "CATCHCHALLENGER_CACHE_HPS":   "ON",
     "CATCHCHALLENGER_DB_INTERNAL_VARS": "ON",
+    "CATCHCHALLENGER_BENCHMARK":   "ON",
 }
 
 # io_uring tuning variants compared on the LOCAL host (the controlled
@@ -422,15 +469,13 @@ def profile_server(staged_bin, bot_bin, tool):
     print(_color(bh.C_GREEN,
         f"[profile] server bound under {tool} (pid={srv.pid}); "
         f"driving {BOT_COUNTS[-1]} bots for {DURATION_S}s"))
-    cmd = ["timeout", "--signal=INT", str(DURATION_S)] + \
+    cmd = ["timeout", "--signal=INT", str(RUN_TIMEOUT)] + \
           _bot_cmd(bot_bin, "127.0.0.1", SERVER_PORT, BOT_COUNTS[-1])
     env = os.environ.copy()
-    env["QT_QPA_PLATFORM"] = "offscreen"
-    # The Qt bot client is extremely chatty (Api_protocol / datapack-parse /
-    # per-character DEBUG lines). Under --profile that flood drowns the
-    # harness output and adds nothing — redirect it to a log file in the run
-    # dir so the terminal stays quiet (path printed only if the bot fails).
-    bot_log = os.path.join(SRV_RUN_DIR, "bot-actions.log")
+    # The client prints one line per bot state transition; under --profile that
+    # adds nothing and drowns the harness output — redirect it to a log file in
+    # the run dir so the terminal stays quiet (path printed only if it fails).
+    bot_log = os.path.join(SRV_RUN_DIR, "bot-bench.log")
     bot_fh = open(bot_log, "wb")
     try:
         subprocess.run(cmd, env=env, timeout=RUN_TIMEOUT * slow,
@@ -577,78 +622,54 @@ def _stage_variant_run_dir(server_bin, run_dir, port,
     return dst
 
 
+def _bench_packets_in_from_text(text):
+    """'BENCH packets_in=<N>' (the LAST one: the counter is cumulative and a
+    node may dump more than once). None when absent -- server built without
+    CATCHCHALLENGER_BENCHMARK, or killed before it could dump.
+
+    Note it counts parser DISPATCHES, not syscalls: under io_uring's
+    recv_multishot many completions are harvested per io_uring_enter."""
+    found = re.findall(r"BENCH packets_in=(\d+)", text)
+    if not found:
+        return None
+    return int(found[-1])
+
+
 def _read_bench_packets_in(run_dir):
-    """Parse the server-side 'BENCH packets_in=<N>' line the
-    CATCHCHALLENGER_BENCHMARK build dumps on SIGINT (read-events the
-    server processed). Returns the int, or None if absent (e.g. server
-    built without the define, or killed before it could dump)."""
-    log_path = os.path.join(run_dir, "server.log")
+    """_bench_packets_in_from_text() for a locally-run server's log."""
     try:
-        with open(log_path, "rb") as f:
-            data = f.read()
+        with open(os.path.join(run_dir, "server.log"), "r",
+                  errors="replace") as f:
+            return _bench_packets_in_from_text(f.read())
     except FileNotFoundError:
-        return None
-    marker = b"BENCH packets_in="
-    pos = data.rfind(marker)
-    if pos < 0:
-        return None
-    tail = data[pos + len(marker):]
-    digits = bytearray()
-    for b in tail:
-        if 48 <= b <= 57:
-            digits.append(b)
-        else:
-            break
-    if not digits:
-        return None
-    try:
-        return int(digits.decode("ascii"))
-    except ValueError:
         return None
 
 
-def _read_bench_latency(run_dir):
-    """Reconstruct the per-read-event processing-latency distribution from
-    the server's 'BENCH lat_hist_<i>=<count>' lines (log2 ns buckets:
-    bucket i = [2^i, 2^(i+1)) ns). Returns a dict of metric -> value in ns:
-    p50/p95/p99/p999 (latency tail) + jitter (stddev). {} when no
-    histogram was dumped (server built without CATCHCHALLENGER_BENCHMARK,
-    or killed before it could dump). Uses each bucket's geometric midpoint
-    (2^i * sqrt(2)) as the representative latency for that bucket."""
-    log_path = os.path.join(run_dir, "server.log")
-    try:
-        with open(log_path, "r", errors="replace") as f:
-            text = f.read()
-    except FileNotFoundError:
-        return {}
-    import re, math
+def _bench_latency_from_text(text):
+    """Reconstruct the server's per-read-event processing-latency distribution
+    from its 'BENCH lat_hist_<i>=<count>' log2-ns buckets. Returns
+    latency_p50/p95/p99/p999_ns + latency_jitter_ns, or {} when nothing was
+    dumped. The bucket math is the shared one (bh.bench_hist_percentiles)."""
     buckets = {}
     for m in re.finditer(r"BENCH lat_hist_(\d+)=(\d+)", text):
         buckets[int(m.group(1))] = int(m.group(2))
-    total = sum(buckets.values())
-    if total == 0:
+    stats = bh.bench_hist_percentiles(buckets)
+    if not stats:
         return {}
-    # representative ns per bucket index (geometric midpoint)
-    def rep(i):
-        return (2.0 ** i) * math.sqrt(2.0)
-    ordered = sorted(buckets.items())
-    # mean + stddev (jitter) over the bucketed distribution
-    mean = sum(rep(i) * c for i, c in ordered) / total
-    var = sum(c * (rep(i) - mean) ** 2 for i, c in ordered) / total
-    out = {"latency_jitter_ns": math.sqrt(var)}
-    def percentile(p):
-        target = p * total
-        cum = 0
-        for i, c in ordered:
-            cum += c
-            if cum >= target:
-                return rep(i)
-        return rep(ordered[-1][0])
-    out["latency_p50_ns"]  = percentile(0.50)
-    out["latency_p95_ns"]  = percentile(0.95)
-    out["latency_p99_ns"]  = percentile(0.99)
-    out["latency_p999_ns"] = percentile(0.999)
+    out = {"latency_jitter_ns": stats["jitter_ns"]}
+    for key in ("p50_ns", "p95_ns", "p99_ns", "p999_ns"):
+        out["latency_" + key] = stats[key]
     return out
+
+
+def _read_bench_latency(run_dir):
+    """_bench_latency_from_text() for a locally-run server's log."""
+    try:
+        with open(os.path.join(run_dir, "server.log"), "r",
+                  errors="replace") as f:
+            return _bench_latency_from_text(f.read())
+    except FileNotFoundError:
+        return {}
 
 
 def _run_iouring_variants(bot_bin, iface):
@@ -705,8 +726,10 @@ def _run_iouring_variants(bot_bin, iface):
                 print(_color(bh.C_YELLOW, f"[iouring] {slabel}: server not ready; skip"))
                 continue
             try:
-                sample, sample_err = _run_once(bot_bin, "127.0.0.1", port, bots,
-                                               iface, server_pid=proc.pid)
+                sample, sample_err = _run_once(
+                    bot_bin, "127.0.0.1", port, bots, iface,
+                    server_pid=proc.pid,
+                    datapack=os.path.join(rdir, "datapack"))
             finally:
                 stop_server(proc)
             if sample is None:
@@ -855,8 +878,10 @@ def _run_compression_variants(bot_bin, iface):
                 print(_color(bh.C_YELLOW, f"[compression] {slabel}: server not ready; skip"))
                 continue
             try:
-                sample, sample_err = _run_once(bot_bin, "127.0.0.1", port,
-                                               bots, iface, server_pid=proc.pid)
+                sample, sample_err = _run_once(
+                    bot_bin, "127.0.0.1", port, bots, iface,
+                    server_pid=proc.pid,
+                    datapack=os.path.join(rdir, "datapack"))
             finally:
                 stop_server(proc)
             if sample is None:
@@ -1000,9 +1025,7 @@ def _read_tcp_retrans():
 
 _CLK_TCK = os.sysconf("SC_CLK_TCK") if hasattr(os, "sysconf") else 100
 
-# gdb path (None = not available on this host, fall back to untraced run)
-_GDB = shutil.which("gdb")
-# Temp dir for per-run bot stdout / stderr / gdb log files. Named by
+# Temp dir for per-run client stdout / stderr logs. Named by
 # port+bots so concurrent io_uring variant runs don't collide.
 _BOT_RUN_TMP = "/tmp/cc-bench-botrun"
 
@@ -1018,37 +1041,12 @@ _TIME_V_PREFIXES = (
 )
 
 
-def _write_gdb_catchcmd(gdb_log_path, out_path):
-    """Write a gdb --batch command file that catches SIGABRT/SIGSEGV/SIGBUS,
-    writes a full backtrace to gdb_log_path via set-logging, then quits.
-    Logging is enabled ONLY inside the catch commands block so that
-    normal gdb startup messages ("Starting program: ...") do NOT appear in
-    the log – only the backtrace from a crash run does.
-    SIGINT is forwarded to the inferior without stopping so that
-    `timeout --signal=INT` can terminate the bot cleanly (the normal path)."""
-    with open(out_path, "w") as f:
-        f.write("set pagination off\n")
-        f.write("set height 0\n")
-        f.write("set width 0\n")
-        f.write("catch signal SIGABRT SIGSEGV SIGBUS\n")
-        f.write("commands\n")
-        f.write(f"  set logging file {gdb_log_path}\n")
-        f.write("  set logging overwrite on\n")
-        f.write("  set logging enabled on\n")
-        f.write("  bt full\n")
-        f.write("  info frame\n")
-        f.write("  set logging enabled off\n")
-        f.write("  quit\n")
-        f.write("end\n")
-        # Let timeout --signal=INT reach the inferior without a gdb stop
-        f.write("handle SIGINT pass nostop noprint\n")
-        f.write("run\n")
-
-
 def _bot_crash_report(stdout_log, stderr_log, gdb_log):
-    """Assemble a crash report string: gdb backtrace (if any) followed by
-    the last 50 lines of bot stdout and the last 50 lines of bot stderr
-    (with /usr/bin/time -v metric lines stripped from stderr)."""
+    """Assemble a crash report string: the last 50 lines of client stdout and
+    the last 50 lines of client stderr (with /usr/bin/time -v metric lines
+    stripped from stderr). `gdb_log` is kept for a caller that has a backtrace
+    from elsewhere; the load path no longer runs the client under gdb (it
+    perturbed the very throughput being measured)."""
     parts = []
     if gdb_log and os.path.isfile(gdb_log):
         try:
@@ -1090,25 +1088,78 @@ def _server_cpu_ticks(pid):
         return None
 
 
-def _bot_cmd(bin_path, host, port, bots):
-    return [bin_path,
-            "--host",  str(host),
+def _bot_argv(host, port, bots, datapack):
+    """bot-bench arguments for one cell.
+
+    --spam is the offered load: once every bot is on the map each one walks
+    between two validated tiles as fast as the server drains its socket, so the
+    pacing is the server's own back-pressure. That is what saturates a
+    single-threaded event loop, and it yields MOVES / REQ_PER_S -- the work-done
+    metric without which the CPU% and RSS of a cell mean nothing.
+
+    The window is self-timed (CLOCK_MONOTONIC around the phase only), so login,
+    character creation and datapack parse are excluded from it; --timeout is the
+    onboarding budget, not the window."""
+    return ["--host",  str(host),
             "--port",  str(port),
             "--bots",  str(bots),
-            "--login", "bench_%NUMBER%",
-            "--pass",  "bench_%NUMBER%"]
+            "--login", BOT_LOGIN,
+            "--pass",  BOT_PASS,
+            "--datapack", datapack,
+            "--timeout", str(int(BOT_ONBOARD_TIMEOUT_S * 1000)),
+            "--spam", "--seconds", str(int(DURATION_S))]
 
 
-def _run_once(bin_path, host, port, bots, iface, server_pid=None):
-    """Run bot-actions for DURATION_S seconds, return sample dict or
-    None on failure. Uses `timeout --signal=INT` so Qt can clean up
-    sockets gracefully -- a hard SIGKILL leaves TIME_WAIT churn that
-    pollutes the NEXT iteration's counters.
+def _bot_cmd(bin_path, host, port, bots, datapack=None):
+    return [bin_path] + _bot_argv(
+        host, port, bots,
+        datapack or os.path.join(SRV_RUN_DIR, "datapack"))
 
-    When gdb is available the bot runs under `gdb --batch` with catch
-    commands for SIGABRT/SIGSEGV/SIGBUS.  On any crash the full backtrace
-    is written to a per-run log file and surfaced in the error string
-    together with the last 50 lines of bot stdout and bot stderr.
+
+# bot-bench's fixed output contract (tools/bot-bench/main.cpp).
+_SPAM_RE = {
+    "moves":     re.compile(r"^MOVES (\d+)$", re.M),
+    "req_per_s": re.compile(r"^REQ_PER_S ([0-9.]+)$", re.M),
+    "survivors": re.compile(r"^SURVIVORS (\d+)/(\d+)$", re.M),
+    "on_map":    re.compile(r"^ON_MAP (\d+)/(\d+)$", re.M),
+}
+
+
+def _parse_spam_output(text):
+    """Pull the saturation numbers out of a bot-bench run. Returns
+    (metrics_dict, err_or_None) -- err when the run produced no REQ_PER_S line
+    at all, which means nothing was measured (a cell with no work metric is a
+    FAIL, not a slow result)."""
+    out = {}
+    m = _SPAM_RE["req_per_s"].search(text)
+    if m is None:
+        return None, "no REQ_PER_S line from " + BOT_BIN_NAME
+    out["req_per_s"] = float(m.group(1))
+    m = _SPAM_RE["moves"].search(text)
+    if m is not None:
+        out["moves"] = int(m.group(1))
+    m = _SPAM_RE["survivors"].search(text)
+    if m is not None:
+        out["survivors"] = int(m.group(1))
+    m = _SPAM_RE["on_map"].search(text)
+    if m is not None:
+        out["bots_on_map"] = int(m.group(1))
+    return out, None
+
+
+def _run_once(bin_path, host, port, bots, iface, server_pid=None,
+              datapack=None):
+    """Run the client for one HOST-ROW cell (client and server both here) and
+    return a sample dict, or None on failure. The client self-times its
+    DURATION_S window and exits on its own; `timeout --signal=INT` is only a
+    backstop, and SIGINT rather than SIGKILL so the sockets close cleanly -- a
+    hard kill leaves TIME_WAIT churn that pollutes the NEXT iteration.
+
+    The remote counterpart is _run_once_on_exec(), which runs the client on the
+    exec node beside its server.
+
+    On a crash the exit code is surfaced together with the last 50 lines of
+    client stdout and stderr.
 
     When `server_pid` is given, sample the server's /proc/<pid>/stat
     cpu ticks pre/post and derive its single-thread CPU% over the run.
@@ -1116,7 +1167,6 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None):
     is bounded at 100 % -- a reading above that means a wrong PID
     was timed (clamp + log, don't pretend it's multi-core)."""
     env = os.environ.copy()
-    env["QT_QPA_PLATFORM"] = "offscreen"
 
     pre_iface = _read_iface_counters(iface) if iface else None
     pre_retrans = _read_tcp_retrans()
@@ -1129,25 +1179,29 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None):
     os.makedirs(run_tmp, exist_ok=True)
     stdout_log = os.path.join(run_tmp, "bot_stdout.log")
     stderr_log = os.path.join(run_tmp, "bot_stderr.log")
-    gdb_log    = os.path.join(run_tmp, "gdb_crash.log")
-    for stale in (stdout_log, stderr_log, gdb_log):
+    for stale in (stdout_log, stderr_log):
         try: os.remove(stale)
         except FileNotFoundError: pass
 
-    bot_args = _bot_cmd(bin_path, host, port, bots)
-    if _GDB:
-        gdb_cmd_path = os.path.join(run_tmp, "bot.gdb")
-        _write_gdb_catchcmd(gdb_log, gdb_cmd_path)
-        inner = ["gdb", "-q", "--batch",
-                 f"--command={gdb_cmd_path}", "--args"] + bot_args
-    else:
-        inner = bot_args
+    bot_args = _bot_cmd(bin_path, host, port, bots, datapack=datapack)
 
-    # timeout(1) sends --signal=INT after DURATION_S (lets Qt clean up
-    # sockets); returns 124 on expiry, 0 on natural bot exit.
-    # /usr/bin/time -v wraps the whole chain for resource metrics.
+    # NOT under gdb. The client used to be wrapped in `gdb --batch` with catch
+    # commands for SIGABRT/SIGSEGV/SIGBUS; that was viable while the bot had no
+    # end of its own and the metrics came from /usr/bin/time -v (a SIGINT kill
+    # with rc=124 was the normal path). It is not viable now, and was never a
+    # good idea in a throughput benchmark: measured here, every cell under gdb
+    # blew past a 180s backstop while the same window bare takes 5.5s, and the
+    # client never got to print its MOVES/REQ_PER_S line. A benchmark must
+    # measure the plain binary. A crash still surfaces -- bad exit code +
+    # _bot_crash_report() with both output tails.
+    inner = bot_args
+
+    # timeout(1) is only a hard backstop: the client self-times its window and
+    # exits on its own (rc 0). --signal=INT so the sockets close cleanly if it
+    # ever does fire; 124 then means the run hung and produced no work metric.
+    # /usr/bin/time -v wraps the chain for the client's resource metrics.
     full = ["/usr/bin/time", "-v",
-            "timeout", "--signal=INT", str(DURATION_S)] + inner
+            "timeout", "--signal=INT", str(RUN_TIMEOUT)] + inner
 
     t0 = time.monotonic()
     with open(stdout_log, "wb") as out_fh, open(stderr_log, "wb") as err_fh:
@@ -1164,21 +1218,12 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None):
     except Exception:
         stderr_text = ""
 
-    # Crash detection:
-    #   (a) bad exit code: 0 / 124 / 130 are the normal paths
-    #   (b) gdb log non-empty: bot crashed inside a gdb-caught signal;
-    #       the catch+quit path makes gdb exit 0 so (a) alone misses it
+    # Crash detection: a bad exit code. 0 is the normal path (the client
+    # self-exits after its window); 124 / 130 mean the backstop fired, which
+    # the missing work metric below reports as a failure anyway.
     bad_rc = p.returncode not in (0, 124, 128 + signal.SIGINT)
-    gdb_log_content = ""
-    if _GDB and os.path.isfile(gdb_log):
-        try:
-            gdb_log_content = open(gdb_log, "r", errors="replace").read().strip()
-        except Exception:
-            pass
-    if bad_rc or gdb_log_content:
-        crash_info = _bot_crash_report(
-            stdout_log, stderr_log,
-            gdb_log if gdb_log_content else None)
+    if bad_rc:
+        crash_info = _bot_crash_report(stdout_log, stderr_log, None)
         msg = f"bot host={host}:{port} bots={bots} rc={p.returncode}"
         if crash_info:
             msg = msg + "\n" + crash_info
@@ -1188,9 +1233,22 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None):
     post_retrans = _read_tcp_retrans()
     post_srv_ticks = _server_cpu_ticks(server_pid) if server_pid else None
 
+    # The work done in the fixed window. Without it the resource numbers below
+    # are unreadable: less CPU because the cell pushed fewer moves is a
+    # regression, not a win (benchmark/CLAUDE.md).
+    try:
+        stdout_text = open(stdout_log, "r", errors="replace").read()
+    except OSError:
+        stdout_text = ""
+    spam, spam_err = _parse_spam_output(stdout_text)
+    if spam is None:
+        return None, (f"bot host={host}:{port} bots={bots}: {spam_err}\n" +
+                      _bot_crash_report(stdout_log, stderr_log, None))
+
     sample = {"wall_s": wall, "user_s": None, "sys_s": None,
               "max_rss_kb": None, "vol_ctx": None, "invol_ctx": None,
               "minor_pf": None, "major_pf": None}
+    sample.update(spam)
     for line in stderr_text.splitlines():
         s = line.strip()
         if s.startswith("Elapsed (wall clock) time"):
@@ -1243,14 +1301,72 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None):
     return sample, None
 
 
-def cell_run(bin_path, host, port, bots, iface, server_pid=None):
+def _run_once_on_exec(exec_node, bots, server_pid):
+    """One pass with the client running ON the exec node, beside the server.
+
+    This is the remote counterpart of _run_once(): same sample keys, but the
+    rusage now belongs to the client process on the BOARD (where it competes
+    with the server for the CPU) instead of to a process on the orchestrating
+    host. The /proc/net counters are deliberately absent -- they would be the
+    node's loopback totals, which is a different quantity from the host's LAN
+    interface delta, so they are left None rather than silently redefined."""
+    argv = _bot_argv("127.0.0.1", SERVER_PORT, bots, "datapack")
+    ok, res = br.run_client_on_exec(
+        exec_node, " ".join(shlex.quote(a) for a in argv),
+        server_pid=server_pid, timeout=RUN_TIMEOUT + 60,
+        bin_name=BOT_BIN_NAME)
+    if not ok:
+        return None, f"node-local client run failed (bots={bots}): {res['error']}"
+    if res["client_rc"] not in (0, None):
+        return None, (f"{BOT_BIN_NAME} rc={res['client_rc']} on "
+                      f"{exec_node['label']} (bots={bots})\n" +
+                      "\n".join(res["err"].splitlines()[-25:]))
+    spam, spam_err = _parse_spam_output(res["out"])
+    if spam is None:
+        return None, (f"{exec_node['label']} bots={bots}: {spam_err}\n" +
+                      "\n".join(res["err"].splitlines()[-25:]))
+    sample = {"wall_s": res["wall_s"], "user_s": None, "sys_s": None,
+              "max_rss_kb": None, "vol_ctx": None, "invol_ctx": None,
+              "minor_pf": None, "major_pf": None}
+    sample.update(spam)
+    for line in res["err"].splitlines():
+        s = line.strip()
+        if s.startswith("User time (seconds):"):
+            sample["user_s"] = _to_float(s.split(":", 1)[1])
+        elif s.startswith("System time (seconds):"):
+            sample["sys_s"] = _to_float(s.split(":", 1)[1])
+        elif s.startswith("Maximum resident set size (kbytes):"):
+            sample["max_rss_kb"] = _to_float(s.split(":", 1)[1])
+        elif s.startswith("Voluntary context switches:"):
+            sample["vol_ctx"] = _to_float(s.split(":", 1)[1])
+        elif s.startswith("Involuntary context switches:"):
+            sample["invol_ctx"] = _to_float(s.split(":", 1)[1])
+        elif s.startswith("Minor (reclaiming a frame) page faults:"):
+            sample["minor_pf"] = _to_float(s.split(":", 1)[1])
+        elif s.startswith("Major (requiring I/O) page faults:"):
+            sample["major_pf"] = _to_float(s.split(":", 1)[1])
+    if res["server_cpu_percent"] is not None:
+        sample["cpu_percent"] = res["server_cpu_percent"]
+    if res["client_cpu_percent"] is not None:
+        sample["client_cpu_percent"] = res["client_cpu_percent"]
+    return sample, None
+
+
+def cell_run(bin_path, host, port, bots, iface, server_pid=None,
+             exec_node=None, datapack=None):
     """RUN_REPEATS passes (drop first as warmup). Returns
     (per-metric {name -> (median, stddev)}, None) for one (bots) cell, or
-    (None, reason) on failure so the caller can surface WHY it failed."""
+    (None, reason) on failure so the caller can surface WHY it failed.
+
+    `exec_node` runs the client on that node next to the server (every remote
+    row); None runs it locally against a local server (the host row)."""
     samples = []
     for i in range(RUN_REPEATS):
-        s, err = _run_once(bin_path, host, port, bots, iface,
-                           server_pid=server_pid)
+        if exec_node is not None:
+            s, err = _run_once_on_exec(exec_node, bots, server_pid)
+        else:
+            s, err = _run_once(bin_path, host, port, bots, iface,
+                               server_pid=server_pid, datapack=datapack)
         if s is None:
             return None, err
         if i == 0:
@@ -1270,7 +1386,18 @@ def cell_run(bin_path, host, port, bots, iface, server_pid=None):
     return out, None
 
 
+def _to_float(text):
+    """Numeric field of a `/usr/bin/time -v` line, or None when it is not a
+    number (a node's BusyBox time prints a different layout). Never raises:
+    a missing metric is recorded as null, never as 0."""
+    try:
+        return float(text.strip())
+    except ValueError:
+        return None
+
+
 def _unit_for(name):
+    if name.endswith("req_per_s"): return "moves/s"
     if name.endswith("_s"):       return "s"
     if name.endswith("_kb"):      return "kb"
     if name.endswith("_bytes"):   return "bytes"
@@ -1279,11 +1406,25 @@ def _unit_for(name):
     return "count"
 
 
+# Metrics where MORE is better. Everything else is a cost (time, bytes, CPU,
+# faults) and defaults to lower-is-better. Names are matched on the suffix
+# because the flat keys are prefixed with the workload slice ("b30_req_per_s").
+_HIGHER_IS_BETTER_SUFFIXES = ("req_per_s", "moves", "survivors", "bots_on_map",
+                              "bench_packets_in")
+
+
+def _better_for(name):
+    for suffix in _HIGHER_IS_BETTER_SUFFIXES:
+        if name == suffix or name.endswith("_" + suffix):
+            return "higher"
+    return "lower"
+
+
 def _flat_to_metric_block(flat):
     out = {}
     for name, (med, std) in flat.items():
         out[name] = {"value": med, "median": med, "stddev": std,
-                     "unit": _unit_for(name), "better": "lower",
+                     "unit": _unit_for(name), "better": _better_for(name),
                      "samples": None}
     return out
 
@@ -1293,14 +1434,14 @@ def _run_remote_cells_botactions(node, avail_profilers, skips, all_profilers,
                                  per_subbench, compile_flags, local_bot_bin):
     """Remote dispatch for benchmarkbotactions on one exec node.
 
-    The server is built on the compile node and runs on the exec node.
-    bot-actions is always run LOCALLY (compiled into /mnt/data/perso/tmpfs/
-    bot-actions/) and connects to the exec node over the LAN — no Qt6
-    required on the compile node.
+    BOTH binaries are built on the compile node and run on the exec node: the
+    server, and the Qt-free client that loads it over 127.0.0.1. Nothing about
+    the measurement happens on the orchestrating host, which only holds the ssh
+    connections.
 
     `extra_rusage_count` = max(len(BOT_COUNTS)-1, 0): number of extra progress
-    ticks the local rusage path emits for additional BOT_COUNT slices so the
-    total counter stays in sync."""
+    ticks the rusage path emits for additional BOT_COUNT slices so the total
+    counter stays in sync."""
     label        = node["label"]
     compile_node = node.get("compile_node")
     if compile_node is None:
@@ -1400,9 +1541,17 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
 
     # 1. rsync datapack to exec node
     if os.path.isdir(DATAPACK_PATH):
+        # keep_skins=True: the client logs into a fresh RAM DB with no
+        # character, so it CREATES one (skinId 0). Without >=1 real skin (a
+        # folder with back/front/trainer.png) the server refuses skin 0 with
+        # "the datapack has no skin, no character can be created" and no bot ever
+        # reaches the map -> no offered load at all. It did not matter while the
+        # remote rows only timed a host-side process that never needed a
+        # character; it does now.
         rc_dp, msg_dp = br.rsync_datapack_to_exec(exec_node, DATAPACK_PATH,
                                                    remote_subdir="datapack",
-                                                   timeout=600, server_mode=True)
+                                                   timeout=600, server_mode=True,
+                                                   keep_skins=True)
         if rc_dp != 0:
             _skip_all(f"datapack-rsync-failed: {msg_dp}")
             return
@@ -1413,6 +1562,14 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
 
     # 2. Build server-cli on compile node. DB_FILE_RAM keeps the DB in
     # /dev/shm so embedded boards never burn flash write cycles.
+    # Stage the source tree FIRST: build_on_compile_node() compiles whatever is
+    # already in <work>/sources/, so without this the node would build a tree
+    # left behind by an earlier run and the candidate under test would never
+    # reach the fleet. Once per compile node per run.
+    rc_st, msg_st = br.stage_source_once(compile_node, verbose=True)
+    if rc_st != 0:
+        _skip_all(f"source-stage-failed: {msg_st}")
+        return
     rc_srv, msg_srv, remote_srv_bld = br.build_on_compile_node(
         compile_node,
         cmake_src_subdir="server/cli",
@@ -1436,11 +1593,27 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
         _skip_all(f"push-server-failed: {msg_ps}")
         return
 
+    # 3a-bis. The measuring client for THIS arch, built on the same compile node
+    # and pushed beside the server. It runs ON the node over 127.0.0.1: the
+    # offered load, the client's own rusage and the server's CPU% then all belong
+    # to the hardware under test, which is the whole point of the exercise.
+    rc_bb, msg_bb, remote_bot_bld = br.build_bot_bench_on_compile_node(
+        compile_node, build_subdir=f"botactions-bot-{label}",
+        exec_node=exec_node, benchmark=True, verbose=True)
+    if rc_bb != 0:
+        _skip_all(f"client-build-failed: {msg_bb}")
+        return
+    rc_pb, _bot_exec_bin, msg_pb = br.push_bot_bench_to_exec(
+        compile_node, exec_node, remote_bot_bld, verbose=True)
+    if rc_pb != 0:
+        _skip_all(f"push-client-failed: {msg_pb}")
+        return
+
     # 3b. Pre-generate the datapack HPS cache on the compile node so the
     # embedded exec node boots from cache, not raw XML.
     rc_cg, remote_cache, msg_cg = br.pregenerate_datapack_cache(
         compile_node, remote_srv_bld, SRV_BIN_NAME, DATAPACK_PATH,
-        maincode, server_port=SERVER_PORT, verbose=True)
+        maincode, server_port=SERVER_PORT, verbose=True, keep_skins=True)
 
     # 3c. Server boot-time benchmark (cold vs warm).
     # Cache is always staged for the main benchmark run (step 4); the cold-boot
@@ -1548,14 +1721,15 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
         _skip_all(f"server-not-ready-in-{SERVER_READY_TIMEOUT}s")
         return
 
-    # 5. Run bot-actions LOCALLY against exec node's server over the LAN.
+    # 5. Run the client ON the exec node, against that node's own server.
     try:
         if "rusage" in runnable:
             all_metrics_flat = {}
             rusage_status    = "PASS"
             for i, bots in enumerate(BOT_COUNTS):
-                cell, cell_err = cell_run(local_bot_bin, eh, SERVER_PORT, bots,
-                                          iface=None, server_pid=None)
+                cell, cell_err = cell_run(None, "127.0.0.1", SERVER_PORT, bots,
+                                          iface=None, server_pid=srv_pid,
+                                          exec_node=exec_node)
                 if cell is None:
                     rusage_status = "FAIL"
                     reason = cell_err or f"bots={bots}: no data"
@@ -1568,6 +1742,10 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
                     continue
                 for name, (med, std) in cell.items():
                     all_metrics_flat[f"b{bots}_{name}"] = (med, std)
+                # Per-workload slice, so the mandatory cpu_percent sits next to
+                # the work metric it rode on instead of only in the flat keys.
+                per_subbench.setdefault(label, {}).setdefault("rusage", {})[
+                    f"{bots}-bots"] = _flat_to_metric_block(cell)
                 progress.emit("rusage", "no", label, status="PASS",
                               extra=f"bots={bots}")
             if rusage_status == "PASS":
@@ -1577,12 +1755,18 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
 
         # binary-size already collected at the top of the body (step 0).
         if "perf-stat" in runnable:
+            # perf runs ON the node now, around the node-local client: counting
+            # cycles of a process on the orchestrating host said nothing about
+            # this board. The SERVER's own work + tail comes from its BENCH dump
+            # below, which needs no perf and works on the nodes where perf is
+            # unavailable or paranoid-blocked.
             bots = BOT_COUNTS[len(BOT_COUNTS) // 2]
-            env  = os.environ.copy()
-            env["QT_QPA_PLATFORM"] = "offscreen"
-            cmd  = (["timeout", "--signal=INT", str(DURATION_S)] +
-                    _bot_cmd(local_bot_bin, eh, SERVER_PORT, bots))
-            out  = bh.measure_perf_stat(cmd, env=env, timeout=RUN_TIMEOUT)
+            argv = _bot_argv("127.0.0.1", SERVER_PORT, bots, "datapack")
+            cmd_str = (f"cd {shlex.quote(ewd)} && ./{shlex.quote(BOT_BIN_NAME)} "
+                       + " ".join(shlex.quote(a) for a in argv))
+            out = br.remote_perf_stat(exec_node, cmd_str,
+                                      timeout=RUN_TIMEOUT + 60)
+            perf_err = None if out else "perf unavailable or paranoid-blocked"
             if out:
                 progress.emit("perf-stat", "no", label, status="PASS")
                 per_tool[label]["perf-stat"] = {
@@ -1591,12 +1775,37 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
                         {f"perf_{k}": (v, 0.0) for k, v in out.items()
                          if isinstance(v, (int, float))})}
             else:
-                reason = bh.perf_no_hw_skip("local")
+                reason = perf_err or "perf-no-hw-counters"
                 progress.emit("perf-stat", "no", label, status="SKIP",
                               extra=reason)
-                per_tool[label]["perf-stat"] = {"status": "SKIP", "metrics": {}}
+                per_tool[label]["perf-stat"] = {"status": "SKIP", "metrics": {},
+                                               "skip_reason": reason}
     finally:
+        # SIGINT makes the server dump its BENCH counters before exiting, so
+        # stop it BEFORE reading the log.
         br.stop_server_popen(srv_ssh_proc, exec_node, srv_pid)
+        # Server-side work + latency tail for this node's whole load run
+        # (cumulative over every slice: the dump happens once, at exit). Never
+        # report req/s without its tail -- a throughput win that inflates p99 is
+        # a tick-stability regression on the constrained targets.
+        srv_flat = {}
+        rc_log, srv_text, _e = br.ssh_run(
+            eu, eh, ep, f"cat {shlex.quote(ewd + '/server.log')} 2>/dev/null",
+            timeout=60)
+        if rc_log == 0 and srv_text:
+            packets = _bench_packets_in_from_text(srv_text)
+            if packets is not None:
+                srv_flat["bench_packets_in"] = (packets, 0.0)
+            for name, value in _bench_latency_from_text(srv_text).items():
+                srv_flat[name] = (value, 0.0)
+            for name, block in bh.parse_loop_selfprobe(srv_text).items():
+                srv_flat[name] = (block["value"], 0.0)
+        if srv_flat:
+            per_tool[label]["server-bench"] = {
+                "status": "PASS", "metrics": _flat_to_metric_block(srv_flat)}
+        else:
+            print(_color(bh.C_YELLOW, f"[server-bench] {label}: no BENCH dump in "
+                                      f"server.log (killed before it could dump?)"))
 
 
 def main():
@@ -1670,11 +1879,11 @@ def _run_with_server(bin_path, server_proc, comment,
     iface = _default_iface()
 
     arch = bh.host_arch()
-    # bot-actions is GUI-linked (Qt6 Widgets); on remote exec_nodes it
-    # only runs where has_gui=True OR QT_QPA_PLATFORM=offscreen works,
-    # which is the same gate the headless flag in this file's doc-
-    # block flips. The remote dispatch is not wired in this benchmark
-    # so we emit SKIP for every remote node.
+    # The client is Qt-FREE (tools/bot-bench: POSIX sockets + select()), so it
+    # builds and runs on every arch of the fleet -- including the 11 headless
+    # boards with no Qt6 runtime, where the old GUI-linked bot-actions could
+    # not run at all. Each remote row therefore measures client AND server on
+    # the same hardware; see _run_remote_cells_botactions().
     # --node may exclude the host baseline; only prepend "local" when allowed.
     local_node = [{"label": "local", "arch": arch}] if bh.node_allowed("local", arch) else []
     nodes = local_node + bh.benchmark_exec_nodes()
@@ -1682,9 +1891,11 @@ def _run_with_server(bin_path, server_proc, comment,
 
     # Pre-resolve per-node profiler availability against the persisted
     # benchmark_disabled_tools list + a live probe.
-    # For botactions, the 'rusage' profiler always runs the bot-actions binary
-    # LOCALLY (only the server is remote). For remote nodes, skip the remote
-    # probe for /usr/bin/time entirely and check only the local machine.
+    # 'rusage' now runs the client ON the exec node, so /usr/bin/time must be
+    # probed THERE. It is not a hard requirement: without it the run still
+    # happens and only the client's own CPU%/RSS is missing (recorded null),
+    # so the probe result is advisory -- the local flag below just keeps the
+    # host row's behaviour unchanged.
     local_has_time = (os.path.isfile("/usr/bin/time") and
                       os.access("/usr/bin/time", os.X_OK))
     node_profilers = {}
@@ -1826,11 +2037,10 @@ def _run_with_server(bin_path, server_proc, comment,
         # noisy). Single run, no aggregation -- perf is deterministic.
         if "perf-stat" in node_profilers[label]:
             env = os.environ.copy()
-            env["QT_QPA_PLATFORM"] = "offscreen"
-            cmd = ["timeout", "--signal=INT", str(DURATION_S)] + \
+            cmd = ["timeout", "--signal=INT", str(RUN_TIMEOUT)] + \
                   _bot_cmd(bin_path, host, port, BOT_COUNTS[len(BOT_COUNTS) // 2])
             deadline.note(label, "perf-stat")
-            out = bh.measure_perf_stat(cmd, env=env, timeout=RUN_TIMEOUT)
+            out = bh.measure_perf_stat(cmd, env=env, timeout=RUN_TIMEOUT + 30)
             if out:
                 m = {}
                 for evt, val in out.items():

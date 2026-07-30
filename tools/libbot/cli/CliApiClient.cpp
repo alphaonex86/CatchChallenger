@@ -1,5 +1,8 @@
 #include "CliApiClient.hpp"
 #include "CliDatapack.hpp"
+//Latency instrumentation: the header expands to nothing unless
+//CATCHCHALLENGER_BENCHMARK is set, and the hooks below are compiled out with it.
+#include "CliLatency.hpp"
 
 #include <iostream>
 
@@ -631,6 +634,10 @@ void CliApiClient::haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,cons
     //move must differ from it. Keep it to seed the alternation.
     spamServerDirection=last_direction;
     setState(State_OnMap);
+#ifdef CATCHCHALLENGER_BENCHMARK
+    if(CliLatency::instance()!=NULL)
+        CliLatency::instance()->onOwnMapPlacement(this);
+#endif
 }
 
 std::string CliApiClient::getLanguage() const
