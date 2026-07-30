@@ -104,30 +104,6 @@ region\walkway=""
 region\walkwayregion=20
 region\waterchance=0.2
 
-[room]
-; interiors: floor from normal1, walls from tileset-1, furniture from normal2
-; (gen2 INTERIOR Walkable/Collisions decode).
-floor="terra/672,terra/673,terra/674"
-furniture\table1\layer="Collisions"
-furniture\table1\tiles="mobilier/0,mobilier/1,mobilier/32,mobilier/33"  ; TODO pick real pkmn table tiles in normal2
-furniture\table1\tags="table"
-furniture\table1\width=2
-furniture\exit\layer="OnGrass"
-furniture\exit\tags="exit"
-furniture\exit\template="exit"            ; TODO pkmn template (CC inside-* tileset)
-furniture\stairup\template="stair-up"     ; TODO pkmn template
-furniture\stairup\tags="stair-up"
-furniture\stairup\width=2
-furniture\stairup\offsetY=-1
-furniture\stairdown\template="stair-down" ; TODO pkmn template
-furniture\stairdown\tags="stair-down"
-furniture\stairdown\width=2
-tileset="terra->normal1.tsx,mobilier->normal2.tsx,wall->tileset-1.tsx,invisible->invisible.tsx"
-walls\generic1\layer="OnGrass"
-walls\generic1\tiles="wall/123,wall/155"
-walls\generic2\layer="OnGrass"
-walls\generic2\tiles="wall/17,wall/49"
-
 [temp]
 monstainborder\collision_tile="961,36,37,38,39,70,71,4,5,68,69"
 

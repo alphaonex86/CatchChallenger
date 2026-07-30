@@ -2,7 +2,7 @@
 <map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="7" height="7" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="8">
  <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
  <tileset firstgid="17" source="../../../tileset/heal4.tsx"/>
- <tileset firstgid="87" source="../../../tileset/houses2"/>
+ <tileset firstgid="87" source="../../../tileset/houses2.tsx"/>
  <tileset firstgid="87" source="../../../tileset/building-small.tsx"/>
  <tileset firstgid="1111" source="../../../tileset/houses2.tsx"/>
  <layer id="4" name="OnGrass" width="7" height="7">

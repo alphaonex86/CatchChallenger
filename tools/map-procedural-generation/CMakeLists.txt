@@ -23,6 +23,7 @@ add_executable(map-procedural-generation
     main.cpp
     SettingsAll.cpp
     LoadMapAll.cpp
+    LoadMapBuilding.cpp
     LoadMapCity.cpp
     PartialMap.cpp
     MiniMapAll.cpp
@@ -55,3 +56,33 @@ set_target_properties(map-procedural-generation PROPERTIES
 if(CC_LINKER)
     target_link_options(map-procedural-generation PRIVATE -fuse-ld=${CC_LINKER})
 endif()
+
+# Runtime data next to the binary: the generator resolves template/, skin/,
+# tileset/ and its txt/xml inputs relative to the EXECUTABLE (LoadMap::readMap),
+# so a fresh build directory is usable without any manual copy.
+foreach(runtimeDir template skin tileset)
+    add_custom_command(TARGET map-procedural-generation POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                ${CMAKE_CURRENT_LIST_DIR}/${runtimeDir}
+                $<TARGET_FILE_DIR:map-procedural-generation>/${runtimeDir}
+        COMMENT "Staging ${runtimeDir}/ next to the binary")
+endforeach()
+foreach(runtimeFile cities.txt dialog.txt informations.xml start.xml
+                    minimap-1way.png minimap-2way1.png minimap-2way2.png
+                    minimap-3way.png minimap-4way.png minimap-citybig.png
+                    minimap-citymedium.png minimap-citysmall.png
+                    miniMapColor.png)
+    add_custom_command(TARGET map-procedural-generation POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_LIST_DIR}/${runtimeFile}
+                $<TARGET_FILE_DIR:map-procedural-generation>/${runtimeFile})
+endforeach()
+# settings.xml is EDITED in the build directory (the generator writes its
+# defaults back), so it is only seeded when absent
+add_custom_command(TARGET map-procedural-generation POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${CMAKE_CURRENT_LIST_DIR}/settings-pkmn.xml
+            $<TARGET_FILE_DIR:map-procedural-generation>/settings-pkmn.xml
+    COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/settings.xml
+            -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation>/settings.xml
+            -P ${CMAKE_CURRENT_LIST_DIR}/copy-if-absent.cmake)

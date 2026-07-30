@@ -46,14 +46,14 @@
   </object>
  </objectgroup>
  <objectgroup id="8" name="Object">
-  <object id="2" gid="1" x="96" y="48" width="16" height="16">
+  <object id="2" type="bot" gid="1" x="96" y="48" width="16" height="16">
    <properties>
     <property name="id" value="2"/>
     <property name="lookAt" value="bottom"/>
     <property name="skin" value="153"/>
    </properties>
   </object>
-  <object id="3" gid="1" x="144" y="64" width="16" height="16">
+  <object id="3" type="bot" gid="1" x="144" y="64" width="16" height="16">
    <properties>
     <property name="id" value="3"/>
    </properties>

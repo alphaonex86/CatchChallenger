@@ -45,12 +45,12 @@
   </object>
  </objectgroup>
  <objectgroup id="8" name="Object">
-  <object id="2" gid="1" x="176" y="160" width="16" height="16">
+  <object id="2" type="bot" gid="1" x="176" y="160" width="16" height="16">
    <properties>
     <property name="id" value="3"/>
    </properties>
   </object>
-  <object id="3" gid="1" x="128" y="128" width="16" height="16">
+  <object id="3" type="bot" gid="1" x="128" y="128" width="16" height="16">
    <properties>
     <property name="id" value="2"/>
     <property name="lookAt" value="bottom"/>

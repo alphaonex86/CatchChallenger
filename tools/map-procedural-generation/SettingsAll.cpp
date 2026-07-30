@@ -134,18 +134,6 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
     settings.endGroup();
     settings.endGroup();
 
-    settings.beginGroup("room");
-    settings.beginGroup("furniture");
-
-    settings.endGroup();
-    settings.beginGroup("limitation");
-
-    settings.endGroup();
-    settings.beginGroup("walls");
-
-    settings.endGroup();
-    settings.endGroup();
-
     settings.beginGroup("building");
     if(!settings.contains("doGym"))
         settings.setValue("doGym",true);
@@ -173,6 +161,8 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
         settings.setValue("gymTypes","");
     if(!settings.contains("cityTypeTerrains"))
         settings.setValue("cityTypeTerrains","");
+    if(!settings.contains("cityStyleTerrains"))
+        settings.setValue("cityStyleTerrains","sea-city->water,sea,beach;desert-city->desert,sand");
     if(!settings.contains("typeXml"))
         settings.setValue("typeXml","");
     settings.endGroup();
@@ -295,84 +285,6 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     settings.endGroup();
     settings.endGroup();
 
-    RoomSetting room;
-    room.furnitures = std::vector<Furnitures> ();
-    room.limitations = std::vector<FurnituresLimitations> ();
-    room.walls = std::vector<RoomStructure>();
-
-    settings.beginGroup("room");
-    settings.beginGroup("furniture");
-    for(QString child: settings.childGroups()){
-        settings.beginGroup(child);
-
-        Furnitures f;
-        f.layer = settings.value("layer", "Collisions").toString();
-        f.offsetX = settings.value("offsetX", 0).toInt();
-        f.offsetY = settings.value("offsetY", 0).toInt();
-        f.width = settings.value("width", 1).toInt();
-        f.tags = settings.value("tags").toString().split(",");
-        f.templatePath = settings.value("template").toString();
-
-        if(settings.contains("tiles")){
-            f.tiles = settings.value("tiles").toString().split(",");
-            f.height = settings.value("height", f.tiles.size()/f.width).toInt();
-
-            if(f.tiles.size() == f.width*f.height)
-                room.furnitures.push_back(f);
-            else
-                std::cout << settings.value("tags").toString().toStdString() << " " << settings.value("tiles").toString().toStdString() << " " << f.layer.toStdString() << " " << f.offsetX << " " << f.offsetY << std::endl;
-        }else if(!f.templatePath.isEmpty()){
-            f.tiles = QStringList();
-            f.height = settings.value("height", 1).toInt();
-            room.furnitures.push_back(f);
-        }
-
-        settings.endGroup();
-    }
-    settings.endGroup();
-    settings.beginGroup("limitation");
-    for(QString child: settings.childGroups()){
-        settings.beginGroup(child);
-
-        FurnituresLimitations f;
-        f.tag = child;
-        f.min = settings.value("min", 1).toUInt();
-        f.max = settings.value("max", 1).toUInt();
-        f.chance = settings.value("chance", 0.5).toFloat();
-
-        room.limitations.push_back(f);
-        settings.endGroup();
-    }
-    settings.endGroup();
-    settings.beginGroup("walls");
-    for(QString child: settings.childGroups()){
-        settings.beginGroup(child);
-
-        RoomStructure f;
-        f.layer = settings.value("layer", "Collisions").toString();
-        f.offsetX = settings.value("offsetX", 0).toInt();
-        f.offsetY = settings.value("offsetY", 0).toInt();
-
-        if(settings.contains("tiles")){
-            f.tiles = settings.value("tiles").toString().split(",");
-            f.width = settings.value("width", 1).toInt();
-            f.height = settings.value("height", f.tiles.size()/f.width).toInt();
-
-            if(f.tiles.size() == f.width*f.height)
-                room.walls.push_back(f);
-            else
-                std::cout << settings.value("tiles").toString().toStdString() << " " << f.layer.toStdString() << " " << f.offsetX << " " << f.offsetY << std::endl;
-        }
-        settings.endGroup();
-    }
-    settings.endGroup();
-
-    room.floors = settings.value("floor").toString().split(",");
-    room.tilesets = settings.value("tileset").toString().split(",");
-    config.room = room;
-
-    settings.endGroup();
-
     settings.beginGroup("building");
     config.doGym=settings.value("doGym",true).toBool();
     config.gymTrainers=settings.value("gymTrainers",3).toUInt();
@@ -490,6 +402,41 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
                     qDebug() << "Syntaxe error into cityTypeTerrains entry: " << typeEntry;
             }
             indexType++;
+        }
+    }
+    config.cityStyleTerrains.clear();
+    {
+        //"style-city->terrainKeyword,terrainKeyword;style2-city->..." : which
+        //template/<style>/ folder the houses of a city come from. A style with
+        //no rule here is only used as a random fallback.
+        const QStringList styleList=settings.value("cityStyleTerrains","").toString().split(";");
+        unsigned int indexStyle=0;
+        while(indexStyle<(unsigned int)styleList.size())
+        {
+            const QString &styleEntry=styleList.at(indexStyle).trimmed();
+            if(!styleEntry.isEmpty())
+            {
+                const QStringList styleSplit=styleEntry.split("->");
+                if(styleSplit.size()==2)
+                {
+                    const std::string styleName=styleSplit.at(0).trimmed().toStdString();
+                    std::vector<std::string> keywords;
+                    const QStringList keywordList=styleSplit.at(1).split(",");
+                    unsigned int indexKeyword=0;
+                    while(indexKeyword<(unsigned int)keywordList.size())
+                    {
+                        const std::string keyword=keywordList.at(indexKeyword).trimmed().toLower().toStdString();
+                        if(!keyword.empty())
+                            keywords.push_back(keyword);
+                        indexKeyword++;
+                    }
+                    if(!styleName.empty() && !keywords.empty())
+                        config.cityStyleTerrains.push_back(std::pair<std::string,std::vector<std::string> >(styleName,keywords));
+                }
+                else
+                    qDebug() << "Syntaxe error into cityStyleTerrains entry: " << styleEntry;
+            }
+            indexStyle++;
         }
     }
     config.typeXml=settings.value("typeXml","").toString();

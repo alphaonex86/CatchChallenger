@@ -3,7 +3,7 @@
     <bot id="1">
         <name>Sign</name>
         <step id="1" type="text">
-            <text><![CDATA[My older brother went on a journey across the region years ago to complete the Pokédex. I'm still waiting for his letter!]]></text>
+            <text><![CDATA[My older brother went on a journey across the region years ago to fill his monster encyclopedia. I'm still waiting for his letter!]]></text>
         </step>
     </bot>
     <bot id="4">

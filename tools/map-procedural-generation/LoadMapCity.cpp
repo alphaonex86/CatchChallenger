@@ -23,14 +23,10 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
                                   const std::pair<uint8_t, uint8_t> pos, const City &city,const std::string &zone,
                                   const BotKind &botKind, const SettingsAll::SettingsExtra &setting,
                                   const std::vector<RoadMonster> &monsterPool, const uint8_t &level,
-                                  const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters)
+                                  const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters,
+                                  const BuildingVariant &variant)
 {
     bool ok=false;
-    //tile inside the entrance floor where stepping through the door drops the
-    //player; captured from the exterior door below. Defaults match the shipped
-    //building templates (floor-0 spawn at 5,10).
-    int spawnX=5;
-    int spawnY=10;
     //search the brush door and retarget
     std::unordered_map<Tiled::MapObject*,Tiled::Properties> oldValue;
     std::vector<Tiled::MapObject*> doors=getDoorsListAndTp(mapTemplatebuilding.tiledMap);
@@ -40,15 +36,6 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
         Tiled::MapObject* object=doors.at(index);
         Tiled::Properties properties=object->properties();
         oldValue[object]=object->properties();
-        //the exterior door's destination x/y IS the player's spawn tile inside
-        //the entrance floor — place the key-building bot(s) relative to it.
-        if(index==0)
-        {
-            if(properties.contains("x"))
-                spawnX=properties.value("x").toInt();
-            if(properties.contains("y"))
-                spawnY=properties.value("y").toInt();
-        }
         if(mapTemplatebuilding.otherMap.size()>1)
             properties["map"]=QString::fromStdString(baseName)+"/"+properties.value("map").toString();
         else
@@ -110,89 +97,22 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
         Tiled::Map *nextHopMap=mapTemplatebuilding.otherMap.at(index);
         Tiled::Properties properties=nextHopMap->properties();
 
-        //Inject the key-building bot object(s) into the ENTRANCE floor (index 0)
-        //and build the matching inline <bot> defs. Objects go into an "Object"
-        //group (the only group the engine scans for bots; created here if the
-        //template lacks one) with a marker cell from the interior's OWN
-        //"invisible" tileset. They are removed again after the file is written
-        //so the shared template stays pristine for the next city.
-        QString botXml;
-        std::vector<Tiled::MapObject*> injectedBots;
-        Tiled::ObjectGroup *npcGroup=NULL;
-        bool createdNpcGroup=false;
-        if(index==0)
-        {
-            std::vector<std::pair<BotKind,std::string> > toPlace;//bot kind, skin name
-            if(botKind==BotKind_fight)
-            {
-                //a gym: several trainers plus one leader
-                unsigned int trainer=0;
-                while(trainer<setting.gymTrainers)
-                {
-                    toPlace.push_back(std::pair<BotKind,std::string>(BotKind_fight,setting.gymTrainerSkin));
-                    trainer++;
-                }
-                toPlace.push_back(std::pair<BotKind,std::string>(BotKind_leader,setting.gymLeaderSkin));
-            }
-            else if(botKind==BotKind_heal)
-                toPlace.push_back(std::pair<BotKind,std::string>(BotKind_heal,setting.healSkin));
-            else if(botKind==BotKind_shop)
-                toPlace.push_back(std::pair<BotKind,std::string>(BotKind_shop,setting.shopSkin));
-
-            if(!toPlace.empty())
-            {
-                npcGroup=LoadMap::searchObjectGroupByName(*nextHopMap,"Object");
-                if(npcGroup==NULL)
-                {
-                    npcGroup=new Tiled::ObjectGroup("Object",0,0);
-                    nextHopMap->addLayer(npcGroup);
-                    createdNpcGroup=true;
-                }
-                Tiled::Tileset *invisInterior=LoadMap::searchTilesetByName(*nextHopMap,"invisible");
-                const int tileW=nextHopMap->tileWidth();
-                const int tileH=nextHopMap->tileHeight();
-                unsigned int localBotId=1;
-                unsigned int placeIndex=0;
-                while(placeIndex<toPlace.size())
-                {
-                    //spread bots on walkable interior tiles a couple of rows
-                    //above the entrance spawn; a lone key-building bot sits on
-                    //the entrance column (blocking it like a service counter).
-                    int tileX=2+(int)((placeIndex%4)*2);
-                    int tileY=spawnY-2-(int)((placeIndex/4)*2);
-                    if(toPlace.size()==1)
-                        tileX=spawnX;
-                    if(tileX>nextHopMap->width()-2)
-                        tileX=nextHopMap->width()-2;
-                    if(tileX<1)
-                        tileX=1;
-                    if(tileY<1)
-                        tileY=1;
-                    //object Y carries the engine's -1 tile correction, so add 1
-                    Tiled::MapObject *npc=new Tiled::MapObject("","bot",
-                        QPointF(tileX*tileW,(tileY+1)*tileH),QSizeF(tileW,tileH));
-                    npc->setProperty("id",QString::number(localBotId));
-                    npc->setProperty("lookAt","bottom");
-                    npc->setProperty("skin",QString::fromStdString(toPlace.at(placeIndex).second));
-                    if(invisInterior!=NULL)
-                    {
-                        Tiled::Cell markerCell;
-                        markerCell.setTile(invisInterior->tileAt(3));
-                        npc->setCell(markerCell);
-                    }
-                    npcGroup->addObject(npc);
-                    injectedBots.push_back(npc);
-                    botXml+=botStepXml(localBotId,toPlace.at(placeIndex).first,std::to_string(localBotId),
-                                       "bottom",setting,monsterPool,level,gymTypeName,gymTypeMonsters);
-                    localBotId++;
-                    placeIndex++;
-                }
-            }
-        }
-
+        //Rebuild the <bot> definitions of this floor from the template's own
+        //floor-N.xml SKELETON: the bots, their position, look direction and
+        //skin come from the template, the CONTENT (names, lines, shop
+        //catalogue, fight teams) is regenerated for this city. Done BEFORE the
+        //tmx is written: it also repairs the bot objects in place (missing
+        //type="bot", duplicated id, unknown skin).
         std::string filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+".tmx";
         if(mapTemplatebuilding.otherMap.size()>1)
             filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+"/"+mapTemplatebuilding.otherMapName.at(index)+".tmx";
+        std::string xmlRelativePath=filePath.substr(std::string("/dest/map/").size());
+        xmlRelativePath=xmlRelativePath.substr(0,xmlRelativePath.size()-4)+".xml";
+        std::vector<Tiled::MapObject*> injectedBots;
+        const QString botXml=interiorBotXml(variant,mapTemplatebuilding.otherMapName.at(index),
+                                            xmlRelativePath,nextHopMap,botKind,city,setting,
+                                            monsterPool,level,gymTypeName,gymTypeMonsters,
+                                            injectedBots);
 
         QFileInfo fileInfo(QCoreApplication::applicationDirPath()+QString::fromStdString(filePath));
         QDir mapDir(fileInfo.absolutePath());
@@ -227,8 +147,12 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
             if(xmlinfo.open(QFile::WriteOnly))
             {
                 QString content("<map");
+                //a building interior is always indoor: the template tmx does not
+                //always carry the property, the engine needs it
                 if(properties.contains("type"))
                     content+=" type=\""+properties.value("type").toString()+"\"";
+                else
+                    content+=" type=\"indoor\"";
                 if(!zone.empty())
                     content+=" zone=\""+QString::fromStdString(zone)+"\"";
                 content+=">\n"
@@ -246,28 +170,17 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
             }
         }
 
-        //remove the injected bot objects (and the group, if we created it) so
-        //the shared interior template is unchanged for the next city.
+        //the extra gym trainers were added to the SHARED template: remove them so
+        //the next city starts from the template as its author drew it
         {
-            unsigned int b=0;
-            while(b<injectedBots.size())
+            Tiled::ObjectGroup * const npcGroup=LoadMap::searchObjectGroupByName(*nextHopMap,"Object");
+            unsigned int injectedIndex=0;
+            while(injectedIndex<injectedBots.size())
             {
-                npcGroup->removeObject(injectedBots.at(b));
-                delete injectedBots.at(b);
-                b++;
-            }
-        }
-        if(createdNpcGroup)
-        {
-            int li=0;
-            while(li<nextHopMap->layerCount())
-            {
-                if(nextHopMap->layerAt(li)==npcGroup)
-                {
-                    delete nextHopMap->takeLayerAt(li);
-                    break;
-                }
-                li++;
+                if(npcGroup!=NULL)
+                    npcGroup->removeObject(injectedBots.at(injectedIndex));
+                delete injectedBots.at(injectedIndex);
+                injectedIndex++;
             }
         }
         index++;
@@ -323,37 +236,53 @@ void LoadMapAll::loadMapTemplate(const char * folderName, MapBrush::MapTemplate 
     std::vector<std::string> mapToLoad;
     std::unordered_map<std::string,unsigned int> fileToIndex;
     mapToLoad.push_back(fileName.toStdString());
+    //an exterior with no door object still has its interior: the generator wires
+    //the door itself (wireBuildingDoors), so floor-0 must join the chain here
+    if(fileName!="floor-0" && QFile::exists(QCoreApplication::applicationDirPath()+
+                                            "/template/"+QString(folderName)+"floor-0.tmx"))
+        mapToLoad.push_back("floor-0");
     while(!mapToLoad.empty())
     {
         const std::string mapFile=mapToLoad.front();
         mapToLoad.erase(mapToLoad.cbegin());
-        Tiled::Map *mapPointer;
-        if(mapFile==fileName.toStdString())
-            mapPointer=map;
+        if(fileToIndex.find(mapFile)!=fileToIndex.cend())
+        {}//already loaded through another door
         else
         {
-            mapPointer=LoadMap::readMap(QString("template/")+QString(folderName)+QString::fromStdString(mapFile)+".tmx");
-            mapTemplate.otherMapName.push_back(mapFile);
-        }
-        fileToIndex[mapFile]=mapList.size();
-        mapList.push_back(mapPointer);
-        std::vector<Tiled::MapObject*> doors=getDoorsListAndTp(mapPointer);
-        unsigned int index=0;
-        while(index<(unsigned int)doors.size())
-        {
-            Tiled::MapObject* object=doors.at(index);
-            Tiled::Properties properties=object->properties();
-            const std::string &mapString=properties.value("map").toString().toStdString();
-            if(fileToIndex.find(mapString)!=fileToIndex.cend())
-            {}//properties["map"]=QString::fromStdString(mapString);
+            Tiled::Map *mapPointer;
+            if(mapFile==fileName.toStdString())
+                mapPointer=map;
             else
             {
-                unsigned int newIndex=fileToIndex.size();
-                fileToIndex[mapString]=newIndex;
-                mapToLoad.push_back(mapString);
+                mapPointer=LoadMap::readMap(QString("template/")+QString(folderName)+QString::fromStdString(mapFile)+".tmx");
+                mapTemplate.otherMapName.push_back(mapFile);
             }
-            object->setProperties(properties);
-            index++;
+            fileToIndex[mapFile]=mapList.size();
+            mapList.push_back(mapPointer);
+            std::vector<Tiled::MapObject*> doors=getDoorsListAndTp(mapPointer);
+            unsigned int index=0;
+            while(index<(unsigned int)doors.size())
+            {
+                Tiled::MapObject* object=doors.at(index);
+                Tiled::Properties properties=object->properties();
+                const std::string &mapString=properties.value("map").toString().toStdString();
+                if(fileToIndex.find(mapString)!=fileToIndex.cend()
+                        || vectorcontainsAtLeastOne(mapToLoad,mapString))
+                {}//already loaded or queued
+                else if(!QFile::exists(QCoreApplication::applicationDirPath()+"/template/"+
+                                       QString(folderName)+QString::fromStdString(mapString)+".tmx"))
+                {
+                    //a hand made door pointing at a map that is not in this
+                    //template folder (copy/paste between templates): the
+                    //generator rewires it in wireBuildingDoors()
+                    std::cerr << "Template " << folderName << ": door to the unknown map \""
+                              << mapString << "\", rewired" << std::endl;
+                }
+                else
+                    mapToLoad.push_back(mapString);
+                object->setProperties(properties);
+                index++;
+            }
         }
     }
     mapList.erase(mapList.cbegin());

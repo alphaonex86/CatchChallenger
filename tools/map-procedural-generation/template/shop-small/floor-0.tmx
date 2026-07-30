@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="11" height="9" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="11">
+ <properties>
+  <property name="type" value="indoor"/>
+ </properties>
+ <tileset firstgid="1" source="../../tileset/inside-terra.tsx"/>
+ <tileset firstgid="1025" source="../../tileset/invisible.tsx"/>
+ <tileset firstgid="1041" source="../../tileset/inside-decoration.tsx"/>
+ <tileset firstgid="2065" source="../../tileset/inside-mobilier.tsx"/>
+ <tileset firstgid="3089" source="../../tileset/shop2.tsx"/>
+ <tileset firstgid="3188" source="../../tileset/shop.tsx"/>
+ <layer id="1" name="Walkable" width="11" height="9">
+  <data encoding="base64" compression="zlib">
+   eJxjYKANUOdhYNAAYk0eCF8bSOsAsS4Q6wGxPhAbQOWMgLQxEJtD+WZQtgUQO6FhdOAIFXdGknODsj2AtDcS9gFiXyD2Q1IbCGUHI4mFAdnhQBwBxJFI4jFQdhyQjgfiBCBOBOIkIE4G4hQgTgXiNCBOB+IMLO7FBwDHnw/O
+  </data>
+ </layer>
+ <layer id="2" name="Other" width="11" height="9">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFgwUAAAGMAAE=
+  </data>
+ </layer>
+ <layer id="3" name="Collisions" width="11" height="9">
+  <data encoding="base64" compression="zlib">
+   eJyFzLkOgkAUhWEeYBoUXAAX3Ao6CkrQAkOJMdJofALX96/8CUOYTIhzki+Tu8y1hWUNMIQDFyOMMcEUHnwEmGGOBZYIscIaG2yxg5pIq9XE2iz5s1snZZ5hj4O2m1MfZa8w3CmZn+TOWb4X3qrn35XeTfbvhrt6vqLxwBMvvPER3az1A/tgDok=
+  </data>
+ </layer>
+ <layer id="4" name="Other" width="11" height="9">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFgwUAAAGMAAE=
+  </data>
+ </layer>
+ <layer id="5" name="WalkBehind" width="11" height="9">
+  <properties>
+   <property name="id" value="1"/>
+   <property name="lookAt" value="right"/>
+   <property name="skin" value="market"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJxjYBg8IIsHU6wIKFbMg2CTCjJ5sJs7GAEAaO4C3Q==
+  </data>
+ </layer>
+ <layer id="6" name="other" width="11" height="9">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFgwUAAAGMAAE=
+  </data>
+ </layer>
+ <objectgroup id="7" name="Moving" visible="0"/>
+ <objectgroup id="8" name="Object">
+  <object id="9" type="bot" gid="1025" x="32" y="64" width="16" height="16">
+   <properties>
+    <property name="id" value="1"/>
+    <property name="lookAt" value="right"/>
+    <property name="skin" value="market"/>
+   </properties>
+  </object>
+  <object id="10" type="bot" gid="1025" x="144" y="48" width="16" height="16">
+   <properties>
+    <property name="id" value="2"/>
+    <property name="lookAt" value="top"/>
+    <property name="skin" value="89"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

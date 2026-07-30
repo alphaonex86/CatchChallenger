@@ -1,0 +1,41 @@
+<map zone="test" type="indoor">
+    <name>Mart</name>
+    <name lang="fr">Boutique</name>
+    <bot id="1">
+        <name>Seller</name>
+        <name lang="fr">Vendeur</name>
+        <step type="text" id="1">
+            <text><![CDATA[Welcome to the mark<br />
+        <a href="2">Buy</a><br />
+        <a href="3">Sell</a>]]></text>
+            <text lang="fr"><![CDATA[Bienvenu dans la Boutique<br />
+        <a href="2">Acheter</a><br />
+        <a href="3">Vendre</a>]]></text>
+        </step>
+        <step type="shop" id="2">
+            <product item="Recipe of potion" overridePrice="85"/>
+            <product item="IronTrap" overridePrice="120"/>
+        </step>
+        <step type="sell" id="3"/>
+    </bot>
+    <bot id="2">
+        <step id="1" type="text">
+            <text><![CDATA[I'm heading out to Route 3 soon, so I need to stock up on some fresh Potions.]]></text>
+        </step>
+    </bot>
+    <bot id="3">
+        <step id="1" type="text">
+            <text><![CDATA[Let's see... five traps, please. You never know what turns up out there.]]></text>
+        </step>
+    </bot>
+    <bot id="4">
+        <step id="1" type="text">
+            <text><![CDATA[My monster took a nasty hit in the last battle. I'll take a Super Potion and an Antidote.]]></text>
+        </step>
+    </bot>
+    <bot id="5">
+        <step id="1" type="text">
+            <text><![CDATA[Do you have any Escape Ropes? Exploring dark caves without one is way too risky.]]></text>
+        </step>
+    </bot>
+</map>

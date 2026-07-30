@@ -37,14 +37,14 @@
   </data>
  </layer>
  <objectgroup id="9" name="Object">
-  <object id="2" gid="1" x="160" y="208" width="16" height="16">
+  <object id="2" type="bot" gid="1" x="160" y="208" width="16" height="16">
    <properties>
     <property name="id" value="2"/>
     <property name="lookAt" value="bottom"/>
     <property name="skin" value="153"/>
    </properties>
   </object>
-  <object id="3" gid="1" x="224" y="208" width="16" height="16">
+  <object id="3" type="bot" gid="1" x="224" y="208" width="16" height="16">
    <properties>
     <property name="id" value="2"/>
     <property name="lookAt" value="bottom"/>

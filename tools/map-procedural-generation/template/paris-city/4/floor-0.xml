@@ -3,7 +3,7 @@
     <bot id="1">
         <name>Sign</name>
         <step id="1" type="text">
-            <text><![CDATA[I left my Pokédex on the nightstand, but somehow it ended up underneath the pillows again. Kids these days...]]></text>
+            <text><![CDATA[I left my monster encyclopedia on the nightstand, but somehow it ended up underneath the pillows again. Kids these days...]]></text>
         </step>
     </bot>
 </map>
