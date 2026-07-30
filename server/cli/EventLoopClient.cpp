@@ -8,6 +8,7 @@
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>   //recv() + MSG_DONTWAIT
 #include <fcntl.h>
 #endif
 #include <cstring>
@@ -76,6 +77,48 @@ ssize_t EventLoopClient::read(char *buffer,const size_t &bufferSize)
     //std::cerr << "EventLoopClient::read infd: " << infd << std::endl;
     if(infd==-1)
         return -1;
+#if !defined(_WIN32) && !defined(__DJGPP__) && !defined(CC_TARGET_ESP32)
+    //POSIX: ONE recv() per call, and nothing else.
+    //
+    //The accepted client socket is deliberately left BLOCKING
+    //(main-unix.cpp: make_non_blocking() is disabled for it, because a
+    //non-blocking socket short-writes the tens-of-KB datapack packets and
+    //this backend has no output queue to finish them). A blocking socket is
+    //why the old path asked the kernel twice before every read: once
+    //ioctl(FIONREAD) to learn how many bytes could be taken without
+    //blocking, and once fcntl(F_GETFL) to re-check the O_NONBLOCK flag.
+    //Both were pure overhead: FIONREAD only sized a read the kernel already
+    //bounds by itself, and the flag is a constant (never F_SETFL'd on this
+    //fd after accept -- verified against every fcntl call site).
+    //
+    //MSG_DONTWAIT gives per-CALL non-blocking semantics without touching the
+    //socket flag, so the write path keeps its blocking full-send guarantee
+    //untouched, and the read can no longer stall the single-threaded event
+    //loop. Same bytes, same order: recv() on a stream socket returns exactly
+    //what read() would. Same 3 outcomes the caller already handles --
+    //>0 bytes, 0 = EOF, EAGAIN = drained (reported as 0, exactly as the
+    //FIONREAD==0 case did). The caller (parseIncommingData) loops until it
+    //gets <=0, which now means "read until EAGAIN": the contract EPOLLET
+    //requires (main-unix.cpp registers client fds with EPOLLET).
+    //
+    //The hard-error path tears the socket down INLINE instead of calling
+    //close(): close() drains through this same read() and would re-enter the
+    //error branch forever (the recursion the ESP32 branch below documents).
+    {
+        const ssize_t count=::recv(infd,buffer,bufferSize,MSG_DONTWAIT);
+        if(count<0)
+        {
+            if(errno==EAGAIN || errno==EWOULDBLOCK)
+                return 0;//socket drained, nothing pending right now
+            std::cerr << "Read socket error, errno: " << errno << std::endl;
+            EventLoop::loop.ctl(EPOLL_CTL_DEL, infd, NULL);
+            cc_close_socket(infd);
+            infd=-1;//isValid()==false -> the main loop drops the client
+            return -1;
+        }
+        return count;//0 = peer closed; EPOLLRDHUP/HUP removes the client
+    }
+#else
     const int64_t bytesAvailableVar=bytesAvailable();
     //need more performance? change the API for 0 copy API
     if(bytesAvailableVar<=0)//non blocking for read
@@ -92,13 +135,12 @@ ssize_t EventLoopClient::read(char *buffer,const size_t &bufferSize)
         //disabled for the client fd — see main-unix.cpp), and Watt-32 has no
         //fcntl(F_GETFL). Reads are driven entirely by bytesAvailable()
         //(FIONREAD): with nothing available, do NOT recv() here (it would block
-        //the single-threaded event loop) — report "no data", like the POSIX
-        //blocking-socket path below.
+        //the single-threaded event loop) — report "no data".
         return bytesAvailableVar;
 #elif defined(CC_TARGET_ESP32)
         //lwIP's ioctl(FIONREAD) is unreliable on a freshly-readable TCP socket:
-        //select() reports the fd readable while FIONREAD still answers 0, so the
-        //POSIX blocking branch below would return 0 and never drain the byte —
+        //select() reports the fd readable while FIONREAD still answers 0, so a
+        //FIONREAD-driven branch would return 0 and never drain the byte —
         //leaving the socket level-readable forever and busy-looping select()
         //(starves the FreeRTOS idle task -> Task WDT). The accepted client fd is
         //left BLOCKING (make_non_blocking disabled in main-unix), so we recv()
@@ -126,22 +168,6 @@ ssize_t EventLoopClient::read(char *buffer,const size_t &bufferSize)
             }
             return r;//r==0 -> EOF, caller's <=0 check removes the client
         }
-#else
-        //good alternative?: Not work
-        /*if(errno == 11)
-            return ::read(infd, buffer, bufferSize);*/
-
-        //valid but can be slow:
-        const int &flags = fcntl(infd, F_GETFL, 0);
-        if(flags == -1)
-        {
-            std::cerr << "fcntl get flags error on " << infd << std::endl;
-            return -1;
-        }
-
-        if(flags & O_NONBLOCK)
-            return ::read(infd, buffer, bufferSize);
-        return bytesAvailableVar;
 #endif
     }
     ssize_t count;
@@ -156,6 +182,8 @@ ssize_t EventLoopClient::read(char *buffer,const size_t &bufferSize)
     const int r=::recv(infd,buffer,want,0);
     count=(r<0)?-1:r;
 #else
+    //CC_TARGET_ESP32 only (POSIX takes the recv(MSG_DONTWAIT) path above):
+    //lwIP's read() is the one that must stay sized by FIONREAD.
     if(bytesAvailableVar>0 && bytesAvailableVar<(ssize_t)bufferSize)
         count=::read(infd, buffer, bytesAvailableVar);
     else
@@ -174,6 +202,7 @@ ssize_t EventLoopClient::read(char *buffer,const size_t &bufferSize)
     }
     //std::cerr << "EventLoopClient::read infd: " << infd << ", count: " << count << std::endl;
     return count;
+#endif
 }
 
 #ifdef CATCHCHALLENGER_IO_URING
