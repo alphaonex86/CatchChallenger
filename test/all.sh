@@ -421,6 +421,8 @@ declare -A PER_TEST_TIMEOUT_MAP=(
     [testingbotactions.py]=25m
     [testingbroadcast.py]=15m
     [testingbyIA.py]=30m
+    # two server boots + 8 and 16 bots creating a character each, twice over
+    [testingcharacterlist.py]=20m
     [testingclient.py]=40m
     [testingcluster.py]=10m
     [testingclustersecurity.py]=90m
@@ -558,6 +560,7 @@ run_test testingclient.py
 run_test testingbots.py
 run_test testingbotactions.py
 run_test testingserver.py
+run_test testingcharacterlist.py
 run_test testingbroadcast.py
 run_test testinghttp.py
 run_test testingwebsocket.py

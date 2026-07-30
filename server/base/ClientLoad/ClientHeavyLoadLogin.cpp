@@ -575,10 +575,24 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
     if(!GlobalServerData::serverPrivateVariables.db_login->next())
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-    const std::string &hexa=binarytoHexa(public_and_private_informations.public_informations.pseudo.c_str(),
-                                         public_and_private_informations.public_informations.pseudo.size());
+    //Re-check that the LOGIN is still free, exactly as the SQL backends do
+    //with db_query_login before answering "Login already used" below. Without
+    //it, N clients opening the same brand-new login in one burst all get the
+    //"unknown login, you may create it" reply before any of them has written
+    //database/login/<hexa>, so each one creates its OWN account record: the
+    //login file ends up pointing at the last writer and every earlier
+    //account -- with its characters -- is orphaned and unreachable.
+    //
+    //The check this replaces could never fire: it hashed the PSEUDO (still
+    //empty at account-creation time) instead of the login, and probed the
+    //relative path "characters/" instead of database/common/characters/, so
+    //::stat() always failed and the create branch was always taken.
+    #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+    if(CatchChallenger::dbInternalVarsStore.count(std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE))==0)
+    #else
     struct stat sb;
-    if(::stat(("characters/"+hexa).c_str(), &sb)!=0)
+    if(::stat(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)).c_str(),&sb)!=0)
+    #endif
     #else
     #error Define what do here
     #endif
@@ -679,6 +693,12 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE));
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    //Same answer as the SQL backends: the login was taken between the
+    //"you may create it" reply and this callback. The FILE backend had no
+    //else at all, so the loser of that race silently created a second
+    //account instead of being told to log in.
+    else
+        loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE));
     #else
     #error Define what do here
     #endif

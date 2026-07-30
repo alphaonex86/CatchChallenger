@@ -32,6 +32,8 @@ _CAPS_SECONDS = {
     "testingbots.py":                 15 * 60,
     "testingbroadcast.py":            15 * 60,
     "testingbyIA.py":                 30 * 60,
+    # two server boots + 8 and 16 bots creating a character each, twice over
+    "testingcharacterlist.py":        20 * 60,
     "testingclient.py":               40 * 60,
     "testingcluster.py":              10 * 60,
     "testingclustersecurity.py":      90 * 60,
