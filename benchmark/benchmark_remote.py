@@ -553,6 +553,30 @@ def stage_source_on_compile_node(compile_node, repo_root=REPO_ROOT,
     return rc, msg
 
 
+_STAGED_SOURCE = {}
+_STAGED_SOURCE_LOCK = threading.Lock()
+
+
+def stage_source_once(compile_node, verbose=False):
+    """stage_source_on_compile_node() AT MOST ONCE per compile node per run.
+
+    Every benchmark that builds remotely must call this before its first
+    build_on_compile_node(): that function builds whatever is already in
+    <work>/sources/, so without staging the node compiles a tree left behind
+    by an earlier run and the candidate under test never reaches the fleet.
+
+    Once per node, not once per exec node: several exec nodes (and several
+    flag sets) share a compile node, and two concurrent rsyncs into the same
+    sources/ would fight over the same files. Returns (rc, message)."""
+    label = compile_node["label"]
+    with _STAGED_SOURCE_LOCK:
+        got = _STAGED_SOURCE.get(label)
+        if got is None:
+            got = stage_source_on_compile_node(compile_node, verbose=verbose)
+            _STAGED_SOURCE[label] = got
+        return got
+
+
 def exec_node_flag_defs(exec_node):
     """Map an execution node's per-CPU compile flags onto the CMake cache
     variables the compile node honours, so the binary that gets pushed to
@@ -1004,7 +1028,7 @@ def _datapack_src_checksum(local_datapack):
 def pregenerate_datapack_cache(compile_node, bin_remote_dir, bin_name,
                                local_datapack, maincode, server_port=61920,
                                timeout=1800, verbose=False, keep_skins=False,
-                               subcode=""):
+                               subcode="", properties_xml=None):
     """Run `<server> save` on the compile node, return (rc,
     remote_cache_path, msg).
 
@@ -1024,15 +1048,41 @@ def pregenerate_datapack_cache(compile_node, bin_remote_dir, bin_name,
     loads at boot actually contains the skin list -- the server reads skins
     from this cache (CACHE_HPS), not by re-scanning skin/fighter at runtime, so
     a skin-less cache leaves the skin list empty even when the on-disk folders
-    exist. clientlatency passes True (its bot creates a character)."""
+    exist. clientlatency passes True (its bot creates a character).
+
+    `properties_xml` is the server-properties.xml the cache must be generated
+    FROM. The cache is not just the datapack: it carries the SETTINGS
+    (loadSettingsFromBinaryCache), so on an exec node the server obeys the
+    values baked in here and IGNORES the server-properties.xml the harness
+    wrote next to it. A caller that needs a non-default setting must pass its
+    XML or the setting silently does not apply. Measured the hard way: with the
+    default dropGlobalChatMessageLocalClan (20, NormalServerGlobal.cpp) the
+    server silently drops local chat past 20 messages per map
+    (Client::sendLocalChatText -- NOT behind the DDoS ifdef), which capped the
+    latency benchmark's probe count at exactly 20 on every node while the local
+    row, which has no cache to load, ran at the full rate. The XML is part of
+    the cache-slot key, so two callers with different settings never share one."""
     user = compile_node["ssh"]["user"]
     host = compile_node["ssh"]["host"]
     port = compile_node["ssh"].get("port", 22)
     work = compile_node["work_dir"]
     datapack_id = os.path.basename(local_datapack.rstrip("/")) or "datapack"
+    # The PORT is part of the slug because it is BAKED INTO the cache: the
+    # server reads its settings from this HPS blob (CACHE_HPS,
+    # loadSettingsFromBinaryCache) and not from server-properties.xml, so a
+    # cache generated for another port makes the server bind THAT port and
+    # every client gets ECONNREFUSED on the port the harness wrote in the XML.
+    # Measured exactly that way: botactions (61920) and clientlatency (61921)
+    # started sharing a slot the day their other key fields matched.
+    xml = properties_xml or _server_properties_xml(maincode, server_port)
+    # The settings are baked in, so they key the slot too (short hash: the slug
+    # is a directory name).
+    xml_key = hashlib.sha256(xml.encode("utf-8")).hexdigest()[:8]
     slug = _slugify(f"{datapack_id}_{maincode}_{subcode or 'nosub'}_"
-                    f"{'skins' if keep_skins else 'noskins'}")
-    # Key per (compile node = arch, datapack, maincode, subcode, keep_skins).
+                    f"{'skins' if keep_skins else 'noskins'}_p{int(server_port)}"
+                    f"_{xml_key}")
+    # Key per (compile node = arch, datapack, maincode, subcode, keep_skins,
+    # server port).
     label = (compile_node.get("label"), slug)
     if label in _CACHE_GEN_MEMO:
         return _CACHE_GEN_MEMO[label]
@@ -1079,7 +1129,6 @@ def pregenerate_datapack_cache(compile_node, bin_remote_dir, bin_name,
         _CACHE_GEN_MEMO[label] = res
         return res
 
-    xml = _server_properties_xml(maincode, server_port)
     escaped = xml.replace("'", "'\\''")
     setup = (f"cp -f {shlex.quote(bin_remote_dir + '/' + bin_name)} "
              f"{shlex.quote(gen + '/' + bin_name)} && "
@@ -1286,6 +1335,200 @@ def push_binary_to_exec(compile_node, exec_node, remote_build_dir, bin_name,
     if rc != 0:
         return rc, None, f"push to exec node failed: {msg}"
     return 0, f"{ewd}/{bin_name}", "ok"
+
+
+# ---- node-local benchmark client (tools/bot-bench) -----------------------
+#
+# The load generator MUST run on the same hardware as the server under test.
+# Driving it from the orchestrating host measures the host<->node link and the
+# HOST's client process, not the board: the recorded rusage then belongs to the
+# wrong machine, and the host (32 cores) can neither saturate a board over a
+# LAN nor be credited for the board's cost. bot-bench is the only client that
+# can go node-local on the whole fleet -- it is Qt-FREE (POSIX sockets +
+# select()), while bot-actions links Qt6 Widgets and 11 of the 15 benchmark
+# exec nodes are headless boards with no Qt6 runtime at all.
+#
+# Everything below is shared by every benchmark*.py that needs offered load, so
+# the recipe (build on the parent compile node -> push -> run beside the server
+# -> sample the server's CPU in the SAME window) exists once.
+
+BOT_BENCH_SRC_SUBDIR = "tools/bot-bench"
+BOT_BENCH_BIN_NAME = "bot-bench"
+
+# /proc/<pid>/stat utime+stime are in USER_HZ, which is 100 on every Linux ABI
+# we target (it is fixed in the kernel ABI, unlike CONFIG_HZ). Reading the
+# node's real value would need another round trip for no practical gain.
+_PROC_USER_HZ = 100.0
+
+
+def build_bot_bench_on_compile_node(compile_node, build_subdir, exec_node=None,
+                                    benchmark=True, verbose=False):
+    """Build the Qt-free benchmark client on the exec node's compile parent.
+
+    `benchmark=True` adds -DCATCHCHALLENGER_BENCHMARK=ON, which compiles in the
+    client-side latency recorder (--latency). Returns
+    (rc, message, remote_build_dir) exactly like build_on_compile_node()."""
+    defs = {"CMAKE_BUILD_TYPE": "Release"}
+    if benchmark:
+        defs["CATCHCHALLENGER_BENCHMARK"] = "ON"
+    return build_on_compile_node(compile_node,
+                                 cmake_src_subdir=BOT_BENCH_SRC_SUBDIR,
+                                 build_subdir=build_subdir, cmake_defs=defs,
+                                 exec_node=exec_node, verbose=verbose)
+
+
+def push_bot_bench_to_exec(compile_node, exec_node, remote_build_dir,
+                           verbose=False):
+    """Ship the built client to the exec node's work_dir, +x. Returns
+    (rc, exec_bin_path, message)."""
+    rc, path, msg = push_binary_to_exec(compile_node, exec_node,
+                                        remote_build_dir, BOT_BENCH_BIN_NAME,
+                                        verbose=verbose)
+    if rc != 0:
+        return rc, None, msg
+    rc2, _o, err = run_remote_cmd(
+        exec_node,
+        f"chmod +x {shlex.quote(exec_node['work_dir'] + '/' + BOT_BENCH_BIN_NAME)}",
+        timeout=60)
+    if rc2 != 0:
+        return rc2, None, f"chmod +x failed: {err[:200]}"
+    return 0, path, "ok"
+
+
+def _client_section(text, name):
+    """Slice one '#<NAME>' ... '#<NEXT>' block out of the run output.
+
+    The terminator must also match a marker that CARRIES a value ('#RC 0'),
+    not just a bare '#WORD' on its own line -- otherwise the preceding block
+    swallows it and its last line is '#RC 0' instead of the data. The client's
+    own stdout never begins a line with '#', so this cannot cut it short."""
+    marker = "#" + name + "\n"
+    start = text.find(marker)
+    if start < 0:
+        return ""
+    start += len(marker)
+    rest = text[start:]
+    nxt = re.search(r"^#[A-Z]+\b", rest, re.M)
+    if nxt is None:
+        return rest
+    return rest[:nxt.start()]
+
+
+def _proc_stat_cpu_ticks(text):
+    """utime+stime from a /proc/<pid>/stat line, or None. The comm field can
+    contain spaces AND parentheses, so split after the LAST ')'."""
+    close = text.rfind(")")
+    if close < 0:
+        return None
+    fields = text[close + 1:].split()
+    # after ')' the fields are state, ppid, pgrp, session, tty, tpgid, flags,
+    # minflt, cminflt, majflt, cmajflt, utime, stime, ... -> index 11 and 12
+    if len(fields) < 13:
+        return None
+    try:
+        return int(fields[11]) + int(fields[12])
+    except ValueError:
+        return None
+
+
+def run_client_on_exec(exec_node, bin_args, server_pid=None,
+                       timeout=RUN_TIMEOUT_DEFAULT,
+                       bin_name=BOT_BENCH_BIN_NAME, taskset_cpus=None):
+    """Run the benchmark client ON the exec node, beside the server.
+
+    ONE ssh command carries the whole window: the server's /proc/<pid>/stat and
+    /proc/uptime are read on the node immediately before and after the client,
+    so no ssh round trip (0.65-1.4s on a slow board) lands inside the measured
+    interval. `/usr/bin/time -v` wraps the client when the node has it, which
+    is where the client's own CPU% comes from.
+
+    `taskset_cpus` pins the client away from the server's core on a node that
+    has one to spare; on a single-core board leave it None and read the
+    contention off the server's CPU% instead of pretending it is absent.
+
+    Returns (ok, result_dict). result_dict always carries 'out' / 'err' /
+    'client_rc' / 'error'; 'server_cpu_percent' (single-threaded server, so
+    bounded at 100) and 'client_cpu_percent' are None when unavailable."""
+    work_dir = exec_node["work_dir"]
+    res = {"out": "", "err": "", "client_rc": None, "wall_s": None,
+           "server_cpu_percent": None, "client_cpu_percent": None,
+           "error": None}
+    sample = ""
+    if server_pid is not None:
+        sample = (f"cat /proc/{int(server_pid)}/stat 2>/dev/null; echo; "
+                  f"cat /proc/uptime 2>/dev/null")
+    else:
+        sample = "cat /proc/uptime 2>/dev/null"
+    pin = f"taskset -c {shlex.quote(str(taskset_cpus))} " if taskset_cpus else ""
+    # A previous slice whose ssh was cut by a timeout can leave a client behind;
+    # it would compete for the CPU with this window. This MUST be its own ssh
+    # call: `pkill -f` matches whole COMMAND LINES, and the measured command
+    # below contains "./<bin>" verbatim, so a pkill inside it matches the shell
+    # running it and ssh comes back 255 with the cell never run. The '[.]/'
+    # bracket only protects against the pattern matching ITSELF. Outside the
+    # measured window (the client self-times that), so the round trip is free.
+    run_remote_cmd(exec_node,
+                   f"pkill -f {shlex.quote('[.]/' + bin_name)} 2>/dev/null; "
+                   f"sleep 1; true", timeout=90)
+    # TIMEV is empty on a node without GNU time: the client still runs, only
+    # its own CPU% is missing (recorded as None, never faked).
+    cmd = (
+        f"cd {shlex.quote(work_dir)} && {{ "
+        f"rm -f client.log client.err; "
+        f"echo '#SRVPRE'; {sample}; "
+        f"TIMEV=''; if [ -x /usr/bin/time ]; then TIMEV='/usr/bin/time -v'; fi; "
+        f"$TIMEV {pin}./{shlex.quote(bin_name)} {bin_args} "
+        f">client.log 2>client.err; echo \"#RC $?\"; "
+        f"echo '#SRVPOST'; {sample}; "
+        f"echo '#CLIENTOUT'; cat client.log; "
+        f"echo '#CLIENTERR'; tail -c 40000 client.err; }}")
+    rc, out, err = run_remote_cmd(exec_node, cmd, timeout=timeout)
+    if rc != 0 and not out:
+        res["error"] = f"ssh rc={rc}: {err[:300]}"
+        return False, res
+    res["out"] = _client_section(out, "CLIENTOUT")
+    res["err"] = _client_section(out, "CLIENTERR")
+    m = re.search(r"^#RC (\d+)$", out, re.M)
+    if m is not None:
+        res["client_rc"] = int(m.group(1))
+
+    pre = _client_section(out, "SRVPRE").strip().splitlines()
+    post = _client_section(out, "SRVPOST").strip().splitlines()
+    if pre and post:
+        # last line of each block is /proc/uptime; the first (when a pid was
+        # asked for) is the server's /proc/<pid>/stat
+        try:
+            up_pre = float(pre[-1].split()[0])
+            up_post = float(post[-1].split()[0])
+            wall = up_post - up_pre
+            if wall > 0:
+                res["wall_s"] = wall
+                if server_pid is not None and len(pre) > 1 and len(post) > 1:
+                    t0 = _proc_stat_cpu_ticks(pre[0])
+                    t1 = _proc_stat_cpu_ticks(post[0])
+                    if t0 is not None and t1 is not None and t1 >= t0:
+                        pct = (t1 - t0) / _PROC_USER_HZ / wall * 100.0
+                        # The server is single-threaded (epoll): >100 means the
+                        # wrong pid was timed. Clamp AND say so -- silently
+                        # recording 180% would read as "uses two cores".
+                        if pct > 100.0:
+                            _rlog(f"WARN: server cpu_percent={pct:.1f} > 100 on "
+                                  f"{exec_node['label']} (pid={server_pid}) -- "
+                                  f"clamped; wrong pid?", err=True)
+                            pct = 100.0
+                        res["server_cpu_percent"] = pct
+        except (ValueError, IndexError):
+            pass
+
+    for line in res["err"].splitlines():
+        s = line.strip()
+        if s.startswith("Percent of CPU this job got:"):
+            try:
+                res["client_cpu_percent"] = float(
+                    s.split(":", 1)[1].strip().rstrip("%"))
+            except ValueError:
+                pass
+    return True, res
 
 
 # ---- run profiler on exec node -------------------------------------------

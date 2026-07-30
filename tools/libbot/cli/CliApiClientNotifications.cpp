@@ -15,6 +15,9 @@
 // bot that needs the data knows where to hook.
 
 #include "CliApiClient.hpp"
+//Latency instrumentation: expands to nothing unless CATCHCHALLENGER_BENCHMARK
+//is set, so the two hooks below cost a normal build nothing at all.
+#include "CliLatency.hpp"
 
 using namespace CatchChallenger;
 
@@ -35,7 +38,15 @@ void CliApiClient::newEvent(const uint8_t &event,const uint8_t &event_value) { (
 // A real client feeds these to MapControllerMP to draw the other players.
 // A visibility benchmark would count them here.
 void CliApiClient::insert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const Direction &direction)
-{ (void)simplifiedIndex; (void)player; (void)mapId; (void)x; (void)y; (void)direction; }
+{
+    (void)simplifiedIndex; (void)player; (void)mapId; (void)x; (void)y; (void)direction;
+#ifdef CATCHCHALLENGER_BENCHMARK
+    //"see another player update": the other bot timestamped its own map
+    //placement, so this is the visibility latency of that join.
+    if(CliLatency::instance()!=NULL)
+        CliLatency::instance()->onOtherPlayerInserted(this,player.pseudo);
+#endif
+}
 void CliApiClient::move_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const std::vector<std::pair<uint8_t,Direction> > &movement)
 { (void)simplifiedIndex; (void)movement; }
 void CliApiClient::remove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex) { (void)simplifiedIndex; }
@@ -63,7 +74,14 @@ void CliApiClient::remove_to_inventory(const std::unordered_map<CATCHCHALLENGER_
 
 //---- chat ---------------------------------------------------------------
 void CliApiClient::new_chat_text(const Chat_type &chat_type,const std::string &text,const std::string &pseudo,const Player_type &player_type)
-{ (void)chat_type; (void)text; (void)pseudo; (void)player_type; }
+{
+    (void)chat_type; (void)text; (void)pseudo; (void)player_type;
+#ifdef CATCHCHALLENGER_BENCHMARK
+    //only the tagged probes are timed; any other chatter is ignored there.
+    if(CliLatency::instance()!=NULL)
+        CliLatency::instance()->onChat(this,text,pseudo);
+#endif
+}
 void CliApiClient::new_system_text(const Chat_type &chat_type,const std::string &text) { (void)chat_type; (void)text; }
 
 //---- datapack transfer over the protocol --------------------------------

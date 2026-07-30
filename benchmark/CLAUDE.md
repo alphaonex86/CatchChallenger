@@ -820,6 +820,51 @@ merits. If the change is otherwise neutral (code clarity, smaller
 binary, removed dependency), promote it as a non-perf clean-up via
 the normal commit path, not via the benchmark champion mechanism.
 
+## The load client runs ON the node under test — always
+
+The load generator and the server share the hardware being measured. Only
+`tools/bot-bench` can do this fleet-wide: it is Qt-FREE, while `tools/bot-actions`
+links Qt6 Widgets and 11 of the 15 benchmark exec nodes are headless boards with
+no Qt6 runtime. `benchmarkbotactions.py` (`--spam` throughput) and
+`benchmarkclientlatency.py` (`--latency` tail) both build it on the exec node's
+compile parent, push it beside the server and run it there over 127.0.0.1.
+Driving from the host instead records the HOST process's rusage under the NODE's
+label, cannot produce a server CPU%, and measures the host↔node link. Shared
+recipe: `br.build_bot_bench_on_compile_node()` / `push_bot_bench_to_exec()` /
+`run_client_on_exec()` (one ssh carries the whole window; the server's
+`/proc/<pid>/stat` + `/proc/uptime` are sampled on the node either side of it).
+
+Traps that cost a debugging cycle each — all fixed, don't reintroduce:
+
+* **The HPS datapack cache carries the SETTINGS, not just the datapack**
+  (`loadSettingsFromBinaryCache`). An exec-node server OBEYS the cache and
+  IGNORES the `server-properties.xml` next to it. So the cache slot key must
+  include the port AND a hash of the XML (`pregenerate_datapack_cache(...,
+  properties_xml=)`), and a caller needing a non-default setting must pass its
+  XML. Symptoms seen: a server binding another benchmark's port
+  (ECONNREFUSED on every cell), and a raised chat limit silently not applying.
+* **`Client::sendLocalChatText` drops silently past
+  `dropGlobalChatMessageLocalClan` per map, and it is NOT behind the DDoS
+  ifdef** — the benchmark define does not lift it. The default 20 capped the
+  latency benchmark at exactly 20 probe samples on every node, whatever the bot
+  count or window. `kickLimit*` are `uint8_t` (>255 wraps STRICTER); the
+  `drop*` ones are plain `int`, so ask for far more than the sweep can produce.
+* **`build_on_compile_node()` does NOT stage the source** — it compiles
+  whatever is already in `<work>/sources/`. Call `br.stage_source_once()` first
+  or the fleet silently measures a previous run's tree.
+* **Never run the load client under `gdb`.** The old bot-actions cells wrapped
+  it in `gdb --batch` to catch crashes; measured, every cell then blew past a
+  180 s backstop for a window that takes 5.5 s bare, and the client never got
+  to print its work metric. A crash is still diagnosable from the exit code +
+  output tails.
+* **`pkill -f '[.]/<bin>'` must be its own ssh call.** `pkill -f` matches whole
+  command lines, so a pkill inside the command that also contains `./<bin>`
+  kills its own shell and ssh returns 255 with the cell never run.
+* Character creation on a fresh RAM DB needs a real skin: rsync the node
+  datapack (and pre-generate its cache) with `keep_skins=True`, else the server
+  answers "the datapack has no skin, no character can be created" and no bot
+  reaches the map.
+
 ## What NOT to put here
 
 * New testing*.py scripts — those live in `test/`. Benchmarks are

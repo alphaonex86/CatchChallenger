@@ -43,6 +43,24 @@ public:
      * \param survivors     [out] clients still on the map and connected at the end
      * \return false only when the loop itself failed (getError() is set) */
     bool runSpam(const uint32_t &seconds,uint64_t &moves,uint64_t &elapsedNs,size_t &survivors);
+#ifdef CATCHCHALLENGER_BENCHMARK
+    /** \brief latency phase: for `seconds`, drive the CliLatency chat probes
+     * and drain every socket so the echoes are timestamped as they arrive.
+     *
+     * Deliberately NOT a saturation loop: it sends a few bytes per bot per
+     * 1.5s and spends the rest of its time in select(), because the metric is
+     * the tail of a QUIET path. Loading the server at the same time would
+     * measure queueing delay instead (that is what runSpam() is for).
+     *
+     * Only compiled in the CATCHCHALLENGER_BENCHMARK build -- so is the
+     * recorder it drives.
+     *
+     * \param seconds   measured window, started only by the caller once every
+     *                  bot is on the map (startup excluded)
+     * \param elapsedNs [out] the window ACTUALLY measured (CLOCK_MONOTONIC)
+     * \return false only when the loop itself failed (getError() is set) */
+    bool runLatency(const uint32_t &seconds,uint64_t &elapsedNs);
+#endif
     /// \brief clients that reached the map
     size_t onMapCount() const;
     /// \brief set when run() bailed out on its own error (not a timeout)

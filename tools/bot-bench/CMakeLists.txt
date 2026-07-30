@@ -24,7 +24,20 @@ add_executable(bot-bench
     ../libbot/cli/CliApiClient.cpp
     ../libbot/cli/CliApiClientNotifications.cpp
     ../libbot/cli/CliEventLoop.cpp
+    # client-side latency instrumentation (--latency). The whole file expands
+    # to nothing unless CATCHCHALLENGER_BENCHMARK is set below.
+    ../libbot/cli/CliLatency.cpp
 )
+
+# Client-side latency benchmark instrumentation (CliLatency + --latency).
+# OFF by default -> zero overhead in normal/dev builds. benchmarkclientlatency.py
+# configures with -DCATCHCHALLENGER_BENCHMARK=ON.
+option(CATCHCHALLENGER_BENCHMARK
+       "Client-side latency instrumentation for benchmark*.py (benchmark only)"
+       OFF)
+if(CATCHCHALLENGER_BENCHMARK)
+    target_compile_definitions(bot-bench PRIVATE CATCHCHALLENGER_BENCHMARK)
+endif()
 
 target_include_directories(bot-bench PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
