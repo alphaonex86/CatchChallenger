@@ -1,0 +1,9 @@
+<map type="indoor">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[Hello! My house is small, but there's always room for a tired monster and a kind trainer.]]></text>
+        </step>
+    </bot>
+</map>

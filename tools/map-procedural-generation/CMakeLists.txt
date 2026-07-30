@@ -60,29 +60,34 @@ endif()
 # Runtime data next to the binary: the generator resolves template/, skin/,
 # tileset/ and its txt/xml inputs relative to the EXECUTABLE (LoadMap::readMap),
 # so a fresh build directory is usable without any manual copy.
+# This is a target of its OWN, always built: a POST_BUILD command only runs when
+# the binary is relinked, so editing a template would never reach the build dir.
+set(CC_RUNTIME_STAGE_COMMANDS)
 foreach(runtimeDir template skin tileset)
-    add_custom_command(TARGET map-procedural-generation POST_BUILD
+    list(APPEND CC_RUNTIME_STAGE_COMMANDS
         COMMAND ${CMAKE_COMMAND} -E copy_directory
                 ${CMAKE_CURRENT_LIST_DIR}/${runtimeDir}
-                $<TARGET_FILE_DIR:map-procedural-generation>/${runtimeDir}
-        COMMENT "Staging ${runtimeDir}/ next to the binary")
+                $<TARGET_FILE_DIR:map-procedural-generation>/${runtimeDir})
 endforeach()
-foreach(runtimeFile cities.txt dialog.txt informations.xml start.xml
+# npc-slots.json is the REVIEWED npc line bank (git tracked): it is copied on
+# every build, so what the generator writes is what was validated in the repo.
+foreach(runtimeFile cities.txt dialog.txt npc-slots.json informations.xml start.xml
                     minimap-1way.png minimap-2way1.png minimap-2way2.png
                     minimap-3way.png minimap-4way.png minimap-citybig.png
                     minimap-citymedium.png minimap-citysmall.png
-                    miniMapColor.png)
-    add_custom_command(TARGET map-procedural-generation POST_BUILD
+                    miniMapColor.png settings-pkmn.xml)
+    list(APPEND CC_RUNTIME_STAGE_COMMANDS
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 ${CMAKE_CURRENT_LIST_DIR}/${runtimeFile}
                 $<TARGET_FILE_DIR:map-procedural-generation>/${runtimeFile})
 endforeach()
 # settings.xml is EDITED in the build directory (the generator writes its
 # defaults back), so it is only seeded when absent
-add_custom_command(TARGET map-procedural-generation POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${CMAKE_CURRENT_LIST_DIR}/settings-pkmn.xml
-            $<TARGET_FILE_DIR:map-procedural-generation>/settings-pkmn.xml
+list(APPEND CC_RUNTIME_STAGE_COMMANDS
     COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/settings.xml
             -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation>/settings.xml
             -P ${CMAKE_CURRENT_LIST_DIR}/copy-if-absent.cmake)
+add_custom_target(map-procedural-generation-runtime ALL
+    ${CC_RUNTIME_STAGE_COMMANDS}
+    COMMENT "Staging template/ skin/ tileset/ and the inputs next to the binary")
+add_dependencies(map-procedural-generation-runtime map-procedural-generation)

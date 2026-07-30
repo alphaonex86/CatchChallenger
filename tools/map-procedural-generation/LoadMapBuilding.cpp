@@ -26,6 +26,10 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QDomDocument>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonParseError>
 #include <QTextStream>
 
 #include <cstring>
@@ -34,9 +38,83 @@
 std::map<std::string,LoadMapAll::BuildingGroup> LoadMapAll::buildingGroups;
 std::vector<std::string> LoadMapAll::cityStyles;
 
-//every text the generator produced, with the context needed to regenerate it
-//with a local LLM (npcfill.py). One entry per CDATA of a generated xml.
+//every text the generator produced, with the context needed to (re)generate it
+//with a local LLM. Written to dest/npc-requests.json, which npcfill.py reads.
 std::vector<std::string> npcTextSlots;
+
+std::string citySizeName(const LoadMapAll::CityType &type);
+static size_t seedPick(const std::string &seed,const size_t &count);
+
+//npc-slots.json: the REVIEWED line bank, kept next to the binary (CMake stages
+//it from the source tree, where it is tracked by git). bucket key -> lines.
+//Written by npcfill.py, validated by a human, used here: that is what makes a
+//generated world reproducible from committed data.
+static std::map<std::string,std::vector<std::string> > npcLineBank;
+static bool npcLineBankLoaded=false;
+
+//the bucket key must be IDENTICAL in npcfill.py (bucket_key()):
+//  <template group>|<role>|<field>|<level tier>[|<city size>][|<element>]
+static std::string npcBucketKey(const std::string &buildingKind,const std::string &role,
+                                const std::string &field,const LoadMapAll::City &city)
+{
+    std::string group=buildingKind;
+    const std::string::size_type slash=group.find('/');
+    if(slash!=std::string::npos)
+        group=group.substr(0,slash);
+    std::string key=group+"|"+role+"|"+field+"|"+
+        std::to_string(city.level/15>3 ? 3 : city.level/15);
+    if(group.size()>5 && group.compare(group.size()-5,5,"-city")==0)
+        key+="|"+citySizeName(city.type);
+    if(role=="gym leader")
+        key+="|"+city.elementType;
+    return key;
+}
+
+static void loadNpcLineBank()
+{
+    npcLineBankLoaded=true;
+    const QString path=QCoreApplication::applicationDirPath()+"/npc-slots.json";
+    QFile file(path);
+    if(!file.open(QFile::ReadOnly))
+    {
+        std::cout << "No npc-slots.json next to the binary: the written lines of "
+                  << "dialog.txt and of the roles are used" << std::endl;
+        return;
+    }
+    const QByteArray content=file.readAll();
+    file.close();
+    QJsonParseError error;
+    const QJsonDocument document=QJsonDocument::fromJson(content,&error);
+    if(document.isNull() || !document.isObject())
+    {
+        std::cerr << "npc-slots.json is not valid json: "
+                  << error.errorString().toStdString() << std::endl;
+        return;
+    }
+    const QJsonObject buckets=document.object().value("buckets").toObject();
+    unsigned int lineCount=0;
+    for(const QString &key : buckets.keys())
+    {
+        const QJsonArray array=buckets.value(key).toArray();
+        std::vector<std::string> lines;
+        int index=0;
+        while(index<array.size())
+        {
+            const QString line=array.at(index).toString().trimmed();
+            //a line with a CDATA end or a tag would break the written xml
+            if(!line.isEmpty() && !line.contains("]]>") && !line.contains('<'))
+                lines.push_back(line.toStdString());
+            index++;
+        }
+        if(!lines.empty())
+        {
+            npcLineBank[key.toStdString()]=lines;
+            lineCount+=lines.size();
+        }
+    }
+    std::cout << "npc-slots.json: " << npcLineBank.size() << " buckets, "
+              << lineCount << " lines" << std::endl;
+}
 
 //true when ANY layer named "Collisions" has a tile at that cell (the engine
 //OR-merges them, so a cell is blocked as soon as one layer blocks it)
@@ -539,7 +617,7 @@ static std::string botRole(const QStringList &stepTypes)
     return "villager";
 }
 
-static std::string citySizeName(const LoadMapAll::CityType &type)
+std::string citySizeName(const LoadMapAll::CityType &type)
 {
     if(type==LoadMapAll::CityType_small)
         return "small";
@@ -556,6 +634,32 @@ static QString npcText(const std::string &destinationFile,const unsigned int &cd
                        const LoadMapAll::City &city,const std::string &buildingKind,
                        const SettingsAll::SettingsExtra &setting,const std::string &seed)
 {
+    if(!npcLineBankLoaded)
+        loadNpcLineBank();
+    //a reviewed line for this context wins over the written fallback
+    {
+        const std::string key=npcBucketKey(buildingKind,role,field,city);
+        std::map<std::string,std::vector<std::string> >::const_iterator bucket=
+            npcLineBank.find(key);
+        if(bucket!=npcLineBank.cend())
+        {
+            const QString line=QString::fromStdString(
+                bucket->second.at(seedPick(seed+"/"+key,bucket->second.size())));
+            npcTextSlots.push_back(std::string("{\"file\":\"")+destinationFile+
+                "\",\"cdata\":"+std::to_string(cdataIndex)+
+                ",\"field\":\""+field+
+                "\",\"role\":\""+role+
+                "\",\"building\":\""+buildingKind+
+                "\",\"bucket\":\""+key+
+                "\",\"city\":\""+city.name+
+                "\",\"style\":\""+city.style+
+                "\",\"size\":\""+citySizeName(city.type)+
+                "\",\"element\":\""+city.elementType+
+                "\",\"level\":"+std::to_string((unsigned int)city.level)+
+                ",\"source\":\"bank\",\"text\":\""+jsonEscape(line).toStdString()+"\"}");
+            return line;
+        }
+    }
     QString fallback;
     if(field=="name")
     {
@@ -653,12 +757,13 @@ static QString npcText(const std::string &destinationFile,const unsigned int &cd
         ",\"field\":\""+field+
         "\",\"role\":\""+role+
         "\",\"building\":\""+buildingKind+
-        "\",\"city\":\""+city.name+
+        "\",\"bucket\":\""+npcBucketKey(buildingKind,role,field,city)+
+        "\",\"source\":\"written\",\"city\":\""+city.name+
         "\",\"style\":\""+city.style+
         "\",\"size\":\""+citySizeName(city.type)+
         "\",\"element\":\""+city.elementType+
         "\",\"level\":"+std::to_string((unsigned int)city.level)+
-        ",\"fallback\":\""+jsonEscape(fallback).toStdString()+"\"}");
+        ",\"text\":\""+jsonEscape(fallback).toStdString()+"\"}");
     return fallback;
 }
 
@@ -1128,7 +1233,7 @@ QString LoadMapAll::interiorBotXml(const BuildingVariant &variant,const std::str
 void LoadMapAll::writeNpcSlots(const SettingsAll::SettingsExtra &setting)
 {
     (void)setting;
-    const QString path=QCoreApplication::applicationDirPath()+"/dest/npc-slots.json";
+    const QString path=QCoreApplication::applicationDirPath()+"/dest/npc-requests.json";
     QFile file(path);
     if(!file.open(QFile::WriteOnly))
     {
@@ -1149,5 +1254,6 @@ void LoadMapAll::writeNpcSlots(const SettingsAll::SettingsExtra &setting)
     if(file.write(content.c_str(),content.size())!=(qint64)content.size())
         std::cerr << "Short write on " << path.toStdString() << std::endl;
     file.close();
-    std::cout << "npc text slots: " << npcTextSlots.size() << " (dest/npc-slots.json)" << std::endl;
+    std::cout << "npc text slots: " << npcTextSlots.size()
+              << " (dest/npc-requests.json)" << std::endl;
 }

@@ -1,0 +1,9 @@
+<map type="indoor">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[They say that if you speak kindly to your monsters every morning, their friendship goes up much faster.]]></text>
+        </step>
+    </bot>
+</map>

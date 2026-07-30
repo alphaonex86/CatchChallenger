@@ -1,0 +1,288 @@
+{
+ "buckets": {
+  "brown-city|villager|text|0|big": [
+   "line1",
+   "line2",
+   "I've seen creatures roaming the hills just past here - watch out for those tricky ones!",
+   "The local team offers great support if you're willing to help them grow.",
+   "Bring back any items you find from your travels and they'll pay you well.",
+   "Did you hear about the new creature discovery outpost in the eastern valley?",
+   "Make sure to visit the hall before heading off - it's where all trainers gather.",
+   "Some creatures hide better than others; check every nook and cranny carefully.",
+   "If a creature seems too strong, don't push it alone - teamwork makes the difference.",
+   "Don't forget your training manuals - they're essential for understanding creature moves."
+  ],
+  "brown-city|villager|text|0|medium": [
+   "I've seen those creatures lurking near the old mine lately, stay sharp!",
+   "That's a rare one you've got there in your hand - be careful not to anger it.",
+   "Bring back any shards from the mine if you find them; they're worth good coin.",
+   "The team has set up a temporary outpost at the edge of town for new recruits.",
+   "You should visit the local healer after a tough battle; don't let those wounds linger.",
+   "A trainer's first creature is their pride and joy, but even yours can get injured.",
+   "Word is the mine's rich in energy cores; maybe today's your lucky day to find one."
+  ],
+  "brown-city|villager|text|0|small": [
+   "I've seen creatures like yours lurking around the old mill lately.",
+   "If you're looking for guidance, head to the hall where the trainers gather.",
+   "Those shiny items you carry are rare - be careful not to lose them!",
+   "The local shopkeeper might have what you need if you trade something valuable.",
+   "Beware of rogue creatures near the rocky cliffs at night.",
+   "Visit the town healer before setting off on another journey.",
+   "I heard a rumor about a hidden path behind the northern fields.",
+   "Stay hydrated; those desert winds can drain your energy quickly."
+  ],
+  "brown-city|villager|text|1|big": [
+   "You'll find some helpful guides in the hall if you need them, just ask around.",
+   "Wild creatures lurk beyond those hills - bring sturdy gear before heading out.",
+   "Trainers who rest often recover faster; don't push too hard without a break.",
+   "The local healer's shop has remedies that work wonders for cuts and scrapes.",
+   "Check the bulletin board near the hall for requests from other adventurers.",
+   "Beware of those tall grasses, they hide creatures that can be tricky to face.",
+   "You'll need a good supply of food if you plan on long expeditions - keep some handy.",
+   "The town's blacksmith sells simple weapons and armor, perfect for beginners like you."
+  ],
+  "brown-city|villager|text|1|medium": [
+   "The mist around these parts can make creatures hard to spot sometimes.",
+   "Found a shiny creature near the rocky outcrop yesterday, never seen one like it before.",
+   "Local team trainers say the mist brings out some strange behaviors in creatures.",
+   "If you're heading east, watch for wild creatures lurking by the old windmill.",
+   "A sturdy guidebook could help track down those elusive creatures hiding in the fog.",
+   "My firstborn's creature turned invisible when it got caught in that thick haze - scared me half to death!",
+   "You'll need a good storage case if you plan to keep more than one creature with you.",
+   "The creatures here don't seem as friendly since the mist rolled in last week."
+  ],
+  "brown-city|villager|text|1|small": [
+   "I heard some creatures near the old mine are getting stronger lately.",
+   "Did you see those trainers heading up north yesterday?",
+   "The hall has been holding special workshops for new adventurers like you.",
+   "Stay sharp out there - some wild creatures can be unpredictable.",
+   "My last expedition didn't go well; watch out for rough terrain.",
+   "Maybe check the local shop before you leave town, they have useful items.",
+   "Good luck on your journey, but don't forget to rest when needed."
+  ],
+  "brown-city|villager|text|2|big": [
+   "I heard there's something strange going on near the old ruins outside town.",
+   "The creatures out there seem to be behaving differently lately.",
+   "You should visit the hall if you're looking for new team members.",
+   "My son caught a wild one yesterday, but it disappeared overnight.",
+   "Make sure your team is strong enough before venturing into those lands.",
+   "The town's been quiet since the last big tournament ended.",
+   "I've got some spare Capture Tools if you need them.",
+   "Stay sharp out there - those creatures aren't to be trusted."
+  ],
+  "brown-city|villager|text|2|medium": [
+   "I've seen creatures like yours roaming these lands before, strange as they are.",
+   "Your team's bond feels powerful - almost like it was meant to be.",
+   "A trainer's luck can change in an instant out here in the wild.",
+   "The hall's scholars say some creatures evolve faster under moonlight.",
+   "You should head east to the next village if you're seeking stronger foes.",
+   "I've heard whispers of a hidden shrine where old relics are kept.",
+   "Beware the wandering beasts near dusk; they grow more aggressive then.",
+   "Your creature seems eager to face new challenges - good luck on your journey!"
+  ],
+  "brown-city|villager|text|2|small": [
+   "That creature over there looks strong - better train it if you want to win any matches.",
+   "The hall's got rare items for sale, but they don't come cheap; think carefully before spending.",
+   "You'll need a good grasp of moves to stand a chance against the toughest trainers out here.",
+   "My cousin swears by this berry to calm down an angry creature before it causes trouble.",
+   "The local team's been recruiting lately, though I doubt they'd accept just anyone's help.",
+   "A sturdy potion might be all you need to survive that next big battle unharmed.",
+   "I've heard rumors of a hidden cave nearby where creatures evolve in strange ways."
+  ],
+  "brown-city|villager|text|3|small": [
+   "I've seen creatures roaming the hills beyond town, you should stay clear of them.",
+   "The local team knows these lands well, be careful not to anger them.",
+   "A wise trainer once told me that patience is key when facing wild ones.",
+   "My cousin caught a creature near the river last summer, it's still with him.",
+   "If your creatures are hurt, bring them to the hall for healing.",
+   "The town elder keeps a collection of ancient team tools in his attic.",
+   "These hills used't be so dangerous before the new trainer arrived.",
+   "Store bought snacks won't help you out here, not like those special items."
+  ],
+  "desert-city|villager|text|0|big": [
+   "I've seen creatures out here that can really light up your day.",
+   "The local team's got problems - those beasts keep getting into the town.",
+   "You might want to check the hall before heading into the wilds.",
+   "My kid brought back a strange glowing item from yesterday's trip.",
+   "There's no safer place than here, but watch out at night.",
+   "I heard rumors of a hidden oasis beyond the dunes.",
+   "Better stock up on healing remedies before you go exploring.",
+   "The wind carries whispers about creatures hiding in the canyons."
+  ],
+  "desert-city|villager|text|0|medium": [
+   "You won't believe what I found in the old ruins just yesterday.",
+   "The desert's heat can be brutal, but don't let it fool you - creatures thrive here too.",
+   "Bring back a rare creature from your journey and we'll trade for something useful.",
+   "I heard rumors of hidden caves near town where creatures hide during the day.",
+   "My grandchild went missing while exploring the dunes; maybe they saw a shadow move.",
+   "If you see a glowing orb in the wastes, don't touch it - some say it's cursed.",
+   "Watch out for the sandstorms, they can stir up more than just dust and grit.",
+   "The local hall has a board listing wanted creatures and their last sightings."
+  ],
+  "desert-city|villager|text|0|small": [
+   "Found a shiny one near the old ruins yesterday, never seen its shell glow like that before.",
+   "The desert winds are harsh, but they bring rare treasures from distant lands if you listen close.",
+   "That little creature's cry sounds like it's calling for help - maybe it's lost?",
+   "I've been trying to catch them all in these parts, but some just vanish into the dunes.",
+   "Bring me a sturgeon with blue feathers and I'll tell you its secret moves.",
+   "The market here has some odd relics that might aid your journey out there.",
+   "Be careful near the canyon - some creatures don't like visitors after dark."
+  ],
+  "desert-city|villager|text|1|big": [
+   "...",
+   "...",
+   "The heat here is brutal, better keep your creatures hydrated.",
+   "I heard whispers of a hidden oasis not far from town.",
+   "Strange things happen out in the wastes at night.",
+   "My little team keeps me company while I work on my inventions.",
+   "You'll need a reliable water source to heal up after battles.",
+   "The sandstorms roll in fast - watch your step outside.",
+   "I've seen creatures change forms when the moon is full."
+  ],
+  "desert-city|villager|text|1|medium": [
+   "Oh, your creatures have grown so strong since you started out in this town.",
+   "The market's got some useful items for adventurers like you today.",
+   "Be careful near the shifting sands - they hide more than one surprise.",
+   "I heard whispers of a rare elemental type creeping through the desert paths.",
+   "Trainers passing by say the town's defenses are weak against those creatures.",
+   "You should visit the hall; they're hosting a meeting for high-level adventurers soon.",
+   "The sandstorms make it easy to get lost - keep your map handy.",
+   "A wanderer once lost their team in the dunes, never found them again."
+  ],
+  "desert-city|villager|text|1|small": [
+   "I've got just the thing for your team's gear - come check it out!",
+   "Watch out for those sneaky sand ambushes, they're a real pain.",
+   "If you head east past the rock formations, you might find rare creatures.",
+   "The local shrine has healing items that could help your team recover faster.",
+   "A well-rested team is key to surviving these desert winds and battles.",
+   "Those wild creatures pack a serious punch - don't underestimate them!",
+   "Bring some water for the journey; the heat here can drain you fast."
+  ],
+  "desert-city|villager|text|2|big": [
+   "I've been looking for reliable help to tame these creatures roaming the desert - careful now.",
+   "You wouldn't believe how many rare eggs I've found buried in the sand this week alone.",
+   "The local team just got back from a big battle out east; they're exhausted but proud.",
+   "Bringing a creature here without proper training is asking for trouble, trust me.",
+   "I once saw a whole nest of glowing eggs near the old ruins - must've been magic in the air.",
+   "You're new to this town, aren't you? Watch out for the wild ones after dark.",
+   "The trainer down the street always brags about her powerful team; maybe she can give you advice."
+  ],
+  "desert-city|villager|text|2|medium": [
+   "Those creatures in the wasteland are getting smarter every day you know",
+   "The local team shop just got restocked with containment devices today",
+   "I heard the guild's hall is holding a workshop on catching techniques soon",
+   "Watch out for wild ones lurking near the watering holes at night",
+   "Better make sure your containment tools are working properly before heading back outside",
+   "You'd be surprised how much easier it is to handle creatures when you know their patterns"
+  ],
+  "desert-city|villager|text|2|small": [
+   "You're new here, aren't you? I can tell by your gear.",
+   "That creature over there looks hungry, better keep moving.",
+   "Water's scarce in these parts. Mind your supplies if heading out.",
+   "The hall's got some rare items but they cost a pretty penny.",
+   "Last year a trainer vanished near the old ruins west of town.",
+   "I stick to the oasis east of here - safer than the dunes.",
+   "Training teams can be tricky; watch who you follow."
+  ],
+  "desert-city|villager|text|3|big": [
+   "Only the first line should be in past tense",
+   "I used to run through these sandy plains when I was younger but now my bones can't take it anymore",
+   "Sandstorms can hide all sorts of hidden dangers, so stay sharp out there",
+   "The town elder says we must keep our creatures safe from harm's way",
+   "Found an odd little shell once that hummed when held, never figured out what it did",
+   "Beware the shifting sands - they swallow creatures whole if you're not careful",
+   "Local traders bring rare items but their prices are steep as ever",
+   "You'll want a sturdy pair of boots to handle these dunes without trouble",
+   "Bring back any shells or strange artifacts you find; they might be valuable"
+  ],
+  "desert-city|villager|text|3|small": [
+   "The creature's nest lies hidden beyond the rocky dunes to the east.",
+   "I've heard reports of a rare team in the distant canyon caves.",
+   "Watch out for sandstorms - they can hide even the cleverest trainer's path.",
+   "Bring back a sample of that glowing herb if you find any near the cliffs.",
+   "The locals say the old ruins are guarded by creatures we rarely see here.",
+   "A sturdy satchel will help carry more loot on your journey out there.",
+   "The town elder once told me about a creature with three tails - beware its temper.",
+   "Check the notice board for new sightings of wandering teams."
+  ],
+  "flat-roof-city|villager|text|0|big": [
+   "I've been hearing tales about wild creatures lurking near the cliffs.",
+   "The trainer's guild offers new ways to bond with creatures every week.",
+   "My grandson just got his first creature from the hall - he's so proud!",
+   "You should check the healing spot if you're feeling worn out after a long day.",
+   "Some creatures are drawn to the old ruins, but few dare to explore them.",
+   "The town square always has trainers showing off their newest captures.",
+   "I once found a rare crystal near the riverbank - it's said to help heal creatures.",
+   "If you're heading out, pack plenty of food for your creature and yourself."
+  ],
+  "flat-roof-city|villager|text|0|medium": [
+   "Found a strange creature near the river yesterday - it was humming like an old engine.",
+   "Those little teams keep popping up everywhere; makes you wonder who's really in charge.",
+   "Youngsters these days think they can just grab any creature off the street without training.",
+   "The hall's got a new rule: no more than three creatures allowed in battles at once.",
+   "Be careful with the odd ones - they don't always obey like the common types do.",
+   "The old trainer down the road says he saw something glinting near the woods, might be worth checking.",
+   "I'd trade my whole team for one that's truly loyal, but who would trust me?"
+  ],
+  "flat-roof-city|villager|text|0|small": [
+   "Oh hey! I think you've got something in your bag that would help me out.",
+   "If you're heading east, watch out for the quicksand near the rocky hills.",
+   "The folks here don't trust outsiders much. Maybe if you prove yourself they will warm up to you.",
+   "I need some of those healing pods you've been collecting. Could you spare a few?",
+   "That team over there seems shady... I wouldn't go poking around their business.",
+   "You'll want to avoid the marshlands at night - they're crawling with sneaky creatures."
+  ],
+  "flat-roof-city|villager|text|1|big": [
+   "line1",
+   "line2",
+   "I've been trying to catch those creatures since I moved here, but they always slip away",
+   "The local team keeps training their creatures near the old bridge outside town",
+   "My first creature companion was a sturdy one from the plains hereabouts",
+   "Be careful with your gear - some items can attract unwanted attention outdoors",
+   "Have you heard about the hidden trail past the hill? Great place to find rare companions",
+   "A trainer once left a careless item behind and it caused chaos in our streets!",
+   "The hall's got a new shipment of recovery aids for trainers' creatures this week",
+   "I keep my creature inside when storms roll in; they hate the rain"
+  ],
+  "flat-roof-city|villager|text|1|medium": [
+   "Looks like your creatures are getting stronger by the day.",
+   "I've heard some trainers use strange items to heal theirs outside battle.",
+   "The hall is hosting an event for new recruits next week, you should check it out.",
+   "My little sibling's team just got its first creature of rank two, quite proud.",
+   "You'll need a special token to enter the higher areas where rare creatures roam.",
+   "I trade creatures with others near the market square if I can't find what I want.",
+   "The local shop sells useful supplies for adventurers like you and me.",
+   "Aim for the forest just past town, many trainers come back with tales of encounters."
+  ],
+  "flat-roof-city|villager|text|1|small": [
+   "Ah, you've returned! The creatures around here have been acting strange lately.",
+   "I'd avoid the woods at night - they're crawling with wild teams tonight.",
+   "Found any new gear in your travels? I'm always looking for a good deal.",
+   "The hall's trainers say their teams are growing stronger by the day.",
+   "Be careful out there; those roaming creatures aren't as friendly as they used to be.",
+   "You should check the local team shop if you need supplies before heading out again.",
+   "Rumor has it a tougher breed of creature lurks near the old bridge.",
+   "Make sure your gear is in top shape - better safe than sorry!"
+  ],
+  "flat-roof-city|villager|text|2|big": [
+   "Focus on being concise",
+   "I found a strange item in the tall grass outside town can you check it out for me",
+   "It looks like a small disc with glowing symbols inside the hall will you take it?",
+   "A shimmering orb appeared near my feet by the roadside do you want to see it",
+   "The symbols flickered faintly when I held it last time what does that mean",
+   "Bring this odd disc to the hall's curator he might recognize its pattern",
+   "I got it from a creature that stood in front of me but didn't attack can you identify it",
+   "This item feels warm to the touch like something living made it recently",
+   "The hall has records of all kinds of items from travelers who've come before maybe yours is there"
+  ],
+  "flat-roof-city|villager|text|2|medium": [
+   "I've seen creatures around here carrying those things to the hall.",
+   "The trainers say you can trade them at that store in town.",
+   "My son brought home a strange one yesterday, nearly tore up my garden!",
+   "Have you tried asking the folks at the hall? They might know more.",
+   "If only I could get one to help with the chores...",
+   "It's not safe to leave them unattended in the field.",
+   "Maybe they'll let you take it for a spin if you're polite."
+  ]
+ }
+}

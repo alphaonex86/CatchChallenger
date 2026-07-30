@@ -1,0 +1,9 @@
+<map type="indoor">
+    <name>Gym</name>
+    <bot id="1">
+        <name>Sign</name>
+        <step id="1" type="text">
+            <text><![CDATA[My bookshelf is packed with strategy guides. Did you know there are special tactics for double battles?]]></text>
+        </step>
+    </bot>
+</map>
