@@ -1,4 +1,4 @@
-<map zone="test" type="indoor">
+<map type="indoor">
     <name>Mart</name>
     <name lang="fr">Boutique</name>
     <bot id="1">

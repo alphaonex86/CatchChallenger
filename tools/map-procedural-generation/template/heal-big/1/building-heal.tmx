@@ -22,8 +22,8 @@
   <object id="7" type="teleport on push" gid="3" x="48" y="144" width="16" height="16">
    <properties>
     <property name="map" value="floor-0"/>
-    <property name="x" value="5"/>
-    <property name="y" value="10"/>
+    <property name="x" value="12"/>
+    <property name="y" value="18"/>
    </properties>
   </object>
  </objectgroup>

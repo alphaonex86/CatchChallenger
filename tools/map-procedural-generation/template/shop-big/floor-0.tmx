@@ -41,8 +41,8 @@
  <objectgroup id="7" name="Moving" visible="0">
   <object id="1" type="teleport on push" gid="1027" x="80" y="192" width="16" height="16">
    <properties>
-    <property name="map" value="gym-building"/>
-    <property name="x" type="int" value="4"/>
+    <property name="map" value="building-shop"/>
+    <property name="x" type="int" value="3"/>
     <property name="y" type="int" value="8"/>
    </properties>
   </object>
@@ -59,28 +59,28 @@
    <properties>
     <property name="id" value="4"/>
     <property name="lookAt" value="right"/>
-    <property name="skin" value="87"/>
+    <property name="skin" value="oldman"/>
    </properties>
   </object>
   <object id="6" type="bot" gid="1025" x="160" y="80" width="16" height="16">
    <properties>
     <property name="id" value="3"/>
     <property name="lookAt" value="top"/>
-    <property name="skin" value="86"/>
+    <property name="skin" value="oldman"/>
    </properties>
   </object>
   <object id="7" type="bot" gid="1025" x="48" y="48" width="16" height="16">
    <properties>
     <property name="id" value="2"/>
     <property name="lookAt" value="left"/>
-    <property name="skin" value="85"/>
+    <property name="skin" value="oldman"/>
    </properties>
   </object>
   <object id="8" type="bot" gid="1025" x="80" y="208" width="16" height="16">
    <properties>
     <property name="id" value="5"/>
     <property name="lookAt" value="bottom"/>
-    <property name="skin" value="88"/>
+    <property name="skin" value="oldman"/>
    </properties>
   </object>
  </objectgroup>
