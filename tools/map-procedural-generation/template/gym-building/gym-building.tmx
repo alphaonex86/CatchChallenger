@@ -12,7 +12,7 @@
    <properties>
     <property name="map" value="floor-0"/>
     <property name="x" value="5"/>
-    <property name="y" value="10"/>
+    <property name="y" value="9"/>
    </properties>
   </object>
  </objectgroup>

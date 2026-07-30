@@ -1,4 +1,4 @@
-<map type="indoor" zone="city">
+<map type="indoor">
     <name>House</name>
     <bot id="2">
         <name>Nurse Joy</name>

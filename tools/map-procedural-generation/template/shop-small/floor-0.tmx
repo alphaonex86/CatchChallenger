@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="11" height="9" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="11">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="11" height="9" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="12">
  <properties>
   <property name="type" value="indoor"/>
  </properties>
@@ -44,7 +44,15 @@
    eJxjYBgFgwUAAAGMAAE=
   </data>
  </layer>
- <objectgroup id="7" name="Moving" visible="0"/>
+ <objectgroup id="7" name="Moving" visible="0">
+  <object id="11" type="teleport on push" gid="1028" x="80" y="144" width="16" height="16">
+   <properties>
+    <property name="map" value="building-shop"/>
+    <property name="x" value="3"/>
+    <property name="y" value="5"/>
+   </properties>
+  </object>
+ </objectgroup>
  <objectgroup id="8" name="Object">
   <object id="9" type="bot" gid="1025" x="32" y="64" width="16" height="16">
    <properties>
@@ -57,7 +65,7 @@
    <properties>
     <property name="id" value="2"/>
     <property name="lookAt" value="top"/>
-    <property name="skin" value="89"/>
+    <property name="skin" value="oldman"/>
    </properties>
   </object>
  </objectgroup>

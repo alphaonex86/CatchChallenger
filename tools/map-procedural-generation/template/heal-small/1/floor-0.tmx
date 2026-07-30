@@ -40,17 +40,17 @@
   <object id="1" type="teleport on push" gid="3" x="96" y="128" width="16" height="16">
    <properties>
     <property name="map" value="building-heal"/>
-    <property name="x" type="int" value="2"/>
-    <property name="y" type="int" value="5"/>
+    <property name="x" type="int" value="3"/>
+    <property name="y" type="int" value="6"/>
    </properties>
   </object>
  </objectgroup>
  <objectgroup id="8" name="Object">
-  <object id="3" type="bot" gid="1" x="96" y="48" width="16" height="16">
+  <object id="3" type="bot" gid="1" x="96" y="80" width="16" height="16">
    <properties>
     <property name="id" value="2"/>
     <property name="lookAt" value="bottom"/>
-    <property name="skin" value="153"/>
+    <property name="skin" value="nurse"/>
    </properties>
   </object>
   <object id="4" type="bot" gid="1" x="144" y="64" width="16" height="16">

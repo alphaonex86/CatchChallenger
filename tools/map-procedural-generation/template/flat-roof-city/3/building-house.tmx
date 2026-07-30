@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="11" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="8">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="11" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="9">
  <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
  <tileset firstgid="17" source="../../../tileset/heal4.tsx"/>
  <tileset firstgid="1111" source="../../../tileset/building-small.tsx"/>
@@ -20,5 +20,13 @@
    eJzbys3AsA2ItwPxDiDeCcS7gHg3EO8B4r1AvA+I9wPxCSAmBlwCqruNpvYBKwPDQ1ZMtU+B6t5hMZeRDVPsB1AdIw+ELc8GwSCgiEUtN1CdCFStPRsE4wJyQHUKQBzPhsAJONQbQs2sZ0PgBpD5PJhqXbCIgUAQDnFSAAArVBZB
   </data>
  </layer>
- <objectgroup id="3" name="Moving"/>
+ <objectgroup id="3" name="Moving">
+  <object id="8" type="teleport on push" gid="4" x="80" y="112" width="16" height="16">
+   <properties>
+    <property name="map" value="floor-0"/>
+    <property name="x" value="8"/>
+    <property name="y" value="11"/>
+   </properties>
+  </object>
+ </objectgroup>
 </map>

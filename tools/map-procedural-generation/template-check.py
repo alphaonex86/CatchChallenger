@@ -93,6 +93,168 @@ def used_gids(text):
     return out
 
 
+# ---------------------------------------------------------------- geometry
+# The generator computes the door/exit cells the same way (LoadMapBuilding.cpp);
+# writing them into the template keeps Tiled and the generator in agreement.
+
+
+def map_size(text):
+    header = re.search(r"<map[^>]*>", text).group(0)
+    return (int(re.search(r'\swidth="(\d+)"', header).group(1)),
+            int(re.search(r'\sheight="(\d+)"', header).group(1)),
+            int(re.search(r'\stilewidth="(\d+)"', header).group(1)),
+            int(re.search(r'\stileheight="(\d+)"', header).group(1)))
+
+
+def tile_layers(text):
+    """{name: [(w, h, gids)]} of the base64 encoded tile layers."""
+    out = {}
+    for m in re.finditer(r'<layer[^>]*name="([^"]*)"[^>]*width="(\d+)" '
+                         r'height="(\d+)"[^>]*>\s*<data encoding="base64"'
+                         r"([^>]*)>(.*?)</data>", text, re.S):
+        name, w, h, attributes, payload = (m.group(1), int(m.group(2)),
+                                           int(m.group(3)), m.group(4),
+                                           m.group(5))
+        raw = base64.b64decode(payload.strip())
+        if "zlib" in attributes:
+            raw = zlib.decompress(raw)
+        elif "gzip" in attributes:
+            raw = zlib.decompress(raw, 16 + zlib.MAX_WBITS)
+        elif "zstd" in attributes:
+            if zstandard is None:
+                return None
+            raw = zstandard.ZstdDecompressor().decompress(
+                raw, max_output_size=w * h * 4)
+        out.setdefault(name, []).append(
+            (w, h, struct.unpack("<%dI" % (w * h), raw[:4 * w * h])))
+    return out
+
+
+def is_collision(layers, width, height, x, y):
+    if x < 0 or y < 0 or x >= width or y >= height:
+        return True
+    for (w, h, grid) in layers.get("Collisions", []):
+        if w == width and h == height and grid[x + y * w]:
+            return True
+    return False
+
+
+def doorstep_cell(layers, width, height):
+    """The free cell under the building body, on its centre column."""
+    columns = []
+    step = 0
+    while step < width:
+        offset = (step + 1) // 2
+        columns.append(width // 2 - offset if step % 2 == 0
+                       else width // 2 + offset)
+        step += 1
+    for column in columns:
+        if 0 <= column < width:
+            lowest = -1
+            row = 0
+            while row < height:
+                if is_collision(layers, width, height, column, row):
+                    lowest = row
+                row += 1
+            if lowest >= 0:
+                row = lowest + 1
+                while row < height and is_collision(layers, width, height,
+                                                    column, row):
+                    row += 1
+                return column, row
+    return width // 2, height
+
+
+def exit_cell(layers, width, height):
+    """Bottom row: the doorway gap, else the wall cell under a free one."""
+    row = height - 1
+    best = -1
+    for column in range(width):
+        if not is_collision(layers, width, height, column, row):
+            if best < 0 or abs(column - width // 2) < abs(best - width // 2):
+                best = column
+    if best < 0:
+        for column in range(width):
+            if not is_collision(layers, width, height, column, row - 1):
+                if best < 0 or abs(column - width // 2) < abs(best - width // 2):
+                    best = column
+    if best < 0:
+        best = width // 2
+    return best, row
+
+
+def spawn_cell(layers, width, height, exitX, exitY):
+    row = exitY - 1
+    while row > 0 and is_collision(layers, width, height, exitX, row):
+        row -= 1
+    return exitX, max(row, 0)
+
+
+def free_cell_near(layers, width, height, x, y):
+    """Closest cell that is free AND has a free neighbour (talkable bot)."""
+    best = None
+    for row in range(height):
+        for column in range(width):
+            if is_collision(layers, width, height, column, row):
+                continue
+            neighbours = 0
+            for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+                if not is_collision(layers, width, height, column + dx,
+                                    row + dy):
+                    neighbours += 1
+            if neighbours == 0:
+                continue
+            distance = abs(column - x) + abs(row - y)
+            if best is None or distance < best[0]:
+                best = (distance, column, row)
+    return (best[1], best[2]) if best else None
+
+
+def invisible_gid(text):
+    """gid of the marker tile 3 of the invisible tileset, None when absent."""
+    for m in re.finditer(r'<tileset firstgid="(\d+)" source="([^"]*)"', text):
+        if os.path.basename(m.group(2)).startswith("invisible"):
+            return int(m.group(1)) + 3
+    return None
+
+
+def insert_object(text, group_name, object_xml):
+    """Add one object to a group, creating its body when self-closing."""
+    identifier = re.search(r'nextobjectid="(\d+)"', text)
+    next_id = int(identifier.group(1)) if identifier else 1000
+    object_xml = object_xml.replace("@ID@", str(next_id))
+    if identifier:
+        text = text[:identifier.start(1)] + str(next_id + 1) + \
+            text[identifier.end(1):]
+    selfClosed = re.search(r'<objectgroup[^>]*name="' + group_name +
+                           r'"[^>]*/>', text)
+    if selfClosed:
+        opening = selfClosed.group(0)[:-2] + ">"
+        return (text[:selfClosed.start()] + opening + "\n" + object_xml +
+                " </objectgroup>" + text[selfClosed.end():])
+    group = re.search(r'<objectgroup[^>]*name="' + group_name +
+                      r'"[^>]*(?<!/)>(.*?)</objectgroup>', text, re.S)
+    if group:
+        return text[:group.end(1)] + object_xml + text[group.end(1):]
+    #no such group: add it before the closing tag of the map
+    body = (" <objectgroup name=\"" + group_name + "\">\n" + object_xml +
+            " </objectgroup>\n")
+    return text.replace("</map>", body + "</map>")
+
+
+def teleport_xml(gid, x, y, tile_width, tile_height, target, targetX, targetY):
+    return ("  <object id=\"@ID@\" type=\"teleport on push\"" +
+            (" gid=\"%d\"" % gid if gid else "") +
+            " x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\">\n"
+            "   <properties>\n"
+            "    <property name=\"map\" value=\"%s\"/>\n"
+            "    <property name=\"x\" value=\"%d\"/>\n"
+            "    <property name=\"y\" value=\"%d\"/>\n"
+            "   </properties>\n"
+            "  </object>\n" % (x * tile_width, y * tile_height, tile_width,
+                               tile_height, target, targetX, targetY))
+
+
 def object_blocks(text, group_name):
     """[(start, end, block)] of the objects of one object group."""
     out = []
@@ -254,6 +416,300 @@ def has_teleport(text):
     return False
 
 
+# ---------------------------------------------------------------- repairs
+# Skins used when the template names one the datapack has not, by bot role.
+ROLE_SKIN = {"healer": "nurse", "shopkeeper": "market", "storage": "bankier",
+             "trainer": "smith", "villager": "oldman"}
+
+
+def bot_role(xml_text, bot_id):
+    bot = re.search(r'<bot id="' + bot_id + r'"(.*?)</bot>', xml_text, re.S)
+    steps = re.findall(r'<step[^>]*type="([a-z]+)"', bot.group(1)) if bot else []
+    if "heal" in steps:
+        return "healer"
+    if "shop" in steps or "sell" in steps:
+        return "shopkeeper"
+    if "warehouse" in steps:
+        return "storage"
+    if "fight" in steps:
+        return "trainer"
+    return "villager"
+
+
+def move_object(text, block_start, block_end, block, x, y, tile_width,
+                tile_height):
+    patched = re.sub(r'\sx="[-0-9.]+"', ' x="%d"' % (x * tile_width), block,
+                     count=1)
+    patched = re.sub(r'\sy="[-0-9.]+"', ' y="%d"' % (y * tile_height), patched,
+                     count=1)
+    return text[:block_start] + patched + text[block_end:]
+
+
+def fix_variant(folder, exterior, floors, fixes, warnings, apply_fix):
+    """Everything that needs the geometry or the two files of a template."""
+    if exterior is None or not floors:
+        return
+    exterior_path = os.path.join(folder, exterior)
+    floor_path = os.path.join(folder, floors[0])
+    exterior_text = open(exterior_path, encoding="utf-8").read()
+    floor_text = open(floor_path, encoding="utf-8").read()
+    exterior_name = exterior[:-4]
+    floor_name = floors[0][:-4]
+    ew, eh, etw, eth = map_size(exterior_text)
+    fw, fh, ftw, fth = map_size(floor_text)
+    exterior_layers = tile_layers(exterior_text)
+    floor_layers = tile_layers(floor_text)
+    if exterior_layers is None or floor_layers is None:
+        warnings.append((folder, "zstd layers unreadable (python-zstandard "
+                         "missing): geometry not checked"))
+        return
+
+    doorX, doorY = doorstep_cell(exterior_layers, ew, eh)
+    exitX, exitY = exit_cell(floor_layers, fw, fh)
+    spawnX, spawnY = spawn_cell(floor_layers, fw, fh, exitX, exitY)
+
+    #1. the exterior door: create it, or move a hand placed one off a collision
+    doors = [(s, e, b) for s, e, b in object_blocks(exterior_text, "Moving") +
+             object_blocks(exterior_text, "Object")
+             if object_type(b) in ("door", "teleport on push", "teleport on it")]
+    if not doors:
+        fixes.append((exterior_path, "door added at %d,%d -> %s (%d,%d)" %
+                      (doorX, doorY, floor_name, spawnX, spawnY)))
+        exterior_text = insert_object(
+            exterior_text, "Moving",
+            teleport_xml(invisible_gid(exterior_text), doorX, doorY, etw, eth,
+                         floor_name, spawnX, spawnY))
+    else:
+        start, end, block = doors[0]
+        props = properties(block)
+        x = int(float(re.search(r'\sx="([-0-9.]+)"', block).group(1))) // etw
+        y = int(float(re.search(r'\sy="([-0-9.]+)"', block).group(1))) // eth
+        if y < eh and is_collision(exterior_layers, ew, eh, x, y):
+            #the doorstep is the cell the PLAYER stands on: it cannot be part
+            #of the building, else nobody can reach the door. Below the rect is
+            #the city ground, always free.
+            newY = y
+            while newY < eh and is_collision(exterior_layers, ew, eh, x, newY):
+                newY += 1
+            fixes.append((exterior_path, "door moved off the building: %d,%d "
+                          "-> %d,%d" % (x, y, x, newY)))
+            exterior_text = move_object(exterior_text, start, end, block, x,
+                                        newY, etw, eth)
+            doorX, doorY = x, newY
+        else:
+            doorX, doorY = x, y
+        #the target is rewritten below, once the real exit is known
+        wanted = {}
+        del wanted
+
+    #2. the interior exit
+    exits = [(s, e, b) for s, e, b in object_blocks(floor_text, "Moving") +
+             object_blocks(floor_text, "Object")
+             if object_type(b) in ("door", "teleport on push", "teleport on it")]
+    if exits:
+        #a hand placed exit wins: the spawn is the free cell above IT
+        block = exits[0][2]
+        exitX = int(float(re.search(r'\sx="([-0-9.]+)"', block).group(1))) // ftw
+        exitY = int(float(re.search(r'\sy="([-0-9.]+)"', block).group(1))) // fth
+        spawnX, spawnY = spawn_cell(floor_layers, fw, fh, exitX, exitY - 1)
+    if not exits:
+        fixes.append((floor_path, "exit added at %d,%d -> %s (%d,%d)" %
+                      (exitX, exitY, exterior_name, doorX, doorY)))
+        floor_text = insert_object(
+            floor_text, "Moving",
+            teleport_xml(invisible_gid(floor_text), exitX, exitY + 1, ftw, fth,
+                         exterior_name, doorX, doorY))
+    else:
+        block = exits[0][2]
+        props = properties(block)
+        wanted = {"map": exterior_name, "x": str(doorX), "y": str(doorY)}
+        missing = [k for k in wanted if k not in props]
+        if missing or any(props.get(k) != v for k, v in wanted.items()):
+            fixes.append((floor_path, "exit target %s -> %s %d,%d" %
+                          (props.get("map"), exterior_name, doorX, doorY)))
+            if apply_fix:
+                start, end = exits[0][0], exits[0][1]
+                patched = block
+                for key, value in wanted.items():
+                    if ('name="' + key + '"') in patched:
+                        patched = re.sub(
+                            r'(<property name="' + key +
+                            r'"(?:\s+type="[^"]*")?\s+value=")[^"]*(")',
+                            r"\g<1>" + value + r"\g<2>", patched, count=1)
+                    else:
+                        insertion = ('    <property name="%s" value="%s"/>\n'
+                                     % (key, value))
+                        if "<properties>" in patched:
+                            patched = patched.replace("<properties>\n",
+                                                      "<properties>\n" +
+                                                      insertion, 1)
+                        else:
+                            patched = patched.replace(
+                                ">", ">\n   <properties>\n" + insertion +
+                                "   </properties>\n", 1)
+                floor_text = floor_text[:start] + patched + floor_text[end:]
+
+    #2b. the exterior door target, now that the landing cell inside is known
+    doors = [(s, e, b) for s, e, b in object_blocks(exterior_text, "Moving") +
+             object_blocks(exterior_text, "Object")
+             if object_type(b) in ("door", "teleport on push", "teleport on it")]
+    if doors:
+        start, end, block = doors[0]
+        props = properties(block)
+        wanted = {"map": floor_name, "x": str(spawnX), "y": str(spawnY)}
+        if any(props.get(k) != v for k, v in wanted.items()):
+            fixes.append((exterior_path, "door target %s(%s,%s) -> %s(%d,%d)" %
+                          (props.get("map"), props.get("x"), props.get("y"),
+                           floor_name, spawnX, spawnY)))
+            patched = block
+            for key, value in wanted.items():
+                if ('name="' + key + '"') in patched:
+                    patched = re.sub(
+                        r'(<property name="' + key +
+                        r'"(?:\s+type="[^"]*")?\s+value=")[^"]*(")',
+                        r"\g<1>" + value + r"\g<2>", patched, count=1)
+                else:
+                    insertion = ('    <property name="%s" value="%s"/>\n'
+                                 % (key, value))
+                    if "<properties>" in patched:
+                        patched = patched.replace("<properties>\n",
+                                                  "<properties>\n" + insertion,
+                                                  1)
+                    else:
+                        patched = patched.replace(
+                            ">", ">\n   <properties>\n" + insertion +
+                            "   </properties>\n", 1)
+            exterior_text = exterior_text[:start] + patched + exterior_text[end:]
+
+    #3. bots: in the "Object" group, reachable, with a skin the datapack has
+    xml_path = os.path.join(folder, floors[0][:-4] + ".xml")
+    xml_text = open(xml_path, encoding="utf-8").read() if \
+        os.path.exists(xml_path) else ""
+    moved = True
+    while moved:
+        moved = False
+        for start, end, block in object_blocks(floor_text, "Moving"):
+            props = properties(block)
+            kind = object_type(block)
+            if kind == "bot" or ("id" in props and kind not in
+                                 ("door", "teleport on push", "teleport on it",
+                                  "rescue")):
+                fixes.append((floor_path, "bot id " + props.get("id", "?") +
+                              " moved to the \"Object\" group"))
+                floor_text = floor_text[:start] + floor_text[end:]
+                floor_text = insert_object(floor_text, "Object",
+                                           "  " + block.strip() + "\n")
+                moved = True
+                break
+    #a duplicated bot id makes two objects share one <bot> definition: give the
+    #extra ones a free id (the generator does it at runtime, do it once here)
+    changed = True
+    while changed:
+        changed = False
+        used = []
+        for start, end, block in object_blocks(floor_text, "Object"):
+            props = properties(block)
+            if "id" not in props:
+                continue
+            if props["id"] in used:
+                free = 1
+                while str(free) in used:
+                    free += 1
+                fixes.append((floor_path, "duplicated bot id " + props["id"] +
+                              " -> " + str(free)))
+                patched = re.sub(
+                    r'(<property name="id"(?:\s+type="[^"]*")?\s+value=")[^"]*(")',
+                    r"\g<1>" + str(free) + r"\g<2>", block, count=1)
+                floor_text = floor_text[:start] + patched + floor_text[end:]
+                changed = True
+                break
+            used.append(props["id"])
+
+    seen = set()
+    for start, end, block in reversed(object_blocks(floor_text, "Object")):
+        props = properties(block)
+        if "id" not in props:
+            continue
+        bot_id = props["id"]
+        x = int(float(re.search(r'\sx="([-0-9.]+)"', block).group(1))) // ftw
+        y = int(float(re.search(r'\sy="([-0-9.]+)"', block).group(1))) // fth
+        tileY = y - 1  #objects carry the engine -1 tile offset
+        talkable = any(not is_collision(floor_layers, fw, fh, x + dx, tileY + dy)
+                       for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)))
+        if is_collision(floor_layers, fw, fh, x, tileY) and not talkable:
+            cell = free_cell_near(floor_layers, fw, fh, x, tileY)
+            if cell:
+                fixes.append((floor_path, "bot id " + bot_id + " was walled in "
+                              "at %d,%d -> %d,%d" % (x, tileY, cell[0],
+                                                     cell[1])))
+                floor_text = move_object(floor_text, start, end, block, cell[0],
+                                         cell[1] + 1, ftw, fth)
+                continue
+        skin = props.get("skin", "")
+        if skin and not os.path.isdir(os.path.join(SKIN_DIR, skin)):
+            role = bot_role(xml_text, bot_id)
+            replacement = ROLE_SKIN.get(role, "oldman")
+            fixes.append((floor_path, "bot id " + bot_id + " skin " + skin +
+                          " -> " + replacement + " (" + role + ")"))
+            floor_text = floor_text[:start] + re.sub(
+                r'(<property name="skin"(?:\s+type="[^"]*")?\s+value=")[^"]*(")',
+                r"\g<1>" + replacement + r"\g<2>", block, count=1) + \
+                floor_text[end:]
+        seen.add(bot_id)
+
+    #4. the interior is an indoor map
+    if 'value="indoor"' not in floor_text:
+        fixes.append((floor_path, "indoor map property added"))
+        header = re.search(r"<map[^>]*>", floor_text)
+        floor_text = (floor_text[:header.end()] +
+                      "\n <properties>\n"
+                      "  <property name=\"type\" value=\"indoor\"/>\n"
+                      " </properties>" + floor_text[header.end():])
+
+    if apply_fix:
+        open(exterior_path, "w", encoding="utf-8").write(exterior_text)
+        open(floor_path, "w", encoding="utf-8").write(floor_text)
+
+
+def fix_skeleton(path, fixes, apply_fix):
+    """The floor-N.xml skeleton: only the bot/step STRUCTURE is used, drop what
+    is copy/paste debris from another template."""
+    tmx = path[:-4] + ".tmx"
+    if not os.path.exists(tmx) or not os.path.exists(path):
+        return
+    text = open(path, encoding="utf-8").read()
+    original = text
+    tmx_ids = set()
+    for _, _, block in object_blocks(open(tmx, encoding="utf-8").read(),
+                                     "Object"):
+        props = properties(block)
+        if "id" in props:
+            tmx_ids.add(props["id"])
+    for bot in re.finditer(r'[ \t]*<bot id="(\d+)".*?</bot>\n?', text, re.S):
+        if bot.group(1) not in tmx_ids:
+            fixes.append((path, "bot " + bot.group(1) +
+                          " has no object in the tmx, dropped"))
+            text = text.replace(bot.group(0), "", 1)
+    sound = re.search(r'\s*backgroundsound="([^"]*)"', text)
+    if sound:
+        found = False
+        for music in MUSIC_DIRS:
+            candidate = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     music, os.path.basename(sound.group(1)))
+            if os.path.exists(candidate):
+                found = True
+        if not found:
+            fixes.append((path, "backgroundsound " + sound.group(1) +
+                          " does not exist, dropped"))
+            text = text.replace(sound.group(0), "", 1)
+    zone = re.search(r'\s*zone="[^"]*"', text)
+    if zone:
+        fixes.append((path, "zone= dropped (the generator sets the city zone)"))
+        text = text.replace(zone.group(0), "", 1)
+    if text != original and apply_fix:
+        open(path, "w", encoding="utf-8").write(text)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--fix", action="store_true",
@@ -292,8 +748,15 @@ def main():
                                   "wires one in)"))
                 if patched != text and args.fix:
                     open(path, "w", encoding="utf-8").write(patched)
+            #geometry and object repairs FIRST: the skeleton clean up below
+            #compares the bots of the xml with the objects of the tmx, and a bot
+            #object still sitting in the wrong group would look absent
+            fix_variant(folder, exteriors[0] if exteriors else None, floors,
+                        fixes, warnings, args.fix)
             for tmx in floors:
                 check_xml(os.path.join(folder, tmx), problems, warnings)
+                fix_skeleton(os.path.join(folder, tmx[:-4] + ".xml"), fixes,
+                             args.fix)
             if not exteriors:
                 problems.append((folder, "no exterior tmx"))
             del name

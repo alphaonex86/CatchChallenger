@@ -39,8 +39,8 @@
   <object id="1" type="teleport on push" gid="3" x="144" y="256" width="16" height="16">
    <properties>
     <property name="map" value="building-heal"/>
-    <property name="x" type="int" value="2"/>
-    <property name="y" type="int" value="5"/>
+    <property name="x" type="int" value="3"/>
+    <property name="y" type="int" value="6"/>
    </properties>
   </object>
  </objectgroup>
@@ -54,7 +54,7 @@
    <properties>
     <property name="id" value="2"/>
     <property name="lookAt" value="bottom"/>
-    <property name="skin" value="153"/>
+    <property name="skin" value="nurse"/>
    </properties>
   </object>
  </objectgroup>

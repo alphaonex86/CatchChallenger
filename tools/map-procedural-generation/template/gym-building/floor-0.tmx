@@ -43,7 +43,7 @@
    <properties>
     <property name="id" type="int" value="4"/>
     <property name="lookAt" value="bottom"/>
-    <property name="skin" value="35"/>
+    <property name="skin" value="smith"/>
    </properties>
   </object>
  </objectgroup>

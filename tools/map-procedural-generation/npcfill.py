@@ -86,16 +86,25 @@ def prompt_of(slot, per_city, count):
              else "a %s town" % slot["size"])
     element = slot["element"] if slot["role"] == "gym leader" else "mixed"
     return (
-        "You write dialogue for an ORIGINAL monster-taming role playing game.\n"
+        "You write dialogue for an ORIGINAL video game. It is NOT a licensed "
+        "game and has no connection to any existing game.\n"
+        "\n"
+        "ABSOLUTE RULE - the text must contain NO trademark and NO reference to "
+        "an existing work. NEVER write, in any spelling or language: Pokemon, "
+        "Pokeball, Pokedex, Pokemart, Pokemon Center, Pokemon League, "
+        "Nintendo, Game Freak, Digimon, Yo-kai, or the name of ANY creature, "
+        "character, town, region, item or organisation from an existing game, "
+        "book, film or series. Invent everything, or stay generic: say "
+        "\"creature\", \"team\", \"trainer\", \"the hall\", \"the town\". "
+        "A single trademarked word makes the whole answer unusable.\n"
+        "\n"
         "Setting: %s, built in a %s landscape, %s element, adventurers around "
         "level %d.\n"
         "Speaker: %s, standing in %s.\n"
         "Write %d different lines, each %s.\n"
-        "Rules: English, ONE sentence each, at most 110 characters, no quotes, "
-        "no emoji, no markdown, no numbering.\n"
-        "The world is ORIGINAL: never mention Pokemon, Nintendo, or any "
-        "existing game, brand, character or place. Say \"monster\" or "
-        "\"creature\", never a real franchise word.\n"
+        "Style: English, ONE sentence each, at most 110 characters, plain "
+        "words, no quotes, no emoji, no markdown, no numbering, no name of a "
+        "real place or brand.\n"
         "Answer with a JSON array of %d strings and nothing else." % (
             where, slot["style"].replace("-city", ""), element,
             int(slot["level"]), slot["role"], place, count,
@@ -271,6 +280,7 @@ def main():
     texts = {}
     calls = 0
     failed = 0
+    rejected = 0
     keys = [k for k in sorted(buckets) if arguments.only in k]
     for index, key in enumerate(keys):
         slotList = buckets[key]
@@ -284,13 +294,32 @@ def main():
             try:
                 answer = ask_ollama(arguments.host, arguments.model, prompt,
                                     arguments.timeout)
+                produced = parse_lines(answer)
                 lines = [c for c in (clean(l, slotList[0]["field"])
-                                     for l in parse_lines(answer)) if c]
+                                     for l in produced) if c]
+                calls += 1
+                rejected += len(produced) - len(lines)
+                #more than a third of the answer refused (trademark, markup,
+                #too long): ask once more, reminding the rule
+                if produced and len(lines) * 3 < len(produced) * 2:
+                    print("   %d/%d lines refused, asking again" %
+                          (len(produced) - len(lines), len(produced)))
+                    answer = ask_ollama(
+                        arguments.host, arguments.model,
+                        prompt + "\nYour previous answer was refused. Write "
+                        "plain original sentences, no trademark, no name of an "
+                        "existing game or character.", arguments.timeout)
+                    produced = parse_lines(answer)
+                    retryLines = [c for c in (clean(l, slotList[0]["field"])
+                                              for l in produced) if c]
+                    calls += 1
+                    rejected += len(produced) - len(retryLines)
+                    lines = lines + [l for l in retryLines if l not in lines]
             except (urllib.error.URLError, OSError, ValueError) as error:
                 print("   model call failed (%s): keeping the offline lines"
                       % error)
                 lines = []
-            calls += 1
+                calls += 1
             if lines:
                 cache[digest] = lines
                 save_cache(cache)
@@ -315,8 +344,9 @@ def main():
                 written += 1
         else:
             print("   missing generated file: " + path)
-    print("%d model calls (%d without usable answer), %d files rewritten" %
-          (calls, failed, written))
+    print("%d model calls (%d without usable answer, %d lines refused by the "
+          "trademark/format filter), %d files rewritten" %
+          (calls, failed, rejected, written))
     return 0
 
 

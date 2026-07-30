@@ -1,4 +1,4 @@
-<map type="indoor" zone="test" backgroundsound="music/gym.opus">
+<map type="indoor">
     <name>Gym</name>
     <bot id="4">
         <name>Cooltrainer Paul</name>

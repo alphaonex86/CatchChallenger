@@ -580,24 +580,33 @@ static QString npcText(const std::string &destinationFile,const unsigned int &cd
         static const char *const lines[]={
             "Let me restore your team.",
             "Your team is in perfect shape again.",
-            "Rest here as long as you need."};
-        fallback=lines[seedPick(seed,3)];
+            "Rest here as long as you need.",
+            "Bring them to me whenever the road is hard on them.",
+            "A short rest and they will be ready for anything.",
+            "Nobody leaves this house with a tired team."};
+        fallback=lines[seedPick(seed,6)];
     }
     else if(role=="shopkeeper")
     {
         static const char *const lines[]={
             "Welcome to our shop!",
             "Everything on these shelves is for sale.",
-            "Stock up before you take the road."};
-        fallback=lines[seedPick(seed,3)];
+            "Stock up before you take the road.",
+            "Fresh stock came in this morning, take a look.",
+            "Travellers always need one more potion than they packed.",
+            "Take your time. The shelves are not going anywhere."};
+        fallback=lines[seedPick(seed,6)];
     }
     else if(role=="storage")
     {
         static const char *const lines[]={
             "Welcome to the monster storage system.",
             "Your spare team members are safe with us.",
-            "The storage is ready when you are."};
-        fallback=lines[seedPick(seed,3)];
+            "The storage is ready when you are.",
+            "Every creature you leave here is fed and looked after.",
+            "Swap your team around as often as you like.",
+            "The system keeps them healthy until you call them back."};
+        fallback=lines[seedPick(seed,6)];
     }
     else if(role=="trainer" || role=="gym leader")
     {
@@ -606,18 +615,32 @@ static QString npcText(const std::string &destinationFile,const unsigned int &cd
             static const char *const lines[]={
                 "Well fought.",
                 "You earned that one.",
-                "My team still has a lot to learn."};
-            fallback=lines[seedPick(seed,3)];
+                "My team still has a lot to learn.",
+                "That was the best match I have had in weeks.",
+                "I will train harder before we meet again.",
+                "Go on then, the road is yours."};
+            fallback=lines[seedPick(seed,6)];
         }
         else if(role=="gym leader")
-            fallback="I am the leader here. Prove your worth!";
+        {
+            static const char *const lines[]={
+                "I am the leader here. Prove your worth!",
+                "Everyone who beat me started exactly where you stand.",
+                "No easy match today. Show me everything you have.",
+                "This hall has a champion. Take the title if you can.",
+                "I train the hardest team in this town. Convince me otherwise."};
+            fallback=lines[seedPick(seed,5)];
+        }
         else
         {
             static const char *const lines[]={
                 "You look strong - let's battle!",
                 "I have been waiting for a real opponent.",
-                "Show me what your team can do!"};
-            fallback=lines[seedPick(seed,3)];
+                "Show me what your team can do!",
+                "One match, right here, right now.",
+                "You will not walk past me that easily.",
+                "Let's see whose training paid off."};
+            fallback=lines[seedPick(seed,6)];
         }
     }
     else if(!setting.npcMessage.empty())

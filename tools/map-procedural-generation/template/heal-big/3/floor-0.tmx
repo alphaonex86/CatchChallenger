@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="25" height="21" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="5">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="25" height="21" tilewidth="16" tileheight="16" infinite="0" nextlayerid="10" nextobjectid="6">
  <properties>
   <property name="type" value="indoor"/>
  </properties>
@@ -41,29 +41,30 @@
    <properties>
     <property name="id" value="2"/>
     <property name="lookAt" value="bottom"/>
-    <property name="skin" value="153"/>
+    <property name="skin" value="nurse"/>
    </properties>
   </object>
   <object id="3" type="bot" gid="1" x="224" y="208" width="16" height="16">
    <properties>
-    <property name="id" value="2"/>
+    <property name="id" value="1"/>
     <property name="lookAt" value="bottom"/>
-    <property name="skin" value="153"/>
+    <property name="skin" value="nurse"/>
    </properties>
   </object>
- </objectgroup>
- <objectgroup id="7" name="Moving">
-  <object id="1" type="teleport on push" gid="3" x="192" y="320" width="16" height="16">
-   <properties>
-    <property name="map" value="building-heal"/>
-    <property name="x" type="int" value="2"/>
-    <property name="y" type="int" value="5"/>
-   </properties>
-  </object>
-  <object id="4" gid="1" x="304" y="160" width="16" height="16">
+   <object id="4" type="bot" gid="1" x="304" y="160" width="16" height="16">
    <properties>
     <property name="id" value="3"/>
    </properties>
   </object>
+</objectgroup>
+ <objectgroup id="7" name="Moving">
+  <object id="1" type="teleport on push" gid="3" x="192" y="320" width="16" height="16">
+   <properties>
+    <property name="map" value="building-heal"/>
+    <property name="x" type="int" value="3"/>
+    <property name="y" type="int" value="9"/>
+   </properties>
+  </object>
+  
  </objectgroup>
 </map>
