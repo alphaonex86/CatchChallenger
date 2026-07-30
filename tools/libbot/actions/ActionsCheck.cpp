@@ -2,26 +2,14 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include <iostream>
 
-void ActionsAction::showTip(const QString &text)
+void ActionsAction::showTip(const std::string &text)
 {
-    std::cout << text.toStdString() << std::endl;
+    std::cout << text << std::endl;
 }
 
 void ActionsAction::appendReputationRewards(CatchChallenger::Api_protocol_Qt *api,const std::vector<CatchChallenger::ReputationRewards> &reputationList)
 {
-    QList<CatchChallenger::ReputationRewards> reputationListTemp;
-    unsigned int index=0;
-    while(index<reputationList.size())
-    {
-        reputationListTemp << reputationList.at(index);
-        index++;
-    }
-    appendReputationRewards(api,reputationListTemp);
-}
-
-void ActionsAction::appendReputationRewards(CatchChallenger::Api_protocol_Qt *api,const QList<CatchChallenger::ReputationRewards> &reputationList)
-{
-    int index=0;
+    size_t index=0;
     while(index<reputationList.size())
     {
         const CatchChallenger::ReputationRewards &reputationRewards=reputationList.at(index);
@@ -34,19 +22,7 @@ void ActionsAction::appendReputationRewards(CatchChallenger::Api_protocol_Qt *ap
 
 bool ActionsAction::haveReputationRequirements(const CatchChallenger::Api_protocol_Qt *api,const std::vector<CatchChallenger::ReputationRequirements> &reputationList)
 {
-    QList<CatchChallenger::ReputationRequirements> reputationListTemp;
-    unsigned int index=0;
-    while(index<reputationList.size())
-    {
-        reputationListTemp << reputationList.at(index);
-        index++;
-    }
-    return haveReputationRequirements(api,reputationListTemp);
-}
-
-bool ActionsAction::haveReputationRequirements(const CatchChallenger::Api_protocol_Qt *api, const QList<CatchChallenger::ReputationRequirements> &reputationList)
-{
-    int index=0;
+    size_t index=0;
     while(index<reputationList.size())
     {
         const CatchChallenger::ReputationRequirements &reputation=reputationList.at(index);

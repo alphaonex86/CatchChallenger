@@ -27,13 +27,9 @@
 std::unordered_map<const MapServerMini::BlockObject *, std::unordered_map<const MapServerMini::BlockObject *, bool> > BotTargetList::cacheCanGoFromBlockToBlock;
 
 BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBotConnection::CatchChallengerClient *> apiToCatchChallengerClient,
-                             QHash<CatchChallenger::ConnectedSocket *,MultipleBotConnection::CatchChallengerClient *> connectedSocketToCatchChallengerClient,
-                             QHash<QSslSocket *,MultipleBotConnection::CatchChallengerClient *> sslSocketToCatchChallengerClient,
                              ActionsAction *actionsAction) :
     ui(new Ui::BotTargetList),
     apiToCatchChallengerClient(apiToCatchChallengerClient),
-    connectedSocketToCatchChallengerClient(connectedSocketToCatchChallengerClient),
-    sslSocketToCatchChallengerClient(sslSocketToCatchChallengerClient),
     actionsAction(actionsAction),
     botsInformationLoaded(false),
     mapId(0),
@@ -62,15 +58,17 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
         ++i;
     }
 
-    MapServerMini::colorsList << QColor(255, 255, 0, 255);
-    MapServerMini::colorsList << QColor(70, 187, 70, 255);
-    MapServerMini::colorsList << QColor(100, 100, 200, 255);
-    MapServerMini::colorsList << QColor(255, 128, 128, 255);
-    MapServerMini::colorsList << QColor(180, 70, 180, 255);
-    MapServerMini::colorsList << QColor(255, 200, 110, 255);
-    MapServerMini::colorsList << QColor(115, 255, 240, 255);
-    MapServerMini::colorsList << QColor(115, 255, 120, 255);
-    MapServerMini::colorsList << QColor(200, 70, 70, 255);
+    //toolkit-free zone colours: the library stores rgb, the widgets below turn
+    //them into a QColor only where a brush is needed
+    MapServerMini::colorsList.push_back(MapServerMini::BlockColor(255, 255, 0));
+    MapServerMini::colorsList.push_back(MapServerMini::BlockColor(70, 187, 70));
+    MapServerMini::colorsList.push_back(MapServerMini::BlockColor(100, 100, 200));
+    MapServerMini::colorsList.push_back(MapServerMini::BlockColor(255, 128, 128));
+    MapServerMini::colorsList.push_back(MapServerMini::BlockColor(180, 70, 180));
+    MapServerMini::colorsList.push_back(MapServerMini::BlockColor(255, 200, 110));
+    MapServerMini::colorsList.push_back(MapServerMini::BlockColor(115, 255, 240));
+    MapServerMini::colorsList.push_back(MapServerMini::BlockColor(115, 255, 120));
+    MapServerMini::colorsList.push_back(MapServerMini::BlockColor(200, 70, 70));
     updateMapContentX=0;
     updateMapContentY=0;
     updateMapContentMapId=0;
@@ -782,8 +780,8 @@ void BotTargetList::updateMapContent(const bool &forceUpdate)
                     if(codeZone>0)
                     {
                         const MapServerMini::MapParsedForBot::Layer &layer=step.layers.at(codeZone-1);
-                        QColor color=layer.blockObject->color;
-                        QBrush brush1(color);
+                        const MapServerMini::BlockColor &color=layer.blockObject->color;
+                        QBrush brush1(QColor(color.r,color.g,color.b));
                         brush1.setStyle(Qt::SolidPattern);
                         tablewidgetitem->setBackground(brush1);
                         tablewidgetitem->setText(QString::number(codeZone));

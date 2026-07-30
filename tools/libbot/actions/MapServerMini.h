@@ -2,14 +2,11 @@
 #define MAPSERVERMINI_H
 
 #include <map>
+#include <string>
 #include <utility>
 #include <vector>
 #include <stdint.h>
 #include <unordered_map>
-
-#include <QString>
-#include <QList>
-#include <QtGui/QColor>
 
 #include "../../general/base/CommonMap/CommonMap.hpp"
 #include "../../client/libqtcatchchallenger/Api_protocol_Qt.hpp"
@@ -18,6 +15,17 @@ class MapServerMini : public CatchChallenger::CommonMap
 {
 public:
     MapServerMini();
+    /// Toolkit-free zone colour. The library only stores/serialises it; the GUI
+    /// converts it to its own colour type at the widget boundary, and the
+    /// graphviz/HTML call sites use html().
+    struct BlockColor
+    {
+        BlockColor();
+        BlockColor(const uint8_t &r,const uint8_t &g,const uint8_t &b);
+        uint8_t r,g,b;
+        /// "#rrggbb" lowercase, the form the graphviz call sites need
+        std::string html() const;
+    };
     std::string map_file;
     uint32_t id;
     bool preload_other_pre();
@@ -27,7 +35,7 @@ public:
     bool preload_step2b();
     bool preload_step2c();
     bool preload_post_subdatapack();
-    static QList<QColor> colorsList;
+    static std::vector<BlockColor> colorsList;
 
     std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>,pairhash> botOnMap;
     std::map<std::pair<uint8_t,uint8_t>,CatchChallenger::Orientation/*,pairhash*/> rescue;
@@ -126,7 +134,7 @@ public:
         std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
         std::vector<std::pair<uint8_t,uint8_t> > block;//exclude special like teleporter
 
-        QColor color;
+        BlockColor color;
         void *layer;
     };
     struct MapParsedForBot{

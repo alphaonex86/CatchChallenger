@@ -12,13 +12,9 @@
 #include <QObject>
 #include <QRegularExpression>
 #include <QElapsedTimer>
-#include <QList>
 #include <map>
 #include <set>
-
-//Only a QList<QListWidgetItem *> of them is held, so the incomplete type is
-//enough here: it keeps the whole QtWidgets dependency out of tools/libbot.
-class QListWidgetItem;
+#include <string>
 
 /// QObject is inherited HERE and not by BotInterface: the bot-brain interface
 /// itself is toolkit-free, only this Qt implementation of it needs signals,
@@ -29,6 +25,7 @@ class ActionsBotInterface : public QObject, public BotInterface
 public:
     struct GlobalTarget
     {
+        GlobalTarget();
         enum GlobalTargetType
         {
             ItemOnMap=0,//indexOfItemOnMap
@@ -50,7 +47,10 @@ public:
         //std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > wildForwardStep,wildBackwardStep;
         uint8_t wildCycle;
         unsigned int points;
-        QList<QListWidgetItem *> uiItems;
+        /// Opaque handle to the front-end row(s) showing this target, 0 when
+        /// none. The GUI owns the widget pointers and resolves the handle; the
+        /// library only carries the integer, so no widget type leaks in here.
+        uint32_t uiItemHandle;
     };
     struct ChatEntry
     {
@@ -89,7 +89,7 @@ public:
         QElapsedTimer lastFightAction;
         CatchChallenger::Api_protocol_Qt  *api;
         std::map<uint16_t,CatchChallenger::Player_public_informations> visiblePlayers;
-        std::set<QString> viewedPlayers;
+        std::set<std::string> viewedPlayers;
 
         //plant/seed is now local to player, no server async confirmation needed
         struct ClientPlantInCollecting

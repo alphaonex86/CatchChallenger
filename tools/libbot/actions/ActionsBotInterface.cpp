@@ -5,6 +5,19 @@
 std::map<CatchChallenger::Api_protocol_Qt  *,ActionsBotInterface::Player> ActionsBotInterface::clientList;
 std::map<CatchChallenger::Api_protocol_Qt  *,std::vector<ActionsBotInterface::DelayedMapPlayerChange> > ActionsBotInterface::delayedMessage;
 
+/// Same values the front-ends were setting by hand on every fresh target
+/// (see resetTarget()); uiItemHandle=0 means "no front-end row".
+ActionsBotInterface::GlobalTarget::GlobalTarget() :
+    type(GlobalTargetType::None),
+    extra(0),
+    blockObject(NULL),
+    linkPoint(),
+    wildCycle(0),
+    points(0),
+    uiItemHandle(0)
+{
+}
+
 ActionsBotInterface::ActionsBotInterface() :
     randomText(false),
     globalChatRandomReply(false)

@@ -12,13 +12,10 @@
 #include "MapServerMini.h"
 
 #include <QTimer>
-#include <QString>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 #include <string>
-#include <QHash>
-#include <QList>
 
 class ActionsAction : public ActionsBotInterface
 {
@@ -60,9 +57,7 @@ public:
     static bool nextStepQuest(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Quest &quest);
     static void appendReputationPoint(CatchChallenger::Api_protocol_Qt  *api, const std::string &type, const int32_t &point);
     static uint32_t itemQuantity(const CatchChallenger::Api_protocol_Qt  *api, const uint16_t &itemId);
-    static bool haveReputationRequirements(const CatchChallenger::Api_protocol_Qt  *api,const QList<CatchChallenger::ReputationRequirements> &reputationList);
     static bool haveReputationRequirements(const CatchChallenger::Api_protocol_Qt  *api, const std::vector<CatchChallenger::ReputationRequirements> &reputationList);
-    static void appendReputationRewards(CatchChallenger::Api_protocol_Qt  *api,const QList<CatchChallenger::ReputationRewards> &reputationList);
     static void appendReputationRewards(CatchChallenger::Api_protocol_Qt  *api,const std::vector<CatchChallenger::ReputationRewards> &reputationList);
 
     void have_inventory_slot(const std::unordered_map<uint16_t, uint32_t> &items);
@@ -83,7 +78,7 @@ public:
     void monsterCatch(const bool &success);
     void teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
     static void resetTarget(GlobalTarget &target);
-    static void showTip(const QString &text);
+    static void showTip(const std::string &text);
     static bool canGoTo(CatchChallenger::Api_protocol_Qt  *api, const CatchChallenger::Direction &direction, const MapServerMini &map, COORD_TYPE x, COORD_TYPE y, const bool &checkCollision, const bool &allowTeleport, const bool &debug=false);
     static bool move(CatchChallenger::Api_protocol_Qt  *api, CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport);
     static bool moveWithoutTeleport(CatchChallenger::Api_protocol_Qt  *api, CatchChallenger::Direction direction, const MapServerMini ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport);

@@ -7,6 +7,25 @@
 #include <iostream>
 #include "../libbot/BotAbort.h"
 
+/// Store a front-end row and return the opaque handle the bot library carries
+/// for it (index+1, so 0 stays "no row"). Valid only for the current
+/// contentToGUI_internal() pass, which clears the table on entry.
+uint32_t BotTargetList::registerUiItemForTarget(QListWidgetItem *item)
+{
+    uiItemsForTarget.push_back(item);
+    return (uint32_t)uiItemsForTarget.size();
+}
+
+/// Resolve a handle back to its row(s). Unknown/zero handle -> nothing to
+/// highlight, which is what a target built without a row used to give.
+QList<QListWidgetItem *> BotTargetList::uiItemsOfHandle(const uint32_t &handle) const
+{
+    QList<QListWidgetItem *> returnedVar;
+    if(handle>0 && handle<=uiItemsForTarget.size())
+        returnedVar << uiItemsForTarget.at(handle-1);
+    return returnedVar;
+}
+
 std::vector<std::string> BotTargetList::contentToGUI(const MapServerMini::BlockObject * const blockObject, const CatchChallenger::Api_protocol_Qt * const api, QListWidget *listGUI)
 {
     std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> resolvedBlockList;
@@ -134,6 +153,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
     if(listGUI==ui->localTargets)
         player.mapIdListLocalTarget.clear();
     std::vector<std::string> itemToReturn;
+    uiItemsForTarget.clear();
     QColor alternateColorValue(230,230,230,255);
     QColor redColorValue(255,240,240,255);
     QColor redAlternateColorValue(255,220,220,255);
@@ -338,7 +358,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
 
                                                 points=points*catchChallengerClient->preferences.plant/100;
                                                 globalTarget.points=points;
-                                                globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
+                                                globalTarget.uiItemHandle=registerUiItemForTarget(newItem);
                                                 if(bestPoint<points)
                                                     bestPoint=points;
                                             }
@@ -406,7 +426,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
 
                                             points=points*catchChallengerClient->preferences.plant/100;
                                             globalTarget.points=points;
-                                            globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
+                                            globalTarget.uiItemHandle=registerUiItemForTarget(newItem);
                                             if(bestPoint<points)
                                                 bestPoint=points;
                                         }
@@ -538,7 +558,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
 
                         points=points*catchChallengerClient->preferences.item/100;
                         globalTarget.points=points;
-                        globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
+                        globalTarget.uiItemHandle=registerUiItemForTarget(newItem);
                         if(bestPoint<points)
                             bestPoint=points;
                     }
@@ -697,7 +717,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         itemToReturn.push_back(newItem->text().toStdString());
                                         if(listGUI==ui->globalTargets)
                                         {
-                                            globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
+                                            globalTarget.uiItemHandle=registerUiItemForTarget(newItem);
                                             player.targetListGlobalTarget.push_back(globalTarget);
                                             if(alternateColor)
                                                 newItem->setBackground(alternateColorValueL);
@@ -733,7 +753,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         itemToReturn.push_back(newItem->text().toStdString());
                                         if(listGUI==ui->globalTargets)
                                         {
-                                            globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
+                                            globalTarget.uiItemHandle=registerUiItemForTarget(newItem);
                                             player.targetListGlobalTarget.push_back(globalTarget);
                                             if(alternateColor)
                                                 newItem->setBackground(alternateColorValueL);
@@ -1041,7 +1061,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                         itemToReturn.push_back(newItem->text().toStdString());
                         if(listGUI==ui->globalTargets)
                         {
-                            globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
+                            globalTarget.uiItemHandle=registerUiItemForTarget(newItem);
                             player.targetListGlobalTarget.push_back(globalTarget);
                             if(alternateColor)
                                 newItem->setBackground(alternateColorValueL);
@@ -1079,7 +1099,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
         if(!bestTargetListGlobalTarget.empty())
         {
             const ActionsBotInterface::GlobalTarget &finalTarget=bestTargetListGlobalTarget.at(rand()%bestTargetListGlobalTarget.size());
-            bestItems=finalTarget.uiItems;
+            bestItems=uiItemsOfHandle(finalTarget.uiItemHandle);
             bestTarget=finalTarget;
         }
     }

@@ -43,6 +43,11 @@ MultipleBotConnectionAction::~MultipleBotConnectionAction()
 {
 }
 
+void MultipleBotConnectionAction::displayCriticalError(const std::string &errorString)
+{
+    QMessageBox::critical(NULL,tr("Error"),QString::fromStdString(errorString));
+}
+
 std::string MultipleBotConnectionAction::getNewPseudo()
 {
     std::string choosePseudo;

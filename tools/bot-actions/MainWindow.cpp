@@ -851,8 +851,6 @@ void MainWindow::all_player_on_map()
         autoConnectTimeout.stop();
     botTargetList=new BotTargetList(
                 multipleBotConnexion.apiToCatchChallengerClient,
-                multipleBotConnexion.connectedSocketToCatchChallengerClient,
-                multipleBotConnexion.sslSocketToCatchChallengerClient,
                 static_cast<ActionsAction *>(multipleBotConnexion.botInterface)
                 );
     SocialChat::socialChat=new SocialChat();
