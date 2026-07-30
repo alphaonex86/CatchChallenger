@@ -113,6 +113,29 @@ Tiled::Map *LoadMap::readMap(const QString &tmx)
 
     Tiled::Map *map_ptr = map.get();
 
+    //A template read from the SOURCE tree carries the path of the source copy of
+    //its tilesets. When the generated datapack ships that tileset
+    //(dest/map/tileset/, same file), point the template at THAT copy: the world
+    //tileset of the same file is then found instead of a duplicate being added,
+    //and every written reference stays inside the datapack instead of climbing
+    //out of it (../../../../../tileset/x.tsx).
+    {
+        const QDir stagedDir(QCoreApplication::applicationDirPath()+"/dest/map/tileset/");
+        int tilesetIndex=0;
+        while(tilesetIndex<map_ptr->tilesetCount())
+        {
+            const Tiled::SharedTileset tileset=map_ptr->tilesetAt(tilesetIndex);
+            const QString name=tileset->fileName();
+            if(!name.isEmpty() && QFileInfo(name).isAbsolute())
+            {
+                const QString staged=stagedDir.absoluteFilePath(QFileInfo(name).fileName());
+                if(QFile::exists(staged) && QFileInfo(name).absoluteFilePath()!=staged)
+                    tileset->setFileName(staged);
+            }
+            tilesetIndex++;
+        }
+    }
+
     LoadMap_map_hack.push_back(std::move(map)); //  Hack FIX Libtiled 1.3.x - Tiled::Map is now smart pointer and is deleted automaticaly
 
     return map_ptr; // TODO: Temp, should just propagate smart pointer

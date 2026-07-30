@@ -136,9 +136,16 @@ def main():
         exits = 0
         for tileset in re.findall(r'<tileset[^>]*source="([^"]*)"',
                                   open(path, encoding="utf-8").read()):
-            if not os.path.exists(os.path.normpath(
-                    os.path.join(folder, tileset))):
+            resolved = os.path.normpath(os.path.join(folder, tileset))
+            if not os.path.exists(resolved):
                 problems.append((path, "tileset not shipped: " + tileset))
+            #a reference climbing above map/ resolves to nothing once the
+            #datapack is installed somewhere else
+            elif not os.path.abspath(resolved).startswith(
+                    os.path.abspath(os.path.join(arguments.dest, "map")) +
+                    os.sep):
+                problems.append((path, "tileset OUTSIDE the datapack: " +
+                                 tileset))
         for obj in objects:
             if obj["type"] in ("door", "teleport on it", "teleport on push"):
                 doors += 1
