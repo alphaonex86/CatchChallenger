@@ -77,10 +77,10 @@ DATAPACKS       = _config["paths"]["datapacks"]
 # The geometry-specific channel/move tests (sign/door/road/lava/house/cave/water
 # navigation) validate the OFFICIAL datapack's test-city fixture
 # (CatchChallenger-datapack/map/main/test/: spawn city map 1 @ (15,26), sign at
-# (17,25), west-border road, etc.). They MUST NOT run against datapack-pkmn — the
-# external reference dataset has its own "test" maincode with DIFFERENT map
+# (17,25), west-border road, etc.). They MUST NOT run against an external
+# reference dataset — those have their own "test" maincode with DIFFERENT map
 # geometry (spawn map 7), so every hard-coded coordinate mismatches and the tests
-# false-fail. Gate those tests to the official datapack only. (The datapack-LOAD
+# false-fail. Gate those tests to the project datapack only. (The datapack-LOAD
 # and solo-reach-map tests have no geometry assumption and still run for every
 # datapack.)
 OFFICIAL_DATAPACK_NAME = "CatchChallenger-datapack"
@@ -3200,6 +3200,15 @@ def main():
         remote_filedb_bin = f"{remote_filedb_build}/catchchallenger-server-cli"
 
         try:
+            # A node that is powered off / not started is UNMEASURED, not a
+            # regression — skip it instead of reporting a datapack-rsync FAIL
+            # that only restates the host state (see remote_build.node_unreachable).
+            _why = remote_build.node_unreachable(host, ssh_port)
+            if _why:
+                log_info(f"remote {label} SKIP: node unreachable over SSH "
+                         f"(powered off / not started): {_why}")
+                ri += 1
+                continue
             if dp_src is None:
                 log_fail(f"remote {label}", "no datapack source")
                 ri += 1

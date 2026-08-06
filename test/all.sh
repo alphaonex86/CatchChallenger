@@ -347,6 +347,14 @@ RED='\033[91m'
 CYAN='\033[96m'
 RESET='\033[0m'
 
+# ── keep IN-SOURCE build dirs bounded. Qt Creator builds next to the sources
+# (client/build/Desktop-Debug/, tools/*/build/) and nothing ever trims them —
+# they had grown to 3.7 GB, 2 GB of it .o/.a scratch. Progressive: each dir over
+# budget gives up compiler scratch first and keeps its binaries + CMake state, so
+# the next IDE build is still incremental. Never removes a whole dir (that needs
+# --allow-remove-dir). Touches nothing the harness builds: those live in tmpfs.
+python3 prune_source_build_dirs.py --budget-mb 300 || true
+
 # ── stage every datapack to the local tmpfs cache + each enabled
 # execution_node's persistent cache, in parallel. See stage_datapacks.py
 # / datapack_stage.py / CLAUDE.md "Datapack staging cache". Aborts the

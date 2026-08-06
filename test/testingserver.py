@@ -96,8 +96,8 @@ SERVER_CLIEPO_PRO  = os.path.join(ROOT, "server/cli/catchchallenger-server-cli.p
 # directory is `testing-filedb` (this file's filedb_build also points at
 # it — see Phase A below), so use the same name here. Picking the old
 # qmake path silently broke setup_server_config(): src didn't exist, so
-# no XML patching happened and stale mainDatapackCode="official" leaked
-# into datapack-pkmn runs whose only maincodes are gen2/test.
+# no XML patching happened and a stale mainDatapackCode leaked into runs
+# against another datapack, whose maincodes are named differently.
 SERVER_REF_BUILD   = build_paths.build_path("server/cli/build/testing-filedb")
 SERVER_BIN_NAME    = "catchchallenger-server-cli"
 
@@ -2032,6 +2032,15 @@ def main():
         remote_filedb_bin = f"{remote_filedb_build}/catchchallenger-server-cli"
 
         try:
+            # A node that is powered off / not started is UNMEASURED, not a
+            # regression — skip it instead of reporting a datapack-rsync FAIL
+            # that only restates the host state (see remote_build.node_unreachable).
+            _why = remote_build.node_unreachable(host, ssh_port)
+            if _why:
+                log_info(f"remote {label} SKIP: node unreachable over SSH "
+                         f"(powered off / not started): {_why}")
+                ri += 1
+                continue
             # setup datapack on remote
             dp_src = DATAPACK_SOURCES[0][0] if DATAPACK_SOURCES else None
             if dp_src is None:

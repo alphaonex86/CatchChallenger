@@ -227,19 +227,40 @@ _BARE_SEV_RE = re.compile(r"\|\s*(LOW|MEDIUM|HIGH|CRITICAL)\s*\|", re.I)
 
 
 def _severity_of(eng, finding):
-    """Highest severity in a finding. The engine reads the tagged form
-    SEVERITY(HIGH); a real model often writes the bare column instead
-    ('logic | MEDIUM | fn:35 | ...'), which would otherwise score as untagged and
-    never gate. Fall back to that pipe-delimited column - bounded by the pipes, so
-    the word 'high' inside prose does not match."""
-    sev = eng.finding_severity(finding)
-    if not sev:
-        best = 0
-        for m in _BARE_SEV_RE.finditer(finding):
-            s = m.group(1).upper()
-            if eng._SEV_ORDER[s] > best:
-                best, sev = eng._SEV_ORDER[s], s
-    return sev
+    """Severity a finding gates on.
+
+    A real model writes its verdict as the bare pipe column
+    ('logic | MEDIUM | fn:35 | ...'), then keeps talking. The engine's
+    finding_severity() takes the HIGHEST SEVERITY(...) tag anywhere in the block,
+    so one 'SEVERITY(HIGH)' echoed from the instruction template while the model
+    argues with itself outranked the MEDIUM it had just declared. Every false gate
+    observed so far was exactly that shape - a block whose column says MEDIUM and
+    whose prose wanders into HIGH, including one that concluded "there is no risk
+    of leak because you delete before" and still gated HIGH.
+
+    So the DECLARED column wins when there is one (max across columns, so a block
+    holding several findings still gates on its worst). The tagged form stays the
+    fallback for a block written exactly as instructed - 'CATEGORY(bug) |
+    SEVERITY(HIGH) | ...' has no bare column (the pipes wrap SEVERITY(HIGH), not a
+    bare HIGH), so a properly formatted HIGH still gates.
+
+    Note the adversarial re-check is NOT a substitute here: it confirmed all four
+    of these, which is why the parse itself had to stop over-reading them."""
+    declared = []
+    for m in _BARE_SEV_RE.finditer(finding):
+        declared.append(m.group(1).upper())
+    if declared:
+        sev = max(declared, key=lambda s: eng._SEV_ORDER[s])
+        # A block that rates the SAME function both MEDIUM and HIGH has not
+        # proved anything: HIGH/CRITICAL is reserved for "the shown code PROVES
+        # it - you must be SURE", so contradicting itself is the definition of
+        # not sure. Cap it at MEDIUM instead of gating on its loudest sentence.
+        # A block that says HIGH consistently still gates. The finding is NOT
+        # dropped - it stays in the findings file for a human to read.
+        if len(set(declared)) > 1 and eng._SEV_ORDER[sev] >= eng._SEV_ORDER["HIGH"]:
+            sev = "MEDIUM"
+        return sev
+    return eng.finding_severity(finding)
 
 
 def _ia_review(eng, idx, funcs, opt, failures):

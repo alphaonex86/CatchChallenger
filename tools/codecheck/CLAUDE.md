@@ -74,3 +74,9 @@ scope keeps exactly its flags.
 **NOT `test/codecheck.py`** — that is the all.sh HARNESS self-test of this engine
 (view-size invariant + one smoke call), not the auditor. Running it with `--llm` does
 nothing (it ignores those args). The auditor is THIS `tools/codecheck/codecheck.py`.
+
+**Wrong findings: rule first, `KNOWN_FALSE_POSITIVES` last.** Fix the CLASS by adding a
+`PROJECT_RULES` line (it feeds the reviewer AND the verifier, and is in the verdict-cache
+key, so it re-reviews the tree). Only when both still get one specific claim wrong, add a
+(function, text, why) entry to `KNOWN_FALSE_POSITIVES`: dropped before caching, announced
+on stderr, and it never mutes the rest of that function's findings.

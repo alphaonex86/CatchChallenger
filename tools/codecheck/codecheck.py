@@ -135,13 +135,23 @@ PROJECT_RULES = (
     "parent - a missing delete on a parented object is NOT a leak.\n"
     "* abort() on a failed QObject::connect or a broken internal invariant is "
     "deliberate (a programming error must not continue) - never report it as too "
-    "destructive.\n"
+    "destructive. abort() never returns, so a return/break written after it is a "
+    "deliberate belt-and-braces guard that also keeps compilers quiet: NEVER "
+    "report code after abort() as unreachable or dead.\n"
     "* The Qt clients compute their RESPONSIVE LAYOUT inside paint() (setPos / "
     "setSize / setPixmap / scaling on child items): that is by design - never report "
     "work or state changes done in paint().\n"
     "* Judge ONLY the code you were shown: never assume what an unshown caller, "
     "destructor or overload does, and never propose lambdas, templates or "
-    "std::thread as the fix.\n")
+    "std::thread as the fix.\n"
+    "* C++ lifetime rules, do not re-derive them: binding a CONST REFERENCE to a "
+    "temporary EXTENDS that temporary to the lifetime of the reference "
+    "([class.temporary]/5), so `const std::string &s(f().g());` followed by a "
+    "later `return s;` is WELL-DEFINED, not a dangling reference. A function "
+    "whose return type is a VALUE (`const std::string`, not `const std::string&`) "
+    "always returns a COPY, so it can never hand back a dangling reference. "
+    "Report a dangling reference ONLY when the return TYPE is itself a reference "
+    "or pointer to a local.\n")
 
 # Crisp system prompt for a SMALL model: ONE function, terse structured output.
 # codecheck.py is the GENERAL code-quality reviewer - SECURITY is NOT its job
@@ -857,6 +867,48 @@ _VERIFY_SYS = (
     "Confirm a HIGH/CRITICAL severity only when you are SURE.")
 
 
+#: Findings the reviewer AND the adversarial verifier both get wrong, and that
+#: the shown code PROVES false. Each entry is
+#: (qualified-name substring, finding-text substring, why it is false).
+#: Matched case-insensitively and DROPPED before the verdict is cached, so no
+#: run can gate on it and a warm cache cannot resurrect it.
+#:
+#: Keep this list SHORT and always justified. It is the LAST resort: the first
+#: fix for a wrong finding is a PROJECT_RULES line, which stops the whole class
+#: from being generated (and, being part of the verdict-cache key, re-reviews
+#: the tree). An entry here only buys determinism for one specific claim a
+#: sampling model may still re-derive occasionally.
+KNOWN_FALSE_POSITIVES = (
+    ("QtDatabase::value", "reference to a local temporary",
+     "value() RETURNS BY VALUE and a const& bound to a temporary lives to the "
+     "end of the reference's scope ([class.temporary]/5), so the copy made by "
+     "`return string;` is well-defined - the model even refutes itself twice "
+     "mid-finding before concluding the opposite"),
+)
+
+
+def drop_known_false_positives(fi, findings):
+    """Remove KNOWN_FALSE_POSITIVES entries, announcing each on stderr.
+
+    Announced rather than silently dropped: a suppression that stops being
+    needed (or starts hiding a real defect after a rewrite) has to be visible
+    to the operator, and the console line is how it stays reviewable."""
+    kept = []
+    for f in findings:
+        why = None
+        for name_part, text_part, reason in KNOWN_FALSE_POSITIVES:
+            if (name_part.lower() in (fi.qual_name or "").lower()
+                    and text_part.lower() in f.lower()):
+                why = reason
+                break
+        if why is None:
+            kept.append(f)
+        else:
+            sys.stderr.write("    [known-FP] dropped a finding on %s: %s\n"
+                             % (fi.qual_name, why))
+    return kept
+
+
 def verify_finding(idx, fi, finding, model, ctx=None):
     """One adversarial verify turn -> 'confirmed' / 'rejected' / 'downgrade' /
     'error' (transport failure: the caller decides — a finding is never silently
@@ -1018,7 +1070,7 @@ def audit_function(idx, fi, model=None, system=CHECK_SYSTEM, dry=False, verify=F
                         f, "the adversarial check did not confirm it"))
                 else:
                     checked.append(f)                  # error on a low finding: keep
-    findings = checked
+    findings = drop_known_false_positives(fi, checked)
     if not any(f.startswith("[chat error") for f in findings):
         verdict_put(material, findings)                # don't cache a transient error
     return findings

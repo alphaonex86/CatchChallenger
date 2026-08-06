@@ -25,7 +25,6 @@ the local box and cannot support a hard gate — they would either false-
 positive constantly or force a margin so wide a real regression hides.
 """
 import faulthandler
-import glob
 import json
 import os
 import subprocess
@@ -90,32 +89,50 @@ def run_benchmark(name):
     return proc.returncode
 
 
-def latest_history(bench):
-    """Newest history JSON the benchmark just wrote for the local node."""
-    patt = os.path.join(HISTORY, bench, "local", "local", "*.json")
-    files = glob.glob(patt)
-    if not files:
-        return None
-    return max(files, key=os.path.getmtime)
+def load_history(bench):
+    """(series payload, platform dict) the benchmark just wrote for local.
+
+    Storage is ONE compact series.json per node — a `runs` axis plus one
+    number per metric per run — alongside platform.json, NOT the verbose
+    one-JSON-per-run layout this used to glob (see benchmark/chart_generator.py
+    and the "series.json (one appended number per metric per run)" note in
+    every benchmark<name>.py). Globbing "*.json" and taking the newest mtime
+    picked up platform.json, which carries no results at all, so every metric
+    read back as MISSING while the real numbers sat in series.json.
+
+    Returns (None, {}) when the benchmark wrote no series at all.
+    """
+    hdir = os.path.join(HISTORY, bench, "local", "local")
+    spath = os.path.join(hdir, "series.json")
+    if not os.path.isfile(spath):
+        return None, {}
+    with open(spath) as fh:
+        payload = json.load(fh)
+    platform = {}
+    ppath = os.path.join(hdir, "platform.json")
+    if os.path.isfile(ppath):
+        try:
+            with open(ppath) as fh:
+                platform = json.load(fh)
+        except (OSError, ValueError) as exc:
+            # Host description only (governor/loadavg warnings); a broken
+            # platform.json must not hide the metric comparison below.
+            log(f"  [warn] cannot read {ppath}: {exc}")
+    return payload, platform
 
 
-def extract_metric(record, profiler, metric):
-    """Pull median value for (profiler, metric) out of a history record.
-    Handles profiler="<tool>#<subbench>" by digging into subbenchmarks."""
-    results = record.get("results", {})
-    if "#" in profiler:
-        tool, sub = profiler.split("#", 1)
-        tool_data = results.get(tool, {})
-        sb = tool_data.get("subbenchmarks") or {}
-        cell = sb.get(sub, {})
-        if metric not in cell:
-            return None
-        return cell[metric].get("median")
-    tool_data = results.get(profiler, {})
-    metrics = tool_data.get("metrics") or {}
-    if metric not in metrics:
+def extract_metric(payload, profiler, metric):
+    """Newest value of (profiler, metric) in the columnar series, or None.
+
+    Series keys are "<profiler>.<metric>"; a subbenchmark profiler is stored
+    dot-joined ("rusage.100-players.ticks_per_s"), so the '#' the BASELINES
+    table uses maps onto a '.' here. The last element is the run just made,
+    and each entry is already that run's median."""
+    series = (payload or {}).get("series") or {}
+    values = series.get(f"{profiler.replace('#', '.')}.{metric}")
+    if not values:
         return None
-    return metrics[metric].get("median")
+    return values[-1]
 
 
 def check_benchmark(bench):
@@ -129,20 +146,18 @@ def check_benchmark(bench):
         failures.append(f"{bench}: benchmark script exited {rc}")
         return failures, 0
 
-    hist = latest_history(bench)
-    if hist is None:
-        failures.append(f"{bench}: no history JSON produced under {HISTORY}")
-        return failures, 0
-
     try:
-        with open(hist) as fh:
-            record = json.load(fh)
+        record, platform = load_history(bench)
     except Exception as exc:
-        failures.append(f"{bench}: cannot parse {hist}: {exc}")
+        failures.append(f"{bench}: cannot parse history under {HISTORY}: {exc}")
+        return failures, 0
+    if record is None:
+        failures.append(f"{bench}: no series.json produced under {HISTORY}")
         return failures, 0
 
-    loadavg = record.get("loadavg_1min_at_start")
-    governor = record.get("cpu_governor")
+    # Host fields live in platform.json now, not in the metric series.
+    loadavg = platform.get("loadavg_1min_at_start")
+    governor = platform.get("cpu_governor")
     if governor and governor != "performance":
         log(f"  [warn] cpu_governor={governor!r} (expected 'performance') — "
             f"timing metrics may be skewed; treat any FAIL below with caution.")
