@@ -2623,7 +2623,7 @@ def run_wine_screenshot(exe_path, label, mode, screenshot_path,
         # tiny-map fixture under
         # datapack/map/main/test/ is what the reference PNG was
         # captured from. Without this the in-process server picks
-        # the first directory alphabetically (typically "official"),
+        # the first directory alphabetically (typically "generated"),
         # which renders a completely different scene and breaks the
         # per-pixel diff against the blessed reference.
         args.append("--main-datapack-code=test")
@@ -2764,6 +2764,10 @@ WIN_REAL_USER      = "ASUS"
 WIN_REAL_PORT      = 22
 WIN_REAL_WORK_DIR  = "C:/cc-test"        # forward slashes work in PowerShell
 WIN_REAL_SERVER_PORT = "61920"           # distinct from E2E_PORT / SERVER_PORT
+# The server-gui is configured for ONE maincode, and the datapack is pruned to
+# it before transfer (see the staging block). "generated" is the full game world
+# since "official" was dropped from the datapack.
+WIN_REAL_MAINCODE  = "generated"
 
 _WIN_REAL_CASE_NAMES = (
     "real-win uninstall pre-clean",
@@ -3014,13 +3018,13 @@ def run_on_real_windows(user_installer_exe, win_dp_src):
     # clients require datapack/informations.xml beside the binary
     # (server-gui ignores --datapack-dir; the installer ships no datapack).
     if win_dp_src and os.path.isdir(win_dp_src):
-        # The server-gui is configured for ONE maincode ("official"); stage a
-        # PRUNED datapack (that maincode only) before transfer. scp -r over SSH
-        # pays a per-file round-trip for the datapack's THOUSANDS of small files,
-        # so the full multi-maincode datapack overran the timeout and landed
-        # WITHOUT map/main/official/, aborting the server-gui with "0 file for
-        # datapack loaded main". Pruning to the needed maincode cuts the file
-        # count so the scp completes.
+        # The server-gui is configured for ONE maincode (WIN_REAL_MAINCODE);
+        # stage a PRUNED datapack (that maincode only) before transfer. scp -r
+        # over SSH pays a per-file round-trip for the datapack's THOUSANDS of
+        # small files, so the full multi-maincode datapack overran the timeout
+        # and landed WITHOUT map/main/<maincode>/, aborting the server-gui with
+        # "0 file for datapack loaded main". Pruning to the needed maincode cuts
+        # the file count so the scp completes.
         prune_dir = build_paths.build_path("client/build/real-win-datapack")
         prune_dp = os.path.join(prune_dir, "datapack")
         if os.path.exists(prune_dir):
@@ -3030,7 +3034,7 @@ def run_on_real_windows(user_installer_exe, win_dp_src):
         _mm = os.path.join(prune_dp, "map", "main")
         if os.path.isdir(_mm):
             for _e in os.listdir(_mm):
-                if _e != "official" and os.path.isdir(os.path.join(_mm, _e)):
+                if _e != WIN_REAL_MAINCODE and os.path.isdir(os.path.join(_mm, _e)):
                     shutil.rmtree(os.path.join(_mm, _e), ignore_errors=True)
         # Transfer the datapack as a SINGLE tar, not scp -r: scp -r onto the stock
         # Windows OpenSSH server lands the root files (so datapack-ok=informations.xml
@@ -3089,7 +3093,7 @@ def run_on_real_windows(user_installer_exe, win_dp_src):
         '    <pvp value="true"/>\n'
         '    <automatic_account_creation value="true"/>\n'
         '    <content>\n'
-        '        <mainDatapackCode value="official"/>\n'
+        f'        <mainDatapackCode value="{WIN_REAL_MAINCODE}"/>\n'
         '        <subDatapackCode value=""/>\n'
         '    </content>\n'
         '</configuration>\n'
@@ -3109,15 +3113,15 @@ def run_on_real_windows(user_installer_exe, win_dp_src):
         + srv_props +
         "'@\n"
         "Write-Output (\"datapack-ok=\" + (Test-Path \"$d\\datapack\\informations.xml\"))\n"
-        # Diagnose where the 'official' maincode is lost: in the transferred staging
+        # Diagnose where the maincode is lost: in the transferred staging
         # dir vs the copied destination.
-        "Write-Output (\"cctest-official=\" + (Test-Path 'C:\\cc-test\\datapack\\map\\main\\official'))\n"
-        "Write-Output (\"dest-official=\" + (Test-Path \"$d\\datapack\\map\\main\\official\"))\n"
+        f"Write-Output (\"cctest-maincode=\" + (Test-Path 'C:\\cc-test\\datapack\\map\\main\\{WIN_REAL_MAINCODE}'))\n"
+        f"Write-Output (\"dest-maincode=\" + (Test-Path \"$d\\datapack\\map\\main\\{WIN_REAL_MAINCODE}\"))\n"
     )
     rc_setup, out_setup = _win_ssh(setup_ps, timeout=120)
     log_info("real-win datapack setup: " + " ".join(
         l.strip() for l in out_setup.splitlines()
-        if "official=" in l or "datapack-ok=" in l))
+        if "maincode=" in l or "datapack-ok=" in l))
     if "datapack-ok=True" not in out_setup:
         log_fail(_WIN_REAL_CASE_NAMES[2],
                  f"post-install setup failed (datapack not staged): "
@@ -3413,7 +3417,7 @@ def main():
     # fixture under datapack/map/main/test/) so the rendered scene
     # matches the blessed reference; without an explicit maincode
     # the in-process server picks the first dir alphabetically
-    # ("official") and the screenshot diff fails on every pixel.
+    # ("generated") and the screenshot diff fails on every pixel.
     # References at test/screenshot-windows-<client>-{start,autosolo}.png;
     # the diff mask drops beside the produced PNG on failure.
     if gl_exe is not None and should_run(
@@ -3716,7 +3720,7 @@ def main():
                     # data=02). Mirror what testingmulti seeds.
                     '    <automatic_account_creation value="true"/>\n'
                     '    <content>\n'
-                    '        <mainDatapackCode value="official"/>\n'
+                    f'        <mainDatapackCode value="{WIN_REAL_MAINCODE}"/>\n'
                     '        <subDatapackCode value=""/>\n'
                     '    </content>\n'
                     '</configuration>\n'
