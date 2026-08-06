@@ -72,7 +72,33 @@ int main(int argc, char *argv[])
             return 0;
     }
 
-    //QFontDatabase::addApplicationFont(":/fonts/komika_font.ttf");
+    //Ship the UI font instead of taking whatever the host happens to have.
+    //Qt resolves the default Windows UI font through GDI (Segoe UI, or
+    //MS Shell Dlg -> Tahoma); on a machine without those faces every glyph
+    //rasterises as a .notdef box and the whole interface becomes unreadable
+    //boxes - which is exactly what the Windows build does under a wine prefix
+    //that has no Microsoft core font. qtopengl already bundles its own face
+    //for the same reason. Liberation Sans is SIL Open Font License (so it may
+    //be redistributed with the game) and is metric-compatible with Arial, so
+    //the point sizes the .ui files set lay out as they were designed.
+    //Only the FAMILY is replaced: size and weight stay whatever Qt picked.
+    {
+        const int fontId=QFontDatabase::addApplicationFont(":/fonts/LiberationSans-Regular.ttf");
+        if(fontId<0)
+            std::cerr << "Unable to load the bundled UI font, keeping the system font" << std::endl;
+        else
+        {
+            const QStringList &families=QFontDatabase::applicationFontFamilies(fontId);
+            if(families.isEmpty())
+                std::cerr << "Bundled UI font exposes no family, keeping the system font" << std::endl;
+            else
+            {
+                QFont appFont=QApplication::font();
+                appFont.setFamily(families.first());
+                QApplication::setFont(appFont);
+            }
+        }
+    }
 
     LanguagesSelect::languagesSelect=new LanguagesSelect();
     MainWindow w;
