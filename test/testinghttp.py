@@ -566,24 +566,19 @@ def _ensure_reference_build():
     if os.path.isdir(_stale_db):
         shutil.rmtree(_stale_db, ignore_errors=True)
     # pick a COMPLETE mainDatapackCode present in the staged datapack. Prefer
-    # the canonical harness maincode "test" (small + complete), then "official"
-    # (full game content); avoid "generated" — the tileset-tagger's output
-    # folder is intentionally incomplete (missing bot steps / monster sprites)
-    # and would make the client bail before receiving the httpDatapackMirror.
+    # the canonical harness maincode "test" (small + complete), then "generated"
+    # (the full game world, map-procedural-generation's output — it replaced
+    # "official", which was dropped from the datapack).
     map_main = os.path.join(dst, "map", "main")
     if os.path.isdir(map_main):
         codes = sorted(d for d in os.listdir(map_main)
                        if os.path.isdir(os.path.join(map_main, d)))
         if "test" in codes:
             maincode = "test"
-        elif "official" in codes:
-            maincode = "official"
-        else:
-            preferred = [c for c in codes if c != "generated"]
-            if preferred:
-                maincode = preferred[0]
-            elif codes:
-                maincode = codes[0]
+        elif "generated" in codes:
+            maincode = "generated"
+        elif codes:
+            maincode = codes[0]
     # ensure server-properties.xml exists (seed if missing) then FORCE the
     # chosen maincode + automatic_account_creation + pinned port. Forcing the
     # maincode every run (not just seed-when-missing) makes the served datapack
