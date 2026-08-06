@@ -10,7 +10,7 @@ CustomButton::CustomButton(QString pix,QGraphicsItem *parent) :
     textPath=nullptr;
 
     font=new QFont();
-    font->setFamily("Comic Sans MS");
+    font->setFamily("Comic Relief");
     font->setPixelSize(35);
     font->setStyleHint(QFont::Monospace);
     font->setBold(true);

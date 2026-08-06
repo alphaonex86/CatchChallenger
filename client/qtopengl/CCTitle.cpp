@@ -10,7 +10,7 @@ CCTitle::CCTitle(QGraphicsItem *parent) :
     textPath=nullptr;
 
     font=new QFont();
-    font->setFamily("Comic Sans MS");
+    font->setFamily("Comic Relief");
     font->setPixelSize(25);
     font->setStyleHint(QFont::Monospace);
     font->setBold(true);

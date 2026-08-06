@@ -53,7 +53,7 @@ void MultiItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidg
         return;
 
     QFont font;
-    font.setFamily("Comic Sans MS");
+    font.setFamily("Comic Relief");
     font.setPixelSize(25);
     font.setStyleHint(QFont::Monospace);
     font.setBold(true);
