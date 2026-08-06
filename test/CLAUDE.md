@@ -402,3 +402,27 @@ Both appended under `O_APPEND + flock(LOCK_EX)`. `failed.json` lock-guarded with
 **Out of bounds:** no deletion of test cases; no widening image tolerances; no skipping slow nodes; no new `time.sleep(N)` (replace with event/poll on actual signal); no mock-swapping; new parallelism must be JSON-safe (`flock`) and lock-safe (`failed_cases._Locked`, `phase_timer` flock); compile stays under `nice -n 19 ionice -c 3`.
 
 **Post-run review** after every full `all.sh` (or `--continue` round once green): top-N slowest phases (`jq -r 'select(.kind=="phase") | "\(.dt) \(.name)"' <tmpfs>/time.json | sort -rn | head -20`); cross-check `monitor.json`. Simple low-risk wins (parallelise loop, swap sleep for poll, cache recomputed value, add `-j$(nproc)`, drop redundant `rsync --checksum`) land same session. Touching test cases/assertions/tolerances/ports/features → STOP, ask operator.
+
+## In-source build dirs — `prune_source_build_dirs.py`
+
+Qt Creator builds NEXT to the sources (`client/build/Desktop-Debug/`,
+`tools/*/build/`) and nothing trimmed them: 3.7 GB, 2 GB of it `.o`/`.a`.
+all.sh runs the pruner at startup (budget 300 MB/dir). PROGRESSIVE, cheapest to
+REGENERATE first: **linked binaries** (measured: relinking a 184 MB client with its
+.o present took 2 s), then `.a`, and only last the `.o` scratch (a full recompile
+to get back). Stops as soon as it fits. Keeping a binary while its .o are gone is
+dead weight — that is why binaries go first and the scratch is kept.
+Whole-dir removal is tier 4 and needs `--allow-remove-dir`. `--dry-run` reports
+without deleting. A candidate must be NAMED like a build dir AND hold CMake/qmake
+state. Harness builds are unaffected (they live in tmpfs).
+
+Also AGE-aware (`--stale-days`, default 14): a dir nobody has built in that long
+gives up its scratch even when UNDER budget — the only reason to keep .o is a fast
+incremental rebuild and that value has expired. Dirs idle 46-61 d were holding
+380 MB of .o purely because each was individually small enough to pass the budget
+test. All passes together: 3734 MB -> 541 MB.
+
+CAUTION for tier 4: some build dirs also hold GENERATED OUTPUT, not just
+artifacts — `map-procedural-generation-terrain/build` carries 247 MB of `.tmx`.
+Tiers 1-3 never touch it; `--allow-remove-dir` would. The generators should
+really write outside the build dir.

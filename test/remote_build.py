@@ -665,6 +665,39 @@ def _host_address(host):
     return host
 
 
+def node_unreachable(host, port, control_path=None):
+    """Reason string when the node cannot be reached over SSH, else None.
+
+    The return value is truthy exactly when the node is unreachable, so
+    callers can use it both as a predicate and as the text to report.
+
+    Only a CONNECTION-level failure counts as unreachable: rc 255 is ssh's
+    OWN failure code ("No route to host", "Connection refused", "Connection
+    timed out", "Could not resolve hostname"), or the connect itself timed
+    out. A command that actually RUNS on a reachable node returns that
+    command's rc, never 255 — so a genuine remote error is never mistaken
+    for an offline box.
+
+    Same rule datapack_stage.py and testingremote.py already apply: a node
+    that is powered off (bench hardware) or not started (LXC container) is
+    UNMEASURED, not a regression, so callers report it as a SKIP rather
+    than turning a host-state problem into a red test.
+
+    ssh also exits 255 on an AUTH failure ("Permission denied (publickey)"),
+    which is a real configuration problem rather than an offline box — so
+    the reason is carried back to the console instead of being swallowed,
+    letting the operator tell the two apart at a glance.
+    """
+    rc, out = _ssh_cmd(host, port, "true", timeout=10,
+                       control_path=control_path)
+    if not (rc == 255 or _ch.is_ssh_timeout(out)):
+        return None
+    if _ch.is_ssh_timeout(out):
+        return "ssh connect TIMEOUT"
+    lines = [l.strip() for l in (out or "").splitlines() if l.strip()]
+    return lines[-1] if lines else "ssh rc=255 (no output)"
+
+
 def _rsync_to_remote(host, port, remote_dir, control_path=None):
     rsync_dest = _rsync_host(host)
     # Ensure parent dir + sources/ leaf exist (rsync creates the leaf
@@ -971,6 +1004,17 @@ def _run_server(label, host, port, use_mold, extra_defines, has_gui,
     """
     cp = _open_ssh_master(host, port, f"compile phase on {label} ({len(pro_files)} pro file(s))")
     try:
+        # An offline compile node is a host-state fact, not a code regression:
+        # report it as a skip so the whole matrix does not go red because a
+        # container was not started (see node_unreachable).
+        why = node_unreachable(host, port, control_path=cp)
+        if why:
+            with lock:
+                results_list.append(
+                    (f"rsync SKIP {label} ({host})", True,
+                     f"node unreachable over SSH — node skipped, nothing "
+                     f"compiled on it: {why}"))
+            return
         ok, out = _rsync_to_remote(host, port, remote_dir, control_path=cp)
         if not ok:
             with lock:
@@ -1193,7 +1237,7 @@ REF_SERVER_PROPS = build_paths.build_path(
 def _detect_maincode(datapack_src):
     """Pick a maincode from the datapack's map/main/ subdirectories.
 
-    Prefer "test" when present — it has ~17 maps vs ~400 for "official", so
+    Prefer "test" when present — it has ~17 maps vs ~617 for "generated", so
     a remote MIPS server can finish parsing in a reasonable timeout. Falls
     back to the first alphabetical maincode otherwise."""
     map_main = os.path.join(datapack_src, "map", "main")
@@ -1335,8 +1379,8 @@ def setup_remote_server_runtime(host, ssh_port, build_dir, datapack_src,
     maincode = _detect_maincode(datapack_src)
     xml = _patch_server_xml(xml, maincode, game_port)
     #prune map/main/<other_maincode> on the remote so the server only parses
-    #the chosen maincode's maps. CatchChallenger-datapack ships ~400 maps
-    #under map/main/official; on slow nodes (MIPS) parsing them all blows
+    #the chosen maincode's maps. CatchChallenger-datapack ships ~617 maps
+    #under map/main/generated; on slow nodes (MIPS) parsing them all blows
     #through the SERVER_READY_TIMEOUT before "correctly bind:" is reached.
     map_main = f"{build_dir}/datapack/map/main"
     prune_cmd = (
@@ -2019,6 +2063,11 @@ def run_remote_autosolo_phase(node, datapack_src, maincode=None, diag=None):
     cp = _open_ssh_master(host, ssh_port,
                           f"solo phase on {label} (autosolo for both clients)")
     try:
+        why = node_unreachable(host, ssh_port, control_path=cp)
+        if why:
+            results.append((f"solo SKIP {label}", True,
+                            f"node unreachable over SSH — node skipped: {why}"))
+            return results
         ok, out = _rsync_to_remote(host, ssh_port, remote_dir, control_path=cp)
         if not ok:
             results.append((f"solo {label}: rsync source", False,

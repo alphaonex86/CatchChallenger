@@ -6,8 +6,8 @@ Tests the catchchallenger-gateway binary under valgrind memcheck:
 
   1. Build server-cli (file-db backend), gateway, qtcpu800x600 client
      all with -std=c++11.
-  2. For each datapack in (CatchChallenger-datapack, datapack-pkmn) and
-     for each maincode + subcode combination found under map/main/<mc>/sub/<sc>/:
+  2. For each datapack root configured in paths.datapacks and for each
+     maincode + subcode combination found under map/main/<mc>/sub/<sc>/:
        For each (dest_http, gateway_http) in {0,1}^2:
          - Stage the datapack at the backend's build/datapack symlink.
          - Start an nginx instance (managed by this script) serving the
@@ -56,26 +56,46 @@ with open(_CONFIG_PATH, "r") as _f:
 ROOT  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NPROC = str(multiprocessing.cpu_count())
 
-# Two datapacks the user explicitly listed. Hard-coded paths per request;
-# config.json's `paths.datapacks` may also point here but we trust the
-# user-provided absolute paths.
-DATAPACKS = [
-    "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack",
-    "/home/user/Desktop/CatchChallenger/datapack-pkmn",
-]
+# Datapack roots come from the out-of-repo config (paths.datapacks): the
+# operator's local reference datasets are NOT part of this project, so neither
+# their names nor their paths belong in git history. The PROJECT datapack is the
+# one whose folder is CatchChallenger-datapack; every other entry is treated as
+# an external reference dataset.
+DATAPACKS = _config.get("paths", {}).get("datapacks", [])
+PROJECT_DATAPACK_NAME = "CatchChallenger-datapack"
 
-# datapack-pkmn is a large EXTERNAL reference dataset (NOT part of this project).
-# Its full maincode×subcode×http matrix is INFEASIBLE under the 15m all.sh cap:
-# each large converted datapack legitimately syncs over the gateway in ~46-54s
-# (measured: every firered case reaches the map, valgrind-clean, at a 150s cap —
-# a slow path, NOT the 0xA1→0x75 hang the old 30s cap assumed), and 48 such cases
-# ≈ 56 min. So for datapack-pkmn we SMOKE the gateway's large-converted-datapack
-# handling with the representative 'firered' base maincode across all 4 http
-# combos, and gate real regressions on the FULL CatchChallenger-datapack matrix
-# (which stays under the tight 30s per-case cap). The over-protocol pkmn sync gets
-# a generous per-case cap (see run_client).
-PKMN_GATEWAY_MAINCODES = {"firered"}
-PKMN_CLIENT_TIMEOUT    = 90
+
+def is_external_datapack(datapack):
+    """True for an operator reference dataset (anything but the project one)."""
+    return os.path.basename(os.path.normpath(datapack)) != PROJECT_DATAPACK_NAME
+
+
+# An external reference dataset is large, and its full maincode×subcode×http
+# matrix is INFEASIBLE under the 15m all.sh cap: each large converted datapack
+# legitimately syncs over the gateway in ~51-113s (measured: every case reaches
+# the map, valgrind-clean, at a 150s cap — a slow path, NOT the 0xA1→0x75 hang
+# the old 30s cap assumed), and 48 such cases ≈ 56 min. So for an external
+# datapack we SMOKE the gateway's large-converted-datapack handling with its
+# FIRST base maincode (enumerate_main_sub sorts, so the pick is deterministic)
+# across all 4 http combos, and gate real regressions on the FULL project
+# datapack matrix (which stays under the tight 30s per-case cap). The
+# over-protocol sync of an external datapack gets a generous per-case cap
+# (see run_client).
+# 90 was calibrated on 2026-06-13 against the external dataset as it existed
+# THEN. It was regenerated since (7060 of its 12607 files are newer than that
+# date), so the smoke case now moves more data and the tightest combo overran
+# the cap — a bigger workload, NOT a hang or a protocol regression.
+# Re-measured on an idle host, every case reaches the map and is valgrind-clean:
+#   dest_http=0 gw_http=0  113.3 s   <- pure protocol: the whole datapack is
+#                                       pulled THROUGH the gateway packet by
+#                                       packet, so it is by far the slowest
+#   dest_http=0 gw_http=1   51.6 s
+#   dest_http=1 gw_http=0   59.5 s
+#   dest_http=1 gw_http=1   51.3 s
+# 150 restores the cap this path was originally measured PASS at (see above) and
+# leaves ~32% margin over the slowest case. The whole script then runs in ~640 s,
+# still comfortably inside its 15 min harness cap.
+EXTERNAL_CLIENT_TIMEOUT = 150
 
 SERVER_FILEDB_PRO = os.path.join(ROOT, "server/cli/catchchallenger-server-filedb.pro")
 GATEWAY_PRO       = os.path.join(ROOT, "server/gateway/gateway.pro")
@@ -522,18 +542,16 @@ def stage_gateway_datapack(datapack_src):
     backend says are stale (`if(remove(mDatapackBase+'/'+name)!=0)`)
     and writeNewFileBase/Main/Sub open files with `fopen("wb")` —
     truncating writes. With a symlink in place, those deletes and
-    overwrites resolve into the SOURCE datapack at
-    /home/user/Desktop/CatchChallenger/{CatchChallenger-datapack,
-    datapack-pkmn}/ and corrupt the operator's tree (e.g. switching
-    cases from CC-datapack/test → datapack-pkmn/gen2 deletes every
-    CC file the backend's pkmn list doesn't mention, then writes
-    pkmn content over it — both source datapacks end up
-    half-merged). The backend reads only, so stage_backend_datapack
-    can still use a symlink.
+    overwrites resolve into the SOURCE datapack roots (paths.datapacks)
+    and corrupt the operator's tree (e.g. switching cases from one
+    datapack's maincode to another's deletes every file the backend's
+    list for the new one does not mention, then writes the new content
+    over it — both source datapacks end up half-merged). The backend
+    reads only, so stage_backend_datapack can still use a symlink.
 
     Copy lives under GATEWAY_BUILD (tmpfs), so the per-case wipe at
     test/all.sh end and the in-process rmtree+copytree below cost
-    less than a second for the 36 MB pkmn datapack."""
+    less than a second for a 36 MB datapack."""
     link = os.path.join(GATEWAY_BUILD, "datapack")
     if os.path.islink(link) or os.path.exists(link):
         try:
@@ -743,14 +761,14 @@ def run_client(label):
     env["QT_QPA_PLATFORM"] = "offscreen"
     # Per-operator policy: hard 30 s cap on the client→map phase for the PROJECT
     # datapack — it syncs in <30 s, so anything past that there IS a hang/regression.
-    # The large EXTERNAL datapack-pkmn datapacks legitimately need ~46-54 s to sync
+    # A large EXTERNAL reference datapack legitimately needs ~46-54 s to sync
     # the full file list over the gateway (measured PASS at 150 s, valgrind-clean),
-    # so a datapack-pkmn case gets the generous PKMN_CLIENT_TIMEOUT. An explicit
+    # so such a case gets the generous EXTERNAL_CLIENT_TIMEOUT. An explicit
     # CC_GW_CLIENT_TIMEOUT overrides both (diagnosis).
     if "CC_GW_CLIENT_TIMEOUT" in os.environ:
         timeout = clamp_local(CLIENT_TIMEOUT)
-    elif "datapack-pkmn" in label:
-        timeout = clamp_local(PKMN_CLIENT_TIMEOUT)
+    elif not label.startswith(PROJECT_DATAPACK_NAME + "/"):
+        timeout = clamp_local(EXTERNAL_CLIENT_TIMEOUT)
     else:
         timeout = clamp_local(CLIENT_TIMEOUT)
     cmd = NICE_PREFIX + [binary] + args
@@ -900,14 +918,15 @@ def main():
             log_fail(f"datapack {os.path.basename(dp)}",
                      "no maincode found under map/main/")
             continue
-        is_pkmn = os.path.basename(dp) == "datapack-pkmn"
+        is_external = is_external_datapack(dp)
+        external_smoke = combos[0][0] if combos else ""
         ci = 0
         while ci < len(combos):
             mc, sc = combos[ci]
             ci += 1
-            # External datapack-pkmn: smoke only the representative base maincode
-            # (full matrix infeasible under the 15m cap — see PKMN_GATEWAY_MAINCODES).
-            if is_pkmn and (mc not in PKMN_GATEWAY_MAINCODES or sc):
+            # External reference dataset: smoke only its FIRST base maincode
+            # (full matrix infeasible under the 15m cap — see the note above).
+            if is_external and (mc != external_smoke or sc):
                 continue
             for dest_http in (0, 1):
                 for gw_http in (0, 1):
@@ -915,7 +934,7 @@ def main():
 
     # Diagnostic focus: CC_GW_ONLY=<substr> runs only the cases whose
     # "<datapackname>/<maincode>" contains the substring (e.g.
-    # CC_GW_ONLY=datapack-pkmn/firered). No effect when unset.
+    # CC_GW_ONLY=CatchChallenger-datapack/test). No effect when unset.
     _only = os.environ.get("CC_GW_ONLY", "")
     if _only:
         plan = [p for p in plan
