@@ -59,6 +59,17 @@ public:
 
     static unsigned int floatToHigh(const float f);
     static unsigned int floatToMoisure(const float f);
+    //dest/map/main/official/tileset/: the tileset dir SHIPPED with the generated
+    //maps, the only one a written reference ever points at
+    static QString shippedTilesetDir();
+    //the run staging pool holding <fileName> (dest/map/tileset/, then the
+    //dest/map/main/tileset/ the settings paths use), empty when neither has it
+    static QString pooledTileset(const QString &fileName);
+    //copy a tileset (the tsx and the images it references) into destinationDir
+    static bool copyTilesetWithImages(const QString &sourceTsx,const QString &destinationDir);
+    //ship a tileset next to the generated maps and return the absolute path of
+    //that copy, empty when the source does not exist
+    static QString shipTileset(const QString &tsxPath);
     static Tiled::Tileset *readTileset(const QString &tsx,Tiled::Map *tiledMap);
     static Tiled::Tileset *readTilesetWithTileId(const uint32_t &tile,const QString &tsx,Tiled::Map *tiledMap);
     static Tiled::Map *readMap(const QString &tmx);

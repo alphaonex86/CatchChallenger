@@ -32,7 +32,6 @@
 #include <QJsonParseError>
 #include <QTextStream>
 
-#include <cstring>
 #include <iostream>
 
 std::map<std::string,LoadMapAll::BuildingGroup> LoadMapAll::buildingGroups;
@@ -369,46 +368,11 @@ Tiled::SharedTileset LoadMapAll::stageTemplateTileset(Tiled::Map &worldMap,const
     const QString destinationDir=QCoreApplication::applicationDirPath()+"/dest/map/tileset/";
     const QString destination=destinationDir+source.fileName();
     if(!QFile::exists(destination))
-    {
-        QDir().mkpath(destinationDir);
-        //the tsx references its image relatively, so the image goes next to it
-        QFile tsxFile(source.absoluteFilePath());
-        if(!tsxFile.open(QFile::ReadOnly))
+        if(!LoadMap::copyTilesetWithImages(source.absoluteFilePath(),destinationDir))
         {
-            std::cerr << "Unable to read the template tileset " << source.absoluteFilePath().toStdString() << std::endl;
+            std::cerr << "Unable to stage the template tileset " << source.absoluteFilePath().toStdString() << std::endl;
             abort();
         }
-        const QString content=QString::fromUtf8(tsxFile.readAll());
-        tsxFile.close();
-        int imageIndex=content.indexOf("<image source=\"");
-        while(imageIndex>=0)
-        {
-            const int start=imageIndex+(int)strlen("<image source=\"");
-            const int end=content.indexOf("\"",start);
-            if(end>start)
-            {
-                const QString image=content.mid(start,end-start);
-                const QString imageSource=QFileInfo(source.absolutePath()+"/"+image).absoluteFilePath();
-                const QString imageDestination=destinationDir+QFileInfo(image).fileName();
-                if(!QFile::exists(imageDestination))
-                {
-                    if(!QFile::copy(imageSource,imageDestination))
-                    {
-                        std::cerr << "Unable to stage the tileset image " << imageSource.toStdString()
-                                  << " into " << imageDestination.toStdString() << std::endl;
-                        abort();
-                    }
-                }
-            }
-            imageIndex=content.indexOf("<image source=\"",imageIndex+1);
-        }
-        if(!QFile::copy(source.absoluteFilePath(),destination))
-        {
-            std::cerr << "Unable to stage the tileset " << source.absoluteFilePath().toStdString()
-                      << " into " << destination.toStdString() << std::endl;
-            abort();
-        }
-    }
     //already in the world?
     int tilesetIndex=0;
     while(tilesetIndex<worldMap.tilesetCount())

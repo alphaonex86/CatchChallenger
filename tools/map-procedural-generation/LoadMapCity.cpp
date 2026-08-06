@@ -133,17 +133,17 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
 
         nextHopMap->setProperties(Tiled::Properties());
         //MapWriter writes each tileset relative to the file it is writing, from
-        //the tileset's own fileName: point them at the STAGED copy (absolute)
-        //so the reference stays inside the datapack, then put them back.
+        //the tileset's own fileName: point them at the SHIPPED copy (absolute)
+        //so the reference stays inside the generated label, then put them back.
         std::vector<std::pair<Tiled::Tileset *,QString> > tilesetNames;
         {
             int tilesetIndex=0;
             while(tilesetIndex<nextHopMap->tilesetCount())
             {
                 Tiled::Tileset * const tileset=nextHopMap->tilesetAt(tilesetIndex).get();
-                const QString staged=QCoreApplication::applicationDirPath()+"/dest/map/tileset/"+
-                                     QFileInfo(tileset->fileName()).fileName();
-                if(!tileset->fileName().isEmpty() && QFile::exists(staged))
+                const QString staged=LoadMap::shipTileset(
+                            LoadMap::pooledTileset(QFileInfo(tileset->fileName()).fileName()));
+                if(!tileset->fileName().isEmpty() && !staged.isEmpty())
                 {
                     tilesetNames.push_back(std::pair<Tiled::Tileset *,QString>(tileset,tileset->fileName()));
                     tileset->setFileName(staged);

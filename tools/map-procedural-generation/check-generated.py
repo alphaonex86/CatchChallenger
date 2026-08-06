@@ -139,13 +139,14 @@ def main():
             resolved = os.path.normpath(os.path.join(folder, tileset))
             if not os.path.exists(resolved):
                 problems.append((path, "tileset not shipped: " + tileset))
-            #a reference climbing above map/ resolves to nothing once the
-            #datapack is installed somewhere else
+            #the generated tree is ONE map label, copied alone into a datapack
+            #(map/main/<label>/): a reference climbing above it resolves to a
+            #tileset the target datapack is not required to own, and the map
+            #then loads with no tileset at all
             elif not os.path.abspath(resolved).startswith(
-                    os.path.abspath(os.path.join(arguments.dest, "map")) +
-                    os.sep):
-                problems.append((path, "tileset OUTSIDE the datapack: " +
-                                 tileset))
+                    os.path.abspath(root) + os.sep):
+                problems.append((path, "tileset OUTSIDE the generated map "
+                                 "label: " + tileset))
         for obj in objects:
             if obj["type"] in ("door", "teleport on it", "teleport on push"):
                 doors += 1
