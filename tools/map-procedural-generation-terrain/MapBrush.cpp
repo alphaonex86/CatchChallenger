@@ -157,7 +157,11 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(Tiled::Map *templateMap,Ti
         }
     }
     {
-        uint8_t templateTilesetIndex=0;
+        //int, NOT uint8_t: tilesetCount() is an int, and a 8 bit counter wraps at
+        //255 into an ENDLESS loop instead of ending. A tileset pairing that stops
+        //matching pushes the world past 255 tilesets, and the generator then spins
+        //for ever eating memory instead of reporting anything.
+        int templateTilesetIndex=0;
         while(templateTilesetIndex<templateMap->tilesetCount())
         {
             Tiled::SharedTileset tileset=templateMap->tilesetAt(templateTilesetIndex);
@@ -166,7 +170,7 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(Tiled::Map *templateMap,Ti
 
             QFileInfo tilesetFile(tileset->fileName());
             QString tilesetPath=tilesetFile.absoluteFilePath();
-            uint8_t templateTilesetWorldIndex=0;
+            int templateTilesetWorldIndex=0;
             //search into current tileset
             while(templateTilesetWorldIndex<worldMap.tilesetCount())
             {

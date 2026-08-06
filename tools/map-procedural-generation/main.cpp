@@ -2,6 +2,7 @@
 #include <QSettings>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QFileInfo>
 #include <QDir>
 #include <iostream>
 #include <algorithm>
@@ -9,6 +10,7 @@
 #include <libtiled/mapwriter.h>
 #include <libtiled/mapobject.h>
 #include <libtiled/objectgroup.h>
+#include <libtiled/tileset.h>
 
 #include "../map-procedural-generation-terrain/znoise/headers/Simplex.hpp"
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"
@@ -364,7 +366,36 @@ int main(int argc, char *argv[])
                 tiledMap.setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
 #endif
 
-                if(!maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/main/official/all.tmx"))
+                //same rule as the chunks: point every tileset at the copy shipped
+                //inside the label, so this dump too stays readable once the folder
+                //is copied into a datapack. Restored right after, the world map is
+                //still the source of the chunks.
+                std::vector<std::pair<Tiled::Tileset *,QString> > tilesetNames;
+                {
+                    int tilesetIndex=0;
+                    while(tilesetIndex<tiledMap.tilesetCount())
+                    {
+                        Tiled::Tileset * const tileset=tiledMap.tilesetAt(tilesetIndex).get();
+                        const QString shipped=LoadMap::shipTileset(
+                                    LoadMap::pooledTileset(QFileInfo(tileset->fileName()).fileName()));
+                        if(!tileset->fileName().isEmpty() && !shipped.isEmpty())
+                        {
+                            tilesetNames.push_back(std::pair<Tiled::Tileset *,QString>(tileset,tileset->fileName()));
+                            tileset->setFileName(shipped);
+                        }
+                        tilesetIndex++;
+                    }
+                }
+                const bool allWritten=maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/main/official/all.tmx");
+                {
+                    unsigned int restoreIndex=0;
+                    while(restoreIndex<tilesetNames.size())
+                    {
+                        tilesetNames.at(restoreIndex).first->setFileName(tilesetNames.at(restoreIndex).second);
+                        restoreIndex++;
+                    }
+                }
+                if(!allWritten)
                 {
                     std::cerr << "Unable to write " << QCoreApplication::applicationDirPath().toStdString() << "/dest/map/main/official/all.tmx" << std::endl;
                     abort();

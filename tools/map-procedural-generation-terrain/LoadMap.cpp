@@ -50,13 +50,104 @@ unsigned int LoadMap::floatToMoisure(const float f)
         return 6;
 }
 
+QString LoadMap::shippedTilesetDir()
+{
+    return QCoreApplication::applicationDirPath()+"/dest/map/main/official/tileset/";
+}
+
+QString LoadMap::pooledTileset(const QString &fileName)
+{
+    const QString pool=QCoreApplication::applicationDirPath()+"/dest/map/tileset/"+fileName;
+    if(QFile::exists(pool))
+        return pool;
+    const QString mainPool=QCoreApplication::applicationDirPath()+"/dest/map/main/tileset/"+fileName;
+    if(QFile::exists(mainPool))
+        return mainPool;
+    return QString();
+}
+
+bool LoadMap::copyTilesetWithImages(const QString &sourceTsx,const QString &destinationDir)
+{
+    const QFileInfo source(sourceTsx);
+    if(!QDir().mkpath(destinationDir))
+    {
+        std::cerr << "Unable to create " << destinationDir.toStdString() << std::endl;
+        return false;
+    }
+    QFile tsxFile(source.absoluteFilePath());
+    if(!tsxFile.open(QFile::ReadOnly))
+    {
+        std::cerr << "Unable to read the tileset " << source.absoluteFilePath().toStdString() << std::endl;
+        return false;
+    }
+    const QString content=QString::fromUtf8(tsxFile.readAll());
+    tsxFile.close();
+    //the tsx references its image relatively, so the image goes next to it
+    int imageIndex=content.indexOf("<image source=\"");
+    while(imageIndex>=0)
+    {
+        const int start=imageIndex+(int)QString("<image source=\"").size();
+        const int end=content.indexOf("\"",start);
+        if(end>start)
+        {
+            const QString image=content.mid(start,end-start);
+            const QString imageSource=QFileInfo(source.absolutePath()+"/"+image).absoluteFilePath();
+            const QString imageDestination=destinationDir+QFileInfo(image).fileName();
+            if(!QFile::exists(imageDestination))
+                if(!QFile::copy(imageSource,imageDestination))
+                {
+                    std::cerr << "Unable to copy the tileset image " << imageSource.toStdString()
+                              << " into " << imageDestination.toStdString() << std::endl;
+                    return false;
+                }
+        }
+        imageIndex=content.indexOf("<image source=\"",imageIndex+1);
+    }
+    const QString destination=destinationDir+source.fileName();
+    if(!QFile::exists(destination))
+        if(!QFile::copy(source.absoluteFilePath(),destination))
+        {
+            std::cerr << "Unable to copy the tileset " << source.absoluteFilePath().toStdString()
+                      << " into " << destination.toStdString() << std::endl;
+            return false;
+        }
+    return true;
+}
+
+//The generated maps are ONE datapack map label: the owner copies
+//dest/map/main/official/ into map/main/<label>/ of a datapack, and that datapack
+//does not have to own the tilesets the generator uses (it holds none of the
+//gym/heal/shop/house sheets the tool ships). So the label carries its OWN
+//tileset/ dir and every written reference points there (tileset/x.tsx next to
+//the maps); the label folder is then self-contained and copyable ANYWHERE, and
+//map/tileset/ of the target datapack is never written. dest/map/tileset/ and
+//dest/map/main/tileset/ stay the RUN STAGING pool where the datapack tilesets
+//(--datapack) and the tool ones are collected, and only what a map really
+//references is shipped out of it.
+QString LoadMap::shipTileset(const QString &tsxPath)
+{
+    const QFileInfo source(tsxPath);
+    const QString destination=shippedTilesetDir()+source.fileName();
+    if(QFileInfo(destination).absoluteFilePath()==source.absoluteFilePath())
+        return destination;
+    if(!QFile::exists(destination))
+    {
+        if(!QFile::exists(source.absoluteFilePath()))
+            return QString();
+        if(!copyTilesetWithImages(source.absoluteFilePath(),shippedTilesetDir()))
+            abort();
+    }
+    return destination;
+}
+
 Tiled::Tileset *LoadMap::readTileset(const QString &tsx,Tiled::Map *tiledMap)
 {
     QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
 
-    //canonical datapack tileset dir is map/tileset/; map/main/tileset/ is only a
-    //run-staging convenience (settings paths) and does not exist in the final
-    //datapack — written map references must point at the canonical copy
+    //dest/map/tileset/ is the canonical pool dir; map/main/tileset/ is only a
+    //run-staging convenience (settings paths). The world keeps the POOL path:
+    //what a map really uses is shipped into the label at WRITE time (shipTileset),
+    //so a tileset no generated map references is never shipped.
     QString tsxResolved=tsx;
     if(tsxResolved.startsWith("main/tileset/"))
     {
@@ -114,11 +205,10 @@ Tiled::Map *LoadMap::readMap(const QString &tmx)
     Tiled::Map *map_ptr = map.get();
 
     //A template read from the SOURCE tree carries the path of the source copy of
-    //its tilesets. When the generated datapack ships that tileset
-    //(dest/map/tileset/, same file), point the template at THAT copy: the world
-    //tileset of the same file is then found instead of a duplicate being added,
-    //and every written reference stays inside the datapack instead of climbing
-    //out of it (../../../../../tileset/x.tsx).
+    //its tilesets. When the run staging pool holds that tileset (dest/map/tileset/,
+    //same file), point the template at THAT copy: the world tileset of the same
+    //file is then found instead of a duplicate being added (MapBrush pairs them by
+    //path), and the written reference is computed from the pool copy.
     {
         const QDir stagedDir(QCoreApplication::applicationDirPath()+"/dest/map/tileset/");
         int tilesetIndex=0;
@@ -370,7 +460,12 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
 
     //add invisible tileset
     QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
-    QString tilesetPath(QFileInfo(QCoreApplication::applicationDirPath()+"/dest/map/main/tileset/invisible.tsx").absoluteFilePath());
+    const QString tilesetPath=pooledTileset("invisible.tsx");
+    if(tilesetPath.isEmpty())
+    {
+        std::cerr << "invisible.tsx not staged, neither in dest/map/tileset/ nor in dest/map/main/tileset/" << std::endl;
+        abort();
+    }
     Tiled::MapReader reader;
     Tiled::SharedTileset tilesetBase=reader.readTileset(tilesetPath);
     if(tilesetBase==NULL)

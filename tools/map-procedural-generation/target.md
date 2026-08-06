@@ -10,9 +10,10 @@ The generator writes everything under one **generation root** (referred to below
 `<root>/`). All cross‑references inside the files are **relative paths** — relative to the
 file that contains them, or to `<root>`. Never write an absolute path.
 
-Shared art (the tileset `.tsx` files and the marker tilesets) lives **two directories above
-`<root>`** and is reached with `../` segments (see §3.3). The generator does not create or
-edit those `.tsx` files; it only references them and places tile ids from them.
+The art (the tileset `.tsx` files and the marker tilesets) is COPIED into `<root>/tileset/`
+and reached with `../` segments from there (see §3.3), so the generation root is
+self-contained. The generator does not create or edit those `.tsx` files; it only copies,
+references them and places tile ids from them.
 
 ### Generic vocabulary
 
@@ -156,16 +157,24 @@ assets, gameplay objects are emitted with `y` equal to the top‑left tile pixel
 object occupies the cell `(x/16, y/16)`). Generate consistently and verify a known door
 lands on the intended tile.
 
-### 3.3 Relative paths to shared tilesets
-Shared `.tsx` files live **two directories above `<root>`**. The number of `../` segments
-depends on how deep the referencing `.tmx` sits:
+### 3.3 Relative paths to the tilesets
+`<root>` is ONE datapack map **label**: the whole folder is copied under
+`map/main/<label>/` of a datapack. So `<root>` ships **its own `tileset/` dir** and every
+`.tsx` a map references lives in it — a reference must NEVER climb above `<root>`.
 
-- A map at `<root>/<region>/<location>/map.tmx` is **four** directories below the tileset
-  directory → reference tilesets as `../../../../tileset-1.tsx`.
-- A map nested one level deeper uses **five** `../` (`../../../../../tileset-1.tsx`).
+- A map at `<root>/<location>/map.tmx` → `../tileset/tileset-1.tsx`.
+- A map one level deeper → `../../tileset/tileset-1.tsx`.
 
-Compute the prefix as: *(depth of the `.tmx` below the tileset directory)* repetitions of
-`../`. The marker tilesets (`invisible.tsx`, `animations.tsx`) are reached the same way.
+Compute the prefix as *(depth of the `.tmx` below `<root>`)* repetitions of `../`, then
+`tileset/`. The marker tilesets (`invisible.tsx`, `animations.tsx`) are reached the same
+way, from the same dir.
+
+Why not the datapack-wide `map/tileset/`: the target datapack is only required to own the
+tilesets ITS own maps use, and it is READ-ONLY for the generator. A label referencing
+`../../../tileset/gym.tsx` loads with no tileset at all in any datapack that does not
+happen to ship that sheet. Self-contained means the label can be dropped into any datapack
+and the shared `map/tileset/` is never written. `check-generated.py` enforces it, and
+`install-generated.py` refuses to install a tree that breaks it.
 
 ---
 

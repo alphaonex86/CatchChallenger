@@ -6,6 +6,7 @@
 #include <libtiled/objectgroup.h>
 #include <libtiled/tileset.h>
 #include <libtiled/tile.h>
+#include "../map-procedural-generation-terrain/LoadMap.h"
 #include "../../general/base/cpp11addition.hpp"
 
 #include <QDir>
@@ -83,17 +84,12 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
                 }
             if(appendPath)
             {
-                //map/main/tileset/ is only a RUN-STAGING convenience (settings use
-                //main/tileset/ paths); the final datapack only has map/tileset/, so
-                //remap to the canonical copy before the reference is written
-                const QString mainTilesetDir=QDir::cleanPath(QCoreApplication::applicationDirPath()+"/dest/map/main/tileset")+"/";
-                const QString cleanedTilesetFileName=QDir::cleanPath(tilesetFileName);
-                if(cleanedTilesetFileName.startsWith(mainTilesetDir))
-                {
-                    const QString canonical=QCoreApplication::applicationDirPath()+"/dest/map/tileset/"+cleanedTilesetFileName.mid(mainTilesetDir.size());
-                    if(QFile::exists(canonical))
-                        tilesetFileName=canonical;
-                }
+                //dest/map/tileset/ and dest/map/main/tileset/ are only a RUN-STAGING
+                //pool; the generated label ships its own tileset/ (LoadMap::shipTileset)
+                //so the written reference stays inside the folder the owner copies
+                const QString shipped=LoadMap::shipTileset(tilesetFileName);
+                if(!shipped.isEmpty())
+                    tilesetFileName=shipped;
             }
             QString tilesetPath(QFileInfo(tilesetFileName).absoluteFilePath());
 
