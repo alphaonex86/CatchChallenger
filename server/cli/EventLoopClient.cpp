@@ -48,6 +48,19 @@ void EventLoopClient::close()
         //purge the buffer to prevent multiple EPOLLIN due to level trigger (vs edge trigger)
         while(read(tempBuffer,sizeof(tempBuffer))>0)
         {}
+#ifdef CATCHCHALLENGER_IO_URING
+        //A send prepped by submitAsyncSendBuf() is deliberately NOT submitted
+        //(wait() flushes the whole tick in ONE enter — that is what saves the
+        //syscalls). On a write-then-close path that batching loses the payload:
+        //the login server answers selectCharacter and immediately hands the
+        //client to the game server, so the fd was closed before the ring ever
+        //saw the SQE and the kernel completed it -EBADF — the client then waited
+        //for a reply that was never sent. Submit while infd is STILL VALID:
+        //io_uring resolves the fd at submission time, so the send survives the
+        //close below. Only pays a syscall on a socket that is closing anyway.
+        if(!asyncSendBuf.empty())
+            EventLoop::loop.submitPendingSends();
+#endif
         /* Closing the descriptor will make epoll remove it
         from the set of descriptors which are monitored. */
         EventLoop::loop.ctl(EPOLL_CTL_DEL, infd, NULL);
