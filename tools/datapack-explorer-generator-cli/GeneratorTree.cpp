@@ -117,7 +117,7 @@ static std::vector<std::string> parseStartMaps(const std::string &path)
 // Wild-encounter layer tags that hold "monster on map" lists.
 static const char *const s_wildLayers[]={"grass","water","cave","lava","waterRod","waterSuperRod",nullptr};
 
-// get_maps() returns map paths WITHOUT extension (e.g. "kanto/pallet/pallet"),
+// get_maps() returns map paths WITHOUT extension (e.g. "region/town/town"),
 // but some callers pass ".tmx" paths — drop a trailing ".tmx" so we never chop
 // real characters when appending ".xml".
 static std::string dropTmx(const std::string &rel)

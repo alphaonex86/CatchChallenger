@@ -1436,7 +1436,7 @@ everywhere the game data crosses a translation-unit boundary.
 
 ### `CATCHCHALLENGER_TYPE_MONSTER`
 - **Scope:** global
-- **Description:** Underlying integer type for monster (Pokémon-equivalent) species IDs.
+- **Description:** Underlying integer type for monster species IDs.
 
 ### `CATCHCHALLENGER_TYPE_MONSTER_LIST_SIZE`
 - **Scope:** global

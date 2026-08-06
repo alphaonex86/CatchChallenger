@@ -95,7 +95,7 @@ Tuxemon versions — is preserved automatically for later support.
   region = the map's `scenario` property (else the nearest one through the warp
   graph, else `other`), location = the nearest *outdoor* map in the warp graph,
   so a town and its interiors share one folder.  File names are shortened the
-  gen2 way (`flower-city/center.tmx`, not `flower-city/spyder_flower_center.tmx`)
+  reference way (`flower-city/center.tmx`, not `flower-city/spyder_flower_center.tmx`)
   by stripping the region and location token prefixes and dashing the rest —
   everything is derived from the source data (scenario property + warp graph +
   token comparison), nothing is hardcoded, so new upstream maps and scenarios
@@ -103,7 +103,7 @@ Tuxemon versions — is preserved automatically for later support.
   emitted relative to the source map's folder.  The engine marker tileset
   `map/invisible.png`/`.tsx` (byte-identical to the official one) is installed
   and every warp/bot object carries a `gid` into it (`firstgid+2` teleport,
-  `+0` bot) so they are visible in Tiled, like the gen2 reference maps.
+  `+0` bot) so they are visible in Tiled, like the reference maps.
 
 ## Verification
 

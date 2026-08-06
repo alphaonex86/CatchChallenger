@@ -1084,7 +1084,7 @@ static int writeTmxFromGrid(const std::vector<std::string> &grid,int W,int H,
         while(i<tsxAbs.size()) { canonOf[i]=QFileInfo(tsxAbs.at(i)).canonicalFilePath().toStdString(); i++; }
     }
     // learn the auto-tiling context from the maps near the tileset dir (its parent
-    // holds main/ for the official set, johto//kanto/ for the model set).
+    // holds main/ for the target set, one dir per region for the model set).
     ContextModel ctx;
     learnContext(QDir(tilesetDir).absoluteFilePath(".."),ctx);
 

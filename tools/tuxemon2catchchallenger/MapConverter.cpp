@@ -498,7 +498,7 @@ static void readProps(tinyxml2::XMLElement *obj, std::map<std::string,std::strin
     }
 }
 
-// ── output layout (region/location folders, gen2-style) ────────────────────
+// ── output layout (region/location folders, reference style) ──────────────
 // One pre-pass record per source map.
 struct MapMeta {
     int w, h;
@@ -561,7 +561,7 @@ static std::string bfsNearest(const std::string &start,
     return found;
 }
 
-// "_"-token helpers for the gen2-style short dashed names — everything is
+// "_"-token helpers for the short dashed names — everything is
 // derived from the source data (scenario + anchor slug), nothing hardcoded.
 static std::vector<std::string> splitTokens(const std::string &s)
 {
@@ -1712,7 +1712,7 @@ bool MapConverter::convertOne(const std::string &tmxPath)
         ++ti;
     }
     // marker tileset placed after the last used gid: bot/teleport objects carry
-    // a gid into it so they are visible in Tiled (the gen2 reference scheme)
+    // a gid into it so they are visible in Tiled (the reference scheme)
     uint32_t invisibleFirstGid = 1;
     ti = 0;
     while(ti < tilesets.size())
@@ -1910,7 +1910,7 @@ bool MapConverter::convertOne(const std::string &tmxPath)
             o << "  </object>\n";
             ++b;
         }
-        // Floor items/chests (gen2 object scheme): the engine resolves a
+        // Floor items/chests (reference object scheme): the engine resolves a
         // non-numeric "item" property through tempNameToItemId[str_tolower]
         // (Map_loaderMain ~l.485), so the value is the lowercased English
         // display name — matching the items.xml <name> DatapackWriter emits.
@@ -2149,8 +2149,8 @@ void MapConverter::computeLayout()
     }
 
     // phase 2: one folder per anchor — region/location, both dashed; the
-    // anchor map itself is named after the location (gen2: violet-city/
-    // violet-city.tmx).  Token prefixes are stripped, never hardcoded names.
+    // anchor map itself is named after the location (a-town/a-town.tmx).
+    // Token prefixes are stripped, never hardcoded names.
     std::map<std::string,std::string> anchorDir;                       // anchor -> "region/location"
     std::map<std::string,std::vector<std::string> > anchorRegionTok;   // anchor -> region tokens
     std::map<std::string,std::vector<std::string> > anchorLocTok;      // anchor -> location tokens
@@ -2200,8 +2200,8 @@ void MapConverter::computeLayout()
     }
 
     // phase 3: short file name for every non-anchor map — strip the region
-    // token prefix, then the tokens shared with the location (gen2:
-    // violet-city/gym.tmx, not violet-city/violet-city-gym.tmx)
+    // token prefix, then the tokens shared with the location
+    // (a-town/gym.tmx, not a-town/a-town-gym.tmx)
     std::map<std::string,std::string>::const_iterator si = anchorOf.begin();
     while(si != anchorOf.end())
     {

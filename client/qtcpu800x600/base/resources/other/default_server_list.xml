@@ -11,7 +11,7 @@
     <server host="gateway.herman-brule.com" port="45626" unique_code="6jPb6u6Nd3Qqwquk"
         ws="wss://catchchallenger.herman-brule.com/ws/pkmn">
         <lang lang="en">
-            <name>Pokemon CatchChallenger server</name>
+            <name>CatchChallenger gateway server</name>
             <site_page>https://gateway.herman-brule.com/</site_page>
         </lang>
     </server>

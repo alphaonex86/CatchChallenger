@@ -1,7 +1,7 @@
 # Learn-from-tags: data-driven map generation
 
-**MODEL datapack = `datapack-pkmn/map/main/gen2/`** (owner) — 100+ `.tmx` maps
-(johto + kanto) over 14 tilesets (`tileset/normal1..15.tsx` + `animations.tsx`),
+**MODEL datapack = the owner's external reference dataset**, one maincode under
+its `map/main/` — 100+ `.tmx` maps over 14 tilesets (`tileset/normal1..15.tsx` + `animations.tsx`),
 with `informations.xml` / `zone/` / `quests/`. This is the corpus whose rules we
 learn and the target the reproducibility guard round-trips against.
 
@@ -24,7 +24,7 @@ tileset-independent, so it replays on any tileset that carries those categories.
             |                              |
             v                              v
    .tmx maps --> [category grid] --> LEARN rules ---> GENERATE --> new .tmx
-   (datapack-pkmn)                   (hard+random)    (official tileset)
+   (reference dataset)               (hard+random)    (target tileset)
                                           |
                                           +--> REPRODUCIBILITY GUARD
 ```

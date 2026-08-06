@@ -47,7 +47,7 @@ Pokémon) against the already-generated main and writes, per changed map, a part
 `map/main/test/sub/smallchange/` (a water-only override). Maps identical to the
 main are not duplicated; sibling-exclusive maps (e.g. Emerald's Battle Frontier)
 are skipped by the wild-only overlay. Because a sub is diffed against its main, the
-main must be generated first (see `generate-datapack-pkmn.sh`).
+main must be generated first (see `generate-reference-datapack.sh`).
 
 ## What is decoded
 

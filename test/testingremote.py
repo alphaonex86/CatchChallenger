@@ -101,13 +101,18 @@ EXEC_RSYNC_TIMEOUT = 300
 EXEC_BIND_TIMEOUT = 180
 NICE_PREFIX = ["nice", "-n", "19"]
 
-# Datapack source on the local machine. Staged onto each exec node next
-# to the binary so the server has something to load. Pick the smaller
-# `test` maincode when available — same trick as remote_build._detect_maincode.
-_LOCAL_DATAPACKS = [
-    "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack",
-    "/home/user/Desktop/CatchChallenger/datapack-pkmn",
-]
+# Datapack sources on the local machine, from the out-of-repo config
+# (paths.datapacks) so the operator's dataset names/locations stay out of git.
+# Staged onto each exec node next to the binary so the server has something to
+# load. Pick the smaller `test` maincode when available — same trick as
+# remote_build._detect_maincode.
+_DP_CONFIG_PATH = os.path.join(os.path.expanduser("~"),
+                               ".config", "catchchallenger-testing", "config.json")
+try:
+    with open(_DP_CONFIG_PATH, "r") as _dpf:
+        _LOCAL_DATAPACKS = json.load(_dpf).get("paths", {}).get("datapacks", [])
+except (OSError, ValueError):
+    _LOCAL_DATAPACKS = []
 
 # ── colours ─────────────────────────────────────────────────────────────────
 C_GREEN = "\033[92m"

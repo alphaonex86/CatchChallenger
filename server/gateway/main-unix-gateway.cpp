@@ -83,10 +83,10 @@ int main(int argc, char *argv[])
     // this, the Main case in datapackList() (line ~178) hits
     // datapack_file_main.find(linkToGameServer->main) == cend()
     // and silently returns, leaving the client waiting forever for
-    // the main-datapack content. testinggateway.py's
-    // datapack-pkmn/gen2 case fails on exactly this — the base
-    // download works (cache pre-indexed above) but the followup
-    // main-datapack request hangs.
+    // the main-datapack content. A testinggateway.py case on a large
+    // converted datapack fails on exactly this — the base download
+    // works (cache pre-indexed above) but the followup main-datapack
+    // request hangs.
     //
     // Walks <datapack>/map/main/<mc>/ and <datapack>/map/main/<mc>/sub/<sc>/.
     {

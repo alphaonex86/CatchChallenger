@@ -245,11 +245,10 @@ def _src_checksum(src):
 def datapack_id(src, server=False):
     """Return a stable cache-key for a source datapack path. The
     basename works because every checked-in datapack lives in its own
-    top-level directory (CatchChallenger-datapack, datapack-pkmn, …);
-    if two sources somehow had the same basename the caller should
-    rename one. Trailing slashes are stripped first so
-    /home/user/datapack-pkmn and /home/user/datapack-pkmn/ map to the
-    same id. `server=True` returns the headless-server slot id (a
+    top-level directory (CatchChallenger-datapack, an external
+    reference dataset, …); if two sources somehow had the same basename
+    the caller should rename one. Trailing slashes are stripped first so
+    /path/to/a-datapack and /path/to/a-datapack/ map to the same id. `server=True` returns the headless-server slot id (a
     media-stripped sibling of the full client slot)."""
     base = os.path.basename(os.path.normpath(src))
     return base + SERVER_SLOT_SUFFIX if server else base
@@ -374,7 +373,7 @@ def _rsync_remote(exec_node, src, log_info, server=False, filter_server=None):
         return False, f"remote rsync TIMEOUT after {_RSYNC_REMOTE_TIMEOUT}s for {label}"
     if p.returncode == 0:
         return True, ""
-    # rsync rc=23 = partial transfer. The pkmn datapack ships files whose
+    # rsync rc=23 = partial transfer. A converted datapack ships files whose
     # XXH32-hash-as-mtime sits in the year-2081–2106 range, which 32-bit
     # time_t receivers (mips-lxc, older LXC images) can't fully represent
     # — rsync emits "Time value of <path> truncated on receiver" warnings
