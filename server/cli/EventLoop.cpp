@@ -1496,6 +1496,13 @@ bool EventLoop::submitAsyncSend(int fd,const char *buffer,unsigned int size,
     return true;
 }
 
+bool EventLoop::submitPendingSends()
+{
+    if(g_uring==nullptr)
+        return false;
+    return io_uring_submit(&g_uring->ring)>=0;
+}
+
 bool EventLoop::armRecvMultishot(int fd,void *user_data)
 {
     if(g_uring==nullptr || !g_uring->multishot_enabled)
@@ -1552,9 +1559,6 @@ bool EventLoop::submitDatapackChain(int sock_fd,
     //Heap-own all bytes referenced by SQEs so they outlive submission.
     PendingSendOp *op=new PendingSendOp();
     op->client=client;
-    //The chain owns the socket until its final CQE: ordinary writes queue.
-    if(client!=nullptr)
-        client->uringOpStarted();
     op->file_fds=file_fds;
     op->header_buf.assign(header_bytes,header_len);
     op->meta=per_file_meta;
@@ -1653,6 +1657,13 @@ bool EventLoop::submitDatapackChain(int sock_fd,
         delete op;
         return false;
     }
+    //The chain owns the socket until its final CQE: ordinary writes queue behind
+    //it. Taken HERE, not while building: every failure path above returns without
+    //ever producing an SQE, so counting earlier left uringOutstanding stuck above
+    //zero with no completion able to clear it — after which EventLoopClient::write()
+    //queues every byte forever and that client silently stops receiving anything.
+    if(client!=nullptr)
+        client->uringOpStarted();
     return true;
 }
 #endif

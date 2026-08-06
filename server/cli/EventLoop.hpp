@@ -78,6 +78,11 @@ public:
     //ring is full, in which case the caller must fall back to ::send().
     bool submitAsyncSend(int fd,const char *buffer,unsigned int size,
                          BaseClassSwitch *client);
+    //Hand every accumulated SQE to the kernel NOW instead of waiting for the
+    //next wait(). Needed before closing a socket that still has a send queued:
+    //io_uring resolves the fd at SUBMISSION time, so a send submitted here
+    //survives the close(), while one left in the SQ completes -EBADF.
+    bool submitPendingSends();
     bool multishotEnabled() const;
     //Phase 3: submit one SQE chain that sends a packet header, then
     //per-file (metadata bytes + splice file→pipe + splice pipe→sock +
