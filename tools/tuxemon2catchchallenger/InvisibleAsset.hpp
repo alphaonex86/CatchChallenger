@@ -2,7 +2,7 @@
 #define TUXEMON2CC_INVISIBLEASSET_HPP
 
 // Byte-identical copy of invisible.png (the engine marker tileset image,
-// same file as datapack-pkmn/map/invisible.png) embedded so the converter
+// same file as the reference datapack's map/invisible.png) embedded so the converter
 // can install map/invisible.png+invisible.tsx into the output datapack.
 
 static const unsigned char kInvisiblePng[] = {

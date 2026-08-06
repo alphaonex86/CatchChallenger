@@ -30,7 +30,7 @@ out of tree (`/tmp/tux2cc-build`).
   rebalance, edit `DatapackWriter::computeStats` only; keep it documented.
 * **Maps** (`MapConverter`): keep Tuxemon gids verbatim (fidelity is checked) —
   only re-home each cell onto `Walkable`/`Collisions`/`WalkBehind` and re-encode
-  base64+zlib.  Output layout is gen2-style `map/main/tuxemon/<region>/<location>/<base>`
+  base64+zlib.  Output layout is reference-style `map/main/tuxemon/<region>/<location>/<base>`
   (region = `scenario` map property else nearest via warp graph else `other`;
   location = nearest outdoor map via warp graph, so a town + its interiors share
   one folder; file base = slug minus the region+location token prefixes, dashed,

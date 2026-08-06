@@ -19,8 +19,8 @@ Checked here (the generator itself aborts on most of them anyway):
 `--fix` repairs only the mechanical ones, with line-level text edits (never an
 XML round-trip: libtiled and Tiled do not write the same file back):
   * drop `<tileset>` lines whose source does not resolve WHEN another tileset
-    with the same firstgid does resolve (the templates carry the pkmn-dataset
-    path next to the good one, at the same firstgid),
+    with the same firstgid does resolve (the templates carry a stale
+    reference-dataset path next to the good one, at the same firstgid),
   * `source="tileset/houses2"` -> `houses2.tsx`,
   * add `type="bot"` to an object of the `Object` group that has an `id`
     property and no type.

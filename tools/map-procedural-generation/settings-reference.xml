@@ -1,19 +1,19 @@
 ; ============================================================================
-; settings.xml for datapack-pkmn
-;   target: /home/user/Desktop/CatchChallenger/datapack-pkmn
+; settings.xml for the operator's external REFERENCE datapack
+;   target: the reference datapack root (LOCAL only, kept out of git)
 ;   place at: <generator run CWD>/settings.xml  (next to dest/map/tileset/)
 ;
-; Tile indices below were DERIVED from the hand-authored gen2 maps after running
-; tools/datapack-tileset-deduplicate on datapack-pkmn/map/ (see the repo file
-; pkmn-gen2.txt for the per-layer tile-role decode). The gameplay-critical tiles
+; Tile indices below were DERIVED from that datapack's hand-authored maps after
+; running tools/datapack-tileset-deduplicate on its map/ (the per-layer
+; tile-role decode lives with the dataset). The gameplay-critical tiles
 ; (ground / water / tall grass / ledges / collisions / interior floor+walls) are
 ; data-derived and confident. A few non-essential biome variants (sand/snow/
 ; mountain ground) reuse plausible tileset-1 ground tiles and are marked
 ; "; guess". The interior furniture + tree overlays still use the CatchChallenger
-; template/ set (which references inside-*/wood tilesets pkmn lacks) — replace
-; those with pkmn templates or inline tiles before a fully clean run.
+; template/ set (which references inside-*/wood tilesets that datapack lacks) —
+; replace those with matching templates or inline tiles for a fully clean run.
 ;
-; PKMN .tsx live FLAT in map/ (not map/tileset/); stage them into
+; Its .tsx live FLAT in map/ (not map/tileset/); stage them into
 ; <run>/dest/map/tileset/ so these bare names resolve (see DATAPACK-CONFIG.md).
 ; No usable transition bands -> dotransition=false.
 ; ============================================================================
@@ -44,8 +44,8 @@ seed=400
 tileStep=4
 
 [city]
-; pkmn scaffold: the CC city templates/tiles do not exist in this datapack,
-; leave empty (no avenue/signs) until pkmn templates are made
+; scaffold: the CC city templates/tiles do not exist in this datapack,
+; leave empty (no avenue/signs) until matching templates are made
 big\template=
 big\useAsBase=false
 big\signTiles=
@@ -54,15 +54,15 @@ medium\useAsBase=false
 medium\signTiles=
 
 [plants]
-; tree-*.tmx templates reference CC tilesets internally -> wrong tree art for
-; pkmn until pkmn tree templates are added. ; TODO pkmn template
+; tree-*.tmx templates reference CC tilesets internally -> wrong tree art here
+; until matching tree templates are added. ; TODO template
 tree-1\heightmoisurelist="3,1;3,2;3,3;3,4;3,5;3,6"
 tree-1\tmx=tree-1
 tree-2\heightmoisurelist="1,1;1,2;1,3;1,4;1,5;1,6;2,1;2,2;2,3;2,4;2,5;2,6"
 tree-2\tmx=tree-2
 
 [road]
-; pkmn scaffold: no cave tiles decoded yet, feature off
+; scaffold: no cave tiles decoded yet, feature off
 cave\percent=0
 cave\wallTile=
 cave\floorTile=
@@ -82,7 +82,7 @@ bot\cashmonster=0.2
 bot\dobot=true
 bot\maxbot=15
 bot\maxskin=474
-; ledges: tileset-1 one-way jump tiles (gen2 LedgesDown/Left/Right decode)
+; ledges: tileset-1 one-way jump tiles (LedgesDown/Left/Right decode)
 ledge\doledge=true
 ledge\ledgebottom=740
 ledge\ledgechance=0.7
@@ -91,12 +91,12 @@ ledge\ledgeright=711
 ledge\tsx=tileset-1.tsx
 ; overworld tileset alias for region overlays
 region\extratileset=ow->tileset-1.tsx
-; tall grass (encounter) overlay = tileset-1/32 (gen2 Grass layer decode)
+; tall grass (encounter) overlay = tileset-1/32 (Grass layer decode)
 region\grass="grass->ow/32"
 region\initialregion=300
 region\mountain_layer=Collisions
 region\mountain_terrain="mountain,snow"
-; impassable mountain/edge collision tiles (gen2 Collisions decode)
+; impassable mountain/edge collision tiles (Collisions decode)
 region\mountain_tile="961,36,37,38,39,70,71,4,5,68,69"
 region\mountain_tsx=ow
 region\retrymax=500
@@ -167,11 +167,11 @@ water\tsx=normal18.tsx
 gymTypes="fire:#f38233->Charmander;water:#2E9EF3->Squirtle;grass:#71DA5E->Bulbasaur;electric:#FFEC10->Pikachu"
 cityTypeTerrains="water->water;grass->grass"
 typeXml=
-; PKMN item ids from items.xml (95=Acro Bike, 96=Bicycle, 98=Escape Rope,
-; 102=Honey, 107=Poke Doll) -> all valid sellables.
+; item ids from that datapack's items.xml (95, 96, 98, 102, 107)
+; -> all valid sellables.
 ; *Skin = a folder NAME under skin/fighter or skin/bot (NOT a numeric index).
-; PKMN skin/fighter holds named human sprites (boy,girl,ghost,rocketboy,
-; rocketgirl); skin/bot holds numbered sprites (1,4,7,...). Either resolves.
+; its skin/fighter holds named human sprites (boy,girl,ghost,...); skin/bot
+; holds numbered sprites (1,4,7,...). Either resolves.
 botSkins="boy,girl,ghost"
 doGym=true
 gymLeaderSkin=rocketgirl

@@ -50,8 +50,8 @@ with open(_CONFIG_PATH, "r") as _f:
 ROOT  = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NPROC = str(multiprocessing.cpu_count())
 
-# Same two datapacks used everywhere else in the harness, plus any extra
-# entries config.json:paths.datapacks lists.
+# The datapack roots config.json:paths.datapacks lists — the same set the rest
+# of the harness uses.
 DATAPACKS = []
 _dpcfg = _config.get("paths", {}).get("datapacks") or []
 i = 0
@@ -60,12 +60,9 @@ while i < len(_dpcfg):
     if os.path.isdir(p):
         DATAPACKS.append(p)
     i += 1
-# Fall back to the two well-known absolute paths if config didn't supply them.
-for fallback in (
-        "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack",
-        "/home/user/Desktop/CatchChallenger/datapack-pkmn"):
-    if os.path.isdir(fallback) and fallback not in DATAPACKS:
-        DATAPACKS.append(fallback)
+# No fallback path list here: the operator's datapack roots live in the
+# out-of-repo config (paths.datapacks), so neither their names nor their
+# locations end up in git history.
 
 PRO        = os.path.join(ROOT, "test/fight/testfightengine.pro")  # virtual
 BUILD_DIR  = build_paths.build_path("test/fight/build/testing-fight" + _DIAG_SUFFIX)

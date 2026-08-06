@@ -3382,7 +3382,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 if(terrainLayers[ti]->cellAt(tx, ty).tile() == terrain->tile){
                                     if(grassTiles.find(terrain->terrainName.toStdString()) != grassTiles.end()){
                                         //Fill the whole grass ZONE: a solid rectangular block of tall
-                                        //grass is the intended Pokemon style (grid-aligned, like the
+                                        //grass is the intended classic tile-RPG style (grid-aligned, like the
                                         //doc/mapping Goodmap) AND compresses far better than scattered
                                         //cells (long runs of one gid).  The terrain generator already
                                         //shapes the grass zones; do NOT thin them with noise.

@@ -4,7 +4,7 @@ https://catchchallenger.herman-brule.com/
 
 ![structure](structure.png)
 
-This game is a MMORPG, Lan game and a single player game. It's mix of pokemon for the RPG part, crafting/clan/TvT, industry. Modular datapck.
+This game is a MMORPG, Lan game and a single player game. It's a mix of creature-collecting RPG, crafting/clan/TvT and industry. Modular datapck.
 
 ## License
 client/tiled/ is extracted version of http://www.mapeditor.org/, https://github.com/bjorn/tiled

@@ -102,9 +102,8 @@ Rules:
 ### 2.1 Region & location naming taxonomy
 
 A readable world names every folder for *what it is*. Derive names in this order (a
-real ROM-import does the same — see the reference worlds under `datapack-pkmn/map/main/`,
-which split a two-region world into `<region>/` trees with named locations and typed
-fallbacks):
+real ROM-import does the same — a converted reference world splits a two-region
+world into `<region>/` trees with named locations and typed fallbacks):
 
 1. **Real name when known.** If the source gives a place a name, slugify it
    (`new-bark-town`, `route-29`, `ice-path`). The overworld map repeats the folder name.

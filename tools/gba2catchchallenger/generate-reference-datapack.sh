@@ -1,16 +1,17 @@
 #!/bin/sh
-# Generate the datapack-pkmn region set from the English Gen3 GBA ROMs.
+# Generate the operator's reference datapack region set from the English Gen3
+# ROMs. The dataset is LOCAL only: its location comes from $DP, never from git.
 #
 # gba2catchchallenger auto-detects each ROM's role from its header (base vs
 # sibling-sub vs standalone hack), so this driver only has to run the ROMs in the
 # right ORDER: a sub overlay is diffed against the already-generated main, so
-# every main must run before its subs.  Kanto = firered(+leafgreen sub),
-# Hoenn = ruby(+sapphire,emerald subs); Glazed/HnS are standalone hack mains.
+# every main must run before its subs. The labels below are CONVERTER labels —
+# they name the ROM input and its output folder, not any content of ours.
 #
 # Override BIN/DP/GBA via the environment.
 set -e
 BIN="${BIN:-/tmp/gba2cc-build/gba2catchchallenger}"
-DP="${DP:-/home/user/Desktop/CatchChallenger/datapack-pkmn}"
+DP="${DP:?set DP to the reference datapack root (kept out of git)}"
 GBA="${GBA:-/mnt/data/read/games/gba/gba/en}"
 
 # Run the first ROM matching a glob (so minor filename variations still resolve).

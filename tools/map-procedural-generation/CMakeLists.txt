@@ -79,7 +79,7 @@ foreach(runtimeFile cities.txt dialog.txt npc-slots.json informations.xml start.
                     minimap-1way.png minimap-2way1.png minimap-2way2.png
                     minimap-3way.png minimap-4way.png minimap-citybig.png
                     minimap-citymedium.png minimap-citysmall.png
-                    miniMapColor.png settings-pkmn.xml)
+                    miniMapColor.png settings-reference.xml)
     list(APPEND CC_RUNTIME_STAGE_COMMANDS
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 ${CMAKE_CURRENT_LIST_DIR}/${runtimeFile}

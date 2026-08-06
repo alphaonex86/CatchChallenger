@@ -108,7 +108,7 @@ tileset-tagger --genmap  <struct.json> <tileset-dir> <out.tmx> [W H seed]   # ge
    **directory** walks every `.tsx` in it, opening the first not-fully-verified one
    and moving to the next when you finish (already-verified tilesets are skipped):
    ```
-   tileset-tagger /home/user/Desktop/CatchChallenger/datapack-pkmn/map/main/gen2/tileset/
+   tileset-tagger <reference-datapack>/map/main/<maincode>/tileset/
    ```
    It **auto-tags on open** (no separate step). **Maximise** the window and the
    tileset expands to fill it; **Zoom +/−** or **Ctrl+mouse-wheel** to resize tiles.
@@ -126,7 +126,7 @@ tileset-tagger --genmap  <struct.json> <tileset-dir> <out.tmx> [W H seed]   # ge
    `verified N/Total`. When a tileset hits 100% it **auto-saves and opens the next**
    in the folder. Headless: `--guard <x.tsx>` prints the same counts. Tags go to the
    sidecar; the datapack is untouched.
-3. Do the model tilesets (`gen2/tileset/`) and the target (`map/tileset/`); then
+3. Do the model tilesets (`<model>/tileset/`) and the target (`map/tileset/`); then
    the generator learns from the model and composes onto the target.
 
 To **batch** the auto-tag for a whole directory up front (optional), use

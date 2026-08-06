@@ -67,7 +67,7 @@ public:
     // main at mainDir (e.g. map/main/ruby).  The sub has no .tmx/tileset (geometry
     // is shared from main); it writes informations.xml plus, per map, a partial
     // <map>.xml carrying only the changed wild-encounter sections (<grass>/<water>)
-    // — the version-exclusive Pokemon — matching map/main/test/sub/smallchange/.
+    // — the version-exclusive species — matching map/main/test/sub/smallchange/.
     bool writeSubOverlay(const std::string &mainDir);
 
     // One bot placed on a map.  A skinned bot is a Gen3 NPC; a skinless bot is
@@ -124,7 +124,7 @@ private:
     // for a static one-off MONSTER object (Mewtwo & co) whose OW graphic is not
     // a walking character sheet.
     std::string staticSkinFor(uint8_t graphicsId);
-    // Rip the 16x16 item-ball sprite once (like gen2's pokeball tile
+    // Rip the 16x16 item-ball sprite once (like the reference dataset's ball tile
     // normal1.tsx#101) — slot 0 of tileset/items.png, the gid every
     // ground/hidden item object shows in the Tiled editor.
     void ensureItemTileset(uint8_t graphicsId);

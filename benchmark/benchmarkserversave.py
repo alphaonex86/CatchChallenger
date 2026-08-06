@@ -48,9 +48,9 @@ BENCH_DIR  = os.path.dirname(os.path.abspath(__file__))
 NETWORK_EXCLUSIVE = False
 
 # Single pinned datapack path. CatchChallenger-datapack is the upstream
-# vanilla data; pkmn would skew bytes-parsed across operators with /
-# without the optional pack. Keep one source of truth so champion.json
-# values stay comparable.
+# vanilla data; an operator's own reference dataset would skew bytes-parsed
+# across machines with / without that optional data. Keep one source of truth
+# so champion.json values stay comparable.
 DATAPACK_PATH = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
 
 try:

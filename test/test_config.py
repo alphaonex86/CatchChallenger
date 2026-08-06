@@ -63,7 +63,7 @@ _DUMMY_CONFIG = {
     "paths": {
         "datapacks": [
             "/path/to/CatchChallenger-datapack",
-            "/path/to/datapack-pkmn"
+            "/path/to/another-reference-datapack"
         ],
         "www_root": "/path/to/www-root",
         "savegame_cpu": "~/.local/share/CatchChallenger/client-qtcpu800x600/savegames",
