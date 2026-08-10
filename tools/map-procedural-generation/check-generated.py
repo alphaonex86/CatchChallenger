@@ -91,6 +91,18 @@ def blocked(layers, width, height, x, y):
     return False
 
 
+def covered(layers, width, height, x, y):
+    """A tile is drawn ABOVE the player on that cell (tree canopy, roof)."""
+    if layers is None:
+        return False
+    if x < 0 or y < 0 or x >= width or y >= height:
+        return False
+    for grid in layers.get("WalkBehind", []):
+        if grid[x + y * width]:
+            return True
+    return False
+
+
 #Map_loader::loadExtraXml default when the <fight> step carries no fightRange
 FIGHT_RANGE = 5
 FIGHT_DIRECTIONS = {"bottom": (0, 1), "top": (0, -1),
@@ -183,6 +195,7 @@ def main():
         width, height, layers, objects = maps[path]
         folder = os.path.dirname(path)
         exits = 0
+        botCells = {}
         for tileset in re.findall(r'<tileset[^>]*source="([^"]*)"',
                                   open(path, encoding="utf-8").read()):
             resolved = os.path.normpath(os.path.join(folder, tileset))
@@ -229,6 +242,28 @@ def main():
                 skin = obj["properties"].get("skin")
                 if skins and skin and skin not in skins:
                     problems.append((path, "skin not in the datapack: " + skin))
+                #a bot WITH a skin draws a CHARACTER: its cell must be free
+                #ground, else the NPC is painted inside a tree/wall or hidden
+                #under a canopy.  A bot without a skin is only a marker on a
+                #decor tile (city sign, heal machine): that tile IS the visual
+                #and is a collision on purpose.
+                if skin:
+                    botId = obj["properties"].get("id", "?")
+                    #the engine reads the object y one tile above the stored one
+                    x, y = obj["x"], obj["y"] - 1
+                    if blocked(layers, width, height, x, y):
+                        problems.append((path, "bot " + botId + " stands ON a "
+                                         "COLLISION at %d,%d" % (x, y)))
+                    elif covered(layers, width, height, x, y):
+                        problems.append((path, "bot " + botId + " is hidden "
+                                         "under a WalkBehind tile at %d,%d"
+                                         % (x, y)))
+                    if (x, y) in botCells:
+                        problems.append((path, "bot " + botId + " shares the "
+                                         "cell %d,%d with bot " % (x, y) +
+                                         botCells[(x, y)]))
+                    else:
+                        botCells[(x, y)] = botId
         # an interior (a map that is not the chunk of its folder) must let the
         # player out again
         base = os.path.basename(path)[:-4]

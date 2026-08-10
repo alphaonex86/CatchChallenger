@@ -281,11 +281,6 @@ int main(int argc, char *argv[])
                 t.start();
                 LoadMapAll::addRoadContent(tiledMap, config);
                 qDebug("add road content took %lld ms", t.elapsed());
-                t.start();
-                //flavour townsfolk on the open city ground (after buildings so they
-                //land on free tiles); emitted into each city's .xml at split time.
-                LoadMapAll::addCityTownsfolk(tiledMap, config, config.mapWidth, config.mapHeight);
-                qDebug("add city townsfolk took %lld ms", t.elapsed());
                 //TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
             if(config.displaycity)
@@ -342,6 +337,13 @@ int main(int argc, char *argv[])
                 LoadMapAll::reassertCitySigns(tiledMap);
                 qDebug("Vegetation took %lld ms", t.elapsed());
             }
+            t.start();
+            //flavour townsfolk on the open city ground: LAST pass, after the
+            //buildings AND after the vegetation, else a tree brushed on the city
+            //border ring (only the town INTERIOR is masked) lands on an NPC that
+            //was already placed and the character is drawn inside the trunk.
+            LoadMapAll::addCityTownsfolk(tiledMap, config, config.mapWidth, config.mapHeight);
+            qDebug("add city townsfolk took %lld ms", t.elapsed());
             t.start();
             {
                 Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0); // ObjectGroup contructor no longer accepts width and height 

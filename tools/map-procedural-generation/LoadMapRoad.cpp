@@ -131,6 +131,39 @@ std::vector<LoadMapAll::CitySign> LoadMapAll::citySigns;
 std::vector<LoadMapAll::BuildingRect> LoadMapAll::cityBuildingRects;
 std::map<std::pair<uint16_t,uint16_t>,LoadMapAll::CavePlan> LoadMapAll::cavePlans;
 
+//Keep the vegetation away from a cell that must stay VISIBLE (a city sign, an
+//NPC): the trees are brushed later, and a trunk (Collisions) or its canopy
+//(WalkBehind, up to 2 rows above the trunk) landing there would draw the thing
+//inside a tree.  Masked cells are refused by MapBrush::brushHaveCollision.
+void LoadMapAll::maskVegetationAround(Tiled::Map &worldMap, const unsigned int &tileX, const unsigned int &tileY,
+                                      const int radius)
+{
+    if(MapBrush::mapMask==NULL)
+    {
+        std::cerr << "MapBrush::mapMask==NULL into LoadMapAll::maskVegetationAround" << std::endl;
+        return;
+    }
+    const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+    int ringY=-radius;
+    while(ringY<=radius)
+    {
+        int ringX=-radius;
+        while(ringX<=radius)
+        {
+            const int mx=(int)tileX+ringX;
+            const int my=(int)tileY+ringY;
+            if(mx>=0 && my>=0 && mx<worldMap.width() && my<worldMap.height())
+            {
+                const unsigned int bitMask=mx+my*worldMap.width();
+                if(bitMask/8<maxMapSize)
+                    MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+            }
+            ringX++;
+        }
+        ringY++;
+    }
+}
+
 //re-assert the city signs AFTER vegetation: a tree canopy lands on WalkBehind
 //and could hide a sign placed near the town border (tree-wall band)
 void LoadMapAll::reassertCitySigns(Tiled::Map &worldMap)
@@ -2879,25 +2912,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                                 sign.y=ty;
                                                 sign.cell=Tiled::Cell(signTile);
                                                 citySigns.push_back(sign);
-                                                const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
-                                                int ringY=-2;
-                                                while(ringY<=2)
-                                                {
-                                                    int ringX=-2;
-                                                    while(ringX<=2)
-                                                    {
-                                                        const int mx=(int)tx+ringX;
-                                                        const int my=(int)ty+ringY;
-                                                        if(mx>=0 && my>=0 && mx<worldMap.width() && my<worldMap.height())
-                                                        {
-                                                            const unsigned int bitMask=mx+my*worldMap.width();
-                                                            if(bitMask/8<maxMapSize)
-                                                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
-                                                        }
-                                                        ringX++;
-                                                    }
-                                                    ringY++;
-                                                }
+                                                maskVegetationAround(worldMap,tx,ty,2);
                                             }
                                             Tiled::MapObject *signBot=new Tiled::MapObject("","bot",
                                                 QPointF(tx*worldMap.tileWidth(),(ty+1)*worldMap.tileHeight()),
@@ -3853,12 +3868,16 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                     LoadMapAll::RoadIndex &roadIndex=LoadMapAll::roadCoordToIndex.at(x).at(y);
                     const char* directions[] = {"left", "right", "top", "bottom"};
 
+                    //one NPC per cell: two characters on the same cell are drawn
+                    //one over the other and the engine keeps a single bot there
+                    std::unordered_set<unsigned int> usedBotCells;
+
                     for(int i = 0; i<15; i++){
                         unsigned int ox = rand()%mapWidth;
                         unsigned int oy = rand()%mapHeight;
                         unsigned int j = ox + oy*mapWidth;
 
-                        if((real_map[j] & 0xF9) == 0x1){
+                        if((real_map[j] & 0xF9) == 0x1 && usedBotCells.find(j)==usedBotCells.cend()){
                             bool valid = true;
 
                             for(int start = 0; j<4; j++){
@@ -3907,6 +3926,11 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 bot->setProperty("skin", QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size())));
                                 bot->setCell(newCell);
                                 objectLayer->addObject(bot);
+                                usedBotCells.insert(j);
+                                //the vegetation is brushed after this pass: keep
+                                //the trees off the NPC so it is not painted
+                                //inside a trunk nor hidden under a canopy
+                                maskVegetationAround(worldMap,roadBot.x,roadBot.y,2);
 
                                 botCount++;
                             }
@@ -4187,6 +4211,48 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
     Tiled::Tileset* invis=LoadMap::searchTilesetByName(worldMap,"invisible");
     if(objGroup==NULL || walk==NULL || coll==NULL || invis==NULL || setting.botSkins.empty())
         return;
+    //an NPC must not end up UNDER a tree canopy either: the above-player layers
+    //are drawn over the character.  There are several layers named WalkBehind
+    //(and the vegetation brush fills any of them), so collect them all.
+    std::vector<Tiled::TileLayer*> abovePlayerLayers;
+    {
+        unsigned int layerIndex=0;
+        while(layerIndex<(unsigned int)worldMap.layerCount())
+        {
+            Tiled::Layer * const layer=worldMap.layerAt(layerIndex);
+            if(layer->isTileLayer() && layer->name()=="WalkBehind")
+                abovePlayerLayers.push_back(static_cast<Tiled::TileLayer *>(layer));
+            layerIndex++;
+        }
+    }
+    //cells already carrying an object (city sign, building door/teleport, an
+    //NPC placed by a previous city): never stack two characters on one cell
+    std::unordered_set<uint64_t> objectCells;
+    {
+        static const char * const objectGroupNames[2]={"Object","Moving"};
+        unsigned int groupIndex=0;
+        while(groupIndex<2)
+        {
+            Tiled::ObjectGroup * const group=LoadMap::searchObjectGroupByName(worldMap,objectGroupNames[groupIndex]);
+            if(group!=NULL)
+            {
+                const QList<Tiled::MapObject*> &objects=group->objects();
+                unsigned int objectIndex=0;
+                while(objectIndex<(unsigned int)objects.size())
+                {
+                    const Tiled::MapObject * const object=objects.at(objectIndex);
+                    //object Y carries the engine's -1 tile correction (same rule
+                    //as the chunk splitter), so step back one row to get the cell
+                    const int cellX=(int)(object->x())/worldMap.tileWidth();
+                    const int cellY=((int)(object->y())-1)/worldMap.tileHeight();
+                    if(cellX>=0 && cellY>=0)
+                        objectCells.insert(((uint64_t)cellX<<32)|(uint64_t)cellY);
+                    objectIndex++;
+                }
+            }
+            groupIndex++;
+        }
+    }
     //decoration: scatter animated flower tufts on the open ground (OnGrass layer,
     //non-collision) so a town is not a bare field.  tiles 320 (red) and 352
     //(blue) of the animations sheet are 4-frame animated flowers (legacy
@@ -4234,6 +4300,23 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
             //open ground only: walkable and not a wall/building/tree
             if(walk->cellAt(tx,ty).tile()==NULL || coll->cellAt(tx,ty).tile()!=NULL)
                 continue;
+            //nothing drawn above the player on that cell (tree canopy, roof)
+            bool coveredByAbovePlayer=false;
+            {
+                unsigned int aboveIndex=0;
+                while(aboveIndex<abovePlayerLayers.size())
+                {
+                    if(abovePlayerLayers.at(aboveIndex)->cellAt(tx,ty).tile()!=NULL)
+                        coveredByAbovePlayer=true;
+                    aboveIndex++;
+                }
+            }
+            if(coveredByAbovePlayer)
+                continue;
+            const uint64_t cellKey=((uint64_t)tx<<32)|(uint64_t)ty;
+            if(objectCells.find(cellKey)!=objectCells.cend())
+                continue;
+            objectCells.insert(cellKey);
             //object Y carries the engine's -1 tile correction, so add 1 row
             Tiled::MapObject* npc=new Tiled::MapObject("","bot",QPointF(tx*tw,(ty+1)*th),QSizeF(tw,th));
             npc->setProperty("skin",QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size())));
