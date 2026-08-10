@@ -178,7 +178,7 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(Tiled::Map *templateMap,Ti
 
                 MapBrush_tilesets_hack.push_back(tilesetWorld);
 
-                QFileInfo tilesetWorldFile(QCoreApplication::applicationDirPath()+"/dest/map/main/official/"+tilesetWorld->fileName());
+                QFileInfo tilesetWorldFile(LoadMap::destMainDir()+tilesetWorld->fileName());
                 QString tilesetWorldPath=tilesetWorldFile.absoluteFilePath();
                 if(tilesetPath==tilesetWorldPath)
                 {
@@ -190,9 +190,9 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(Tiled::Map *templateMap,Ti
             //if not found
             if(templateTilesetWorldIndex>=worldMap.tilesetCount())
             {
-                QDir templateDir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
+                QDir templateDir(LoadMap::destMainDir());
                 const QString &tilesetTemplateRelativePath=templateDir.relativeFilePath(tilesetPath);
-                returnedVar.templateTilesetToMapTileset[tileset.get()]=LoadMap::readTileset("main/official/"+tilesetTemplateRelativePath,&worldMap); // TODO: Needs to be converted from Tileset* to SharedTileset
+                returnedVar.templateTilesetToMapTileset[tileset.get()]=LoadMap::readTileset(("main/"+LoadMap::mainCode()+"/")+tilesetTemplateRelativePath,&worldMap); // TODO: Needs to be converted from Tileset* to SharedTileset
             }
             templateTilesetIndex++;
         }

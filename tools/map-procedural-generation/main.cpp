@@ -137,6 +137,9 @@ int main(int argc, char *argv[])
     if(!QFile::exists(settingsPath))
         QFile::copy(":/settings.xml",settingsPath);
     QSettings settings(settingsPath,QSettings::NativeFormat);
+    //the label the world is written under, once, for every path below
+    LoadMap::resolveMainCode(settings);
+    std::cout << "Generating the map label \"" << LoadMap::mainCode().toStdString() << "\"" << std::endl;
 
     //Validate the input BEFORE dest/ is wiped: a template defect that no tool can repair
     //without knowing the author's intent must not produce half a world. Every error of
@@ -157,20 +160,20 @@ int main(int argc, char *argv[])
         }
     }
 
-    QDir dir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
+    QDir dir(LoadMap::destMainDir());
     dir.removeRecursively();
     if(!dir.mkpath(dir.path()))
     {
         std::cerr << "Unable to create path: " << dir.path().toStdString() << std::endl;
         abort();
     }
-    QDir dirZone(QCoreApplication::applicationDirPath()+"/dest/map/main/official/zone/");
+    QDir dirZone(LoadMap::destMainDir()+"zone/");
     if(!dir.mkpath(dirZone.path()))
     {
         std::cerr << "Unable to create path: " << dir.path().toStdString() << std::endl;
         abort();
     }
-    QFile info(QCoreApplication::applicationDirPath()+"/dest/map/main/official/informations.xml");
+    QFile info(LoadMap::destMainDir()+"informations.xml");
     if(info.open(QFile::WriteOnly))
     {
         //no <options> block here: the generator settings are neither read by the engine nor
@@ -398,7 +401,7 @@ int main(int argc, char *argv[])
                         tilesetIndex++;
                     }
                 }
-                const bool allWritten=maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/main/official/all.tmx");
+                const bool allWritten=maprwriter.writeMap(&tiledMap,LoadMap::destMainDir()+"all.tmx");
                 {
                     unsigned int restoreIndex=0;
                     while(restoreIndex<tilesetNames.size())
@@ -409,7 +412,7 @@ int main(int argc, char *argv[])
                 }
                 if(!allWritten)
                 {
-                    std::cerr << "Unable to write " << QCoreApplication::applicationDirPath().toStdString() << "/dest/map/main/official/all.tmx" << std::endl;
+                    std::cerr << "Unable to write " << LoadMap::destMainDir().toStdString() << "all.tmx" << std::endl;
                     abort();
                 }
                 qDebug("Write all.tmx %lld ms", t.elapsed());
@@ -471,7 +474,7 @@ int main(int argc, char *argv[])
                 recuesPoints.insert(recuesPoints.cend(),newRecuesPoints.cbegin(),newRecuesPoints.cend());
                 if(LoadMapAll::zones.find(cityLowerCaseName)==LoadMapAll::zones.cend())
                 {
-                    QFile xmlinfo(QCoreApplication::applicationDirPath()+"/dest/map/main/official/zone/"+QString::fromStdString(cityLowerCaseName)+".xml");
+                    QFile xmlinfo(LoadMap::destMainDir()+"zone/"+QString::fromStdString(cityLowerCaseName)+".xml");
                     if(xmlinfo.open(QFile::WriteOnly))
                     {
                         QString content("<zone>\n"
@@ -532,7 +535,7 @@ int main(int argc, char *argv[])
                             file="road-"+std::to_string(roadIndex.roadIndex+1)+"/"+std::to_string(indexCoord+1)+".tmx";
                             if(LoadMapAll::zones.find(cityLowerCaseName)==LoadMapAll::zones.cend())
                             {
-                                QFile xmlinfo(QCoreApplication::applicationDirPath()+"/dest/map/main/official/zone/"+QString::fromStdString(cityLowerCaseName)+".xml");
+                                QFile xmlinfo(LoadMap::destMainDir()+"zone/"+QString::fromStdString(cityLowerCaseName)+".xml");
                                 if(xmlinfo.open(QFile::WriteOnly))
                                 {
                                     QString content("<zone>\n"
@@ -620,7 +623,7 @@ int main(int argc, char *argv[])
         //road trainer bots are now emitted inline per chunk during the split
         //loop above (LoadMapAll::emitRoadBotsForChunk via additionalXmlInfo).
         //do the start point
-        QFile start(QCoreApplication::applicationDirPath()+"/dest/map/main/official/start.xml");
+        QFile start(LoadMap::destMainDir()+"start.xml");
         if(start.open(QFile::WriteOnly))
         {
             if(cityStarts.empty())

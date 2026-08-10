@@ -297,8 +297,10 @@ int main(int argc, char *argv[])
             }
             ::closedir(d);
         }
+        //no fallback label: a datapack without a single map/main/<code>/ has nothing
+        //to explore, and inventing a name only produced empty pages
         if(mainCodes.empty())
-            mainCodes.push_back("official");
+            std::cerr << "No map label in " << mainRoot << std::endl;
     }
     std::sort(mainCodes.begin(),mainCodes.end());
 

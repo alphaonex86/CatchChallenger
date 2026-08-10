@@ -201,6 +201,57 @@ std::vector<std::string> FacilityLibGeneral::skinIdList(const std::string& skinP
     return skinFolderList;
 }
 
+std::string FacilityLibGeneral::resolveDatapackMainCode(const std::string &datapackPath,const bool &preferTest)
+{
+    std::string root=datapackPath;
+    if(!root.empty() && root.at(root.size()-1)!='/')
+        root+='/';
+    root+=DATAPACK_BASE_PATH_MAPMAIN;
+    std::vector<std::string> codes;
+    {
+        const std::vector<InodeDescriptor> inodes=listFolderNotRecursive(root,Dirs);
+        unsigned int index=0;
+        while(index<inodes.size())
+        {
+            //CATCHCHALLENGER_CHECK_MAINDATAPACKCODE without pulling <regex> into a
+            //file every tiny target compiles: the engine only accepts [a-z0-9]+
+            const std::string &name=inodes.at(index).name;
+            bool usable=!name.empty();
+            unsigned int charIndex=0;
+            while(charIndex<name.size())
+            {
+                const char c=name.at(charIndex);
+                if(!((c>='a' && c<='z') || (c>='0' && c<='9')))
+                    usable=false;
+                charIndex++;
+            }
+            if(usable)
+                codes.push_back(name);
+            index++;
+        }
+    }
+    //the directory order is filesystem order: sort so two hosts resolve the same label
+    std::sort(codes.begin(),codes.end());
+    bool haveTest=false;
+    std::string firstNotTest;
+    unsigned int index=0;
+    while(index<codes.size())
+    {
+        if(codes.at(index)==DATAPACK_MAINCODE_TEST)
+            haveTest=true;
+        else if(firstNotTest.empty())
+            firstNotTest=codes.at(index);
+        index++;
+    }
+    if(preferTest && haveTest)
+        return std::string(DATAPACK_MAINCODE_TEST);
+    if(!firstNotTest.empty())
+        return firstNotTest;
+    if(haveTest)
+        return std::string(DATAPACK_MAINCODE_TEST);
+    return std::string();
+}
+
 std::string FacilityLibGeneral::dropPrefixAndSuffixLowerThen33(const std::string &str)
 {
     unsigned int start=0;

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Install the generated maps as a datapack map LABEL (map/main/<label>/).
 
-The generator writes dest/map/main/official/; a datapack calls that folder a
-"label" and it is copied under map/main/<label>/. Doing that copy by hand is
+The generator writes dest/map/main/<label>/ (the label comes from its settings);
+a datapack calls that folder a "label" too and it is copied under
+map/main/<label>/. Doing that copy by hand is
 what broke once: only the maps were copied, and every map referenced its
 tilesets in map/tileset/ of the target datapack, which does not own the
 gym/heal/shop/house sheets the generator uses -> "tileset not found". The label
@@ -22,6 +23,9 @@ import os
 import re
 import shutil
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import generated_label
 
 #the whole-world dump written when settings doallmap=true: a debug artefact, not
 #a map of the label
@@ -61,16 +65,20 @@ def main():
     parser.add_argument("dest", nargs="?", default="dest",
                         help="the dest/ the generator wrote")
     parser.add_argument("--datapack", required=True, help="datapack root")
-    parser.add_argument("--label", default="generated",
-                        help="map/main/<label>/ to install into")
+    parser.add_argument("--label", default=None,
+                        help="map/main/<label>/ to install into, defaults to the "
+                             "label the generator wrote")
     parser.add_argument("--dry-run", action="store_true",
                         help="say what would change, touch nothing")
     arguments = parser.parse_args()
 
-    source = os.path.join(arguments.dest, "map", "main", "official")
-    if not os.path.isdir(source):
-        print("no generated map in " + source)
+    #the generator resolves its label from its settings, so read it back off disk
+    label, source = generated_label.find(arguments.dest)
+    if label is None:
+        print(source)
         return 2
+    if arguments.label is None:
+        arguments.label = label
     files = [name for name in collect(source)
              if os.path.basename(name) != DEBUG_DUMP]
 

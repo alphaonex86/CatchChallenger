@@ -35,7 +35,7 @@ side files any more.
 The generator resolves `settings.xml` tileset paths relative to its CWD and the
 bundled `template/*.tmx` reference tilesets as `../dest/map/tileset/<x>.tsx` (or
 `../../dest/map/tileset/<x>.tsx` for `building-*/floor-*.tmx`); output is written
-to `<binary dir>/dest/map/main/official/`. So the run dir must contain
+to `<binary dir>/dest/map/main/<maincode>/`. So the run dir must contain
 `dest/map/tileset/` populated with the `.tsx`+`.png` the chosen config names.
 Keep each datapack in its own run dir so their tilesets don't collide. Never
 write tilesets back into a source datapack tree (read-only).

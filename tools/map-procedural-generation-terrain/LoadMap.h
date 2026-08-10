@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <QString>
+#include <QSettings>
 #include <unordered_map>
 #include <string>
 
@@ -59,7 +60,18 @@ public:
 
     static unsigned int floatToHigh(const float f);
     static unsigned int floatToMoisure(const float f);
-    //dest/map/main/official/tileset/: the tileset dir SHIPPED with the generated
+    //The map LABEL the world is written under: dest/map/main/<mainCode>/, copied as
+    //map/main/<mainCode>/ of a datapack. Resolved once from the settings ("maincode"
+    //key) by resolveMainCode(); never hard code it, and never "official".
+    static const QString &mainCode();
+    //Read "maincode" from settings. Absent, empty, or not a valid datapack label ->
+    //fall back on DATAPACK_MAINCODE_GENERATED and WRITE it back, so the next run is
+    //explicit. "test" is refused here: that label belongs to the hand made harness
+    //maps and a generated world would overwrite them.
+    static void resolveMainCode(QSettings &settings);
+    //dest/map/main/<mainCode>/: the root of the generated map label
+    static QString destMainDir();
+    //dest/map/main/<mainCode>/tileset/: the tileset dir SHIPPED with the generated
     //maps, the only one a written reference ever points at
     static QString shippedTilesetDir();
     //the run staging pool holding <fileName> (dest/map/tileset/, then the
