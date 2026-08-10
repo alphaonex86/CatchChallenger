@@ -37,6 +37,7 @@ from remote_build import (start_remote_builds, collect_remote_results,
 import remote_build
 import diagnostic
 import build_paths
+import client_output_check
 from cmd_helpers import (clamp_local, assert_port_or_fail,
                          assert_port_or_fail_with_remotes, find_tool)
 
@@ -520,6 +521,28 @@ def stop_server():
     server_proc = None
 
 
+#Unknown client output is always PRINTED so a new message cannot hide in the 400+
+#lines a run produces, but it only FAILS when
+#CC_STRICT_CLIENT_OUTPUT=1 is in the environment: part of that output comes from pipewire / ffmpeg / the
+#GL driver and differs from host to host, so gating on it would keep the fleet red
+#for lines that are not ours. Accept a new line of OUR code with:
+#  test/client_output_check.py --learn <log>
+STRICT_CLIENT_OUTPUT = os.environ.get("CC_STRICT_CLIENT_OUTPUT", "") == "1"
+
+
+def report_unknown_client_output(label, output_lines):
+    """Print (and return) the lines of this run that no whitelist entry covers."""
+    unknown = client_output_check.unknown_lines(output_lines)
+    if unknown:
+        print(f"  client output not in the whitelist ({len(unknown)} line(s)) "
+              f"for {label}:")
+        for line in unknown[:40]:
+            print(f"  ? {line}")
+        if len(unknown) > 40:
+            print(f"  ? ... {len(unknown) - 40} more")
+    return unknown
+
+
 def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
                success_marker=None, use_offscreen=True,
                remote_ssh_proc=None, soft_timeout=False):
@@ -618,6 +641,7 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     t.start()
     triggered = done.wait(timeout=timeout)
     out = "\n".join(output_lines)
+    unknown_output = report_unknown_client_output(label, output_lines)
 
     def _kill():
         try:
@@ -662,6 +686,10 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
         kind, detail = outcome[0]
         _kill()
         if kind == "pass":
+            if STRICT_CLIENT_OUTPUT and unknown_output:
+                log_fail(label, f"{len(unknown_output)} client output line(s) not "
+                                "in the whitelist (CC_STRICT_CLIENT_OUTPUT=1)")
+                return False
             log_pass(label, f"early pass ({detail})")
             return True
         # If we're driving a remote-started server and the server died
@@ -701,6 +729,10 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
 
     rc = proc.wait()
     if rc == 0:
+        if STRICT_CLIENT_OUTPUT and unknown_output:
+            log_fail(label, f"{len(unknown_output)} client output line(s) not in "
+                            "the whitelist (CC_STRICT_CLIENT_OUTPUT=1)")
+            return False
         log_pass(label, "exit code 0")
         return True
     log_fail(label, f"exit code {rc}")

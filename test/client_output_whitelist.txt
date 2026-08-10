@@ -1,0 +1,272 @@
+# Normalised lines a client is KNOWN to print (numbers -> <n>,
+# paths -> <path>, pointers -> <ptr>). Regenerate/extend with:
+#   test/client_output_check.py --learn <client-log>...
+# and REVIEW the diff: a new line here means we accepted a new
+# message, which is exactly the thing this file exists to show.
+"<n> buff(s) extra loaded"
+"<n> monster(s) extra loaded" into <n> ms/ <n> ms
+"<n> plant(s) extra loaded"
+"<path> loaded into <n>ms"
+"Player is logged, cash: <n>"
+"QtDatapackClientLoader::parseDatapack()"
+"listDatapack(): remove invalid file: .claude<path>"
+"listDatapack(): remove invalid file: .git<path>"
+"listDatapack(): remove invalid file: README.md"
+"listDatapack(): remove invalid file: datapack-change.md"
+"listDatapack(): remove invalid file: items<path>"
+"listDatapack(): remove invalid file: monsters<path>"
+<n> SQL city loaded
+<n> SQL clan max id
+<n> SQL map dictionary
+<n> SQL reputation dictionary
+<n> SQL skin dictionary
+<n> audio ambiance(s) link loaded
+<n> bot linked with quest(s) loaded
+<n> crafting recipe(s) loaded
+<n> event(s) loaded
+<n> files for datapack loaded
+<n> hash for datapack loaded base, <n> hash for datapack loaded main, <n> hash for datapack loaded sub
+<n> item(s) extra loaded
+<n> items(s) loaded
+<n> map(s) extra loaded
+<n> map(s) loaded into <n>ms
+<n> monster buff(s) loaded
+<n> monster drop(s) loaded
+<n> monster evolution items(s) loaded
+<n> monster items(s) to learn loaded
+<n> monster skill(s) loaded
+<n> monster(s) collisions loaded
+<n> monster(s) loaded
+<n> monters drop(s) loaded
+<n> parseIncommingData(): !haveData_dataSize
+<n> parseIncommingData(): remaining data: <n>, returnVal: <n>
+<n> parseIncommingData(): socket->bytesAvailable(): ?, header_cut: <n>
+<n> plant(s) loaded
+<n> profile loaded
+<n> profile text(s) loaded
+<n> profile(s) loaded
+<n> quest(s) extra loaded
+<n> quest(s) loaded
+<n> quest(s) text loaded
+<n> reputation(s) extra loaded
+<n> reputation(s) loaded
+<n> server profile(s) loaded
+<n> skill(s) extra loaded
+<n> skin(s) loaded
+<n> trap(s) loaded
+<n> type(s) extra loaded
+<n> type(s) loaded
+<n> visual cat loaded
+<n> zone(s) extra loaded
+<n> zone(s) loaded
+Api_client_real::datapackChecksumDoneBase
+Api_client_real::datapackDownloadFinishedBase()
+Api_client_real::sendDatapackContentBase()
+Api_client_real::sendDatapackContentBase() doDifferedChecksumBase
+Api_protocol::addCharacter() pseudo: Player
+Api_protocol::connectTheExternalSocketInternal()
+Api_protocol::protocol_is_good(), login is empty, normal for login without creation
+Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage<n> set at <path>
+Api_protocol::selectCharacter() reply for <ptr> <ptr> <path>
+Api_protocol::selectCharacter(): <ptr>, select char: <n>, charactersGroupIndex: <n>, serverUniqueKey: <n>, line: <path> <n>
+Api_protocol::selectCharacter(uint<n>_t,uint<n>_t)
+Api_protocol::selectCharacter(uint<n>_t,uint<n>_t,uint<n>_t,uint<n>_t)
+Api_protocol::tryLogin()
+Api_protocol_Qt::haveTheDatapack()
+Api_protocol_Qt::have_current_player_info()
+Api_protocol_Qt::stateChanged(<n>)
+AutoArgs: --autosolo no savegame found, creating one
+AutoArgs: --autosolo playing savegame: <path>
+AutoArgs: --closewhenonmap, exiting in <n>s
+AutoArgs: server="" host="" port=<n> url="" autologin=false character="" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=true mainDatapackCodeOverride="test" takeScreenshotPath=""
+Base: Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote <n>F<n>FA<n>A<n>B<n>D<n>FAD<n>BDE<n>DAF<n>C<n>DFF<n>A<n>DCF<n>AA<n>B<n>
+BaseWindow::currentMapLoaded(): map: <n> with type: ""
+BaseWindow::protocol_is_good()
+CatchChallenger::CommonDatapack::commonDatapack.parseDatapack end took <n>ms to parse <path>
+CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() other took <n>ms to parse <path>
+CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took <n>ms to parse <path>
+CliClientOptions: --closewhenonmap, exiting in <n>s
+CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase is now:
+CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer is now:
+Connected to SQLite at <path>
+ConnexionManager::stateChanged(<n>)
+Datapack, base: <path>
+File excluded because don't match the regex (<n>): README.md
+File excluded because don't match the regex (<n>): datapack-change.md
+File excluded because don't match the regex (<n>): items<path>
+File excluded because don't match the regex (<n>): map<path>
+File excluded because don't match the regex (<n>): monsters<path>
+Hash not same CommonSettingsCommon::commonSettingsCommon.datapackHashBase "<n>F<n>FA<n>A<n>B<n>D<n>FAD<n>BDE<n>DAF<n>C<n>DFF<n>A<n>DCF<n>AA<n>B<n>" hashBase ""
+ImageFormats:ani,avif,avifs,bmp,bw,cur,dds,ff,gif,hdr,icns,ico,iff,ilbm,im<n>,im<n>,im<n>,im<n>,jfif,jpeg,jpg,jxl,kra,lbm,mng,ora,pbm,pcx,pdd,pdf,pfm,pgm,phm,pic,png,ppm,psb,psd,psdt,pxr,qoi,ras,rgb,rgba,sct,sgi,sun,svg,svgz,tga,tif,tiff,tim,wbmp,webp,xbm,xcf,xpm
+Loaded map and other <n>ms
+Loaded the common datapack into <n>ms
+Loaded the server SQL datapack into <n>ms
+Loaded the server static datapack into <n>ms
+MainWindow::stateChanged(<n>)
+MainWindow::stateChanged(<n>) mostly quit
+MapController::loadBotOnTheMap() skin empty
+MapControllerMP::datapackParsedMainSub()
+MapControllerMP::loadCurrentPlayer() mapId=<n> x=<n> y=<n> mHaveTheDatapack=<n> player_informations_is_set=<n>
+MapControllerMP::reinject_signals() loading current player on mapId=<n> x=<n> y=<n> maps.size()=<n>
+MapControllerMP::resetAll()
+MapItem::addMap() done mapIndex=<n> <n> layers, <n> items added (width=<n> height=<n>)
+MapItem::addMap() layers.size()=<n>
+MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n>
+MapItem::setMapPosition() map=<ptr> global_x=-<n> global_y=<n>
+MapItem::setMapPosition() map=<ptr> global_x=<n> global_y=<n>
+MapVisualiser::MapVisualiser() debugTags=<n> useCache=<n> openGL=<n>
+MapVisualiser::MapVisualiser() ready, mScene=<ptr> mapItem=<ptr>
+MapVisualiser::asyncDetectBorder() mapIndex=<n> current_map=<n>
+MapVisualiser::asyncMapLoaded() mapIndex=<n> current_map=<n> tempMapObject=<ptr>
+MapVisualiser::loadOtherMap() mapIndex=<n> current_map=<n>
+MapVisualiser::loadOtherMap() mapIndex=<n> current_map=<n>MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
+MapVisualiserPlayer::asyncMapLoaded() mapIndex=<n> current_map=<n>
+MapVisualiserPlayer::finalPlayerStep()
+MapVisualiserPlayer::insert_player_internal()
+MapVisualiserPlayer::insert_player_internal() direction: <n> lastTileset: trainer
+MapVisualiserPlayer::insert_player_internal() loading player
+MapVisualiserPlayer::loadPlayerFromCurrentMap() current_map=<n> x=<n> y=<n> centerOnPlayer=<n>
+MapVisualiserPlayer::mapDisplayedSlot() mapIndex= <n> current_map= <n>
+MapVisualiserPlayer::mapDisplayedSlot() mapIndex=<n> current_map=<n>
+MapVisualiserPlayer::setDatapackPath(<path>
+MapVisualiserPlayer::updatePlayerMonsterTile() image not found: <path>
+MapVisualiserPlayer::updatePlayerMonsterTile() monster=<n>
+MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
+Missing "object" properties (item) for the bot: object, file: <path> text: object
+Missing attribute: child->Name(): monster, file: <path>
+Missing map,x or y, type: teleport on it, file: <path>
+OverMapLogic::currentMapLoaded(): map: <n> with type: ""
+Player: internalPackOutcommingData(): start
+Preload data for server version <n>.<n>
+ProtocolParsingInputOutput::parseIncommingData() !header_cut.empty() post read
+ProtocolParsingInputOutput::parseIncommingData() !header_cut.empty() pre read
+QCssParser::parseColorValue: Specified color without alpha value but alpha given: 'rgb <n>,<n>,<n>,<n>'
+QFileDevice::flush: No file engine. Is IODevice open?
+QImage to QPixmap: <n>ms
+QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) "<path>"
+QtDatapackChecksum::doDifferedChecksumBase
+QtServer::stop()
+QtServer::stop_internal_server()
+QtServer::stop_internal_server() emit stop_internal_server_signal()
+QtServer::stop_internal_server() moveToThread(QThread::currentThread())
+ScreenTransition::closeEvent()
+ScreenTransition::closeEvent: internalServer->isFinished()
+ScreenTransition::errorString()
+ScreenTransition::is_started(<n>)
+Start split: <n> and size <n>, cursor: <n>
+Start split: <n>E<n>F<n>F<n>F<n>A<n>E<n>F<n>FA<n>A<n>B<n>D<n>FAD<n>BDE<n>DAF<n>C<n>DFF<n>A<n>DCF<n>AA<n>B<n> and size <n>, cursor: <n>
+Start split: <n>E<n>FF<n>F<n>BB<n>DCBD<n>FA<n>E<n>F<n>C<n>DAA<n>CE<n>D<n>F<n>EF<n>DDD<n>FD<n>CAA<n>F<n>CF<n>CE<n>F<n>C<n>FE<n>A<n>FBD<n>F<n>F<n>A<n>A<n>B<n>EDA<n>CAA<n>C<n>E<n>ECB<n>AC<n>B<n>BE<n>D<n>BB<n>E<n>BA<n>EAF<n>CE<n>FD<n>CD<n>D<n>A<n>B<n>E<n>EA<n>A<n>C<n>CFE<n>D<n>D<n>D<n>E<n>B<n>B<n>F<n>C<n>CC<n>E<n>AD<n>FF<n>F<n>AD<n>F<n>CCEF<n>F<n>F<n>ED<n>B<n>EB<n>BE<n>A<n>EB<n>F<n>BA<n>F<n>A<n>EA<n>EA<n>F<n>B<n>C<n>AB<n>C<n>AA<n>AA<n>D<n>DD<n>F<n>BF<n>FD<n>D<n>E<n>BE<n>B<n>D<n>C<n>ECDAB<n>FF<n>FA<n>CD<n>CA<n>AF<n>C<n>E<n>F<n>A<n>EC<n>F<n>ED<n>D<n>A<n>AD<n>ADE<n>B<n>DE<n>A<n>DA<n> and size <n>, cursor: <n>
+Start split: <n>F<n>F<n> and size <n>, cursor: <n>
+Start split: <n>F<n>F<n>EAFF<n>A<n>BB<n>D<n>A<n>C<n>EABFE<n>B<n>D and size <n>, cursor: <n>
+Start split: <n>F<n>F<n>F<n>A<n>E<n>F<n>FA<n>A<n>B<n>D<n>FAD<n>BDE<n>DAF<n>C<n>DFF<n>A<n>DCF<n>AA<n>B<n> and size <n>, cursor: <n>
+Start split: <n>F<n>FC<n>B<n>E<n>E<n>E<n>E<n>F<n>A<n>F<n>A<n>F<n>A<n>C<n>F<n>C<n>C<n>CA<n>B<n>FFD<n>B<n>B<n>D<n>C<n>D<n>E<n>FF<n>F<n>BB<n>DCBD<n>FA<n>E<n>F<n>C<n>DAA<n>CE<n>D<n>F<n>EF<n>DDD<n>FD<n>CAA<n>F<n>CF<n>CE<n>F<n>C<n>FE<n>A<n>FBD<n>F<n>F<n>A<n>A<n>B<n>EDA<n>CAA<n>C<n>E<n>ECB<n>AC<n>B<n>BE<n>D<n>BB<n>E<n>BA<n>EAF<n>CE<n>FD<n>CD<n>D<n>A<n>B<n>E<n>EA<n>A<n>C<n>CFE<n>D<n>D<n>D<n>E<n>B<n>B<n>F<n>C<n>CC<n>E<n>AD<n>FF<n>F<n>AD<n>F<n>CCEF<n>F<n>F<n>ED<n>B<n>EB<n>BE<n>A<n>EB<n>F<n>BA<n>F<n>A<n>EA<n>EA<n>F<n>B<n>C<n>AB<n>C<n>AA<n>AA<n>D<n>DD<n>F<n>BF<n>FD<n>D<n>E<n>BE<n>B<n>D<n>C<n>ECDAB<n>FF<n>FA<n>CD<n>CA<n>AF<n>C<n>E<n>F<n>A<n>EC<n>F<n>ED<n>D<n>A<n>AD<n>ADE<n>B<n>DE<n>A<n>DA<n> and size <n>, cursor: <n>
+Start split: <n>FF<n>F<n>BB<n>DCBD<n>FA<n>E<n>F<n>C<n>DAA<n>CE<n>D<n>F<n>EF<n>DDD<n>FD<n>CAA<n>F<n>CF<n>CE<n>F<n>C<n>FE<n>A<n>FBD<n>F<n>F<n>A<n>A<n>B<n>EDA<n>CAA<n>C<n>E<n>ECB<n>AC<n>B<n>BE<n>D<n>BB<n>E<n>BA<n>EAF<n>CE<n>FD<n>CD<n>D<n>A<n>B<n>E<n>EA<n>A<n>C<n>CFE<n>D<n>D<n>D<n>E<n>B<n>B<n>F<n>C<n>CC<n>E<n>AD<n>FF<n>F<n>AD<n>F<n>CCEF<n>F<n>F<n>ED<n>B<n>EB<n>BE<n>A<n>EB<n>F<n>BA<n>F<n>A<n>EA<n>EA<n>F<n>B<n>C<n>AB<n>C<n>AA<n>AA<n>D<n>DD<n>F<n>BF<n>FD<n>D<n>E<n>BE<n>B<n>D<n>C<n>ECDAB<n>FF<n>FA<n>CD<n>CA<n>AF<n>C<n>E<n>F<n>A<n>EC<n>F<n>ED<n>D<n>A<n>AD<n>ADE<n>B<n>DE<n>A<n>DA<n> and size <n>, cursor: <n>
+Start split: A<n>F<n>C<n>D<n>AF<n>C<n>EE<n>CF<n>B<n>FF<n>CFCB<n>CEEB<n>C<n>B<n>EB<n>C<n>B<n>F<n>DAF<n>BE<n>F<n>BAC<n>FDE<n>DCC<n>C<n>CAFD<n>FA<n>C<n>DB<n>CEEAD<n>E<n>D<n> and size <n>, cursor: <n>
+Start split: A<n>F<n>CD<n>D<n> and size <n>, cursor: <n>
+Start split: A<n>FF<n>A<n>C<n>F<n>AA<n>DFE<n>BA<n>A<n>BD<n>E<n>BDB<n>F<n>FB<n>C<n>D<n>C<n>B<n>B<n>BF<n>B<n>C<n>C<n>B<n>EF<n>A<n>F<n>FF<n>A<n>C<n>CCB<n>A<n> and size <n>, cursor: <n>
+Start split: AA<n>F<n>B<n>C<n> and size <n>, cursor: <n>
+Start split: AC<n>F<n> and size <n>, cursor: <n>
+This plugin does not support propagateSizeHints()
+Try create account: login: <n>A<n>D<n>AE<n>C<n>DF<n>DC<n>DF<n>F<n>BC<n>D<n>FD<n>C<n>A<n>FC<n>F<n>ED<n>A and pass: <n>E<n>B<n>AA<n>A<n>BD<n>E<n>AA<n>E<n>E<n>AB<n>E<n>DC<n>C<n>B<n>E<n>DAEB<n>A<n>
+Try create account: login: <n>C<n>D<n>AF<n>C<n>EE<n>CF<n>B<n>FF<n>CFCB<n>CEEB<n>C<n>B<n>EB<n>C<n>B<n> and pass: <n>C<n>B<n>B<n>BF<n>B<n>C<n>C<n>B<n>EF<n>A<n>F<n>FF<n>A<n>C<n>CCB<n>A<n>
+Try stop
+[CENTER DEBUG] centerOnPlayer=TRUE
+[SPAWN] player spawned on map <n> at (<n>,<n>)
+[SQL exec-sync] INSERT INTO account(id,login,password,date) VALUES(<n>,'<n>C<n>E<n>E<n>A<n>C<n>E<n>D<n>A<n>ED<n>CCF<n>B<n>DAE<n>AD<n>DDBD<n>C<n>','<n>E<n>B<n>AA<n>A<n>BD<n>E<n>AA<n>E<n>E<n>AB<n>E<n>DC<n>C<n>B<n>E<n>DAEB<n>A<n>',<n>)
+[SQL exec-sync] INSERT INTO account(id,login,password,date) VALUES(<n>,'F<n>A<n>C<n>F<n>AA<n>DFE<n>BA<n>A<n>BD<n>E<n>BDB<n>F<n>FB<n>C<n>D<n>','<n>C<n>B<n>B<n>BF<n>B<n>C<n>C<n>B<n>EF<n>A<n>F<n>FF<n>A<n>C<n>CCB<n>A<n>',<n>)
+[SQL exec-sync] INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item) VALUES(<n>,<n>,'Player',<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,'<n>','<n>','<n>','<n>');
+[SQL exec-sync] INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,quest) VALUES(<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,'');
+[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'cave');
+[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'city');
+[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'gym');
+[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'house<n>');
+[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'road');
+[SQL exec-sync] INSERT INTO dictionary_reputation(id,reputation) VALUES(<n>,'crafting');
+[SQL exec-sync] INSERT INTO dictionary_reputation(id,reputation) VALUES(<n>,'nation');
+[SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'bandit');
+[SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'girlplayer');
+[SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'player');
+[SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'terranite');
+[SQL exec-sync] INSERT INTO dictionary_starter(id,starter) VALUES(<n>,'Normal');
+[SQL exec-sync] INSERT INTO monster(id,character,place,hp,monster,level,xp,captured_with,gender,egg_step,character_origin,position,buffs,skills,skills_endurance) VALUES(<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,'','C<n>','<n>')
+[SQL exec-sync] SELECT * FROM account
+[SQL exec-sync] SELECT * FROM character
+[SQL exec-sync] SELECT * FROM character_forserver
+[SQL exec-sync] SELECT * FROM dictionary_reputation
+[SQL exec-sync] UPDATE character SET last_connect=<n> WHERE id=<n>
+[SQL exec] SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow_create_clan,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,date,lastdaillygift FROM character WHERE id=<n>
+[SQL exec] SELECT clan FROM city WHERE city='test'
+[SQL exec] SELECT id FROM account ORDER BY id DESC LIMIT <n>,<n>;
+[SQL exec] SELECT id FROM character ORDER BY id DESC LIMIT <n>,<n>;
+[SQL exec] SELECT id FROM character WHERE pseudo='Player'
+[SQL exec] SELECT id FROM clan ORDER BY id DESC LIMIT <n>,<n>;
+[SQL exec] SELECT id FROM monster ORDER BY id DESC LIMIT <n>,<n>;
+[SQL exec] SELECT id,character,place,hp,monster,level,xp,captured_with,gender,egg_step,character_origin,buffs,skills,skills_endurance FROM monster WHERE character=<n> ORDER BY position ASC
+[SQL exec] SELECT id,map FROM dictionary_map ORDER BY map
+[SQL exec] SELECT id,password FROM account WHERE login='<n>C<n>E<n>E<n>A<n>C<n>E<n>D<n>A<n>ED<n>CCF<n>B<n>DAE<n>AD<n>DDBD<n>C<n>'
+[SQL exec] SELECT id,password FROM account WHERE login='F<n>A<n>C<n>F<n>AA<n>DFE<n>BA<n>A<n>BD<n>E<n>BDB<n>F<n>FB<n>C<n>D<n>'
+[SQL exec] SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=<n>
+[SQL exec] SELECT id,reputation FROM dictionary_reputation ORDER BY id
+[SQL exec] SELECT id,resources,products,last_update FROM factory
+[SQL exec] SELECT id,skin FROM dictionary_skin ORDER BY id
+[SQL exec] SELECT id,starter FROM dictionary_starter ORDER BY id
+[SQL exec] SELECT map,plants,items,fights,industries FROM character_bymap WHERE character=<n>
+[SQL exec] SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,quest,date FROM character_forserver WHERE character=<n>
+[SQL exec] SELECT server,played_time,last_connect FROM server_time WHERE account=<n>
+[SQL read] SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow_create_clan,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,date,lastdaillygift FROM character WHERE id=<n>
+[SQL read] SELECT clan FROM city WHERE city='test'
+[SQL read] SELECT id FROM account ORDER BY id DESC LIMIT <n>,<n>;
+[SQL read] SELECT id FROM character ORDER BY id DESC LIMIT <n>,<n>;
+[SQL read] SELECT id FROM character WHERE pseudo='Player'
+[SQL read] SELECT id FROM clan ORDER BY id DESC LIMIT <n>,<n>;
+[SQL read] SELECT id FROM monster ORDER BY id DESC LIMIT <n>,<n>;
+[SQL read] SELECT id,character,place,hp,monster,level,xp,captured_with,gender,egg_step,character_origin,buffs,skills,skills_endurance FROM monster WHERE character=<n> ORDER BY position ASC
+[SQL read] SELECT id,map FROM dictionary_map ORDER BY map
+[SQL read] SELECT id,password FROM account WHERE login='<n>C<n>E<n>E<n>A<n>C<n>E<n>D<n>A<n>ED<n>CCF<n>B<n>DAE<n>AD<n>DDBD<n>C<n>'
+[SQL read] SELECT id,password FROM account WHERE login='F<n>A<n>C<n>F<n>AA<n>DFE<n>BA<n>A<n>BD<n>E<n>BDB<n>F<n>FB<n>C<n>D<n>'
+[SQL read] SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=<n>
+[SQL read] SELECT id,reputation FROM dictionary_reputation ORDER BY id
+[SQL read] SELECT id,resources,products,last_update FROM factory
+[SQL read] SELECT id,skin FROM dictionary_skin ORDER BY id
+[SQL read] SELECT id,starter FROM dictionary_starter ORDER BY id
+[SQL read] SELECT map,plants,items,fights,industries FROM character_bymap WHERE character=<n>
+[SQL read] SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,quest,date FROM character_forserver WHERE character=<n>
+[SQL read] SELECT server,played_time,last_connect FROM server_time WHERE account=<n>
+client <ptr> ProtocolParsingInputOutput::parseIncommingData() start
+correctly loaded at <path>
+created character with id: <n>, returnCode: <n>, line: <path> <n>
+database dictionary_map query finish
+display mergedConnexionInfoList.size(): <n>
+have character
+industry point have not the industry attribute: for bot at: <n>,<n>
+info.public_informations.pseudo: Player
+internalPackOutcommingData(): start
+layer Object, unknown object at <n> , <n> type: ""
+layers options parsed
+map have empty monster layer:<path> luck is not egal to <n> (<n>) for grass, monsters dropped: child->Name(): lava, file: <path>
+map: <ptr>
+merge the music: <n>ms
+mergedConnexionInfoList.size(): <n>
+newConnection(): new CatchChallenger::QtClient connected by fake socket
+parseDatapackMainSub took <n>ms to parse <path>
+qt.core.qmetatype.deprecated: QMetaType: copy construction of type 'QSqlQuery' is deprecated
+qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version <n>.<n> GPL version <n> or later
+set playerTileset here from: <n>
+spaVisitChoice: parse error "Object: size <n>, type Spa:Pod:Object:Param:Format (<n>), id Spa:Enum:ParamId:EnumFormat (<n>)" " Prop: key Spa:Pod:Object:Param:Format:mediaType (<n>), flags <n>" " Id <n> (Spa:Enum:MediaType:audio)" " Prop: key Spa:Pod:Object:Param:Format:mediaSubtype (<n>), flags <n>" " Id <n> (Spa:Enum:MediaSubtype:iec<n>)" " Prop: key Spa:Pod:Object:Param:Format:Audio:iec<n>Codec (<n>), flags <n>" " Choice: type Spa:Enum:Choice:Enum, flags <n> <n> <n>" " Id <n> (Spa:Enum:AudioIEC<n>Codec:PCM)" " Id <n> (Spa:Enum:AudioIEC<n>Codec:PCM)" " Id <n> (Spa:Enum:AudioIEC<n>Codec:AC<n>)" " Id <n> (Spa:Enum:AudioIEC<n>Codec:EAC<n>)" " Id <n> (Spa:Enum:AudioIEC<n>Codec:TrueHD)" " Prop: key Spa:Pod:Object:Param:Format:Audio:rate (<n>), flags <n>" " Choice: type Spa:Enum:Choice:Range, flags <n> <n> <n>" " Int <n>" " Int <n>" " Int <n>"
+time audio: <n>ms
+time image: <n>ms
+try connect Internal on: : <n>
+wait database dictionary_map query
+wait: haveTheDatapack()
+without header cut <n> and size <n>
+without header cut <n>E<n>F<n>F<n>F<n>A<n>E<n>F<n>FA<n>A<n>B<n>D<n>FAD<n>BDE<n>DAF<n>C<n>DFF<n>A<n>DCF<n>AA<n>B<n> and size <n>
+without header cut <n>F<n>F<n> and size <n>
+without header cut <n>F<n>F<n>EAFF<n>A<n>BB<n>D<n>A<n>C<n>EABFE<n>B<n>D and size <n>
+without header cut <n>F<n>FC<n>B<n>E<n>E<n>E<n>E<n>F<n>A<n>F<n>A<n>F<n>A<n>C<n>F<n>C<n>C<n>CA<n>B<n>FFD<n>B<n>B<n>D<n>C<n>D<n>E<n>FF<n>F<n>BB<n>DCBD<n>FA<n>E<n>F<n>C<n>DAA<n>CE<n>D<n>F<n>EF<n>DDD<n>FD<n>CAA<n>F<n>CF<n>CE<n>F<n>C<n>FE<n>A<n>FBD<n>F<n>F<n>A<n>A<n>B<n>EDA<n>CAA<n>C<n>E<n>ECB<n>AC<n>B<n>BE<n>D<n>BB<n>E<n>BA<n>EAF<n>CE<n>FD<n>CD<n>D<n>A<n>B<n>E<n>EA<n>A<n>C<n>CFE<n>D<n>D<n>D<n>E<n>B<n>B<n>F<n>C<n>CC<n>E<n>AD<n>FF<n>F<n>AD<n>F<n>CCEF<n>F<n>F<n>ED<n>B<n>EB<n>BE<n>A<n>EB<n>F<n>BA<n>F<n>A<n>EA<n>EA<n>F<n>B<n>C<n>AB<n>C<n>AA<n>AA<n>D<n>DD<n>F<n>BF<n>FD<n>D<n>E<n>BE<n>B<n>D<n>C<n>ECDAB<n>FF<n>FA<n>CD<n>CA<n>AF<n>C<n>E<n>F<n>A<n>EC<n>F<n>ED<n>D<n>A<n>AD<n>ADE<n>B<n>DE<n>A<n>DA<n> and size <n>
+without header cut A<n>F<n>C<n>D<n>AF<n>C<n>EE<n>CF<n>B<n>FF<n>CFCB<n>CEEB<n>C<n>B<n>EB<n>C<n>B<n>F<n>DAF<n>BE<n>F<n>BAC<n>FDE<n>DCC<n>C<n>CAFD<n>FA<n>C<n>DB<n>CEEAD<n>E<n>D<n> and size <n>
+without header cut A<n>F<n>CD<n>D<n> and size <n>
+without header cut A<n>FF<n>A<n>C<n>F<n>AA<n>DFE<n>BA<n>A<n>BD<n>E<n>BDB<n>F<n>FB<n>C<n>D<n>C<n>B<n>B<n>BF<n>B<n>C<n>C<n>B<n>EF<n>A<n>F<n>FF<n>A<n>C<n>CCB<n>A<n> and size <n>
+without header cut AA<n>F<n>B<n>C<n> and size <n>
+without header cut AC<n>F<n> and size <n>
+wrong teleporter on the map: gym(<n>,<n>), to gym(<n>,<n>) because the tp is out of range
+zonecapture point have not the zone attribute: for bot id: <n>,<n>
