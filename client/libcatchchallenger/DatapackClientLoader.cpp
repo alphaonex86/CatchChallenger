@@ -234,6 +234,48 @@ std::string DatapackClientLoader::getSubDatapackPath() const
     return DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB;
 }
 
+//true when the folder holds, at any depth, at least one file with that extension.
+//FacilityLibGeneral::listFolder()'s second argument is a sub PATH, not a filter, so
+//the extension is matched here.
+static bool datapackFolderHasFile(const std::string &folder,const std::string &extension)
+{
+    if(!CatchChallenger::FacilityLibGeneral::isDir(folder))
+        return false;
+    const std::vector<std::string> files=CatchChallenger::FacilityLibGeneral::listFolder(folder);
+    unsigned int index=0;
+    while(index<files.size())
+    {
+        const std::string &name=files.at(index);
+        if(name.size()>extension.size() &&
+                name.compare(name.size()-extension.size(),extension.size(),extension)==0)
+            return true;
+        index++;
+    }
+    return false;
+}
+
+std::string DatapackClientLoader::datapackProblem(const std::string &datapackPath)
+{
+    std::string root=datapackPath;
+    if(!root.empty() && root.at(root.size()-1)!='/')
+        root+='/';
+    if(!CatchChallenger::FacilityLibGeneral::isDir(root))
+        return "The datapack folder is missing: "+root;
+    //CommonDatapack::parseItems()/parseMonsters() feed the name->id tables the map
+    //loader needs; empty tables make Map_loader::tryLoadMap() abort straight away
+    if(!datapackFolderHasFile(root+DATAPACK_BASE_PATH_ITEM,".xml"))
+        return "The datapack has no item: "+root+DATAPACK_BASE_PATH_ITEM;
+    if(!datapackFolderHasFile(root+DATAPACK_BASE_PATH_MONSTERS,".xml"))
+        return "The datapack has no monster: "+root+DATAPACK_BASE_PATH_MONSTERS;
+    const std::string mainCode=CatchChallenger::FacilityLibGeneral::resolveDatapackMainCode(root,false);
+    if(mainCode.empty())
+        return "The datapack has no map label: "+root+DATAPACK_BASE_PATH_MAPMAIN;
+    if(!datapackFolderHasFile(root+DATAPACK_BASE_PATH_MAPMAIN+mainCode+"/",".tmx"))
+        return "The datapack map label \""+mainCode+"\" has no map: "+
+                root+DATAPACK_BASE_PATH_MAPMAIN+mainCode+"/";
+    return std::string();
+}
+
 DatapackClientLoader::CCColor DatapackClientLoader::namedColorToCCColor(const std::string &str,bool *ok)
 {
     CCColor color;

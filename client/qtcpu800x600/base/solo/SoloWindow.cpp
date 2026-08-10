@@ -50,7 +50,14 @@ SoloWindow::SoloWindow(QWidget *parent, const std::string &datapackPath, const s
     selectedSavegame=NULL;
     this->datapackPath=datapackPath;//QCoreApplication::applicationDirPath()+"/datapack/";
     this->savegamePath=savegamePath;//QCoreApplication::applicationDirPath()+"/savegames/";
-    datapackPathExists=QDir(QString::fromStdString(datapackPath)).exists();//QCoreApplication::applicationDirPath()+"/datapack/internal/";
+    //not just "the folder is there": a half copied datapack (no item, no map) let the
+    //player press New game and the engine aborted deep inside its loaders
+    {
+        const std::string datapackIssue=DatapackClientLoader::datapackProblem(datapackPath);
+        datapackPathExists=datapackIssue.empty();
+        if(!datapackPathExists)
+            std::cerr << datapackIssue << std::endl;
+    }
 
     updateSavegameList();
 
