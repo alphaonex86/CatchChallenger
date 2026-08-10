@@ -235,6 +235,9 @@ public:
     };
     static std::vector<CitySign> citySigns;
     static void reassertCitySigns(Tiled::Map &worldMap);
+    //keep the later vegetation brush off a cell that must stay visible
+    static void maskVegetationAround(Tiled::Map &worldMap, const unsigned int &tileX, const unsigned int &tileY,
+                                     const int radius);
     //world-tile footprints of the placed city buildings: the avenue/path paint
     //must NEVER overwrite a building tile
     struct BuildingRect
