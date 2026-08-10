@@ -15,8 +15,13 @@ CPU time comes from /proc/<pid>/stat (utime+stime, the whole process tree of the
 client, threads included), not from wall clock, so a busier machine does not move
 the result.
 
-Needs an X server: Xvfb is started on a free display (the clients are OpenGL/widget
-UIs and the offscreen platform plugin does not exercise the same paint path).
+Runs under QT_QPA_PLATFORM=offscreen. That is not a shortcut: on a real display the
+window only repaints while it is visible and getting frame callbacks, so an
+unfocused or occluded window (or a headless shell driving someone else's session)
+paints NOTHING and the measurement silently becomes the idle event loop. Offscreen
+paints every frame unconditionally, which is what makes the number reproducible.
+It also means the number is the CPU-side scene and raster cost, not the GPU
+driver's -- which is the part that matters on the hardware this engine targets.
 
   benchmark/benchmarkclientcpu.py --qtopengl <bin> --qt800 <bin> [--maincode test]
 """
@@ -42,37 +47,7 @@ def process_cpu_seconds(pid):
     return (int(fields[11]) + int(fields[12])) / CLOCK_TICKS
 
 
-class Xvfb:
-    def __init__(self):
-        self.display = None
-        self.process = None
-
-    def start(self):
-        display = 60
-        while display < 100:
-            lock = "/tmp/.X%d-lock" % display
-            if not os.path.exists(lock):
-                self.process = subprocess.Popen(
-                    ["Xvfb", ":%d" % display, "-screen", "0", "1024x768x24",
-                     "-nolisten", "tcp"],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                time.sleep(1.0)
-                if self.process.poll() is None:
-                    self.display = ":%d" % display
-                    return True
-            display += 1
-        return False
-
-    def stop(self):
-        if self.process is not None and self.process.poll() is None:
-            self.process.terminate()
-            try:
-                self.process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self.process.kill()
-
-
-def run_once(binary, seconds, display, maincode, data_home, verbose):
+def run_once(binary, seconds, maincode, data_home, verbose):
     """CPU seconds the client used for a run that stays `seconds` on the map."""
     # a fresh XDG_DATA_HOME per run: the savegame is recreated every time, so the
     # start-up cost is the same in the short and in the long run and cancels out
@@ -80,8 +55,8 @@ def run_once(binary, seconds, display, maincode, data_home, verbose):
         shutil.rmtree(data_home)
     os.makedirs(data_home)
     environment = dict(os.environ)
-    environment["DISPLAY"] = display
     environment["XDG_DATA_HOME"] = data_home
+    environment["QT_QPA_PLATFORM"] = "offscreen"
     arguments = [binary, "--autosolo", "--closewhenonmapafter=%d" % seconds]
     if maincode:
         arguments.append("--main-datapack-code=" + maincode)
@@ -109,8 +84,7 @@ def run_once(binary, seconds, display, maincode, data_home, verbose):
     return cpu
 
 
-def measure(name, binary, display, maincode, scratch, short, long_, repeat,
-            verbose):
+def measure(name, binary, maincode, scratch, short, long_, repeat, verbose):
     if not os.path.isfile(binary):
         print("SKIP %s: no binary at %s" % (name, binary))
         return None
@@ -118,9 +92,9 @@ def measure(name, binary, display, maincode, scratch, short, long_, repeat,
     slopes = []
     run = 0
     while run < repeat:
-        short_cpu = run_once(binary, short, display, maincode,
+        short_cpu = run_once(binary, short, maincode,
                              os.path.join(scratch, name + "-short"), verbose)
-        long_cpu = run_once(binary, long_, display, maincode,
+        long_cpu = run_once(binary, long_, maincode,
                             os.path.join(scratch, name + "-long"), verbose)
         slopes.append((long_cpu - short_cpu) / (long_ - short))
         run += 1
@@ -162,27 +136,19 @@ def main():
         print("nothing to measure: pass --qtopengl and/or --qt800")
         return 2
 
-    xvfb = Xvfb()
-    if not xvfb.start():
-        print("no free X display for Xvfb")
-        return 2
-    try:
-        results = {}
-        for name, binary in (("qtopengl", arguments.qtopengl),
-                             ("qtcpu800x600", arguments.qt800)):
-            if binary is not None:
-                results[name] = measure(name, binary, xvfb.display,
-                                        arguments.maincode, arguments.scratch,
-                                        arguments.short, arguments.long,
-                                        arguments.repeat, not arguments.quiet)
-        if results.get("qtopengl") and results.get("qtcpu800x600"):
-            ratio = results["qtopengl"] / results["qtcpu800x600"]
-            print("\nqtopengl costs %.2fx the CPU of qtcpu800x600 on the map"
-                  % ratio)
-        else:
-            print("\nno usable comparison (see the warnings above)")
-    finally:
-        xvfb.stop()
+    results = {}
+    for name, binary in (("qtopengl", arguments.qtopengl),
+                         ("qtcpu800x600", arguments.qt800)):
+        if binary is not None:
+            results[name] = measure(name, binary, arguments.maincode,
+                                    arguments.scratch, arguments.short,
+                                    arguments.long, arguments.repeat,
+                                    not arguments.quiet)
+    if results.get("qtopengl") and results.get("qtcpu800x600"):
+        ratio = results["qtopengl"] / results["qtcpu800x600"]
+        print("\nqtopengl costs %.2fx the CPU of qtcpu800x600 on the map" % ratio)
+    else:
+        print("\nno usable comparison (see the warnings above)")
     return 0
 
 
