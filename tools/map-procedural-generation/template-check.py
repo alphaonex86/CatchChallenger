@@ -33,6 +33,9 @@ import struct
 import sys
 import zlib
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import franchise_denylist
+
 try:
     import zstandard
 except ImportError:
@@ -43,13 +46,11 @@ TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 SKIN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "skin")
 MUSIC_DIRS = ["../../../CatchChallenger-datapack/music"]
 
-#same denylist as check-generated.py, applied to the SOURCE skeletons: the generator
-#rewrites every name and line per city, so a franchise word in a template never shows
-#up in the output and only a check on the templates themselves catches it
-FORBIDDEN = ["pokemon", "pokémon", "pokeball", "poké", "pokedex", "pokedollar",
-             "pokemart", "pokecenter", "pikachu", "nintendo", "game freak",
-             "charizard", "bulbasaur", "squirtle", "charmander", "eevee",
-             "digimon", "pokestop", "nurse joy", "joëlle", "umbreon"]
+#the SOURCE skeletons need the same check as the generated tree: the generator rewrites
+#every name and line per city, so a franchise word in a template never shows up in the
+#output and only a check on the templates themselves catches it. The word list is
+#operator-local, see franchise_denylist.py.
+FORBIDDEN = franchise_denylist.load()
 
 
 def variants(group_path):
