@@ -1,8 +1,8 @@
 <map type="indoor">
     <name>House</name>
     <bot id="2">
-        <name>Nurse Joy</name>
-        <name lang="fr">Infirmière Joëlle</name>
+        <name>Nurse</name>
+        <name lang="fr">Infirmière</name>
         <step type="text" id="1">
             <text><![CDATA[Let me heal your monsters for you...<br /><a href="2;3">[Heal]</a>]]></text>
             <text lang="fr"><![CDATA[Laissez moi soigner vos monstres...<br /><a href="2;3">[Soin]</a>]]></text>

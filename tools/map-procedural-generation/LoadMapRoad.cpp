@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <random>
 #include <queue>
+#include <set>
 #include <unordered_map>
 
 #include <QDir>
@@ -20,6 +21,106 @@
 #include <QFile>
 #include <QImage>
 #include <QColor>
+
+//The engine keeps ONE fight per (x,y): CommonMap::botsFightTrigger is a map keyed by
+//the swept cell, so when two trainers' lines of sight cross, the second one is DROPPED
+//with "botsFight point already on the map" and never triggers from that cell. The cells
+//are claimed here without looking at the walls: the engine stops its sweep on the first
+//non-walkable tile, so this ray is a superset of the engine's and can only over-reserve.
+#define BOT_FIGHT_RANGE 5 //Map_loader::loadExtraXml default when <fight> has no fightRange
+
+static void botFightRay(const QString &lookAt,const int &x,const int &y,
+                        const int &width,const int &height,
+                        std::vector<std::pair<int,int> > &cells)
+{
+    cells.clear();
+    int dx=0;
+    int dy=0;
+    if(lookAt=="bottom")
+        dy=1;
+    else if(lookAt=="top")
+        dy=-1;
+    else if(lookAt=="left")
+        dx=-1;
+    else if(lookAt=="right")
+        dx=1;
+    else
+        return;//no orientation: the engine arms no trigger at all
+    int cx=x;
+    int cy=y;
+    unsigned int step=0;
+    while(step<BOT_FIGHT_RANGE)
+    {
+        cx+=dx;
+        cy+=dy;
+        if(cx<0 || cy<0 || cx>=width || cy>=height)
+            step=BOT_FIGHT_RANGE;
+        else
+        {
+            cells.push_back(std::pair<int,int>(cx,cy));
+            step++;
+        }
+    }
+}
+
+//Returns the facing to use for this trainer and reserves its cells. The wanted facing is
+//tried first so an unconstrained map keeps the layout it had; the fallbacks are walked in
+//a fixed order so the whole generation stays reproducible.
+static QString claimBotFightLookAt(const QString &wanted,const int &x,const int &y,
+                                   const int &width,const int &height,
+                                   std::set<std::pair<int,int> > &claimed)
+{
+    static const char * const lookAtList[4]={"bottom","top","left","right"};
+    std::vector<QString> candidates;
+    candidates.push_back(wanted);
+    unsigned int index=0;
+    while(index<4)
+    {
+        const QString candidate=QString::fromLatin1(lookAtList[index]);
+        if(candidate!=wanted)
+            candidates.push_back(candidate);
+        index++;
+    }
+    std::vector<std::pair<int,int> > cells;
+    index=0;
+    while(index<candidates.size())
+    {
+        botFightRay(candidates.at(index),x,y,width,height,cells);
+        bool free=true;
+        unsigned int cellIndex=0;
+        while(cellIndex<cells.size())
+        {
+            if(claimed.find(cells.at(cellIndex))!=claimed.cend())
+                free=false;
+            cellIndex++;
+        }
+        if(free)
+        {
+            cellIndex=0;
+            while(cellIndex<cells.size())
+            {
+                claimed.insert(cells.at(cellIndex));
+                cellIndex++;
+            }
+            return candidates.at(index);
+        }
+        index++;
+    }
+    //boxed in on the four sides: keep the wanted facing, the engine will drop the
+    //overlapping cells. Reported so a settings change that packs trainers too tightly
+    //does not go unnoticed.
+    std::cerr << "trainer at " << x << "," << y
+              << " has no free line of sight in any direction, its fight will partially overlap"
+              << std::endl;
+    botFightRay(wanted,x,y,width,height,cells);
+    index=0;
+    while(index<cells.size())
+    {
+        claimed.insert(cells.at(index));
+        index++;
+    }
+    return wanted;
+}
 
 unsigned int ** LoadMapAll::roadData = NULL;
 int LoadMapAll::botId = 0;
@@ -439,6 +540,7 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
             const int wanted=2+rand()%2;
             int placed=0,tries=0;
             static const char* const lookDirs[4]={"bottom","top","left","right"};
+            std::set<std::pair<int,int> > claimedFightCells;
             while(placed<wanted && tries<200)
             {
                 tries++;
@@ -451,7 +553,11 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
                         QPointF((x0+lx)*worldMap.tileWidth(),(y0+ly+1)*worldMap.tileHeight()),
                         QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
                     bot->setProperty("id",QString::number(localBotId));
-                    bot->setProperty("lookAt",lookDirs[rand()%4]);
+                    //same one-fight-per-cell rule as on the roads, see claimBotFightLookAt
+                    const QString lookAt=claimBotFightLookAt(QString::fromLatin1(lookDirs[rand()%4]),
+                                                             lx,ly,(int)singleMapWidth,(int)singleMapHeight,
+                                                             claimedFightCells);
+                    bot->setProperty("lookAt",lookAt);
                     bot->setProperty("skin",QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size())));
                     Tiled::Cell botCell;
                     botCell.setTile(invisibleTileset->tileAt(0));
@@ -3975,6 +4081,7 @@ QString LoadMapAll::emitRoadBotsForChunk(Tiled::Map &worldMap,
     const unsigned int x1=x0+singleMapWidth;
     const unsigned int y1=y0+singleMapHeight;
     const QList<Tiled::MapObject*> &objects=objectLayer->objects();
+    std::set<std::pair<int,int> > claimedFightCells;
     unsigned int localBotId=1;
     unsigned int index=0;
     while(index<(unsigned int)objects.size())
@@ -3992,9 +4099,15 @@ QString LoadMapAll::emitRoadBotsForChunk(Tiled::Map &worldMap,
                 Tiled::Properties properties=object->properties();
                 properties.remove("file");//dead engine property
                 properties["id"]=QString::number(localBotId);
+                //the trigger cells are map-local, like CommonMap::botsFightTrigger
+                const QString lookAt=claimBotFightLookAt(properties.value("lookAt").toString(),
+                                                         (int)(tileX-x0),(int)(tileY-y0),
+                                                         (int)singleMapWidth,(int)singleMapHeight,
+                                                         claimedFightCells);
+                properties["lookAt"]=lookAt;
                 object->setProperties(properties);
                 out+=botStepXml(localBotId,BotKind_fight,std::to_string(localBotId),
-                                properties.value("lookAt").toString(),setting,
+                                lookAt,setting,
                                 roadIndex.roadMonsters,roadIndex.level,
                                 std::string(),std::vector<std::string>());
                 localBotId++;

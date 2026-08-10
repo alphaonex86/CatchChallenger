@@ -9,7 +9,15 @@ using namespace CatchChallenger;
 
 void Client::wildDrop(const uint16_t &monster)
 {
-    std::vector<MonsterDrops> drops=GlobalServerData::serverPrivateVariables.monsterDrops.at(monster);
+    //monsterDrops only holds the monsters that declare a <drop>; a monster without any
+    //drop is simply absent, so .at() used to throw out_of_range and abort() the server.
+    std::vector<MonsterDrops> drops;
+    {
+        const catchchallenger_datapack_map<uint16_t,std::vector<MonsterDrops> >::const_iterator dropsIt=
+                GlobalServerData::serverPrivateVariables.monsterDrops.find(monster);
+        if(dropsIt!=GlobalServerData::serverPrivateVariables.monsterDrops.cend())
+            drops=dropsIt->second;
+    }
     if(questsDrop.find(monster)!=questsDrop.cend())
         drops.insert(drops.end(),questsDrop.at(monster).begin(),questsDrop.at(monster).end());
     unsigned int index=0;

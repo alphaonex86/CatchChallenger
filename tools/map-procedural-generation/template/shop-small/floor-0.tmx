@@ -44,7 +44,7 @@
    eJxjYBgFgwUAAAGMAAE=
   </data>
  </layer>
- <objectgroup id="7" name="Moving" visible="0">
+ <objectgroup id="7" name="Moving">
   <object id="11" type="teleport on push" gid="1028" x="80" y="144" width="16" height="16">
    <properties>
     <property name="map" value="building-shop"/>

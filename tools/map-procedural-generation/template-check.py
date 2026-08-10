@@ -43,6 +43,14 @@ TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 SKIN_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "skin")
 MUSIC_DIRS = ["../../../CatchChallenger-datapack/music"]
 
+#same denylist as check-generated.py, applied to the SOURCE skeletons: the generator
+#rewrites every name and line per city, so a franchise word in a template never shows
+#up in the output and only a check on the templates themselves catches it
+FORBIDDEN = ["pokemon", "pokémon", "pokeball", "poké", "pokedex", "pokedollar",
+             "pokemart", "pokecenter", "pikachu", "nintendo", "game freak",
+             "charizard", "bulbasaur", "squirtle", "charmander", "eevee",
+             "digimon", "pokestop", "nurse joy", "joëlle", "umbreon"]
+
 
 def variants(group_path):
     """[(label, folder)] of a group: numbered sub-folders, else the group."""
@@ -323,6 +331,41 @@ def check_tilesets(path, text, problems, fixes):
     return text
 
 
+#the engine matches an object property by its EXACT name, so "LookAt" is simply not
+#read and the bot ends up with no orientation at all. The spelling is the only thing
+#wrong here, the intent is unambiguous, so it is repaired rather than reported.
+CANONICAL_PROPERTIES = ["id", "skin", "lookAt", "map", "x", "y", "item", "infinite",
+                        "visible", "fightRange", "zone", "industry", "file"]
+
+
+def check_property_case(path, text, fixes):
+    for name in set(re.findall(r'<property name="([^"]*)"', text)):
+        for canonical in CANONICAL_PROPERTIES:
+            if name != canonical and name.lower() == canonical.lower():
+                fixes.append((path, 'property "' + name + '" -> "' + canonical +
+                              '" (the engine matches the exact name)'))
+                text = text.replace('<property name="' + name + '"',
+                                    '<property name="' + canonical + '"')
+    return text
+
+
+def check_group_visibility(path, text, fixes):
+    """The Moving and Object groups must never be hidden.
+
+    They carry the teleporters, the bots and the ground items. The engine finds
+    them by name and ignores the flag, but a hidden group is invisible in Tiled,
+    so whoever edits the template cannot see - nor place - a door or an NPC, and
+    the generated map inherits the flag on every copy.
+    """
+    for group in re.finditer(r'<objectgroup[^>]*name="(Moving|Object)"[^>]*>',
+                             text):
+        if 'visible="0"' in group.group(0):
+            fixes.append((path, "unhide the \"" + group.group(1) + "\" group"))
+            text = text.replace(group.group(0),
+                                group.group(0).replace(' visible="0"', ""))
+    return text
+
+
 def check_objects(path, text, problems, warnings, fixes):
     #the engine reads bots ONLY from the group named "Object"
     #(Map_loaderMain.cpp); the generator moves the misplaced ones, but the
@@ -379,6 +422,11 @@ def check_xml(path, problems, warnings):
         problems.append((path, "no sibling xml"))
         return
     text = open(xml, encoding="utf-8").read()
+    lowered = text.lower()
+    for word in FORBIDDEN:
+        if word in lowered:
+            problems.append((xml, 'FRANCHISE WORDING "' + word + '" - the world is '
+                             'ORIGINAL, say what the character/creature IS'))
     xml_ids = set(re.findall(r'<bot id="(\d+)"', text))
     tmx_ids = set()
     for _, _, block in object_blocks(open(tmx, encoding="utf-8").read(),
@@ -793,6 +841,8 @@ def main():
                 path = os.path.join(folder, tmx)
                 text = open(path, encoding="utf-8").read()
                 patched = check_tilesets(path, text, problems, fixes)
+                patched = check_property_case(path, patched, fixes)
+                patched = check_group_visibility(path, patched, fixes)
                 patched = check_objects(path, patched, problems, warnings, fixes)
                 if not has_teleport(patched):
                     infos.append((path, "no door/exit object (the generator "
