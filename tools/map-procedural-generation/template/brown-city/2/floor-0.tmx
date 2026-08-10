@@ -37,7 +37,7 @@
  <objectgroup id="6" name="Object">
   <object id="40" type="bot" gid="1" x="112" y="80" width="16" height="16">
    <properties>
-    <property name="LookAt" value="bottom"/>
+    <property name="lookAt" value="bottom"/>
     <property name="id" value="1"/>
     <property name="skin" value="oldman"/>
    </properties>

@@ -3,7 +3,7 @@
     <bot id="1">
         <name>Sign</name>
         <step id="1" type="text">
-            <text><![CDATA[I've been trying to evolve my Eevee into an Umbreon, so I've been staying up all night playing games in the dark.]]></text>
+            <text><![CDATA[I've been trying to evolve my creature into its night form, so I've been staying up all night training in the dark.]]></text>
         </step>
     </bot>
 </map>

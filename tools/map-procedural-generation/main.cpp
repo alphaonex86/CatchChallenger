@@ -138,6 +138,25 @@ int main(int argc, char *argv[])
         QFile::copy(":/settings.xml",settingsPath);
     QSettings settings(settingsPath,QSettings::NativeFormat);
 
+    //Validate the input BEFORE dest/ is wiped: a template defect that no tool can repair
+    //without knowing the author's intent must not produce half a world. Every error of
+    //every template is reported in one go so the author fixes them in one pass.
+    {
+        std::vector<std::string> templateErrors;
+        if(!LoadMapAll::precheckTemplates(templateErrors))
+        {
+            std::cerr << templateErrors.size() << " error(s) in the input templates, nothing was generated:" << std::endl;
+            unsigned int errorIndex=0;
+            while(errorIndex<templateErrors.size())
+            {
+                std::cerr << "  " << templateErrors.at(errorIndex) << std::endl;
+                errorIndex++;
+            }
+            std::cerr << "Fix them and run again (template-check.py --fix repairs the mechanical ones)." << std::endl;
+            return 1;
+        }
+    }
+
     QDir dir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
     dir.removeRecursively();
     if(!dir.mkpath(dir.path()))
@@ -154,22 +173,15 @@ int main(int argc, char *argv[])
     QFile info(QCoreApplication::applicationDirPath()+"/dest/map/main/official/informations.xml");
     if(info.open(QFile::WriteOnly))
     {
+        //no <options> block here: the generator settings are neither read by the engine nor
+        //useful to the player who receives this datapack, and they don't allow rebuilding
+        //another server either. The settings stay in settings.xml, next to the generator.
         QString content("<?xml version='1.0'?>\n"
                             "<informations color=\"#23c71f\">\n"
                             "    <name>Generated map</name>\n"
                             "    <name lang=\"fr\">Map généré</name>\n"
                             "    <initial>G</initial>\n"
-                            "    <options>\n");
-        QFile optionsFile(settingsPath);
-        if(!optionsFile.open(QFile::ReadOnly))
-        {
-            std::cerr << "!optionsFile.open(QFile::ReadOnly)" << std::endl;
-            abort();
-        }
-        content+=optionsFile.readAll();
-        optionsFile.close();
-        content+="    </options>\n";
-        content+="</informations>";
+                            "</informations>");
         QByteArray contentData(content.toUtf8());
         info.write(contentData.constData(),contentData.size());
         info.close();

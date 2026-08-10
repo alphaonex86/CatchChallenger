@@ -375,7 +375,9 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                                 {
                                     if(buffers!=nullptr)
                                         buffers->unknownMovingBuffer.push_back({type,object_x,object_y,property_text});
-                                    else
+                                    //"rescue" is consumed by the server only (MapServer::parseUnknownMoving);
+                                    //the client has nothing to do with it, so it is not an unknown type there.
+                                    else if(type!="rescue")
                                         std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y

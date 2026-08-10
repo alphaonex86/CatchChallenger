@@ -263,6 +263,10 @@ public:
     //(exterior + interiors), staging their tilesets into dest/map/tileset/ and
     //wiring the door/exit objects. Called once before the city pass.
     static void scanBuildingTemplates(Tiled::Map &worldMap,const unsigned int mapWidth,const unsigned int mapHeight);
+    //Validate the INPUT templates before a single file is written. Only the defects
+    //nobody can repair without knowing the author's intent land here; every error is
+    //collected so one run reports them all. Returns false when generation must stop.
+    static bool precheckTemplates(std::vector<std::string> &errors);
     //NULL when the group does not exist on disk
     static BuildingGroup *buildingGroup(const std::string &name);
     //copy a tileset (tsx + its image) used by a template into dest/map/tileset/

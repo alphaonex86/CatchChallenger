@@ -32,6 +32,7 @@
 #include <QJsonParseError>
 #include <QTextStream>
 
+#include <algorithm>
 #include <iostream>
 
 std::map<std::string,LoadMapAll::BuildingGroup> LoadMapAll::buildingGroups;
@@ -433,6 +434,104 @@ static bool loadBuildingVariant(const QString &groupName,const QString &variantN
                                 mapWidth,mapHeight,worldMap);
     LoadMapAll::wireBuildingDoors(variant);
     return true;
+}
+
+//Two defects a tool must NOT guess, so they stop the generation instead of being
+//silently patched:
+// * an object with a skin but no lookAt. Is the skin wrong (the object is then not a
+//   bot) or is the lookAt missing, and facing WHERE? The engine used to patch it to
+//   "bottom", which left trainers staring at a wall and their fight never triggering.
+// * a hidden "Moving"/"Object" group. The engine finds its layers by name and loads it
+//   anyway, so the map "works", but nobody can see - nor place - a door or an NPC in
+//   Tiled any more, and every generated copy inherits the flag.
+static void precheckTemplateFile(const QString &path,std::vector<std::string> &errors)
+{
+    QFile file(path);
+    if(!file.open(QFile::ReadOnly))
+    {
+        errors.push_back(path.toStdString()+": unable to read the file");
+        return;
+    }
+    QDomDocument document;
+    QString parseError;
+    int parseLine=0;
+    const bool parsed=document.setContent(&file,&parseError,&parseLine);
+    file.close();
+    if(!parsed)
+    {
+        errors.push_back(path.toStdString()+":"+std::to_string(parseLine)+": "+
+                         parseError.toStdString());
+        return;
+    }
+    const QDomNodeList groups=document.elementsByTagName("objectgroup");
+    int groupIndex=0;
+    while(groupIndex<groups.count())
+    {
+        const QDomElement group=groups.at(groupIndex).toElement();
+        const QString groupName=group.attribute("name");
+        if((groupName=="Moving" || groupName=="Object") &&
+                group.attribute("visible")=="0")
+            errors.push_back(path.toStdString()+": the \""+groupName.toStdString()+
+                             "\" group is hidden, it carries the teleporters/bots/items"
+                             " and has to stay visible in Tiled");
+        const QDomNodeList objects=group.elementsByTagName("object");
+        int objectIndex=0;
+        while(objectIndex<objects.count())
+        {
+            const QDomElement object=objects.at(objectIndex).toElement();
+            QString skin;
+            QString lookAt;
+            const QDomNodeList objectProperties=object.elementsByTagName("property");
+            int propertyIndex=0;
+            while(propertyIndex<objectProperties.count())
+            {
+                const QDomElement property=objectProperties.at(propertyIndex).toElement();
+                if(property.attribute("name")=="skin")
+                    skin=property.attribute("value");
+                else if(property.attribute("name")=="lookAt")
+                    lookAt=property.attribute("value");
+                propertyIndex++;
+            }
+            if(!skin.isEmpty() && lookAt.isEmpty())
+                errors.push_back(path.toStdString()+": object id "+
+                                 object.attribute("id").toStdString()+" at "+
+                                 object.attribute("x").toStdString()+","+
+                                 object.attribute("y").toStdString()+
+                                 " has skin=\""+skin.toStdString()+"\" but no lookAt:"
+                                 " either the skin does not belong there or the lookAt"
+                                 " is missing, and no tool can tell which direction you"
+                                 " meant (bottom/top/left/right/move)");
+            objectIndex++;
+        }
+        groupIndex++;
+    }
+}
+
+bool LoadMapAll::precheckTemplates(std::vector<std::string> &errors)
+{
+    const QDir templateDir(QCoreApplication::applicationDirPath()+"/template");
+    if(!templateDir.exists())
+    {
+        errors.push_back("template/ not found next to the binary (the "
+                         "map-procedural-generation-runtime target stages it)");
+        return false;
+    }
+    std::vector<QString> paths;
+    {
+        QDirIterator tmxIterator(templateDir.absolutePath(),QStringList("*.tmx"),
+                                 QDir::Files,QDirIterator::Subdirectories);
+        while(tmxIterator.hasNext())
+            paths.push_back(tmxIterator.next());
+    }
+    //the iteration order is the filesystem one: sort so two runs report the same list
+    std::sort(paths.begin(),paths.end());
+    unsigned int index=0;
+    while(index<paths.size())
+    {
+        precheckTemplateFile(paths.at(index),errors);
+        index++;
+    }
+    return errors.empty();
 }
 
 void LoadMapAll::scanBuildingTemplates(Tiled::Map &worldMap,const unsigned int mapWidth,const unsigned int mapHeight)
@@ -962,10 +1061,17 @@ QString LoadMapAll::interiorBotXml(const BuildingVariant &variant,const std::str
                     usedIds.push_back(botId);
                     properties["id"]=QString::number(botId);
                     //an unknown skin makes a bot without sprite: fall back on the
-                    //role skin configured for this datapack
+                    //role skin configured for this datapack.
+                    //A bot with NEITHER skin NOR lookAt is a deliberately invisible
+                    //interaction point (the storage terminal of the heal templates is
+                    //drawn by the map tiles): giving it a human skin is what produced
+                    //the "skin but not lookAt" bots the engine then had to patch.
                     const QString skin=properties.value("skin").toString();
-                    if(skin.isEmpty() ||
-                            !QDir(QCoreApplication::applicationDirPath()+"/skin").exists(skin))
+                    const bool invisibleOnPurpose=skin.isEmpty() &&
+                            properties.value("lookAt").toString().isEmpty();
+                    if(!invisibleOnPurpose &&
+                            (skin.isEmpty() ||
+                             !QDir(QCoreApplication::applicationDirPath()+"/skin").exists(skin)))
                     {
                         std::string replacement=setting.botSkins.empty()?std::string():
                             setting.botSkins.at(seedPick(variant.folder+floorName+std::to_string(botId),

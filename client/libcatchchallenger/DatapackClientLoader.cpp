@@ -862,13 +862,11 @@ void DatapackClientLoader::parseMaps()
     CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
     // Populate mapBots from semi_loaded_map
     mapBots.clear();
-    std::cerr << "mapBots: iterating semi_loaded_map.size()=" << semi_loaded_map.size() << std::endl;
     {
         unsigned int mapIdx=0;
         while(mapIdx<semi_loaded_map.size())
         {
             const CatchChallenger::Map_to_send &old_map=semi_loaded_map.at(mapIdx).old_map;
-            std::cerr << "  mapIdx=" << mapIdx << " bots.size()=" << old_map.bots.size() << std::endl;
             unsigned int botIdx=0;
             while(botIdx<old_map.bots.size())
             {
@@ -927,14 +925,12 @@ void DatapackClientLoader::parseMaps()
                         }
                     }
                     mapBots[mapIdx][botSemi.point]=bot;
-                    std::cerr << "  mapBots: mapIdx=" << mapIdx << " pos=(" << std::to_string(botSemi.point.first) << "," << std::to_string(botSemi.point.second) << ") botId=" << std::to_string(botSemi.id) << " name=" << bot.name << " steps=" << bot.step.size() << std::endl;
                 }
                 botIdx++;
             }
             mapIdx++;
         }
     }
-    std::cerr << "mapBots populated: " << mapBots.size() << " map(s) with bots" << std::endl;
 #endif
     std::cout << std::to_string(mapPathToId.size()) << " map(s) extra loaded" << std::endl;
 }

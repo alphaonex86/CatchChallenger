@@ -147,6 +147,41 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
     return maxOutputSize-strm.avail_out;
 }
 
+//botsFightTrigger holds ONE fight per cell, so when two trainers cross their line of
+//sight only the first one triggers on the shared cell. Name both bots and the cell:
+//the datapack is what has to be fixed, and "for bot id N" alone said nothing about it.
+static void claimBotFightTrigger(catchchallenger_datapack_map<std::pair<uint8_t,uint8_t>,uint8_t> &botsFightTrigger,
+                                 const std::string &file,const uint8_t &x,const uint8_t &y,const uint8_t &searchID)
+{
+    const std::pair<uint8_t,uint8_t> point(x,y);
+    if(botsFightTrigger.find(point)!=botsFightTrigger.cend())
+        std::cerr << file << " bot id " << std::to_string(searchID)
+                  << " crosses the line of sight of bot id " << std::to_string(botsFightTrigger.at(point))
+                  << " at " << std::to_string(x) << "," << std::to_string(y)
+                  << ": only the first one triggers there" << std::endl;
+    else
+        botsFightTrigger[point]=searchID;
+}
+
+//The whole <step type="..."> vocabulary. loadExtraXml() itself only consumes the two
+//types that need map-side data (shop, fight); every other one is consumed later, either
+//by the server (MapServer::parseUnknownBotStep) or only by the client UI (BaseWindowBot /
+//OverMapLogicBot). So an unconsumed step here is NOT a broken datapack as long as the
+//type is part of that vocabulary -- only a type nobody knows deserves a warning.
+static bool isKnownBotStepType(const char * const type)
+{
+    return strcmp(type,"shop")==0 ||
+           strcmp(type,"fight")==0 ||
+           strcmp(type,"text")==0 ||
+           strcmp(type,"sell")==0 ||
+           strcmp(type,"heal")==0 ||
+           strcmp(type,"quests")==0 ||
+           strcmp(type,"clan")==0 ||
+           strcmp(type,"warehouse")==0 ||
+           strcmp(type,"industry")==0 ||
+           strcmp(type,"zonecapture")==0;
+}
+
 bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, const std::vector<std::string>& detectedMonsterCollisionLayer,std::string &zoneName, MapLoadBuffers *buffers)
 {
     /* in same map when:
@@ -550,10 +585,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                                break;
                                            //the TRIGGER tile is the swept cell (x,y) the player walks onto -- NOT
                                            //the bot's own (unstandable) cell botOnMap.point.
-                                           if(map_to_send.botsFightTrigger.find(std::pair<uint8_t,uint8_t>(x,y))!=map_to_send.botsFightTrigger.cend())
-                                               std::cerr << "botsFight point already on the map: for bot id " << std::to_string(searchID) << std::endl;
-                                           else
-                                              map_to_send.botsFightTrigger[std::pair<uint8_t,uint8_t>(x,y)]=searchID;
+                                           claimBotFightTrigger(map_to_send.botsFightTrigger,file,x,y,searchID);
                                            parsedRange++;
                                        }
                                    break;
@@ -567,10 +599,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                                break;
                                            //the TRIGGER tile is the swept cell (x,y) the player walks onto -- NOT
                                            //the bot's own (unstandable) cell botOnMap.point.
-                                           if(map_to_send.botsFightTrigger.find(std::pair<uint8_t,uint8_t>(x,y))!=map_to_send.botsFightTrigger.cend())
-                                               std::cerr << "botsFight point already on the map: for bot id " << std::to_string(searchID) << std::endl;
-                                           else
-                                              map_to_send.botsFightTrigger[std::pair<uint8_t,uint8_t>(x,y)]=searchID;
+                                           claimBotFightTrigger(map_to_send.botsFightTrigger,file,x,y,searchID);
                                            parsedRange++;
                                        }
                                    break;
@@ -584,10 +613,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                                break;
                                            //the TRIGGER tile is the swept cell (x,y) the player walks onto -- NOT
                                            //the bot's own (unstandable) cell botOnMap.point.
-                                           if(map_to_send.botsFightTrigger.find(std::pair<uint8_t,uint8_t>(x,y))!=map_to_send.botsFightTrigger.cend())
-                                               std::cerr << "botsFight point already on the map: for bot id " << std::to_string(searchID) << std::endl;
-                                           else
-                                              map_to_send.botsFightTrigger[std::pair<uint8_t,uint8_t>(x,y)]=searchID;
+                                           claimBotFightTrigger(map_to_send.botsFightTrigger,file,x,y,searchID);
                                            parsedRange++;
                                        }
                                    break;
@@ -601,10 +627,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                                break;
                                            //the TRIGGER tile is the swept cell (x,y) the player walks onto -- NOT
                                            //the bot's own (unstandable) cell botOnMap.point.
-                                           if(map_to_send.botsFightTrigger.find(std::pair<uint8_t,uint8_t>(x,y))!=map_to_send.botsFightTrigger.cend())
-                                               std::cerr << "botsFight point already on the map: for bot id " << std::to_string(searchID) << std::endl;
-                                           else
-                                              map_to_send.botsFightTrigger[std::pair<uint8_t,uint8_t>(x,y)]=searchID;
+                                           claimBotFightTrigger(map_to_send.botsFightTrigger,file,x,y,searchID);
                                            parsedRange++;
                                        }
                                    break;
@@ -617,8 +640,8 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                        {
                            if(buffers!=nullptr)
                                buffers->unknownBotStepBuffer.push_back({botOnMap.point.first,botOnMap.point.second,step});
-                           else
-                               std::cerr << file << " bot id " << std::to_string(searchID) << " bot step not found: " << step->Attribute("type") << std::endl;//the map is loaded before the bot?
+                           else if(!isKnownBotStepType(step->Attribute("type")))
+                               std::cerr << file << " bot id " << std::to_string(searchID) << " bot step type is unknown: " << step->Attribute("type") << std::endl;
                        }
                     }
                     step = step->NextSiblingElement("step");

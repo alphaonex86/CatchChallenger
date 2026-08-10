@@ -88,6 +88,51 @@ def blocked(layers, width, height, x, y):
     return False
 
 
+#Map_loader::loadExtraXml default when the <fight> step carries no fightRange
+FIGHT_RANGE = 5
+FIGHT_DIRECTIONS = {"bottom": (0, 1), "top": (0, -1),
+                    "left": (-1, 0), "right": (1, 0)}
+
+
+def check_fight_lines(path, xmlPath, objects, layers, width, height, problems):
+    """No two trainers may claim the same line-of-sight cell.
+
+    CommonMap::botsFightTrigger keeps ONE fight per (x,y), so the second trainer
+    reaching an already claimed cell is dropped there and never triggers.
+    """
+    text = open(xmlPath, encoding="utf-8").read()
+    fightIds = set()
+    for bot in re.finditer(r'<bot id="(\d+)"(.*?)</bot>', text, re.S):
+        if re.search(r'<step[^>]*type="fight"', bot.group(2)):
+            fightIds.add(bot.group(1))
+    claimed = {}
+    for obj in objects:
+        if obj["type"] != "bot":
+            continue
+        botId = obj["properties"].get("id")
+        if botId not in fightIds:
+            continue
+        step = FIGHT_DIRECTIONS.get(obj["properties"].get("lookAt"))
+        if step is None:
+            continue
+        #the engine reads the object y one tile above the stored one
+        x, y = obj["x"], obj["y"] - 1
+        walked = 0
+        while walked < FIGHT_RANGE:
+            x += step[0]
+            y += step[1]
+            if blocked(layers, width, height, x, y):
+                walked = FIGHT_RANGE
+            else:
+                if (x, y) in claimed:
+                    problems.append((path, "bot " + botId + " crosses the line "
+                                     "of sight of bot " + claimed[(x, y)] +
+                                     " at %d,%d" % (x, y)))
+                else:
+                    claimed[(x, y)] = botId
+                walked += 1
+
+
 def check_text(path, problems):
     text = open(path, encoding="utf-8").read()
     lowered = text.lower()
@@ -190,6 +235,8 @@ def main():
         xmlPath = path[:-4] + ".xml"
         if os.path.exists(xmlPath):
             check_text(xmlPath, problems)
+            check_fight_lines(path, xmlPath, objects, layers, width, height,
+                              problems)
             xmlIds = set(re.findall(r'<bot id="(\d+)"',
                                     open(xmlPath, encoding="utf-8").read()))
             tmxIds = set(o["properties"]["id"] for o in objects
