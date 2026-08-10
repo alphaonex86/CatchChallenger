@@ -3880,21 +3880,38 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                         if((real_map[j] & 0xF9) == 0x1 && usedBotCells.find(j)==usedBotCells.cend()){
                             bool valid = true;
 
-                            for(int start = 0; j<4; j++){
-                                unsigned int sx = start%2 == 1? ox: ox+2-start;
-                                unsigned int sy = start%2 == 0? oy: oy+3-start;
+                            //A bot BLOCKS its cell (the engine never lets the
+                            //player stand on it), so a trainer dropped in a
+                            //1-tile corridor cuts the route in two.  Block the
+                            //cell and check every pair of its walkable orthogonal
+                            //neighbours still reaches the other AROUND the bot.
+                            //The pathing is directional (the 0xF0 ledge bits), so
+                            //both ways of each pair are tried.
+                            static const int neighborDx[4]={1,0,-1,0};
+                            static const int neighborDy[4]={0,1,0,-1};
+                            const unsigned int botCellCode = real_map[j];
+                            real_map[j] &= ~0x1u;
 
-                                if(real_map[sx + sy*mapWidth] & 0x1){
-                                    for(int dest = 0; dest<4; dest++){
-                                        unsigned int dx = dest%2 == 1? ox: ox+2-dest;
-                                        unsigned int dy = dest%2 == 0? oy: oy+3-dest;
+                            for(int start = 0; start<4 && valid; start++){
+                                const int sx = (int)ox+neighborDx[start];
+                                const int sy = (int)oy+neighborDy[start];
 
-                                        if(start != dest && (real_map[dx + dy*mapWidth] & 0x1) && !checkPathing(real_map, mapWidth, mapHeight, sx, sy, dx, dy)){
+                                if(sx>=0 && sy>=0 && sx<(int)mapWidth && sy<(int)mapHeight
+                                        && (real_map[(unsigned int)sx + (unsigned int)sy*mapWidth] & 0x1)){
+                                    for(int dest = 0; dest<4 && valid; dest++){
+                                        const int dx = (int)ox+neighborDx[dest];
+                                        const int dy = (int)oy+neighborDy[dest];
+
+                                        if(start != dest && dx>=0 && dy>=0 && dx<(int)mapWidth && dy<(int)mapHeight
+                                                && (real_map[(unsigned int)dx + (unsigned int)dy*mapWidth] & 0x1)
+                                                && !checkPathing(real_map, mapWidth, mapHeight, (unsigned int)sx, (unsigned int)sy, (unsigned int)dx, (unsigned int)dy)){
                                             valid = false;
                                         }
                                     }
                                 }
                             }
+
+                            real_map[j] = botCellCode;
 
                             if(valid){
                                 RoadBot roadBot;
