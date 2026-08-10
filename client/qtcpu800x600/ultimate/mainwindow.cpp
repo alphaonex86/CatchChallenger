@@ -4,6 +4,7 @@
 #include "../base/AutoArgs.h"
 #include "../../libqtcatchchallenger/InternetUpdater.hpp"
 #include "../../libcatchchallenger/BlacklistPassword.hpp"
+#include "../../libcatchchallenger/DatapackClientLoader.hpp"
 #include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
 #include "../../../general/base/CompressionProtocol.hpp"
@@ -2289,6 +2290,22 @@ void MainWindow::gameSolo_play(const std::string &savegamesPath)
     QString datapackPath=QCoreApplication::applicationDirPath()+"/datapack/internal/";
     if(!QDir(datapackPath).exists())
         datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
+
+    //A missing or half copied datapack used to abort() deep inside the loaders ("no
+    //item name loaded", "No file map to list"): a core dump, and the player never
+    //learned what was wrong. Say it and stay on the screen we came from.
+    {
+        const std::string datapackIssue=
+                DatapackClientLoader::datapackProblem(datapackPath.toStdString());
+        if(!datapackIssue.empty())
+        {
+            std::cerr << datapackIssue << std::endl;
+            QMessageBox::critical(this,tr("Datapack error"),
+                                  tr("The game data can not be loaded:\n%1")
+                                  .arg(QString::fromStdString(datapackIssue)));
+            return;
+        }
+    }
 
     if(socket!=NULL)
     {

@@ -324,6 +324,12 @@ public:
     std::string getSubDatapackPath() const;
     void parseDatapack(const std::string &datapackPath, const std::string &cacheHash=std::string(), const std::string &language="en");
     void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode, const std::string &cacheHashMain=std::string(), const std::string &cacheHashBase=std::string());
+    //Empty when this datapack can be loaded, otherwise the reason, phrased for the
+    //player. The engine loaders abort() deep inside on a datapack that is absent or
+    //half copied ("no item name loaded", "No file map to list"), which kills the
+    //client with a core dump and tells the player nothing. Both front-ends call this
+    //BEFORE handing a LOCAL datapack to the engine, and show the reason instead.
+    static std::string datapackProblem(const std::string &datapackPath);
     static CCColor namedColorToCCColor(const std::string &str,bool *ok);
     static std::vector<std::string> listFolderNotRecursive(const std::string& folder,const std::string& suffix);
     const CatchChallenger::CommonMap &getMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);

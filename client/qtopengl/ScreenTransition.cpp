@@ -799,9 +799,36 @@ void ScreenTransition::removeAbove()
     setAbove(nullptr);
 }
 
+// Prefer <app>/datapack/internal/ (the per-server cache layout populated when the
+// client downloads a datapack online); fall back to <app>/datapack/ for
+// installer-bundled deploys where the datapack ships flat at the top level (see
+// testingcompilationwindows.py setup_datapack_client + the matching macOS/Android
+// staging).
+static std::string soloDatapackPath()
+{
+    const std::string appDir=QCoreApplication::applicationDirPath().toStdString();
+    const std::string internalPath=appDir+"/datapack/internal/";
+    if(QDir(QString::fromStdString(internalPath)).exists())
+        return internalPath;
+    return appDir+"/datapack/";
+}
+
 void ScreenTransition::openSolo()
 {
     multiplaySelected=false;
+    //A missing or half copied datapack used to abort() deep inside the loaders ("no
+    //item name loaded", "No file map to list"): a core dump, and the player never
+    //learned what was wrong. Checked BEFORE the internal server is even built, since
+    //that constructor is the first thing that trips on it.
+    {
+        const std::string datapackIssue=DatapackClientLoader::datapackProblem(soloDatapackPath());
+        if(!datapackIssue.empty())
+        {
+            std::cerr << datapackIssue << std::endl;
+            errorString(datapackIssue);
+            return;
+        }
+    }
     CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
     CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
     QStringList l=QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation);
@@ -896,10 +923,7 @@ void ScreenTransition::openSolo()
         // the datapack ships flat at the top level (see
         // testingcompilationwindows.py setup_datapack_client + the
         // matching macOS/Android staging).
-        const std::string appDir=QCoreApplication::applicationDirPath().toStdString();
-        std::string datapackPathBase=appDir+"/datapack/internal/";
-        if(!QDir(QString::fromStdString(datapackPathBase)).exists())
-            datapackPathBase=appDir+"/datapack/";
+        const std::string datapackPathBase=soloDatapackPath();
         CatchChallenger::GameServerSettings formatedServerSettings=internalServer->getSettings();
 
         CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=0;
