@@ -188,6 +188,7 @@ total_expected = [0]
 server_proc = None
 
 SCRIPT_NAME = os.path.basename(__file__)
+import test_config
 from test_config import FAILED_JSON
 
 
@@ -521,13 +522,15 @@ def stop_server():
     server_proc = None
 
 
-#Unknown client output is always PRINTED so a new message cannot hide in the 400+
-#lines a run produces, but it only FAILS when
-#CC_STRICT_CLIENT_OUTPUT=1 is in the environment: part of that output comes from pipewire / ffmpeg / the
-#GL driver and differs from host to host, so gating on it would keep the fleet red
-#for lines that are not ours. Accept a new line of OUR code with:
-#  test/client_output_check.py --learn <log>
-STRICT_CLIENT_OUTPUT = os.environ.get("CC_STRICT_CLIENT_OUTPUT", "") == "1"
+#A client line nobody has ever accepted FAILS the run: a new message is exactly the
+#thing that used to hide in the 400+ lines a run prints. CC_STRICT_CLIENT_OUTPUT=0
+#downgrades it to a warning for a host whose third-party stack (pipewire, ffmpeg, the
+#GL driver) prints something this machine has never seen. Every unknown line is also
+#appended to <tmpfs>/client-output-unknown.log so the fix is one reviewed command:
+#  test/client_output_check.py --learn <tmpfs>/client-output-unknown.log
+STRICT_CLIENT_OUTPUT = os.environ.get("CC_STRICT_CLIENT_OUTPUT", "1") != "0"
+UNKNOWN_OUTPUT_LOG = os.path.join(test_config.TMPFS_ROOT,
+                                  "client-output-unknown.log")
 
 
 def report_unknown_client_output(label, output_lines):
@@ -540,6 +543,12 @@ def report_unknown_client_output(label, output_lines):
             print(f"  ? {line}")
         if len(unknown) > 40:
             print(f"  ? ... {len(unknown) - 40} more")
+        try:
+            with open(UNKNOWN_OUTPUT_LOG, "a", encoding="utf-8") as handle:
+                for line in unknown:
+                    handle.write(line + "\n")
+        except OSError as error:
+            print(f"  (could not append to {UNKNOWN_OUTPUT_LOG}: {error})")
     return unknown
 
 

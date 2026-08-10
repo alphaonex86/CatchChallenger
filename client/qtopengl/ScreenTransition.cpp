@@ -183,7 +183,13 @@ ScreenTransition::ScreenTransition() :
     }
 
     render();
-    setTargetFPS(100);
+    //This asked for 100 fps and re-composed the whole map that often, which was the
+    //whole reason this client cost four times the CPU of the 800x600 one: standing
+    //still on the generated world, 0.0733 CPU s per second here against 0.0180 there
+    //(that one renders at 25, Options::fps). The picture does not change between
+    //those frames, only how often the identical one is drawn again. 30 rather than
+    //25 because this client renders on the GPU and has the headroom for it.
+    setTargetFPS(30);
 }
 
 ScreenTransition::~ScreenTransition()
