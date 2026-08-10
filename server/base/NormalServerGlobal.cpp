@@ -380,27 +380,14 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
             settings->setValue("server_message","");
         if(!settings->contains("mainDatapackCode"))
         {
-            // Pick a preferred maincode rather than hardcoding any specific
-            // value. Strategy: alphabetically first folder under map/main/
-            // whose name matches the allowed charset. Falls back to the
-            // "[main]" placeholder only when map/main/ is empty or no name
-            // matches the regex (the server then refuses to start, which
-            // is the same outcome as before but no longer triggered just
-            // because there happens to be more than one maincode on disk).
-            const std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> &fileInfoList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(datapack_basePath+"map/main/",CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
-            const std::regex maincodeRegex("^[a-z0-9\\- _]+$",std::regex_constants::optimize);
-            std::string preferred;
-            unsigned int fi=0;
-            while(fi<fileInfoList.size())
-            {
-                const std::string &name=fileInfoList.at(fi).name;
-                if(regex_search(name,maincodeRegex))
-                {
-                    if(preferred.empty() || name<preferred)
-                        preferred=name;
-                }
-                fi++;
-            }
+            // Pick a preferred maincode rather than hardcoding any specific value.
+            // A real server wants the WORLD, so "test" (the small hand made harness
+            // label) only wins when the datapack holds nothing else -- taking the
+            // alphabetically first label used to hand a full server the test maps.
+            // Falls back to the "[main]" placeholder when map/main/ holds no usable
+            // label at all, and the server then refuses to start with a clear
+            // message (BaseServer::checkSettings).
+            const std::string preferred=CatchChallenger::FacilityLibGeneral::resolveDatapackMainCode(datapack_basePath,false);
             if(!preferred.empty())
                 settings->setValue("mainDatapackCode",preferred);
             else

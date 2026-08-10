@@ -380,7 +380,7 @@ Tiled::SharedTileset LoadMapAll::stageTemplateTileset(Tiled::Map &worldMap,const
     {
         const Tiled::SharedTileset tileset=worldMap.tilesetAt(tilesetIndex);
         const QString worldPath=QFileInfo(QCoreApplication::applicationDirPath()+
-                                          "/dest/map/main/official/"+tileset->fileName()).absoluteFilePath();
+                                          ("/dest/map/main/"+LoadMap::mainCode()+"/")+tileset->fileName()).absoluteFilePath();
         if(worldPath==QFileInfo(destination).absoluteFilePath())
             return tileset;
         tilesetIndex++;

@@ -41,7 +41,7 @@ straight from `dialog.txt`, so they are not part of what a human validates.
 key), then `npcfill.py` covers them too.
 
 ### 1.3 Do not ship the debug dump
-`dest/map/main/official/all.tmx` (5.6 MB, the whole world in one file) and
+`dest/map/main/<maincode>/all.tmx` (5.6 MB, the whole world in one file) and
 `dest/map/main/tileset/` (run staging only) must not be copied into a datapack.
 Either stop writing them next to the real output, or write them under
 `dest/debug/`.

@@ -22,6 +22,7 @@ import zlib
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import franchise_denylist
+import generated_label
 
 try:
     import zstandard
@@ -157,9 +158,10 @@ def main():
     parser.add_argument("--datapack", default=None,
                         help="datapack root the skins are taken from")
     arguments = parser.parse_args()
-    root = os.path.join(arguments.dest, "map", "main", "official")
-    if not os.path.isdir(root):
-        print("no generated map in " + root)
+    #the generator resolves its map label from its settings, so read it back off disk
+    label, root = generated_label.find(arguments.dest)
+    if label is None:
+        print(root)
         return 2
     skins = set()
     if arguments.datapack:

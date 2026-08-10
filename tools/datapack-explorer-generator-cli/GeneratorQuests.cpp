@@ -573,10 +573,8 @@ void generate()
     {
         if(set.quests.empty())
             continue;
-        std::string label=(set.mainCode=="official")
-            ? std::string("Official datapack")
-            : set.mainCode;
-        indexBody << "<h2>" << Helper::htmlEscape(label) << "</h2>\n";
+        //the map label as it is on disk: no name is special any more
+        indexBody << "<h2>" << Helper::htmlEscape(set.mainCode) << "</h2>\n";
         writeIndexTable(indexBody,set);
     }
 

@@ -46,6 +46,9 @@ int main(int argc, char *argv[])
     if(!QFile::exists(QCoreApplication::applicationDirPath()+"/settings.xml"))
         QFile::copy(":/settings.xml",QCoreApplication::applicationDirPath()+"/settings.xml");
     QSettings settings(QCoreApplication::applicationDirPath()+"/settings.xml",QSettings::NativeFormat);
+    //the label the base terrain is written under, once, for every path below
+    LoadMap::resolveMainCode(settings);
+    std::cout << "Generating the map label \"" << LoadMap::mainCode().toStdString() << "\"" << std::endl;
     Settings::putDefaultSettings(settings);
     Settings::Setting config;
     Settings::populateSettings(settings, config);
@@ -153,7 +156,7 @@ int main(int argc, char *argv[])
 
             tiledMap.setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
 
-            maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/main/official/all.tmx");
+            maprwriter.writeMap(&tiledMap,LoadMap::destMainDir()+"all.tmx");
         }
         //do tmx split
     }

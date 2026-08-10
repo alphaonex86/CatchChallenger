@@ -103,9 +103,9 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
         //catalogue, fight teams) is regenerated for this city. Done BEFORE the
         //tmx is written: it also repairs the bot objects in place (missing
         //type="bot", duplicated id, unknown skin).
-        std::string filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+".tmx";
+        std::string filePath=("/dest/map/main/"+LoadMap::mainCode().toStdString()+"/")+LoadMapAll::lowerCase(city.name)+"/"+baseName+".tmx";
         if(mapTemplatebuilding.otherMap.size()>1)
-            filePath="/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+baseName+"/"+mapTemplatebuilding.otherMapName.at(index)+".tmx";
+            filePath=("/dest/map/main/"+LoadMap::mainCode().toStdString()+"/")+LoadMapAll::lowerCase(city.name)+"/"+baseName+"/"+mapTemplatebuilding.otherMapName.at(index)+".tmx";
         std::string xmlRelativePath=filePath.substr(std::string("/dest/map/").size());
         xmlRelativePath=xmlRelativePath.substr(0,xmlRelativePath.size()-4)+".xml";
         std::vector<Tiled::MapObject*> injectedBots;
@@ -470,7 +470,7 @@ std::string LoadMapAll::getMapFile(const unsigned int &x, const unsigned int &y)
     if(haveCityEntry(citiesCoordToIndex,x,y))
     {
         const LoadMapAll::City &city=LoadMapAll::cities.at(LoadMapAll::citiesCoordToIndex.at(x).at(y));
-        return QCoreApplication::applicationDirPath().toStdString()+"/dest/map/main/official/"+LoadMapAll::lowerCase(city.name)+"/"+LoadMapAll::lowerCase(city.name);
+        return LoadMap::destMainDir().toStdString()+LoadMapAll::lowerCase(city.name)+"/"+LoadMapAll::lowerCase(city.name);
     }
 
     const RoadIndex &roadIndex=roadCoordToIndex.at(x).at(y);
@@ -483,14 +483,14 @@ std::string LoadMapAll::getMapFile(const unsigned int &x, const unsigned int &y)
             abort();
         }
         const LoadMapAll::RoadToCity &cityIndex=roadIndex.cityIndex.front();
-        return QCoreApplication::applicationDirPath().toStdString()+"/dest/map/main/official/"+
+        return LoadMap::destMainDir().toStdString()+
                 LoadMapAll::lowerCase(LoadMapAll::cities.at(cityIndex.cityIndex).name)+"/road-"+std::to_string(roadIndex.roadIndex+1)+
                 "-"+LoadMapAll::orientationToString(LoadMapAll::reverseOrientation(cityIndex.orientation));
     }
     else
     {
         const unsigned int &indexCoord=vectorindexOf(road.coords,std::pair<uint16_t,uint16_t>(x,y));
-        return QCoreApplication::applicationDirPath().toStdString()+"/dest/map/main/official/road-"+
+        return LoadMap::destMainDir().toStdString()+"road-"+
                 std::to_string(roadIndex.roadIndex+1)+"/"+std::to_string(indexCoord+1);
     }
 }

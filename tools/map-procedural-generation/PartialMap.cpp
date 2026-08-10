@@ -28,7 +28,7 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
     Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,mapWidth,mapHeight,16,16);
     QFileInfo fileInfo;
     if(appendPath)
-        fileInfo=QFileInfo(QString::fromStdString(QCoreApplication::applicationDirPath().toStdString()+"/dest/map/main/official/"+file));
+        fileInfo=QFileInfo(QString::fromStdString(LoadMap::destMainDir().toStdString()+file));
     else
         fileInfo=QFileInfo(QString::fromStdString(file));
     QDir mapDir(fileInfo.absolutePath());
@@ -75,7 +75,7 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
                     //the tool's own source tree and leaked out-of-datapack paths into
                     //the chunks); cleanPath: an embedded ".." would break the later
                     //mapDir.relativeFilePath and emit a wrong-depth reference.
-                    const QString pathAppend=QCoreApplication::applicationDirPath()+"/dest/map/main/official/";
+                    const QString pathAppend=LoadMap::destMainDir();
                     const QString officialResolved=QDir::cleanPath(pathAppend+tilesetFileName);
                     if(QFile::exists(officialResolved))
                         tilesetFileName=officialResolved;

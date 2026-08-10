@@ -3,7 +3,10 @@
 #include <QDir>
 #include <QFile>
 #include <QCoreApplication>
+#include <QRegularExpression>
 #include <iostream>
+
+#include "../../general/base/GeneralVariable.hpp"
 
 #include <libtiled/mapreader.h>
 #include <libtiled/tileset.h>
@@ -50,9 +53,42 @@ unsigned int LoadMap::floatToMoisure(const float f)
         return 6;
 }
 
+static QString loadMapMainCode=QString::fromLatin1(DATAPACK_MAINCODE_GENERATED);
+
+const QString &LoadMap::mainCode()
+{
+    return loadMapMainCode;
+}
+
+void LoadMap::resolveMainCode(QSettings &settings)
+{
+    const QString configured=settings.value("maincode").toString().trimmed();
+    //CATCHCHALLENGER_CHECK_MAINDATAPACKCODE: the engine only accepts [a-z0-9]+ (the
+    //"-" is the separator of the http datapack download paths)
+    const QRegularExpression valid(QString::fromLatin1(CATCHCHALLENGER_CHECK_MAINDATAPACKCODE));
+    if(!configured.isEmpty() && valid.match(configured).hasMatch() &&
+            configured!=QString::fromLatin1(DATAPACK_MAINCODE_TEST))
+        loadMapMainCode=configured;
+    else
+    {
+        if(!configured.isEmpty())
+            std::cerr << "maincode \"" << configured.toStdString()
+                      << "\" of the settings is not a usable generated map label, using \""
+                      << DATAPACK_MAINCODE_GENERATED << "\"" << std::endl;
+        loadMapMainCode=QString::fromLatin1(DATAPACK_MAINCODE_GENERATED);
+        settings.setValue("maincode",loadMapMainCode);
+        settings.sync();
+    }
+}
+
+QString LoadMap::destMainDir()
+{
+    return QCoreApplication::applicationDirPath()+"/dest/map/main/"+mainCode()+"/";
+}
+
 QString LoadMap::shippedTilesetDir()
 {
-    return QCoreApplication::applicationDirPath()+"/dest/map/main/official/tileset/";
+    return destMainDir()+"tileset/";
 }
 
 QString LoadMap::pooledTileset(const QString &fileName)
@@ -115,7 +151,7 @@ bool LoadMap::copyTilesetWithImages(const QString &sourceTsx,const QString &dest
 }
 
 //The generated maps are ONE datapack map label: the owner copies
-//dest/map/main/official/ into map/main/<label>/ of a datapack, and that datapack
+//dest/map/main/<label>/ into map/main/<label>/ of a datapack, and that datapack
 //does not have to own the tilesets the generator uses (it holds none of the
 //gym/heal/shop/house sheets the tool ships). So the label carries its OWN
 //tileset/ dir and every written reference points there (tileset/x.tsx next to
@@ -142,7 +178,7 @@ QString LoadMap::shipTileset(const QString &tsxPath)
 
 Tiled::Tileset *LoadMap::readTileset(const QString &tsx,Tiled::Map *tiledMap)
 {
-    QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
+    QDir mapDir(LoadMap::destMainDir());
 
     //dest/map/tileset/ is the canonical pool dir; map/main/tileset/ is only a
     //run-staging convenience (settings paths). The world keeps the POOL path:
@@ -459,7 +495,7 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
         }
 
     //add invisible tileset
-    QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
+    QDir mapDir(LoadMap::destMainDir());
     const QString tilesetPath=pooledTileset("invisible.tsx");
     if(tilesetPath.isEmpty())
     {
