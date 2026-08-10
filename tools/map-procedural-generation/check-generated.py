@@ -20,17 +20,19 @@ import struct
 import sys
 import zlib
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import franchise_denylist
+
 try:
     import zstandard
 except ImportError:
     zstandard = None
 
 # Trademarked / franchise wording must never reach the datapack: the generated
-# world is original. Checked on the generated text AND on dialog.txt.
-FORBIDDEN = ["pokemon", "pokémon", "pokeball", "poké", "pokedex", "pokedollar",
-             "pokemart", "pokecenter", "pikachu", "nintendo", "game freak",
-             "charizard", "bulbasaur", "squirtle", "charmander", "eevee",
-             "digimon", "pokestop"]
+# world is original. Checked on the generated text AND on dialog.txt. The words
+# themselves are what we must not carry, so the list is operator-local and stays
+# out of git, see franchise_denylist.py.
+FORBIDDEN = franchise_denylist.load()
 
 
 def read_map(path):

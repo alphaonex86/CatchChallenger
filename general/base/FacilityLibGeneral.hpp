@@ -17,6 +17,11 @@ public:
     static std::string randomPassword(const std::string& string,const uint8_t& length);
     static std::vector<std::string> skinIdList(const std::string& skinPath);
     static std::string dropPrefixAndSuffixLowerThen33(const std::string &str);
+    //Which map label of a datapack to work on, listed from map/main/ on disk.
+    //preferTest picks DATAPACK_MAINCODE_TEST when it is there (small, deterministic,
+    //what a test fixture wants); otherwise the first label that is NOT "test" wins (the
+    //real world), and "test" is only the last resort. Empty when the datapack has none.
+    static std::string resolveDatapackMainCode(const std::string &datapackPath,const bool &preferTest);
     //static std::string secondsToString(const uint64_t &seconds);
     static bool rmpath(const std::string &dirPath);
     //static std::string timeToString(const uint32_t &time);

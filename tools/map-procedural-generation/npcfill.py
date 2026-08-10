@@ -34,6 +34,9 @@ import urllib.error
 import urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+import franchise_denylist
+
 BANK_FILE = os.path.join(HERE, "npc-slots.json")
 DEFAULT_DEST = os.path.join(HERE, "build", "release", "dest")
 DEFAULT_MODEL = "mistral-small-4:119b"
@@ -41,11 +44,9 @@ LINES_PER_BUCKET = 8
 #a bucket holding at least this many reviewed lines is never asked again
 ENOUGH_LINES = 6
 
-#trademarked or franchise wording: the generated world is ORIGINAL
-FORBIDDEN = ["pokemon", "pokémon", "pokeball", "poke ball", "poké", "pokedex",
-             "pokemart", "pokecenter", "poke center", "pikachu", "nintendo",
-             "game freak", "charizard", "bulbasaur", "squirtle", "charmander",
-             "eevee", "digimon", "pokestop", "pokedollar", "gotta catch"]
+#trademarked or franchise wording: the generated world is ORIGINAL. The words are what
+#we must not carry, so the list is operator-local, see franchise_denylist.py
+FORBIDDEN = franchise_denylist.load()
 #the model sometimes answers with a piece of its own instructions
 META = ["json", "array", "answer with", "as an ai", "here are", "here's a",
         "certainly", "of course!", "instruction", "prompt", "markdown",

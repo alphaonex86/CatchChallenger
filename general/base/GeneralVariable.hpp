@@ -70,6 +70,11 @@
 #define DATAPACK_FILE_REGEX "^[0-9a-z_./-]*[0-9a-z]\\.[a-z]{2,4}$" //Not work: "^[-0-9/a-z\\._]*[0-9a-z]\\.[a-z]{2,4}$", Partial work: "^[-0-9a-z\\._/]*[0-9a-z]\\.[a-z]{2,4}$", Work: "^[0-9a-z/.-]*[0-9a-z]\\.[a-z]{2,4}$"
 #define DATAPACK_BASE_PATH_MAPBASE "map/"
 #define DATAPACK_BASE_PATH_MAPMAIN "map/main/"
+//The map label a generator writes under. "test" is the small hand made harness label:
+//a tool that wants a real world takes anything BUT that one, a tool that wants a quick
+//deterministic fixture takes it. Nothing is called "official" any more.
+#define DATAPACK_MAINCODE_GENERATED "generated"
+#define DATAPACK_MAINCODE_TEST "test"
 #define DATAPACK_BASE_PATH_MAPSUB1 "map/main/"
 #define DATAPACK_BASE_PATH_MAPSUB2 "/sub/"
 #define DATAPACK_BASE_PATH_ZONE1 "map/main/"
