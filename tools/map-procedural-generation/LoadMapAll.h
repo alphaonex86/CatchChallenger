@@ -349,6 +349,21 @@ public:
     //Empty string when no map is written for that chunk.
     static std::string chunkDebugName(const unsigned int &x, const unsigned int &y);
 
+    //WALKABILITY GUARD, run on the finished world before a single map is written.
+    //Two things a generated world must never ship:
+    // 1) a chunk whose border openings are not all reachable from one another —
+    //    the player walks in through one side and cannot leave through the other,
+    //    which cuts the world graph in two;
+    // 2) a building door the player cannot reach — the doorstep must be in the
+    //    BIGGEST walkable component of its chunk, the one the borders open on.
+    //Walkable follows the engine: a cell is blocked when ANY layer named
+    //Collisions holds a tile (they are OR-merged, Map_loaderMain.cpp); water and
+    //ledges are passable (walkOn / one-way jumps).
+    //Every problem of the whole world is collected so one run reports them all.
+    //Returns false when the world must not be written.
+    static bool checkWalkability(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting,
+                                 std::vector<std::string> &errors);
+
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     //[General] cityDebug: Object layer "City" with the hole polygon of every town
     //and a ONE LINE label (name, size, level, type, style, hole, density, buildings)
