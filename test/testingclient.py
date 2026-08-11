@@ -534,8 +534,20 @@ UNKNOWN_OUTPUT_LOG = os.path.join(test_config.TMPFS_ROOT,
 
 
 def report_unknown_client_output(label, output_lines):
-    """Print (and return) the lines of this run that no whitelist entry covers."""
-    unknown = client_output_check.unknown_lines(output_lines)
+    """Print (and return) the lines of this run that no whitelist entry covers.
+
+    A line quoting a ROM-converted datapack's own creature names is printed but not
+    returned: client_output_check.learn() refuses to commit those words, so counting
+    them would fail every run for ever with nothing anyone can do about it.
+    """
+    reported = client_output_check.unknown_lines(output_lines)
+    forbidden = client_output_check.franchise_words()
+    unknown = [line for line in reported
+               if not client_output_check.carries_franchise(
+                   client_output_check.normalise(line), forbidden)]
+    for line in reported:
+        if line not in unknown:
+            print(f"  ? (datapack wording, not whitelistable) {line}")
     if unknown:
         print(f"  client output not in the whitelist ({len(unknown)} line(s)) "
               f"for {label}:")

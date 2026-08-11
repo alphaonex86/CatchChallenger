@@ -309,6 +309,34 @@ def stage_run_dir(work, staged_datapack, port, max_players):
                             pick_maincode(staged_datapack), port, max_players)
 
 
+def port_squatter(port):
+    """Who already listens on 127.0.0.1:<port>, or None when it is free.
+
+    A case picks a FIXED port (BASE_PORT + index) so a leftover server of OURS
+    cannot be mistaken for this one. When something else holds it the server just
+    fails to bind, and "server failed to bind" then blames our binary for what is
+    somebody else's socket -- say whose it is instead.
+    """
+    try:
+        entries = open("/proc/net/tcp", encoding="utf-8").read().split("\n")
+    except OSError:
+        return None
+    for line in entries[1:]:
+        fields = line.split()
+        #3 is the state (0A = LISTEN), 1 the local address, 7 the owning uid
+        if len(fields) > 7 and fields[3] == "0A":
+            try:
+                listening = int(fields[1].split(":")[1], 16)
+            except (IndexError, ValueError):
+                continue
+            if listening == port:
+                uid = fields[7]
+                if uid == str(os.getuid()):
+                    return "one of our own processes (uid %s) never exited" % uid
+                return ("another user (uid %s) on this host, not us" % uid)
+    return None
+
+
 def launch_server(work):
     """Start the server and wait for its bind line. Returns (proc, logpath)."""
     logpath = os.path.join(work, "server.log")
@@ -464,6 +492,11 @@ def run_case(bots, staged_datapack, failed):
 
     proc, logpath = launch_server(work)
     if proc is None:
+        squatter = port_squatter(port)
+        if squatter is not None:
+            log_fail(case_persist, f"port {port} is already taken by {squatter}; "
+                                   f"see {logpath}")
+            return
         log_fail(case_persist, f"server failed to bind; see {logpath}")
         print(read_log(logpath)[-2000:])
         return
@@ -649,6 +682,11 @@ def run_race_case(bots, staged_datapack, failed):
 
     proc, logpath = launch_server(work)
     if proc is None:
+        squatter = port_squatter(port)
+        if squatter is not None:
+            log_fail(case_race, f"port {port} is already taken by {squatter}; "
+                                f"see {logpath}")
+            return
         log_fail(case_race, f"server failed to bind; see {logpath}")
         print(read_log(logpath)[-2000:])
         return

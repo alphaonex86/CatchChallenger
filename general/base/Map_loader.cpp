@@ -179,7 +179,12 @@ static bool isKnownBotStepType(const char * const type)
            strcmp(type,"clan")==0 ||
            strcmp(type,"warehouse")==0 ||
            strcmp(type,"industry")==0 ||
-           strcmp(type,"zonecapture")==0;
+           strcmp(type,"zonecapture")==0 ||
+           //emitted on purpose by the ROM converter (tools/gba2catchchallenger,
+           //CCWriter.cpp): a static one-off wild monster, distinct from a trainer
+           //"fight". Nothing implements it yet -- the server says so once per map --
+           //but it is a known name, not a typo, so it does not belong here.
+           strcmp(type,"wild")==0;
 }
 
 bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, const std::vector<std::string>& detectedMonsterCollisionLayer,std::string &zoneName, MapLoadBuffers *buffers)

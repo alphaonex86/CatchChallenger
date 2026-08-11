@@ -770,7 +770,6 @@ void MapVisualiserPlayer::moveStepSlot()
 
 bool MapVisualiserPlayer::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client * tempMapObject)
 {
-    std::cerr << "MapVisualiserPlayer::asyncMapLoaded() mapIndex=" << mapIndex << " current_map=" << current_map << std::endl;
     if(current_map==65535)
     {
         std::cerr << "MapVisualiserPlayer::asyncMapLoaded() current_map==65535, ignoring" << std::endl;

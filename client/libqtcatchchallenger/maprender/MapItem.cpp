@@ -24,7 +24,6 @@ MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
 
 void MapItem::addMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
 {
-    std::cerr << "MapItem::addMap() mapIndex=" << mapIndex << " map=" << map << " renderer=" << renderer << " playerLayerIndex=" << playerLayerIndex << " cache=" << cache << std::endl;
     if(map==NULL)
     {
         std::cerr << "MapItem::addMap() map is NULL (abort add)" << std::endl;
@@ -62,7 +61,6 @@ void MapItem::addMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Tiled::Map *map,
     //align zIndex to "Dyna management" Layer
     int index=-playerLayerIndex;
     const QList<Tiled::Layer *> &layers=map->layers();
-    std::cerr << "MapItem::addMap() layers.size()=" << layers.size() << std::endl;
 
     QImage image;
     QGraphicsItem * graphicsItem=NULL;
@@ -160,7 +158,6 @@ void MapItem::addMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Tiled::Map *map,
         else
             std::cerr << "MapItem::addMap() final tempPixmap.convertFromImage failed" << std::endl;
     }
-    std::cerr << "MapItem::addMap() done mapIndex=" << mapIndex << " " << layers.size() << " layers, " << displayed_layer[map].size() << " items added (width=" << width << " height=" << height << ")" << std::endl;
     if(displayed_layer[map].empty())
         std::cerr << "MapItem::addMap() WARNING: NO items added for mapIndex=" << mapIndex << " (black map will result)" << std::endl;
 

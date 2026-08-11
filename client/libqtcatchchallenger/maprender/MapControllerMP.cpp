@@ -491,8 +491,6 @@ void MapControllerMP::unloadOtherMonsterFromCurrentMap(const MapControllerMP::Ot
 
 void MapControllerMP::loadCurrentPlayer(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
-    std::cerr << "MapControllerMP::loadCurrentPlayer() mapId=" << mapId << " x=" << std::to_string(x) << " y=" << std::to_string(y)
-              << " mHaveTheDatapack=" << mHaveTheDatapack << " player_informations_is_set=" << player_informations_is_set << std::endl;
     initialPlayerPosition.mapId=mapId;
     initialPlayerPosition.x=x;
     initialPlayerPosition.y=y;
