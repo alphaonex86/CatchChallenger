@@ -39,7 +39,10 @@ WHITELIST = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 NORMALISERS = [
     (re.compile(r"0x[0-9a-fA-F]+"), "<ptr>"),
     (re.compile(r"\b[0-9A-Fa-f]{16,}\b"), "<hash>"),
-    (re.compile(r"(\.\.)?(/[^\s\"']+)+"), "<path>"),
+    #a relative path counts too: the datapack download lists every file it fetches,
+    #and "wanstrees/road-<n>.tmx" as its own pattern per map would have added ~600
+    #lines of pure noise to the list
+    (re.compile(r"[\w.-]*(/[^\s\"']+)+"), "<path>"),
     #no word boundary: "31ms", "v2", "id=7" all carry a value that varies per run
     (re.compile(r"[0-9]+(\.[0-9]+)?"), "<n>"),
     (re.compile(r"[ \t]+"), " "),
