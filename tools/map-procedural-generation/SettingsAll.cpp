@@ -19,6 +19,8 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
         settings.setValue("cleanTileset",true);
     if(!settings.contains("cityDebug"))
         settings.setValue("cityDebug",false);
+    if(!settings.contains("terrainDebug"))
+        settings.setValue("terrainDebug",false);
     if(!settings.contains("scale_City"))
         settings.setValue("scale_City",1.0);
     if(!settings.contains("doallmap"))
@@ -210,6 +212,15 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.displayregion=settings.value("displayregion").toBool();
     config.cleanTileset=settings.value("cleanTileset",true).toBool();
     config.cityDebug=settings.value("cityDebug",false).toBool();
+    config.terrainDebug=settings.value("terrainDebug",false).toBool();
+
+    settings.beginGroup("water");
+    config.waterSeaMinTiles=settings.value("seaMinTiles",4000).toUInt();
+    config.waterBodyDebugMinTiles=settings.value("bodyDebugMinTiles",200).toUInt();
+    config.waterBodyDebugStep=settings.value("bodyDebugStep",32).toUInt();
+    if(config.waterBodyDebugStep<1)
+        config.waterBodyDebugStep=1;
+    settings.endGroup();
     config.scale_City=settings.value("scale_City").toFloat();
     config.doallmap=settings.value("doallmap").toBool();
     config.maxCityLinks=settings.value("maxCityLinks").toUInt();

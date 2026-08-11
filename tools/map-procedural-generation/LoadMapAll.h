@@ -391,6 +391,27 @@ public:
     static bool checkWalkability(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting,
                                  std::vector<std::string> &errors);
 
+    //WATER BODIES: connected components of the Water layer over the whole world.
+    //A component holding at least [water] seaMinTiles cells is a SEA — big enough
+    //to sail, and the only kind a water path is ever routed on. Anything smaller
+    //is a LAKE: a pond in a field must not become a shipping lane.
+    struct WaterBody
+    {
+        unsigned int size;
+        bool isSea;
+        //bounding box in world tiles, and one cell known to belong to it
+        unsigned int minX,minY,maxX,maxY;
+        unsigned int seedX,seedY;
+    };
+    static std::vector<WaterBody> waterBodies;
+    //world-sized, waterNoBody on land: which body a tile belongs to
+    static std::vector<uint16_t> waterBodyOfTile;
+    enum : uint16_t { waterNoBody=0xFFFF };
+    static void detectWaterBodies(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting);
+    //[General] terrainDebug: Object layer "Terrain" with the OUTLINE polygon of
+    //every sea and lake, named with its kind and size
+    static void addDebugWaterBodies(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting);
+
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     //[General] cityDebug: Object layer "City" with the hole polygon of every town
     //and a ONE LINE label (name, size, level, type, style, hole, density, buildings)

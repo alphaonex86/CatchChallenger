@@ -629,6 +629,266 @@ bool LoadMapAll::checkWalkability(Tiled::Map &worldMap, const SettingsAll::Setti
     return errors.empty();
 }
 
+std::vector<LoadMapAll::WaterBody> LoadMapAll::waterBodies;
+std::vector<uint16_t> LoadMapAll::waterBodyOfTile;
+
+void LoadMapAll::detectWaterBodies(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting)
+{
+    waterBodies.clear();
+    const unsigned int worldWidth=(unsigned int)worldMap.width();
+    const unsigned int worldHeight=(unsigned int)worldMap.height();
+    waterBodyOfTile.assign(worldWidth*worldHeight,waterNoBody);
+    Tiled::TileLayer * const waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
+    if(waterLayer==NULL)
+    {
+        std::cerr << "no Water layer in the world map, no sea can be found" << std::endl;
+        return;
+    }
+    std::vector<unsigned char> isWater(worldWidth*worldHeight,0);
+    {
+        unsigned int cell=0;
+        while(cell<worldWidth*worldHeight)
+        {
+            if(waterLayer->cellAt((int)(cell%worldWidth),(int)(cell/worldWidth)).tile()!=NULL)
+                isWater[cell]=1;
+            cell++;
+        }
+    }
+    std::vector<unsigned int> queue;
+    unsigned int startCell=0;
+    while(startCell<worldWidth*worldHeight)
+    {
+        if(isWater.at(startCell)!=0 && waterBodyOfTile.at(startCell)==waterNoBody)
+        {
+            //0xFFFF is the "land" marker, so that many bodies is the limit; the
+            //ones after it are simply not tracked (they are tiny by then)
+            if(waterBodies.size()>=waterNoBody)
+                break;
+            const uint16_t label=(uint16_t)waterBodies.size();
+            WaterBody body;
+            body.size=0;
+            body.isSea=false;
+            body.minX=startCell%worldWidth;
+            body.maxX=body.minX;
+            body.minY=startCell/worldWidth;
+            body.maxY=body.minY;
+            body.seedX=body.minX;
+            body.seedY=body.minY;
+            waterBodyOfTile[startCell]=label;
+            queue.clear();
+            queue.push_back(startCell);
+            unsigned int queueIndex=0;
+            while(queueIndex<queue.size())
+            {
+                const unsigned int cell=queue.at(queueIndex);
+                queueIndex++;
+                const unsigned int cellX=cell%worldWidth;
+                const unsigned int cellY=cell/worldWidth;
+                body.size++;
+                if(cellX<body.minX)
+                    body.minX=cellX;
+                if(cellX>body.maxX)
+                    body.maxX=cellX;
+                if(cellY<body.minY)
+                    body.minY=cellY;
+                if(cellY>body.maxY)
+                    body.maxY=cellY;
+                const int stepX[4]={-1,1,0,0};
+                const int stepY[4]={0,0,-1,1};
+                unsigned int direction=0;
+                while(direction<4)
+                {
+                    const int nextX=(int)cellX+stepX[direction];
+                    const int nextY=(int)cellY+stepY[direction];
+                    if(nextX>=0 && nextY>=0 && nextX<(int)worldWidth && nextY<(int)worldHeight)
+                    {
+                        const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*worldWidth;
+                        if(isWater.at(next)!=0 && waterBodyOfTile.at(next)==waterNoBody)
+                        {
+                            waterBodyOfTile[next]=label;
+                            queue.push_back(next);
+                        }
+                    }
+                    direction++;
+                }
+            }
+            body.isSea=(body.size>=setting.waterSeaMinTiles);
+            waterBodies.push_back(body);
+        }
+        startCell++;
+    }
+    unsigned int seaCount=0;
+    unsigned int biggest=0;
+    unsigned int bodyIndex=0;
+    while(bodyIndex<waterBodies.size())
+    {
+        if(waterBodies.at(bodyIndex).isSea)
+            seaCount++;
+        if(waterBodies.at(bodyIndex).size>biggest)
+            biggest=waterBodies.at(bodyIndex).size;
+        bodyIndex++;
+    }
+    std::cout << "water: " << waterBodies.size() << " bod(y|ies), " << seaCount
+              << " sea(s) of at least " << setting.waterSeaMinTiles << " tiles, biggest "
+              << biggest << " tiles" << std::endl;
+}
+
+//Outline of a mask as a closed polygon of CELL CORNERS, by following the boundary
+//edges. A bounding box would say nothing about a coastline; this is the shape.
+static QPolygonF traceMaskOutline(const std::vector<unsigned char> &mask,
+                                  const unsigned int worldWidth,const unsigned int worldHeight,
+                                  const unsigned int seedX,const unsigned int seedY)
+{
+    QPolygonF outline;
+    //Walk the boundary edges with the body always on the RIGHT hand, clockwise.
+    //Direction 0 right, 1 down, 2 left, 3 up; the position is a CORNER of the
+    //tile grid, (cx,cy) being the top-left corner of tile (cx,cy).
+    //The seed is the FIRST body cell in scan order, so the cell above it and the
+    //one left of it are not in the body: starting at its top-left corner heading
+    //RIGHT puts the body below, that is on the right hand. (With the body on the
+    //LEFT the very first step is already invalid and the walk never closes.)
+    const int stepX[4]={1,0,-1,0};
+    const int stepY[4]={0,1,0,-1};
+    int cornerX=(int)seedX;
+    int cornerY=(int)seedY;
+    int direction=0;
+    const int startX=cornerX;
+    const int startY=cornerY;
+    const int startDirection=direction;
+    unsigned int guard=0;
+    //one step per boundary edge; a coastline cannot be longer than every edge of
+    //the grid, and the polygon is capped well below that anyway
+    const unsigned int guardLimit=4*worldWidth*worldHeight;
+    do
+    {
+        //only a CORNER is worth a point: a straight run of edges would add one
+        //point per tile and bury the debug layer under a million of them
+        bool turned=false;
+        //turn RIGHT first to hug the coast, then straight, then left, then back
+        int tryDirection=(direction+1)%4;
+        unsigned int attempt=0;
+        while(attempt<4 && !turned)
+        {
+            const int nextX=cornerX+stepX[tryDirection];
+            const int nextY=cornerY+stepY[tryDirection];
+            //the two tiles the edge separates, left and right of the move
+            int leftX=0,leftY=0,rightX=0,rightY=0;
+            if(tryDirection==0){leftX=cornerX;leftY=cornerY-1;rightX=cornerX;rightY=cornerY;}
+            else if(tryDirection==1){leftX=cornerX;leftY=cornerY;rightX=cornerX-1;rightY=cornerY;}
+            else if(tryDirection==2){leftX=cornerX-1;leftY=cornerY;rightX=cornerX-1;rightY=cornerY-1;}
+            else {leftX=cornerX-1;leftY=cornerY-1;rightX=cornerX;rightY=cornerY-1;}
+            const bool leftIn=(leftX>=0 && leftY>=0 && leftX<(int)worldWidth && leftY<(int)worldHeight
+                               && mask.at((unsigned int)leftX+(unsigned int)leftY*worldWidth)!=0);
+            const bool rightIn=(rightX>=0 && rightY>=0 && rightX<(int)worldWidth && rightY<(int)worldHeight
+                                && mask.at((unsigned int)rightX+(unsigned int)rightY*worldWidth)!=0);
+            if(rightIn && !leftIn)
+            {
+                //the point is emitted where the walk TURNS
+                if(tryDirection!=direction || outline.isEmpty())
+                    outline << QPointF(cornerX,cornerY);
+                cornerX=nextX;
+                cornerY=nextY;
+                direction=tryDirection;
+                turned=true;
+            }
+            else
+            {
+                tryDirection=(tryDirection+3)%4;
+                attempt++;
+            }
+        }
+        if(!turned)
+            break;//a single isolated cell, or a shape the walk cannot follow
+        guard++;
+    }
+    while((cornerX!=startX || cornerY!=startY || direction!=startDirection) && guard<guardLimit);
+    return outline;
+}
+
+void LoadMapAll::addDebugWaterBodies(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting)
+{
+    Tiled::ObjectGroup * const layerTerrain=new Tiled::ObjectGroup("Terrain",0,0);
+    layerTerrain->setColor(QColor("#2E9EF3"));
+    worldMap.addLayer(layerTerrain);
+    const unsigned int worldWidth=(unsigned int)worldMap.width();
+    const unsigned int worldHeight=(unsigned int)worldMap.height();
+    const int tileWidth=worldMap.tileWidth();
+    const int tileHeight=worldMap.tileHeight();
+    unsigned int bodyIndex=0;
+    unsigned int drawn=0;
+    while(bodyIndex<waterBodies.size())
+    {
+        const WaterBody &body=waterBodies.at(bodyIndex);
+        //a one-pond puddle would add thousands of useless objects; only what is
+        //worth naming on a map of the world
+        if(body.size>=setting.waterBodyDebugMinTiles)
+        {
+            //A GENERAL shape, not the per-tile coastline: traced at tile
+            //resolution a noisy 668k-tile sea gives over a MILLION corners, which
+            //is useless to look at and doubles the size of all.tmx. The body is
+            //downsampled first — a block belongs to it as soon as one of its
+            //tiles does, so nothing is lost from the silhouette.
+            const unsigned int step=setting.waterBodyDebugStep;
+            const unsigned int coarseWidth=(worldWidth+step-1)/step;
+            const unsigned int coarseHeight=(worldHeight+step-1)/step;
+            std::vector<unsigned char> coarse(coarseWidth*coarseHeight,0);
+            {
+                unsigned int tileY=body.minY;
+                while(tileY<=body.maxY)
+                {
+                    unsigned int tileX=body.minX;
+                    while(tileX<=body.maxX)
+                    {
+                        if(waterBodyOfTile.at(tileX+tileY*worldWidth)==(uint16_t)bodyIndex)
+                            coarse[(tileX/step)+(tileY/step)*coarseWidth]=1;
+                        tileX++;
+                    }
+                    tileY++;
+                }
+            }
+            //the seed must be the FIRST block in scan order, as the tracer expects
+            unsigned int coarseSeed=0;
+            while(coarseSeed<coarse.size() && coarse.at(coarseSeed)==0)
+                coarseSeed++;
+            QPolygonF outline=traceMaskOutline(coarse,coarseWidth,coarseHeight,
+                                               coarseSeed%coarseWidth,coarseSeed/coarseWidth);
+            //scale the block corners back to world tiles
+            {
+                unsigned int pointIndex=0;
+                while(pointIndex<(unsigned int)outline.size())
+                {
+                    outline[pointIndex]=QPointF(outline.at(pointIndex).x()*step,
+                                                outline.at(pointIndex).y()*step);
+                    pointIndex++;
+                }
+            }
+            if(outline.size()>=3)
+            {
+                const QString label=QString::fromLatin1(body.isSea?"sea ":"lake ")+
+                        QString::number(bodyIndex)+" "+QString::number(body.size)+" tiles";
+                //the polygon points are relative to the object position
+                const QPointF origin=outline.first();
+                unsigned int pointIndex=0;
+                while(pointIndex<(unsigned int)outline.size())
+                {
+                    outline[pointIndex]=QPointF((outline.at(pointIndex).x()-origin.x())*tileWidth,
+                                                (outline.at(pointIndex).y()-origin.y())*tileHeight);
+                    pointIndex++;
+                }
+                Tiled::MapObject * const object=new Tiled::MapObject(label,"",
+                    QPointF(origin.x()*tileWidth,origin.y()*tileHeight),QSizeF(0.0,0.0));
+                object->setPolygon(outline);
+                object->setShape(Tiled::MapObject::Polygon);
+                layerTerrain->addObject(object);
+                drawn++;
+            }
+        }
+        bodyIndex++;
+    }
+    layerTerrain->setVisible(false);
+    std::cout << "terrainDebug: " << drawn << " water body outline(s)" << std::endl;
+}
+
 std::string LoadMapAll::chunkDebugName(const unsigned int &x, const unsigned int &y)
 {
     if(haveCityEntry(citiesCoordToIndex,x,y))
