@@ -115,7 +115,6 @@ void MapVisualiser::loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
         std::cerr << "MapVisualiser::loadOtherMap() current_map==65535 (map empty), mapIndex=" << mapIndex << std::endl;
         return;
     }
-    std::cerr << "MapVisualiser::loadOtherMap() mapIndex=" << mapIndex << " current_map=" << current_map << std::endl;
     //already loaded
     if(CatchChallenger::QMap_client::all_map.find(mapIndex)!=CatchChallenger::QMap_client::all_map.cend())
         return;
@@ -143,7 +142,6 @@ void MapVisualiser::loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 
 void MapVisualiser::asyncDetectBorder(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
-    std::cerr << "MapVisualiser::asyncDetectBorder() mapIndex=" << mapIndex << " current_map=" << current_map << std::endl;
     if(CatchChallenger::QMap_client::all_map.find(mapIndex)==CatchChallenger::QMap_client::all_map.cend())
     {
         qDebug() << "Map is NULL, can't load more at MapVisualiser::asyncDetectBorder()";
@@ -229,7 +227,6 @@ void MapVisualiser::asyncDetectBorder(const CATCHCHALLENGER_TYPE_MAPID &mapIndex
 
 bool MapVisualiser::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, QMap_client * tempMapObject)
 {
-    std::cerr << "MapVisualiser::asyncMapLoaded() mapIndex=" << mapIndex << " current_map=" << current_map << " tempMapObject=" << tempMapObject << std::endl;
     if(current_map==65535)
     {
         std::cerr << "MapVisualiser::asyncMapLoaded() current_map==65535, ignoring async load of mapIndex=" << mapIndex << std::endl;
