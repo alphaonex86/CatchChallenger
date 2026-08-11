@@ -245,11 +245,17 @@ int main(int argc, char *argv[])
                 LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
                                     tiledMap.width(),tiledMap.height(),0,0,false);
                 qDebug("Add terrain took %lld ms", t.elapsed());
+                //what is a SEA and what is only a lake. BEFORE addCity: the water
+                //paths join the road graph there, and that is the last moment the
+                //graph can still be changed.
+                t.start();
+                LoadMapAll::detectWaterBodies(tiledMap,config);
+                qDebug("detect water bodies took %lld ms", t.elapsed());
                 t.start();
                 //the terrain a road takes its wild monsters from is read from the
                 //voronoi zones, not sampled again from the noise
                 LoadMapAll::addCity(tiledMap,gridCity,config.citiesNames,config.mapXCount,config.mapYCount,config.maxCityLinks,config.cityRadius,
-                                    levelmap,config.levelmapscale,config.levelmapmin,config.levelmapmax);
+                                    levelmap,config.levelmapscale,config.levelmapmin,config.levelmapmax,config);
                 qDebug("place cities took %lld ms", t.elapsed());
                 //Now that the towns are known, FLATTEN the terrain under each of
                 //them and sample the terrain AGAIN, this time drawing it: a town cut
@@ -268,9 +274,6 @@ int main(int argc, char *argv[])
                 LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
                                     tiledMap.width(),tiledMap.height(),0,0,false);
                 qDebug("Draw terrain took %lld ms", t.elapsed());
-                //what is a SEA and what is only a lake, from the water that was
-                //just drawn: a water path is only ever routed on a sea
-                LoadMapAll::detectWaterBodies(tiledMap,config);
                 MapBrush::initialiseMapMask(tiledMap);
                 //BEFORE the transitions: the outer-border pass is mask-gated, so
                 //this is what keeps the mountain COLLISION ridge out of the town

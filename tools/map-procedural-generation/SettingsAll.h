@@ -40,6 +40,13 @@ public:
         //debug outlines are traced on a DOWNSAMPLED grid of this many tiles per
         //block: at tile resolution a noisy coastline gives over a million corners
         unsigned int waterBodyDebugStep;
+        //[water] how many sea routes to build, as a percent of the number of land
+        //roads ("a water path should be X fewer than land"); a chunk is sailable
+        //when at least chunkSeaPercent of it is sea; boatPercent of the routes are
+        //a closed boat crossing instead of a swimmable channel.
+        unsigned int waterPathPercentOfLand;
+        unsigned int waterChunkSeaPercent;
+        unsigned int waterBoatPercent;
         std::vector<std::string> citiesNames;
         float scale_City;
         bool doallmap;

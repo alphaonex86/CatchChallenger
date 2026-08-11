@@ -629,6 +629,7 @@ bool LoadMapAll::checkWalkability(Tiled::Map &worldMap, const SettingsAll::Setti
     return errors.empty();
 }
 
+std::vector<LoadMapAll::BoatCrossing> LoadMapAll::boatCrossings;
 std::vector<LoadMapAll::WaterBody> LoadMapAll::waterBodies;
 std::vector<uint16_t> LoadMapAll::waterBodyOfTile;
 
@@ -638,10 +639,14 @@ void LoadMapAll::detectWaterBodies(Tiled::Map &worldMap, const SettingsAll::Sett
     const unsigned int worldWidth=(unsigned int)worldMap.width();
     const unsigned int worldHeight=(unsigned int)worldMap.height();
     waterBodyOfTile.assign(worldWidth*worldHeight,waterNoBody);
-    Tiled::TileLayer * const waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
-    if(waterLayer==NULL)
+    //Read the VORONOI zones, not the drawn Water layer: the water paths are
+    //decided together with the land roads, before a single tile is painted, and
+    //that is the only moment where the whole road graph can still be changed.
+    //The zone heights are set by the first addTerrain pass, so this is the very
+    //terrain that will be drawn.
+    if(VoronioForTiledMapTmx::voronoiMap.tileToPolygonZoneIndex==NULL)
     {
-        std::cerr << "no Water layer in the world map, no sea can be found" << std::endl;
+        std::cerr << "detectWaterBodies called before the voronoi map is computed" << std::endl;
         return;
     }
     std::vector<unsigned char> isWater(worldWidth*worldHeight,0);
@@ -649,8 +654,13 @@ void LoadMapAll::detectWaterBodies(Tiled::Map &worldMap, const SettingsAll::Sett
         unsigned int cell=0;
         while(cell<worldWidth*worldHeight)
         {
-            if(waterLayer->cellAt((int)(cell%worldWidth),(int)(cell/worldWidth)).tile()!=NULL)
-                isWater[cell]=1;
+            const VoronioForTiledMapTmx::PolygonZone &zone=
+                    VoronioForTiledMapTmx::voronoiMap.zones.at(
+                        VoronioForTiledMapTmx::voronoiMap.tileToPolygonZoneIndex[cell].index);
+            if(zone.height<5 && zone.moisure>=1 && zone.moisure<=6)
+                if(LoadMap::terrainList[zone.height][zone.moisure-1].terrainName
+                        .compare(QString("water"),Qt::CaseInsensitive)==0)
+                    isWater[cell]=1;
             cell++;
         }
     }
@@ -889,6 +899,283 @@ void LoadMapAll::addDebugWaterBodies(Tiled::Map &worldMap, const SettingsAll::Se
     std::cout << "terrainDebug: " << drawn << " water body outline(s)" << std::endl;
 }
 
+//one candidate sea route between two coastal towns
+struct WaterCandidate
+{
+    unsigned int cityA,cityB;
+    unsigned int distance;
+};
+static bool waterCandidateCloser(const WaterCandidate &a,const WaterCandidate &b)
+{
+    if(a.distance!=b.distance)
+        return a.distance<b.distance;
+    //stable whatever the order the pairs were found in
+    if(a.cityA!=b.cityA)
+        return a.cityA<b.cityA;
+    return a.cityB<b.cityB;
+}
+
+void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int mapYCount,
+                               const unsigned int singleMapWidth,const unsigned int singleMapHeight,
+                               const unsigned int worldWidth,
+                               const SettingsAll::SettingsExtra &setting,
+                               std::vector<std::pair<uint16_t,uint16_t> > &waterChunks,
+                               std::vector<std::pair<uint16_t,uint16_t> > &boatChunks)
+{
+    waterChunks.clear();
+    boatChunks.clear();
+    boatCrossings.clear();
+    if(setting.waterPathPercentOfLand==0 || cities.size()<2 || waterBodies.empty())
+        return;
+    //how much SEA each chunk holds, and which seas it touches
+    std::vector<unsigned int> chunkSeaTiles(mapXCount*mapYCount,0);
+    std::vector<std::set<uint16_t> > chunkSeas(mapXCount*mapYCount);
+    {
+        unsigned int chunkY=0;
+        while(chunkY<mapYCount)
+        {
+            unsigned int chunkX=0;
+            while(chunkX<mapXCount)
+            {
+                unsigned int localY=0;
+                while(localY<singleMapHeight)
+                {
+                    unsigned int localX=0;
+                    while(localX<singleMapWidth)
+                    {
+                        const unsigned int tileX=chunkX*singleMapWidth+localX;
+                        const unsigned int tileY=chunkY*singleMapHeight+localY;
+                        const uint16_t body=waterBodyOfTile.at(tileX+tileY*worldWidth);
+                        if(body!=waterNoBody && waterBodies.at(body).isSea)
+                        {
+                            chunkSeaTiles[chunkX+chunkY*mapXCount]++;
+                            chunkSeas[chunkX+chunkY*mapXCount].insert(body);
+                        }
+                        localX++;
+                    }
+                    localY++;
+                }
+                chunkX++;
+            }
+            chunkY++;
+        }
+    }
+    //a chunk a route may sail through: mostly sea, no town, no land road on it
+    const unsigned int chunkTiles=singleMapWidth*singleMapHeight;
+    std::vector<unsigned char> sailable(mapXCount*mapYCount,0);
+    {
+        unsigned int chunk=0;
+        while(chunk<mapXCount*mapYCount)
+        {
+            if(chunkSeaTiles.at(chunk)*100>=chunkTiles*setting.waterChunkSeaPercent
+                    && mapPathDirection[chunk]==0
+                    && !haveCityEntry(citiesCoordToIndex,chunk%mapXCount,chunk/mapXCount))
+                sailable[chunk]=1;
+            chunk++;
+        }
+    }
+    //the seas every town can put to sea on: its chunk plus one chunk of margin
+    std::vector<std::set<uint16_t> > citySeas(cities.size());
+    {
+        unsigned int cityIndex=0;
+        while(cityIndex<cities.size())
+        {
+            const City &city=cities.at(cityIndex);
+            int neighborY=-1;
+            while(neighborY<=1)
+            {
+                int neighborX=-1;
+                while(neighborX<=1)
+                {
+                    const int chunkX=(int)city.x+neighborX;
+                    const int chunkY=(int)city.y+neighborY;
+                    if(chunkX>=0 && chunkY>=0 && chunkX<(int)mapXCount && chunkY<(int)mapYCount)
+                    {
+                        const std::set<uint16_t> &seas=chunkSeas.at((unsigned int)chunkX+(unsigned int)chunkY*mapXCount);
+                        citySeas[cityIndex].insert(seas.cbegin(),seas.cend());
+                    }
+                    neighborX++;
+                }
+                neighborY++;
+            }
+            cityIndex++;
+        }
+    }
+    //every pair of towns that can reach each other on the SAME sea, nearest first
+    std::vector<WaterCandidate> candidates;
+    {
+        unsigned int firstCity=0;
+        while(firstCity<cities.size())
+        {
+            unsigned int secondCity=firstCity+1;
+            while(secondCity<cities.size())
+            {
+                bool shareASea=false;
+                std::set<uint16_t>::const_iterator seaIterator=citySeas.at(firstCity).cbegin();
+                while(seaIterator!=citySeas.at(firstCity).cend() && !shareASea)
+                {
+                    if(citySeas.at(secondCity).find(*seaIterator)!=citySeas.at(secondCity).cend())
+                        shareASea=true;
+                    ++seaIterator;
+                }
+                if(shareASea)
+                {
+                    WaterCandidate candidate;
+                    candidate.cityA=firstCity;
+                    candidate.cityB=secondCity;
+                    const int deltaX=(int)cities.at(firstCity).x-(int)cities.at(secondCity).x;
+                    const int deltaY=(int)cities.at(firstCity).y-(int)cities.at(secondCity).y;
+                    candidate.distance=(unsigned int)(abs(deltaX)+abs(deltaY));
+                    candidates.push_back(candidate);
+                }
+                secondCity++;
+            }
+            firstCity++;
+        }
+    }
+    std::sort(candidates.begin(),candidates.end(),waterCandidateCloser);
+    //"a water path should be X fewer than land": a share of the land road count
+    unsigned int landRoads=roads.size();
+    if(landRoads==0)
+        landRoads=cities.size();
+    unsigned int wanted=landRoads*setting.waterPathPercentOfLand/100;
+    if(wanted==0 && !candidates.empty())
+        wanted=1;
+    //a town is joined by sea ONCE: the nearest partner, so the routes spread over
+    //the coast instead of all leaving the same harbour
+    std::vector<unsigned char> cityUsed(cities.size(),0);
+    unsigned int built=0;
+    unsigned int candidateIndex=0;
+    while(candidateIndex<candidates.size() && built<wanted)
+    {
+        const WaterCandidate &candidate=candidates.at(candidateIndex);
+        candidateIndex++;
+        if(cityUsed.at(candidate.cityA)!=0 || cityUsed.at(candidate.cityB)!=0)
+            continue;
+        //BOAT crossing: no corridor at all, one closed chunk on each shore and a
+        //push-teleport between them. Decided before the route is even searched.
+        const bool byBoat=((unsigned int)(rand()%100)<setting.waterBoatPercent);
+        //cheapest sail from A to B over the sailable chunks; the two town chunks
+        //are the ends and are never painted as water themselves
+        std::vector<int> parent(mapXCount*mapYCount,-2);
+        const unsigned int startChunk=cities.at(candidate.cityA).x+cities.at(candidate.cityA).y*mapXCount;
+        const unsigned int endChunk=cities.at(candidate.cityB).x+cities.at(candidate.cityB).y*mapXCount;
+        std::vector<unsigned int> queue;
+        parent[startChunk]=-1;
+        queue.push_back(startChunk);
+        unsigned int queueIndex=0;
+        bool found=false;
+        while(queueIndex<queue.size() && !found)
+        {
+            const unsigned int chunk=queue.at(queueIndex);
+            queueIndex++;
+            const int chunkX=(int)(chunk%mapXCount);
+            const int chunkY=(int)(chunk/mapXCount);
+            const int stepX[4]={-1,1,0,0};
+            const int stepY[4]={0,0,-1,1};
+            unsigned int direction=0;
+            while(direction<4 && !found)
+            {
+                const int nextX=chunkX+stepX[direction];
+                const int nextY=chunkY+stepY[direction];
+                if(nextX>=0 && nextY>=0 && nextX<(int)mapXCount && nextY<(int)mapYCount)
+                {
+                    const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapXCount;
+                    if(parent.at(next)==-2 && (sailable.at(next)!=0 || next==endChunk))
+                    {
+                        parent[next]=(int)chunk;
+                        if(next==endChunk)
+                            found=true;
+                        else
+                            queue.push_back(next);
+                    }
+                }
+                direction++;
+            }
+        }
+        if(found)
+        {
+            //the chunks between the two towns, town chunks excluded
+            std::vector<unsigned int> route;
+            int walkChunk=(int)endChunk;
+            while(walkChunk>=0)
+            {
+                route.push_back((unsigned int)walkChunk);
+                walkChunk=parent.at((unsigned int)walkChunk);
+            }
+            //route is end..start; it always holds both town chunks
+            if(route.size()>=3)
+            {
+                cityUsed[candidate.cityA]=1;
+                cityUsed[candidate.cityB]=1;
+                built++;
+                if(byBoat)
+                {
+                    //only the chunk next to each town, closed, with the teleport
+                    const unsigned int nearB=route.at(1);
+                    const unsigned int nearA=route.at(route.size()-2);
+                    //link each closed chunk to ITS town only
+                    linkChunkToNeighbour(nearB,endChunk,mapXCount);
+                    linkChunkToNeighbour(nearA,startChunk,mapXCount);
+                    boatChunks.push_back(std::pair<uint16_t,uint16_t>((uint16_t)(nearA%mapXCount),(uint16_t)(nearA/mapXCount)));
+                    boatChunks.push_back(std::pair<uint16_t,uint16_t>((uint16_t)(nearB%mapXCount),(uint16_t)(nearB/mapXCount)));
+                    waterChunks.push_back(boatChunks.at(boatChunks.size()-2));
+                    waterChunks.push_back(boatChunks.back());
+                    BoatCrossing crossing;
+                    crossing.fromX=(uint16_t)(nearA%mapXCount);
+                    crossing.fromY=(uint16_t)(nearA/mapXCount);
+                    crossing.toX=(uint16_t)(nearB%mapXCount);
+                    crossing.toY=(uint16_t)(nearB/mapXCount);
+                    boatCrossings.push_back(crossing);
+                }
+                else
+                {
+                    //a swimmable channel: every chunk of the route joined to the
+                    //next, so the border teleports chain all the way across
+                    unsigned int routeIndex=0;
+                    while(routeIndex+1<route.size())
+                    {
+                        linkChunkToNeighbour(route.at(routeIndex),route.at(routeIndex+1),mapXCount);
+                        linkChunkToNeighbour(route.at(routeIndex+1),route.at(routeIndex),mapXCount);
+                        routeIndex++;
+                    }
+                    routeIndex=1;
+                    while(routeIndex+1<route.size())
+                    {
+                        waterChunks.push_back(std::pair<uint16_t,uint16_t>(
+                                                  (uint16_t)(route.at(routeIndex)%mapXCount),
+                                                  (uint16_t)(route.at(routeIndex)/mapXCount)));
+                        routeIndex++;
+                    }
+                }
+            }
+        }
+    }
+    std::cout << "water paths: " << built << " route(s) of the " << wanted << " asked ("
+              << candidates.size() << " coastal town pairs), " << boatCrossings.size()
+              << " by boat, " << waterChunks.size() << " chunk(s)" << std::endl;
+}
+
+//OR the orientation bit of `from` toward its NEIGHBOUR `to` into mapPathDirection
+void LoadMapAll::linkChunkToNeighbour(const unsigned int &from,const unsigned int &to,
+                                      const unsigned int &mapXCount)
+{
+    const int fromX=(int)(from%mapXCount);
+    const int fromY=(int)(from/mapXCount);
+    const int toX=(int)(to%mapXCount);
+    const int toY=(int)(to/mapXCount);
+    if(toX==fromX-1 && toY==fromY)
+        mapPathDirection[from]|=Orientation_left;
+    else if(toX==fromX+1 && toY==fromY)
+        mapPathDirection[from]|=Orientation_right;
+    else if(toX==fromX && toY==fromY-1)
+        mapPathDirection[from]|=Orientation_top;
+    else if(toX==fromX && toY==fromY+1)
+        mapPathDirection[from]|=Orientation_bottom;
+    else
+        std::cerr << "linkChunkToNeighbour on chunks that do not touch" << std::endl;
+}
+
 std::string LoadMapAll::chunkDebugName(const unsigned int &x, const unsigned int &y)
 {
     if(haveCityEntry(citiesCoordToIndex,x,y))
@@ -917,6 +1204,10 @@ std::string LoadMapAll::chunkDebugName(const unsigned int &x, const unsigned int
         name+=" #"+std::to_string(vectorindexOf(road.coords,std::pair<uint16_t,uint16_t>(x,y))+1);
     if(roadIndex.isCave)
         name+=" (cave)";
+    if(roadIndex.isBoat)
+        name+=" (boat)";
+    else if(roadIndex.isWater)
+        name+=" (sea)";
     return name;
 }
 
@@ -1094,7 +1385,8 @@ std::string LoadMapAll::orientationToString(const Orientation &orientation)
 void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
                          const unsigned int &mapXCount, const unsigned int &mapYCount,
                          const unsigned int &maxCityLinks, const unsigned int &cityRadius, const Simplex &levelmap,
-                         const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax)
+                         const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax,
+                         const SettingsAll::SettingsExtra &setting)
 {
     if(grid.empty())
         return;
@@ -1676,6 +1968,14 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             indexCities++;
         }
     }
+    //SEA ROUTES, before the grouping: they ride the same graph as the land roads,
+    //so everything below (chunk grouping, city links, level, wild monsters, and
+    //later the border teleports and the minimap) applies to them unchanged.
+    std::vector<std::pair<uint16_t,uint16_t> > waterChunks;
+    std::vector<std::pair<uint16_t,uint16_t> > boatChunks;
+    addWaterPaths(mapXCount,mapYCount,singleMapWitdh,singleMapHeight,
+                  (unsigned int)worldMap.width(),setting,waterChunks,boatChunks);
+
     //Do the road group
     {
         unsigned int mapY=0;
@@ -1710,6 +2010,8 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                         roadIndex.roadIndex=roadIntIndex;
                         roadIndex.level=0;
                         roadIndex.isCave=false;
+                        roadIndex.isWater=false;
+                        roadIndex.isBoat=false;
 
                         //left tile
                         if(x>0)
@@ -1805,6 +2107,30 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                 mapX++;
             }
             mapY++;
+        }
+    }
+
+    //mark which of the freshly grouped chunks are SEA, and which of those are the
+    //closed ends of a boat crossing. Done after the grouping so a water chunk is
+    //an ordinary road everywhere except where its content is painted.
+    {
+        unsigned int waterIndex=0;
+        while(waterIndex<waterChunks.size())
+        {
+            const std::pair<uint16_t,uint16_t> &chunk=waterChunks.at(waterIndex);
+            if(roadCoordToIndex.find(chunk.first)!=roadCoordToIndex.cend()
+                    && roadCoordToIndex.at(chunk.first).find(chunk.second)!=roadCoordToIndex.at(chunk.first).cend())
+                roadCoordToIndex[chunk.first][chunk.second].isWater=true;
+            waterIndex++;
+        }
+        unsigned int boatIndex=0;
+        while(boatIndex<boatChunks.size())
+        {
+            const std::pair<uint16_t,uint16_t> &chunk=boatChunks.at(boatIndex);
+            if(roadCoordToIndex.find(chunk.first)!=roadCoordToIndex.cend()
+                    && roadCoordToIndex.at(chunk.first).find(chunk.second)!=roadCoordToIndex.at(chunk.first).cend())
+                roadCoordToIndex[chunk.first][chunk.second].isBoat=true;
+            boatIndex++;
         }
     }
 
