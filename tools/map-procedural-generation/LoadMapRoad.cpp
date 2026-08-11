@@ -2210,7 +2210,12 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                 //so the overworld hole may only sit on the TOP or BOTTOM border. A
                 //chunk with a left or right road connection would need a mouth on a
                 //vertical cliff face and is left as a normal road.
+                //a SEA chunk is never a cave: the corridor would be dug in the
+                //middle of the water and its mouths walled off by the channel
                 if(!isCity && setting.cavePercent>0
+                        && !(roadCoordToIndex.find(x)!=roadCoordToIndex.cend()
+                             && roadCoordToIndex.at(x).find(y)!=roadCoordToIndex.at(x).cend()
+                             && roadCoordToIndex.at(x).at(y).isWater)
                         && (zoneOrientation&(Orientation_left|Orientation_right))==0
                         && !setting.caveWallTile.isEmpty() && !setting.caveFloorTile.isEmpty()
                         && !setting.caveEntranceTile.isEmpty() && !setting.caveEntranceTopTile.isEmpty()
@@ -2439,6 +2444,26 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
 
                 unsigned int* map = new unsigned int[scaleWidth * scaleHeight];
                 roadData[x+y*w] = map;
+                //a SEA chunk has no road content at all: no zones, no buildings,
+                //no ledges. Its channel is painted in addRoadContent, after the
+                //terrain transitions, so nothing repaints over it.
+                {
+                    bool chunkIsWater=false;
+                    if(roadCoordToIndex.find(x)!=roadCoordToIndex.cend()
+                            && roadCoordToIndex.at(x).find(y)!=roadCoordToIndex.at(x).cend())
+                        chunkIsWater=roadCoordToIndex.at(x).at(y).isWater;
+                    if(chunkIsWater)
+                    {
+                        unsigned int emptyCell=0;
+                        while(emptyCell<scaleWidth*scaleHeight)
+                        {
+                            map[emptyCell]=0;
+                            emptyCell++;
+                        }
+                        x++;
+                        continue;
+                    }
+                }
 
                 // Step 1: analyse
                 for(unsigned int sy = 0; sy < scaleWidth; sy++){
@@ -3625,6 +3650,20 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                 bool chunkIsCave=false;
                 if(!isCity && caveTilesOk)
                     chunkIsCave=isCaveChunk(x,y);
+                //a SEA chunk: paint its channel and skip every road pass
+                {
+                    bool chunkIsWater=false;
+                    if(roadCoordToIndex.find(x)!=roadCoordToIndex.cend()
+                            && roadCoordToIndex.at(x).find(y)!=roadCoordToIndex.at(x).cend())
+                        chunkIsWater=roadCoordToIndex.at(x).at(y).isWater;
+                    if(chunkIsWater)
+                    {
+                        paintWaterChunk(worldMap,x,y,mapWidth,mapHeight,
+                                        roadCoordToIndex.at(x).at(y),zoneOrientation,setting);
+                        x++;
+                        continue;
+                    }
+                }
                 //the HOLE of this town: the rock border decoration below is drawn on
                 //every cell the road/zone grid does not claim, which inside a town
                 //meant rock ridges cutting the square into a maze. The hole is meant
@@ -4486,6 +4525,431 @@ QString LoadMapAll::emitCityBotsForChunk(Tiled::Map &worldMap,
         index++;
     }
     return out;
+}
+
+void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX,const unsigned int &chunkY,
+                                 const unsigned int &mapWidth,const unsigned int &mapHeight,
+                                 const RoadIndex &roadIndex,const uint8_t &zoneOrientation,
+                                 const SettingsAll::SettingsExtra &setting)
+{
+    Tiled::TileLayer * const walkLayer=LoadMap::searchTileLayerByName(worldMap,"Walkable");
+    Tiled::TileLayer * const waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
+    Tiled::TileLayer * const colliLayer=LoadMap::searchTileLayerByName(worldMap,"Collisions");
+    Tiled::TileLayer * const grassLayer=LoadMap::searchTileLayerByName(worldMap,"Grass");
+    Tiled::TileLayer * const onGrassLayer=LoadMap::searchTileLayerByName(worldMap,"OnGrass");
+    if(walkLayer==NULL || waterLayer==NULL || colliLayer==NULL)
+        return;
+    std::vector<Tiled::TileLayer*> abovePlayerLayers;
+    {
+        unsigned int layerIndex=0;
+        while(layerIndex<(unsigned int)worldMap.layerCount())
+        {
+            Tiled::Layer * const layer=worldMap.layerAt(layerIndex);
+            if(layer->isTileLayer() && layer->name()=="WalkBehind")
+                abovePlayerLayers.push_back(static_cast<Tiled::TileLayer *>(layer));
+            layerIndex++;
+        }
+    }
+    //the rock the wall is built of (a 9-tile 3x3 block like the cave wall, or a
+    //single tile), and the water/sand/mountain of the terrain itself
+    std::vector<Tiled::Tile *> rockTiles;
+    {
+        const QStringList borderTileList=setting.waterBorderTile.split(",");
+        int borderIndex=0;
+        while(borderIndex<borderTileList.size())
+        {
+            Tiled::Tile * const tile=fetchTile(worldMap,borderTileList.at(borderIndex).trimmed());
+            if(tile!=NULL)
+                rockTiles.push_back(tile);
+            borderIndex++;
+        }
+    }
+    if(rockTiles.empty())
+    {
+        std::cerr << "[water] borderTile resolves to nothing, the channel would have no wall" << std::endl;
+        return;
+    }
+    Tiled::Tile *waterTile=NULL;
+    Tiled::Tile *sandTile=NULL;
+    Tiled::Tile *mountainTile=NULL;
+    {
+        int height=0;
+        while(height<5)
+        {
+            int moisure=0;
+            while(moisure<6)
+            {
+                const LoadMap::Terrain &terrain=LoadMap::terrainList[height][moisure];
+                if(terrain.tile!=NULL)
+                {
+                    if(waterTile==NULL && terrain.terrainName.compare(QString("water"),Qt::CaseInsensitive)==0)
+                        waterTile=terrain.tile;
+                    if(sandTile==NULL && terrain.terrainName.startsWith(QString("sand"),Qt::CaseInsensitive))
+                        sandTile=terrain.tile;
+                    if(mountainTile==NULL && terrain.terrainName.compare(QString("mountain"),Qt::CaseInsensitive)==0)
+                        mountainTile=terrain.tile;
+                }
+                moisure++;
+            }
+            height++;
+        }
+    }
+    if(waterTile==NULL)
+    {
+        std::cerr << "no water terrain, a sea chunk cannot be painted" << std::endl;
+        return;
+    }
+    const unsigned int x0=chunkX*mapWidth;
+    const unsigned int y0=chunkY*mapHeight;
+    const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
+    //nothing grows on the sea
+    {
+        unsigned int localY=0;
+        while(localY<mapHeight)
+        {
+            unsigned int localX=0;
+            while(localX<mapWidth)
+            {
+                const unsigned int bitMask=(x0+localX)+(y0+localY)*worldMap.width();
+                if(bitMask/8<maxMapSize)
+                    MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
+                localX++;
+            }
+            localY++;
+        }
+    }
+    //the axis a closed boat chunk faces its town on
+    const bool horizontal=((zoneOrientation&(Orientation_left|Orientation_right))!=0);
+    const int axis=(int)(horizontal?mapHeight:mapWidth)/2;
+
+    //A CLOSED boat chunk: no corridor at all, the whole chunk is walled and only
+    //a small landing with the boat tile stays reachable from the town side.
+    if(roadIndex.isBoat)
+    {
+        Tiled::Tile * const boatTile=setting.waterBoatTile.isEmpty()?NULL:fetchTile(worldMap,setting.waterBoatTile);
+        unsigned int localY=0;
+        while(localY<mapHeight)
+        {
+            unsigned int localX=0;
+            while(localX<mapWidth)
+            {
+                const unsigned int tileX=x0+localX;
+                const unsigned int tileY=y0+localY;
+                //the landing: a small pocket on the side the town is, kept walkable
+                const bool landing=(horizontal
+                                    ? (labs((long)localY-(long)axis)<=2 && ((zoneOrientation&Orientation_left)!=0 ? localX<6 : localX>=mapWidth-6))
+                                    : (labs((long)localX-(long)axis)<=2 && ((zoneOrientation&Orientation_top)!=0 ? localY<6 : localY>=mapHeight-6)));
+                if(landing)
+                {
+                    colliLayer->setCell(tileX,tileY,Tiled::Cell());
+                    waterLayer->setCell(tileX,tileY,Tiled::Cell());
+                    if(grassLayer!=NULL)
+                        grassLayer->setCell(tileX,tileY,Tiled::Cell());
+                    walkLayer->setCell(tileX,tileY,Tiled::Cell(sandTile!=NULL?sandTile:waterTile));
+                }
+                else
+                {
+                    walkLayer->setCell(tileX,tileY,Tiled::Cell());
+                    if(grassLayer!=NULL)
+                        grassLayer->setCell(tileX,tileY,Tiled::Cell());
+                    if(onGrassLayer!=NULL)
+                        onGrassLayer->setCell(tileX,tileY,Tiled::Cell());
+                    waterLayer->setCell(tileX,tileY,Tiled::Cell(waterTile));
+                    //the solid BODY of the rock block: indexing it by position
+                    //tiled the corner pieces over the whole chunk
+                    colliLayer->setCell(tileX,tileY,Tiled::Cell(rockTiles.at(rockTiles.size()>=9?4:0)));
+                }
+                unsigned int aboveIndex=0;
+                while(aboveIndex<abovePlayerLayers.size())
+                {
+                    abovePlayerLayers.at(aboveIndex)->setCell(tileX,tileY,Tiled::Cell());
+                    aboveIndex++;
+                }
+                localX++;
+            }
+            localY++;
+        }
+        //the boat itself, at the inner end of the landing, and the push-teleport
+        //that carries the player to the OTHER shore of this crossing
+        if(boatTile!=NULL)
+        {
+            const unsigned int boatX=x0+(horizontal?((zoneOrientation&Orientation_left)!=0?6:mapWidth-7):(unsigned int)axis);
+            const unsigned int boatY=y0+(horizontal?(unsigned int)axis:((zoneOrientation&Orientation_top)!=0?6:mapHeight-7));
+            colliLayer->setCell(boatX,boatY,Tiled::Cell(boatTile));
+            //which crossing this chunk belongs to, and the chunk on the far shore
+            int otherX=-1,otherY=-1;
+            {
+                unsigned int crossingIndex=0;
+                while(crossingIndex<boatCrossings.size())
+                {
+                    const BoatCrossing &crossing=boatCrossings.at(crossingIndex);
+                    if(crossing.fromX==chunkX && crossing.fromY==chunkY)
+                    {
+                        otherX=crossing.toX;
+                        otherY=crossing.toY;
+                    }
+                    else if(crossing.toX==chunkX && crossing.toY==chunkY)
+                    {
+                        otherX=crossing.fromX;
+                        otherY=crossing.fromY;
+                    }
+                    crossingIndex++;
+                }
+            }
+            Tiled::ObjectGroup * const movingGroup=LoadMap::searchObjectGroupByName(worldMap,"Moving");
+            if(otherX>=0 && movingGroup!=NULL)
+            {
+                //the far shore's landing, computed exactly like this one from ITS
+                //own orientation: a boat crossing is symmetric
+                const uint8_t otherOrientation=mapPathDirection[otherX+otherY*setting.mapXCount];
+                const bool otherHorizontal=((otherOrientation&(Orientation_left|Orientation_right))!=0);
+                const int otherAxis=(int)(otherHorizontal?mapHeight:mapWidth)/2;
+                const unsigned int landX=otherHorizontal
+                        ?((otherOrientation&Orientation_left)!=0?5:mapWidth-6):(unsigned int)otherAxis;
+                const unsigned int landY=otherHorizontal
+                        ?(unsigned int)otherAxis:((otherOrientation&Orientation_top)!=0?5:mapHeight-6);
+                const QDir mapDir(QFileInfo(QString::fromStdString(getMapFile(chunkX,chunkY))).absoluteDir());
+                const QString targetMap=mapDir.relativeFilePath(
+                            QString::fromStdString(getMapFile((unsigned int)otherX,(unsigned int)otherY)));
+                Tiled::MapObject * const boat=new Tiled::MapObject("","teleport on push",
+                    QPointF(boatX*worldMap.tileWidth(),boatY*worldMap.tileHeight()),
+                    QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
+                boat->setProperty("map",targetMap);
+                boat->setProperty("x",QString::number(landX));
+                boat->setProperty("y",QString::number(landY));
+                const Tiled::Tileset * const invisibleTileset=LoadMap::searchTilesetByName(worldMap,"invisible");
+                if(invisibleTileset!=NULL)
+                {
+                    Tiled::Cell boatCell;
+                    boatCell.setTile(invisibleTileset->tileAt(2));
+                    boat->setCell(boatCell);
+                }
+                movingGroup->addObject(boat);
+            }
+        }
+        return;
+    }
+
+    //A SWIMMABLE CHANNEL, one per travel AXIS the chunk is connected on. Both are
+    //classified BEFORE anything is painted: on a corner chunk the two channels
+    //cross, and painting them one after the other would let the second wall close
+    //the first channel. Channel wins over wall everywhere, so the crossing is
+    //open water and the walls simply stop at it.
+    std::vector<unsigned char> channelCell(mapWidth*mapHeight,0);
+    std::vector<unsigned char> wallCell(mapWidth*mapHeight,0);
+    {
+        unsigned int axisIndex=0;
+        while(axisIndex<2)
+        {
+            const bool axisHorizontal=(axisIndex==0);
+            const bool axisUsed=axisHorizontal
+                    ? ((zoneOrientation&(Orientation_left|Orientation_right))!=0)
+                    : ((zoneOrientation&(Orientation_top|Orientation_bottom))!=0);
+            if(axisUsed)
+            {
+                const unsigned int alongCount=axisHorizontal?mapWidth:mapHeight;
+                const unsigned int acrossCount=axisHorizontal?mapHeight:mapWidth;
+                const int axisCentre=(int)acrossCount/2;
+                int halfWidth=(int)setting.waterChannelHalfWidth;
+                if(halfWidth<2)
+                    halfWidth=2;
+                if(halfWidth>(int)acrossCount/2-3)
+                    halfWidth=(int)acrossCount/2-3;
+                //the wall is a CONTINUOUS chain: its distance from the axis moves
+                //by at most one tile per step, so it can never break
+                int topOffset=halfWidth;
+                int bottomOffset=halfWidth;
+                unsigned int along=0;
+                while(along<alongCount)
+                {
+                    if((rand()%3)==0)
+                    {
+                        const int lowest=halfWidth-(int)setting.waterWanderAmplitude;
+                        const int highest=halfWidth+(int)setting.waterWanderAmplitude;
+                        topOffset+=(rand()%2==0)?1:-1;
+                        if(topOffset<lowest)
+                            topOffset=lowest;
+                        if(topOffset>highest)
+                            topOffset=highest;
+                        bottomOffset+=(rand()%2==0)?1:-1;
+                        if(bottomOffset<lowest)
+                            bottomOffset=lowest;
+                        if(bottomOffset>highest)
+                            bottomOffset=highest;
+                    }
+                    unsigned int across=0;
+                    while(across<acrossCount)
+                    {
+                        const int distance=(int)across-axisCentre;
+                        const unsigned int localX=axisHorizontal?along:across;
+                        const unsigned int localY=axisHorizontal?across:along;
+                        if(distance>=-bottomOffset && distance<=topOffset)
+                            channelCell[localX+localY*mapWidth]=1;
+                        else if(distance==-bottomOffset-1 || distance==topOffset+1)
+                            wallCell[localX+localY*mapWidth]=1;
+                        across++;
+                    }
+                    along++;
+                }
+            }
+            axisIndex++;
+        }
+    }
+    {
+        unsigned int localY=0;
+        while(localY<mapHeight)
+        {
+            unsigned int localX=0;
+            while(localX<mapWidth)
+            {
+                const unsigned int cell=localX+localY*mapWidth;
+                const unsigned int tileX=x0+localX;
+                const unsigned int tileY=y0+localY;
+                if(channelCell.at(cell)!=0 || wallCell.at(cell)!=0)
+                {
+                    walkLayer->setCell(tileX,tileY,Tiled::Cell());
+                    if(grassLayer!=NULL)
+                        grassLayer->setCell(tileX,tileY,Tiled::Cell());
+                    if(onGrassLayer!=NULL)
+                        onGrassLayer->setCell(tileX,tileY,Tiled::Cell());
+                    unsigned int aboveIndex=0;
+                    while(aboveIndex<abovePlayerLayers.size())
+                    {
+                        abovePlayerLayers.at(aboveIndex)->setCell(tileX,tileY,Tiled::Cell());
+                        aboveIndex++;
+                    }
+                }
+                //channel wins over wall: the crossing of two channels stays open
+                if(channelCell.at(cell)!=0)
+                {
+                    colliLayer->setCell(tileX,tileY,Tiled::Cell());
+                    waterLayer->setCell(tileX,tileY,Tiled::Cell(waterTile));
+                }
+                else if(wallCell.at(cell)!=0)
+                {
+                    waterLayer->setCell(tileX,tileY,Tiled::Cell());
+                    //the wall is ONE tile wide, so it wants the solid BODY of the
+                    //rock block (index 4 of the 3x3), not the edge tiles: indexing
+                    //the block by the world position gave a dotted line of corners
+                    colliLayer->setCell(tileX,tileY,Tiled::Cell(rockTiles.at(rockTiles.size()>=9?4:0)));
+                }
+                //beyond the wall nothing is touched: it keeps its natural terrain
+                //and is simply unreachable
+                localX++;
+            }
+            localY++;
+        }
+    }
+    const unsigned int alongCount=horizontal?mapWidth:mapHeight;
+    const unsigned int acrossCount=horizontal?mapHeight:mapWidth;
+    int halfWidth=(int)setting.waterChannelHalfWidth;
+    if(halfWidth<2)
+        halfWidth=2;
+    if(halfWidth>(int)acrossCount/2-3)
+        halfWidth=(int)acrossCount/2-3;
+
+    //ONE island in the middle of the channel, now and then. Mountain core, a sand
+    //ring of at most islandSandMax, and never touching the wall: it must not
+    //break the water line the player follows.
+    if((unsigned int)(rand()%100)<setting.waterIslandPercent && mountainTile!=NULL)
+    {
+        //the island has to fit between the two walls with water left either side
+        const int maxRadius=(halfWidth-(int)setting.waterIslandSandMax-2);
+        if(maxRadius>=1)
+        {
+            //at least islandMinTiles tiles: a disc of radius r holds about 3*r*r
+            int radius=1;
+            while((unsigned int)(3*radius*radius)<setting.waterIslandMinTiles && radius<maxRadius)
+                radius++;
+            if(radius<=maxRadius)
+            {
+                const bool landable=((unsigned int)(rand()%100)<setting.waterIslandLandablePercent);
+                const int sandRing=(int)(setting.waterIslandSandMax==0?0:(rand()%(setting.waterIslandSandMax+1)));
+                const int centerAlong=(int)(alongCount/4)+(int)(rand()%(alongCount/2));
+                int islandAlong=-radius-sandRing;
+                while(islandAlong<=radius+sandRing)
+                {
+                    int islandAcross=-radius-sandRing;
+                    while(islandAcross<=radius+sandRing)
+                    {
+                        const int distance=islandAlong*islandAlong+islandAcross*islandAcross;
+                        const int alongCell=centerAlong+islandAlong;
+                        const int acrossCell=axis+islandAcross;
+                        if(alongCell>=0 && alongCell<(int)alongCount
+                                && acrossCell>=0 && acrossCell<(int)acrossCount)
+                        {
+                            const unsigned int tileX=x0+(horizontal?(unsigned int)alongCell:(unsigned int)acrossCell);
+                            const unsigned int tileY=y0+(horizontal?(unsigned int)acrossCell:(unsigned int)alongCell);
+                            //only ever inside the channel, never on the wall
+                            if(waterLayer->cellAt(tileX,tileY).tile()!=NULL
+                                    && colliLayer->cellAt(tileX,tileY).tile()==NULL)
+                            {
+                                if(distance<=radius*radius)
+                                {
+                                    waterLayer->setCell(tileX,tileY,Tiled::Cell());
+                                    if(landable)
+                                        walkLayer->setCell(tileX,tileY,Tiled::Cell(sandTile!=NULL?sandTile:mountainTile));
+                                    else
+                                        colliLayer->setCell(tileX,tileY,Tiled::Cell(mountainTile));
+                                }
+                                else if(sandRing>0 && distance<=(radius+sandRing)*(radius+sandRing) && sandTile!=NULL)
+                                {
+                                    waterLayer->setCell(tileX,tileY,Tiled::Cell());
+                                    walkLayer->setCell(tileX,tileY,Tiled::Cell(sandTile));
+                                }
+                            }
+                        }
+                        islandAcross++;
+                    }
+                    islandAlong++;
+                }
+            }
+        }
+    }
+
+    //SWIMMERS: [water] minFighter..maxFighter trainers standing on the open water
+    //of the channel. They are ordinary bot objects, so emitRoadBotsForChunk gives
+    //them their inline <bot> fight definition at split time like a road trainer.
+    {
+        Tiled::ObjectGroup * const objectLayer=LoadMap::searchObjectGroupByName(worldMap,"Object");
+        const Tiled::Tileset * const invisibleTileset=LoadMap::searchTilesetByName(worldMap,"invisible");
+        if(objectLayer!=NULL && invisibleTileset!=NULL && !setting.botSkins.empty())
+        {
+            static const char * const lookDirs[4]={"bottom","top","left","right"};
+            unsigned int wanted=setting.waterMinFighter;
+            if(setting.waterMaxFighter>setting.waterMinFighter)
+                wanted+=rand()%(setting.waterMaxFighter-setting.waterMinFighter+1);
+            std::set<std::pair<unsigned int,unsigned int> > usedCells;
+            unsigned int tries=0;
+            while(wanted>0 && tries<200)
+            {
+                tries++;
+                const unsigned int localX=2+rand()%(mapWidth-4);
+                const unsigned int localY=2+rand()%(mapHeight-4);
+                const unsigned int tileX=x0+localX;
+                const unsigned int tileY=y0+localY;
+                //open water only: never on the wall, never on an islet, never twice
+                if(channelCell.at(localX+localY*mapWidth)!=0
+                        && waterLayer->cellAt(tileX,tileY).tile()!=NULL
+                        && colliLayer->cellAt(tileX,tileY).tile()==NULL
+                        && usedCells.find(std::pair<unsigned int,unsigned int>(tileX,tileY))==usedCells.cend())
+                {
+                    usedCells.insert(std::pair<unsigned int,unsigned int>(tileX,tileY));
+                    Tiled::MapObject *bot=new Tiled::MapObject("","bot",
+                        QPointF(tileX*worldMap.tileWidth(),(tileY+1)*worldMap.tileHeight()),
+                        QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
+                    bot->setProperty("id",QString::number(wanted));
+                    bot->setProperty("lookAt",QString::fromLatin1(lookDirs[rand()%4]));
+                    bot->setProperty("skin",QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size())));
+                    Tiled::Cell botCell;
+                    botCell.setTile(invisibleTileset->tileAt(0));
+                    bot->setCell(botCell);
+                    objectLayer->addObject(bot);
+                    wanted--;
+                }
+            }
+        }
+    }
 }
 
 void LoadMapAll::addTerrainDecorations(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting)

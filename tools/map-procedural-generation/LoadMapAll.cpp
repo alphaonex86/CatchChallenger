@@ -831,7 +831,7 @@ void LoadMapAll::addDebugWaterBodies(Tiled::Map &worldMap, const SettingsAll::Se
         const WaterBody &body=waterBodies.at(bodyIndex);
         //a one-pond puddle would add thousands of useless objects; only what is
         //worth naming on a map of the world
-        if(body.size>=setting.waterBodyDebugMinTiles)
+        if(body.size>=setting.waterLakeMinTiles)
         {
             //A GENERAL shape, not the per-tile coastline: traced at tile
             //resolution a noisy 668k-tile sea gives over a MILLION corners, which
@@ -981,11 +981,15 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
         while(cityIndex<cities.size())
         {
             const City &city=cities.at(cityIndex);
-            int neighborY=-1;
-            while(neighborY<=1)
+            //how far from a town the coast may be for it to count as a PORT. One
+            //chunk left most towns with no sea at all and two whole land masses
+            //unjoinable; the shore does not have to be at the town gate.
+            const int harbourRadius=(int)setting.waterHarbourChunkRadius;
+            int neighborY=-harbourRadius;
+            while(neighborY<=harbourRadius)
             {
-                int neighborX=-1;
-                while(neighborX<=1)
+                int neighborX=-harbourRadius;
+                while(neighborX<=harbourRadius)
                 {
                     const int chunkX=(int)city.x+neighborX;
                     const int chunkY=(int)city.y+neighborY;
@@ -1033,6 +1037,70 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
             firstCity++;
         }
     }
+    //The LAND graph is not one piece: the road router cannot cross water, so the
+    //world comes out as several land masses (measured on the reference world: 3,
+    //of 492 / 91 / 82 maps, with the start town in the SMALLEST one — 88% of the
+    //world was unreachable on foot). Joining them is the first job of the sea
+    //routes, so a candidate that links two land masses is built whatever the
+    //quota says, and only then the quota is spent on the rest.
+    std::vector<unsigned int> chunkComponent(mapXCount*mapYCount,0xFFFFFFFF);
+    {
+        unsigned int componentCount=0;
+        unsigned int startChunk=0;
+        while(startChunk<mapXCount*mapYCount)
+        {
+            if(mapPathDirection[startChunk]!=0 && chunkComponent.at(startChunk)==0xFFFFFFFF)
+            {
+                std::vector<unsigned int> queue;
+                chunkComponent[startChunk]=componentCount;
+                queue.push_back(startChunk);
+                unsigned int queueIndex=0;
+                while(queueIndex<queue.size())
+                {
+                    const unsigned int chunk=queue.at(queueIndex);
+                    queueIndex++;
+                    const int chunkX=(int)(chunk%mapXCount);
+                    const int chunkY=(int)(chunk/mapXCount);
+                    const int stepX[4]={-1,1,0,0};
+                    const int stepY[4]={0,0,-1,1};
+                    const Orientation bit[4]={Orientation_left,Orientation_right,Orientation_top,Orientation_bottom};
+                    unsigned int direction=0;
+                    while(direction<4)
+                    {
+                        if((mapPathDirection[chunk]&bit[direction])!=0)
+                        {
+                            const int nextX=chunkX+stepX[direction];
+                            const int nextY=chunkY+stepY[direction];
+                            if(nextX>=0 && nextY>=0 && nextX<(int)mapXCount && nextY<(int)mapYCount)
+                            {
+                                const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapXCount;
+                                if(mapPathDirection[next]!=0 && chunkComponent.at(next)==0xFFFFFFFF)
+                                {
+                                    chunkComponent[next]=componentCount;
+                                    queue.push_back(next);
+                                }
+                            }
+                        }
+                        direction++;
+                    }
+                }
+                componentCount++;
+            }
+            startChunk++;
+        }
+        std::cout << "land masses before the sea routes: " << componentCount << std::endl;
+    }
+    //union-find over the land masses, so each route only counts when it really
+    //merges two of them
+    std::vector<unsigned int> componentOf(cities.size(),0xFFFFFFFF);
+    {
+        unsigned int cityIndex=0;
+        while(cityIndex<cities.size())
+        {
+            componentOf[cityIndex]=chunkComponent.at(cities.at(cityIndex).x+cities.at(cityIndex).y*mapXCount);
+            cityIndex++;
+        }
+    }
     std::sort(candidates.begin(),candidates.end(),waterCandidateCloser);
     //"a water path should be X fewer than land": a share of the land road count
     unsigned int landRoads=roads.size();
@@ -1046,12 +1114,33 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
     std::vector<unsigned char> cityUsed(cities.size(),0);
     unsigned int built=0;
     unsigned int candidateIndex=0;
-    while(candidateIndex<candidates.size() && built<wanted)
+    //two passes over the same sorted list: the routes that JOIN two land masses
+    //first, then the quota on the rest
+    unsigned int pass=0;
+    while(pass<2)
+    {
+    candidateIndex=0;
+    while(candidateIndex<candidates.size() && (pass==0 || built<wanted))
     {
         const WaterCandidate &candidate=candidates.at(candidateIndex);
         candidateIndex++;
-        if(cityUsed.at(candidate.cityA)!=0 || cityUsed.at(candidate.cityB)!=0)
-            continue;
+        const bool joinsLandMasses=(componentOf.at(candidate.cityA)!=componentOf.at(candidate.cityB)
+                                    && componentOf.at(candidate.cityA)!=0xFFFFFFFF
+                                    && componentOf.at(candidate.cityB)!=0xFFFFFFFF);
+        if(pass==0)
+        {
+            //only what merges two land masses, whatever the quota
+            if(!joinsLandMasses)
+                continue;
+        }
+        else
+        {
+            //the quota, and one sea link per town so the harbours spread
+            if(joinsLandMasses)
+                continue;
+            if(cityUsed.at(candidate.cityA)!=0 || cityUsed.at(candidate.cityB)!=0)
+                continue;
+        }
         //BOAT crossing: no corridor at all, one closed chunk on each shore and a
         //push-teleport between them. Decided before the route is even searched.
         const bool byBoat=((unsigned int)(rand()%100)<setting.waterBoatPercent);
@@ -1109,6 +1198,18 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                 cityUsed[candidate.cityA]=1;
                 cityUsed[candidate.cityB]=1;
                 built++;
+                //the two land masses are now one
+                {
+                    const unsigned int merged=componentOf.at(candidate.cityB);
+                    const unsigned int into=componentOf.at(candidate.cityA);
+                    unsigned int cityIndex=0;
+                    while(cityIndex<componentOf.size())
+                    {
+                        if(componentOf.at(cityIndex)==merged)
+                            componentOf[cityIndex]=into;
+                        cityIndex++;
+                    }
+                }
                 if(byBoat)
                 {
                     //only the chunk next to each town, closed, with the teleport
@@ -1151,6 +1252,8 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
             }
         }
     }
+    pass++;
+    }
     std::cout << "water paths: " << built << " route(s) of the " << wanted << " asked ("
               << candidates.size() << " coastal town pairs), " << boatCrossings.size()
               << " by boat, " << waterChunks.size() << " chunk(s)" << std::endl;
@@ -1174,6 +1277,99 @@ void LoadMapAll::linkChunkToNeighbour(const unsigned int &from,const unsigned in
         mapPathDirection[from]|=Orientation_bottom;
     else
         std::cerr << "linkChunkToNeighbour on chunks that do not touch" << std::endl;
+}
+
+bool LoadMapAll::checkNoIsolatedMap(const SettingsAll::SettingsExtra &setting,
+                                    std::vector<std::string> &errors)
+{
+    const unsigned int mapXCount=setting.mapXCount;
+    const unsigned int mapYCount=setting.mapYCount;
+    if(mapPathDirection==NULL || cities.empty())
+        return true;
+    //start where the player does: the lowest level town
+    unsigned int startCity=0;
+    {
+        unsigned int cityIndex=1;
+        while(cityIndex<cities.size())
+        {
+            if(cities.at(cityIndex).level<cities.at(startCity).level)
+                startCity=cityIndex;
+            cityIndex++;
+        }
+    }
+    const unsigned int startChunk=cities.at(startCity).x+cities.at(startCity).y*mapXCount;
+    std::vector<unsigned char> reached(mapXCount*mapYCount,0);
+    std::vector<unsigned int> queue;
+    reached[startChunk]=1;
+    queue.push_back(startChunk);
+    unsigned int queueIndex=0;
+    while(queueIndex<queue.size())
+    {
+        const unsigned int chunk=queue.at(queueIndex);
+        queueIndex++;
+        const int chunkX=(int)(chunk%mapXCount);
+        const int chunkY=(int)(chunk/mapXCount);
+        const uint8_t orientation=mapPathDirection[chunk];
+        //a border teleport exists in BOTH directions, so following the bits of
+        //this chunk is enough
+        const int stepX[4]={-1,1,0,0};
+        const int stepY[4]={0,0,-1,1};
+        const Orientation bit[4]={Orientation_left,Orientation_right,Orientation_top,Orientation_bottom};
+        unsigned int direction=0;
+        while(direction<4)
+        {
+            if((orientation&bit[direction])!=0)
+            {
+                const int nextX=chunkX+stepX[direction];
+                const int nextY=chunkY+stepY[direction];
+                if(nextX>=0 && nextY>=0 && nextX<(int)mapXCount && nextY<(int)mapYCount)
+                {
+                    const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapXCount;
+                    if(reached.at(next)==0 && mapPathDirection[next]!=0)
+                    {
+                        reached[next]=1;
+                        queue.push_back(next);
+                    }
+                }
+            }
+            direction++;
+        }
+        //a boat crossing joins two chunks that do NOT touch
+        unsigned int crossingIndex=0;
+        while(crossingIndex<boatCrossings.size())
+        {
+            const BoatCrossing &crossing=boatCrossings.at(crossingIndex);
+            const unsigned int fromChunk=crossing.fromX+crossing.fromY*mapXCount;
+            const unsigned int toChunk=crossing.toX+crossing.toY*mapXCount;
+            unsigned int other=mapXCount*mapYCount;
+            if(fromChunk==chunk)
+                other=toChunk;
+            else if(toChunk==chunk)
+                other=fromChunk;
+            if(other<mapXCount*mapYCount && reached.at(other)==0)
+            {
+                reached[other]=1;
+                queue.push_back(other);
+            }
+            crossingIndex++;
+        }
+    }
+    unsigned int isolated=0;
+    unsigned int chunk=0;
+    while(chunk<mapXCount*mapYCount)
+    {
+        if(mapPathDirection[chunk]!=0 && reached.at(chunk)==0)
+        {
+            isolated++;
+            if(errors.size()<40)
+                errors.push_back(chunkDebugName(chunk%mapXCount,chunk/mapXCount)+
+                                 ": no way to reach this map from "+cities.at(startCity).name);
+        }
+        chunk++;
+    }
+    std::cout << "connectivity: " << queue.size() << " map(s) reachable from "
+              << cities.at(startCity).name << ", " << isolated << " isolated" << std::endl;
+    return isolated==0;
 }
 
 std::string LoadMapAll::chunkDebugName(const unsigned int &x, const unsigned int &y)

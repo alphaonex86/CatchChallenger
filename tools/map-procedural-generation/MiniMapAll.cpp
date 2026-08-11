@@ -12,11 +12,23 @@ QImage MiniMapAll::minimap2way2;
 QImage MiniMapAll::minimap3way;
 QImage MiniMapAll::minimap4way;
 
+QImage MiniMapAll::minimap1wayWater;
+QImage MiniMapAll::minimap2way1Water;
+QImage MiniMapAll::minimap2way2Water;
+QImage MiniMapAll::minimap3wayWater;
+QImage MiniMapAll::minimap4wayWater;
+
 //Orientation_top=1,Orientation_right=2,Orientation_bottom=4,Orientation_left=8
-void MiniMapAll::drawRoad(const uint8_t orientation,QPainter &p,const unsigned int x,const unsigned int y,const unsigned int mapWidth,const unsigned int mapHeight)
+void MiniMapAll::drawRoad(const uint8_t orientation,QPainter &p,const unsigned int x,const unsigned int y,const unsigned int mapWidth,const unsigned int mapHeight,const bool water)
 {
     QImage minimaptemp;
     QTransform rotating;
+    //a SEA route draws the water variants of the same shapes
+    const QImage &minimap1way=water?minimap1wayWater:MiniMapAll::minimap1way;
+    const QImage &minimap2way1=water?minimap2way1Water:MiniMapAll::minimap2way1;
+    const QImage &minimap2way2=water?minimap2way2Water:MiniMapAll::minimap2way2;
+    const QImage &minimap3way=water?minimap3wayWater:MiniMapAll::minimap3way;
+    const QImage &minimap4way=water?minimap4wayWater:MiniMapAll::minimap4way;
     switch(orientation)
     {
     default:
@@ -103,6 +115,12 @@ QImage MiniMapAll::makeMapTiled(const unsigned int worldWidthMap, const unsigned
     MiniMapAll::minimap3way=QImage(QCoreApplication::applicationDirPath()+"/minimap-3way.png");
     MiniMapAll::minimap4way=QImage(QCoreApplication::applicationDirPath()+"/minimap-4way.png");
 
+    MiniMapAll::minimap1wayWater=QImage(QCoreApplication::applicationDirPath()+"/minimap-1way-water.png");
+    MiniMapAll::minimap2way1Water=QImage(QCoreApplication::applicationDirPath()+"/minimap-2way1-water.png");
+    MiniMapAll::minimap2way2Water=QImage(QCoreApplication::applicationDirPath()+"/minimap-2way2-water.png");
+    MiniMapAll::minimap3wayWater=QImage(QCoreApplication::applicationDirPath()+"/minimap-3way-water.png");
+    MiniMapAll::minimap4wayWater=QImage(QCoreApplication::applicationDirPath()+"/minimap-4way-water.png");
+
     unsigned int indexCity=0;
     while(indexCity<LoadMapAll::cities.size())
     {
@@ -144,7 +162,14 @@ QImage MiniMapAll::makeMapTiled(const unsigned int worldWidthMap, const unsigned
 
             const uint8_t &zoneOrientation=LoadMapAll::mapPathDirection[x+y*mapXCount];
             if(zoneOrientation!=0)
-                drawRoad(zoneOrientation,p,x,y,mapWidth,mapHeight);
+            {
+                //a SEA route reads as water on the world map, not as a road
+                bool water=false;
+                if(LoadMapAll::roadCoordToIndex.find((uint16_t)x)!=LoadMapAll::roadCoordToIndex.cend()
+                        && LoadMapAll::roadCoordToIndex.at((uint16_t)x).find((uint16_t)y)!=LoadMapAll::roadCoordToIndex.at((uint16_t)x).cend())
+                    water=LoadMapAll::roadCoordToIndex.at((uint16_t)x).at((uint16_t)y).isWater;
+                drawRoad(zoneOrientation,p,x,y,mapWidth,mapHeight,water);
+            }
             indexCoord++;
         }
         indexIntRoad++;
