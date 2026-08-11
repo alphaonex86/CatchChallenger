@@ -1822,11 +1822,11 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
             wallTileIndex++;
         }
     }
-    //gym building template (typed facade), optional: no template, no gym
-    const BuildingGroup * const gymGroup=buildingGroup("gym-building");
-    const bool haveGymTemplate=(gymGroup!=NULL);
-    if(!haveGymTemplate)
-        std::cerr << "No template/gym-building/: the cities get no gym" << std::endl;
+    //gym building template (typed facade), optional: no template, no gym. A city
+    //style may ship its own <stem>-gym, picked per town by cityBuildingSet().
+    if(buildingGroup("gym-building")==NULL)
+        std::cerr << "No template/gym-building/: only the city styles shipping their own"
+                  << " <style>-gym get one" << std::endl;
     //world tileset per gym type, added on first use
     std::map<std::string,Tiled::Tileset*> gymTypeWorldTilesets;
 
@@ -1972,14 +1972,17 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
         while(cityIndex<cities.size())
         {
             City &city=cities[cityIndex];
-            //terrain profile of the chunk plus a 4-tile margin (same sampling as
-            //the element type above)
+            //terrain profile of the SURROUNDINGS, one full chunk of margin. The
+            //chunk itself is FLATTENED to a single terrain ([city] flatten), so
+            //sampling it alone only ever answers "the terrain the town stands on"
+            //and a town on the shore never saw its sea. The margin is what makes
+            //"match the city terrain style" mean the landscape around the town.
             std::map<std::string,unsigned int> terrainCount;
             {
-                const int x0=(int)(city.x*mapWidth)-4;
-                const int y0=(int)(city.y*mapHeight)-4;
-                const int x1=(int)((city.x+1)*mapWidth)+4;
-                const int y1=(int)((city.y+1)*mapHeight)+4;
+                const int x0=(int)(city.x*mapWidth)-(int)mapWidth;
+                const int y0=(int)(city.y*mapHeight)-(int)mapHeight;
+                const int x1=(int)((city.x+1)*mapWidth)+(int)mapWidth;
+                const int y1=(int)((city.y+1)*mapHeight)+(int)mapHeight;
                 int sampleY=y0;
                 while(sampleY<y1)
                 {
@@ -1998,37 +2001,49 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                     sampleY+=2;
                 }
             }
+            //FIRST rule whose terrain is present around the town, not the one with
+            //the most tiles: "most tiles wins" always answered with the commonest
+            //terrain of the world, so 57 towns of 83 got the same grass style. The
+            //rules are read in order of DISTINCTIVENESS (water, snow, mountain,
+            //sand2, sand, grass2, grass), and a town is a sea town as soon as it
+            //has a coast — it does not have to be built in the sea.
+            //A keyword is a SUBSTRING of the terrain name ("sand" also matches
+            //"sand2"), so the specific rule has to come first; the order of
+            //cityStyleTerrains is the whole meaning.
             int bestStyle=-1;
-            unsigned int bestScore=0;
-            unsigned int mappingIndex=0;
-            while(mappingIndex<setting.cityStyleTerrains.size())
             {
-                const std::string &mappedStyle=setting.cityStyleTerrains.at(mappingIndex).first;
-                const int styleIndex=vectorindexOf(cityStyles,mappedStyle);
-                if(styleIndex>=0)
+                unsigned int sampleTotal=0;
+                for(const std::pair<const std::string,unsigned int> &entry : terrainCount)
+                    sampleTotal+=entry.second;
+                //enough of that terrain to be worth naming the town after
+                const unsigned int threshold=(sampleTotal+9)/10;
+                unsigned int mappingIndex=0;
+                while(mappingIndex<setting.cityStyleTerrains.size() && bestStyle<0)
                 {
-                    unsigned int score=0;
-                    const std::vector<std::string> &keywords=setting.cityStyleTerrains.at(mappingIndex).second;
-                    for(const std::pair<const std::string,unsigned int> &entry : terrainCount)
+                    const std::string &mappedStyle=setting.cityStyleTerrains.at(mappingIndex).first;
+                    const int styleIndex=vectorindexOf(cityStyles,mappedStyle);
+                    if(styleIndex>=0)
                     {
-                        unsigned int keywordIndex=0;
-                        while(keywordIndex<keywords.size())
+                        unsigned int score=0;
+                        const std::vector<std::string> &keywords=setting.cityStyleTerrains.at(mappingIndex).second;
+                        for(const std::pair<const std::string,unsigned int> &entry : terrainCount)
                         {
-                            if(entry.first.find(keywords.at(keywordIndex))!=std::string::npos)
+                            unsigned int keywordIndex=0;
+                            while(keywordIndex<keywords.size())
                             {
-                                score+=entry.second;
-                                break;
+                                if(entry.first.find(keywords.at(keywordIndex))!=std::string::npos)
+                                {
+                                    score+=entry.second;
+                                    break;
+                                }
+                                keywordIndex++;
                             }
-                            keywordIndex++;
                         }
+                        if(score>0 && score>=threshold)
+                            bestStyle=styleIndex;
                     }
-                    if(score>bestScore)
-                    {
-                        bestStyle=styleIndex;
-                        bestScore=score;
-                    }
+                    mappingIndex++;
                 }
-                mappingIndex++;
             }
             if(bestStyle<0)
             {
@@ -2055,6 +2070,20 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
             }
             if(bestStyle<0)
                 bestStyle=(int)(rand()%cityStyles.size());
+            //cities-types.ini has the LAST word: the terrain match is only a
+            //default, the operator names the towns they want to look a given way
+            {
+                const std::string forcedStyle=cityStyleOverride(city.name);
+                if(!forcedStyle.empty())
+                {
+                    const int forcedIndex=vectorindexOf(cityStyles,forcedStyle);
+                    if(forcedIndex>=0)
+                        bestStyle=forcedIndex;
+                    else
+                        std::cerr << "cities-types.ini forces " << city.name << "=" << forcedStyle
+                                  << " but that is not a <name>-city style folder" << std::endl;
+                }
+            }
             city.style=cityStyles.at(bestStyle);
             styleCount[bestStyle]++;
             cityIndex++;
@@ -2467,17 +2496,23 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         ((city->type==CityType_big)?std::string("big"):
                          ((city->type==CityType_medium)?std::string("medium"):std::string("small")));
 
+                    //market / heal / gym / special of THIS town: the style folder
+                    //wins over the generic size one, and a <stem>-market-heal
+                    //template serves both roles from a single building
+                    const CityBuildingSet citySet=cityBuildingSet(
+                                (city==NULL)?std::string():city->style,citySizeSuffix);
                     {
-                        BuildingGroup * const healGroup=buildingGroup("heal-"+citySizeSuffix);
-                        if(healGroup==NULL)
+                        if(citySet.heal==NULL)
                         {
                             std::cerr << "Missing template/heal-" << citySizeSuffix << "/" << std::endl;
                             abort();
                         }
-                        const BuildingVariant &variant=healGroup->variants.at(rand()%healGroup->variants.size());
+                        const BuildingVariant &variant=citySet.heal->variants.at(rand()%citySet.heal->variants.size());
                         templates.push_back(variant.mapTemplate);
                         templateKind.push_back(BotKind_heal);
-                        templateBaseName.push_back("heal");
+                        //combined: ONE building, and it is named after both roles so
+                        //the folder on disk says what it holds
+                        templateBaseName.push_back(citySet.marketHealCombined?"market-heal":"heal");
                         templateVariant.push_back(&variant);
                     }
 
@@ -2487,8 +2522,8 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                     std::string gymTypeName;
                     std::vector<std::string> gymTypeMonsters;
                     const BuildingVariant *gymVariant=NULL;
-                    if(setting.doGym && haveGymTemplate && city!=NULL && city->type!=CityType_small){
-                        gymVariant=&gymGroup->variants.at(rand()%gymGroup->variants.size());
+                    if(setting.doGym && citySet.gym!=NULL && city!=NULL && city->type!=CityType_small){
+                        gymVariant=&citySet.gym->variants.at(rand()%citySet.gym->variants.size());
                         MapBrush::MapTemplate gymTemplate=gymVariant->mapTemplate;
                         if(!setting.gymTypeNames.empty())
                         {
@@ -2505,7 +2540,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             }
                             gymTypeName=setting.gymTypeNames.at(gymTypeIndex);
                             gymTypeMonsters=setting.gymTypeMonsters.at(gymTypeIndex);
-                            if(haveGymTemplate && !setting.gymTypeColors.at(gymTypeIndex).isEmpty())
+                            if(!setting.gymTypeColors.at(gymTypeIndex).isEmpty())
                             {
                                 //swap the blue gym tileset for the type-colored one
                                 Tiled::Tileset *typeTileset=NULL;
@@ -2535,18 +2570,45 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         templateVariant.push_back(gymVariant);
                     }
 
+                    //the market is a SECOND building only when it is not already
+                    //served by the combined market-heal one
+                    if(!citySet.marketHealCombined)
                     {
-                        BuildingGroup * const shopGroup=buildingGroup("shop-"+citySizeSuffix);
-                        if(shopGroup==NULL)
+                        if(citySet.market==NULL)
                         {
                             std::cerr << "Missing template/shop-" << citySizeSuffix << "/" << std::endl;
                             abort();
                         }
-                        const BuildingVariant &variant=shopGroup->variants.at(rand()%shopGroup->variants.size());
+                        const BuildingVariant &variant=citySet.market->variants.at(rand()%citySet.market->variants.size());
                         templates.push_back(variant.mapTemplate);
                         templateKind.push_back(BotKind_shop);
                         templateBaseName.push_back("shop");
                         templateVariant.push_back(&variant);
+                    }
+
+                    //<stem>-special-building: extra buildings of this city style,
+                    //spawned per its own how-use.ini (mapPercent + min/max)
+                    if(citySet.special!=NULL && city!=NULL)
+                    {
+                        bool useAllowed=true;
+                        if(!citySet.special->use.cityTypes.empty())
+                            useAllowed=vectorcontainsAtLeastOne(citySet.special->use.cityTypes,citySizeSuffix);
+                        if(useAllowed)
+                        {
+                            unsigned int specialCount=templateUseCount(citySet.special->use);
+                            unsigned int specialNumber=1;
+                            while(specialCount>0)
+                            {
+                                const BuildingVariant &variant=citySet.special->variants.at(
+                                            rand()%citySet.special->variants.size());
+                                templates.push_back(variant.mapTemplate);
+                                templateKind.push_back(BotKind_text);
+                                templateBaseName.push_back("special-"+std::to_string(specialNumber));
+                                templateVariant.push_back(&variant);
+                                specialNumber++;
+                                specialCount--;
+                            }
+                        }
                     }
 
                     //[city] <size>\minBuilding houses to TRY for, plus a little

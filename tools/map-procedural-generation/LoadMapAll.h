@@ -172,11 +172,63 @@ public:
         unsigned int doorX,doorY;
         unsigned int spawnX,spawnY;
     };
+    //template/<group>/how-use.ini — how often an OPTIONAL template is used. Absent
+    //file = the group is not spawned on its own (it is picked by name, like
+    //heal-small or desert-market).
+    //  [use]
+    //  mapPercent=10   ; chance this template is used at all on an eligible map
+    //  min=1           ; how many copies when it IS used
+    //  max=3
+    //  terrains=grass,sand   ; optional, empty = any surrounding terrain
+    //  cityTypes=big,medium  ; optional, empty = any city size
+    struct TemplateUse
+    {
+        bool valid;//false = no how-use.ini, the group is never spawned on its own
+        unsigned int mapPercent;
+        unsigned int minCount,maxCount;
+        std::vector<std::string> terrains;
+        std::vector<std::string> cityTypes;
+    };
     struct BuildingGroup
     {
         std::string name;
         std::vector<BuildingVariant> variants;
+        TemplateUse use;
     };
+    //read template/<folder>/how-use.ini; use.valid stays false when it is absent
+    static TemplateUse readTemplateUse(const QString &folderPath);
+    //Roll how-use.ini for one map: 0 when the template is not used here, else the
+    //number of copies to try. seedText makes it deterministic per map+template.
+    static unsigned int templateUseCount(const TemplateUse &use);
+
+    //Which building group plays a ROLE for a town, style FIRST then size:
+    //  market+heal: <stem>-market-heal (ONE building for both)
+    //            -> <stem>-market      + <stem>-heal
+    //            -> <stem>-market-<size> + <stem>-heal-<size>
+    //            -> shop-<size>        + heal-<size>
+    //  gym:         <stem>-gym         -> gym-building
+    //where <stem> is the city style folder without its "-city" suffix
+    //("desert-city" -> "desert"). Nothing to declare: the folders are looked up on
+    //disk, so dropping template/desert-market/ in is all it takes.
+    struct CityBuildingSet
+    {
+        BuildingGroup *market;
+        BuildingGroup *heal;
+        //market==heal: ONE building holds both the shop and the heal bot (its
+        //floor-N.xml skeleton carries a shop step AND a heal step)
+        bool marketHealCombined;
+        BuildingGroup *gym;
+        //<stem>-special-building, spawned per its how-use.ini; NULL when absent
+        BuildingGroup *special;
+    };
+    static CityBuildingSet cityBuildingSet(const std::string &style, const std::string &sizeSuffix);
+    //style stem of a city style folder: "desert-city" -> "desert"
+    static std::string cityStyleStem(const std::string &style);
+    //cities-types.ini next to the binary: "<city name>=<style folder>" forces the
+    //house style of that town (the terrain match is only a default). Loaded once.
+    static void loadCityStyleOverrides();
+    //the forced style of a city, empty when the file has no line for it
+    static std::string cityStyleOverride(const std::string &cityName);
     static std::map<std::string,BuildingGroup> buildingGroups;
     //the discovered "*-city" style groups, in scan order
     static std::vector<std::string> cityStyles;
