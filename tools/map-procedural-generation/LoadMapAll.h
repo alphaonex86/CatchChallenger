@@ -115,7 +115,22 @@ public:
         std::vector<RoadBot> roadBot;
         //chunk converted to a cave (walled corridor, cave encounters)
         bool isCave;
+        //chunk of a WATER PATH: a sea channel walled by rock instead of a road.
+        //It rides the same graph as a land road (border teleports, level, wild
+        //monsters — which come out of the water terrain band by construction),
+        //only the painted content differs.
+        bool isWater;
+        //that channel is CLOSED and crossed by boat: no swimmable corridor, a
+        //push-teleport on the boat tile jumps straight to the other shore
+        bool isBoat;
     };
+    //the two closed chunks a boat crossing joins, and the cities behind them
+    struct BoatCrossing
+    {
+        uint16_t fromX,fromY;
+        uint16_t toX,toY;
+    };
+    static std::vector<BoatCrossing> boatCrossings;
     //plan of one cave chunk, decided at selection time: the chunk qualifies only
     //when its road connections are SEPARATED by the natural terrain (cliffs) so
     //the cave cannot be bypassed; each side enters through a mouth placed ON the
@@ -411,6 +426,22 @@ public:
     //[General] terrainDebug: Object layer "Terrain" with the OUTLINE polygon of
     //every sea and lake, named with its kind and size
     static void addDebugWaterBodies(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting);
+    //WATER PATHS: sea routes joining coastal towns, registered in the SAME graph
+    //as the land roads (mapPathDirection). The chunk grouping, the city links,
+    //the levels, the wild monsters (which come out of the WATER terrain band by
+    //construction), the border teleports and the minimap then all come for free;
+    //only the painted content differs. Called from addCity, right before the road
+    //grouping — that is the last moment the graph can still be changed.
+    //A route may be the ONLY way to a town: the no-isolated-map check is what
+    //guarantees the world stays whole, not the land network.
+    static void addWaterPaths(const unsigned int mapXCount,const unsigned int mapYCount,
+                              const unsigned int singleMapWidth,const unsigned int singleMapHeight,
+                              const unsigned int worldWidth,
+                              const SettingsAll::SettingsExtra &setting,
+                              std::vector<std::pair<uint16_t,uint16_t> > &waterChunks,
+                              std::vector<std::pair<uint16_t,uint16_t> > &boatChunks);
+    static void linkChunkToNeighbour(const unsigned int &from,const unsigned int &to,
+                                     const unsigned int &mapXCount);
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     //[General] cityDebug: Object layer "City" with the hole polygon of every town
@@ -423,7 +454,8 @@ public:
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
                         const unsigned int &mapXCount, const unsigned int &mapYCount,
                         const unsigned int &maxCityLinks, const unsigned int &cityRadius,
-                        const Simplex &levelmap, const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax);
+                        const Simplex &levelmap, const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax,
+                        const SettingsAll::SettingsExtra &setting);
     //Declare one FLAT zone per city to the terrain shaper: a town cut in half by
     //two terrains looks wrong, so the height/moisure noise of its chunk is forced
     //to the DOMINANT terrain already found there (water excluded, a town is on

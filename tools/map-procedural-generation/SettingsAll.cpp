@@ -218,6 +218,13 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.waterSeaMinTiles=settings.value("seaMinTiles",4000).toUInt();
     config.waterBodyDebugMinTiles=settings.value("bodyDebugMinTiles",200).toUInt();
     config.waterBodyDebugStep=settings.value("bodyDebugStep",32).toUInt();
+    config.waterPathPercentOfLand=settings.value("pathPercentOfLand",0).toUInt();
+    config.waterChunkSeaPercent=settings.value("chunkSeaPercent",80).toUInt();
+    if(config.waterChunkSeaPercent>100)
+        config.waterChunkSeaPercent=100;
+    config.waterBoatPercent=settings.value("boatPercent",30).toUInt();
+    if(config.waterBoatPercent>100)
+        config.waterBoatPercent=100;
     if(config.waterBodyDebugStep<1)
         config.waterBodyDebugStep=1;
     settings.endGroup();

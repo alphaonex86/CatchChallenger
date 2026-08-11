@@ -16,6 +16,30 @@ sea, and a guarantee that no map ends up isolated.
   `[water] bodyDebugStep` so it stays a *general* shape (4-5k points instead of
   1.1 million).
 
+* `LoadMapAll::addWaterPaths` — the ROUTING, called from `addCity` right before
+  the road grouping: the seas each town can put to sea on (its chunk plus one
+  chunk of margin), every pair of towns sharing a sea, nearest first, one route
+  per town, A* over the chunks that are at least `[water] chunkSeaPercent` sea.
+  The chunks are OR-ed into `mapPathDirection`, so the grouping, the city links,
+  the level, the wild monsters (which come out of the water terrain band by
+  construction), the border teleports and the map writing all apply to them
+  unchanged; `RoadIndex::isWater` / `isBoat` say which ones they are, and
+  `boatCrossings` holds the pairs. Measured with it on: 4 routes over 36 chunks
+  out of 315 coastal town pairs.
+
+  **It ships OFF (`[water] pathPercentOfLand=0`)**, because nothing PAINTS a
+  water chunk yet: turned on, a route is drawn as an ordinary road over the open
+  sea, which is worse than not having the feature. Point 3 below is what turns
+  it on.
+
+  Known gap to fix when point 3 lands: the routes are planned on the voronoi
+  terrain, which is the terrain BEFORE the city flattening ramps back over
+  `flattenFalloff` tiles, so the first sea chunk out of a harbour has more land
+  in it than the router assumed. Either route on the post-flatten terrain (the
+  water pass then has to register its own chunks instead of riding addCity's
+  grouping), or accept it and let the channel painting treat that chunk as the
+  coast it now is.
+
 **Left to do**, in the order the pieces depend on each other. Every one of them
 touches the WORLD MAP GRAPH (`mapPathDirection` / `roads` / `roadCoordToIndex`),
 so a half-finished piece breaks every map, not just the water ones — land them
