@@ -251,6 +251,11 @@ int main(int argc, char *argv[])
                                     tiledMap.width(),tiledMap.height(),0,0,false);
                 qDebug("Draw terrain took %lld ms", t.elapsed());
                 MapBrush::initialiseMapMask(tiledMap);
+                //BEFORE the transitions: the outer-border pass is mask-gated, so
+                //this is what keeps the mountain COLLISION ridge out of the town
+                //square (it used to cut it in two and refuse every building lot),
+                //and the same mark later keeps the vegetation out
+                LoadMapAll::maskCityHoles(tiledMap,config);
                 //the debug zone overlay must show the terrain that was DRAWN, so it
                 //comes after the flattening pass
                 if(config.displayzone)
@@ -292,6 +297,9 @@ int main(int argc, char *argv[])
             }
             if(config.displaycity)
                 LoadMapAll::addDebugCity(tiledMap,config.mapWidth,config.mapHeight);
+            //the hole every town was laid out in, with its key numbers on one line
+            if(config.cityDebug)
+                LoadMapAll::addDebugCityLimits(tiledMap,config);
             if(config.dominimap)
             {
                 t.start();
@@ -307,37 +315,11 @@ int main(int argc, char *argv[])
                 //scatters NO trees inside a town.  The terrain forest already
                 //carved around the town stays as the wall; only the cluttering
                 //interior clumps are suppressed.
-                if(MapBrush::mapMask!=NULL)
-                {
-                    //Mask only the INTERIOR of a city chunk, leaving a border ring
-                    //unmasked so vegetation still grows a tree WALL around the town
-                    //(like the reference) while the centre stays open for the
-                    //buildings/paths.
-                    const unsigned int mw=config.mapWidth, mh=config.mapHeight;
-                    const unsigned int ring=5; //tiles of tree border kept on each edge
-                    const unsigned int Wt=(unsigned int)tiledMap.width(), Ht=(unsigned int)tiledMap.height();
-                    unsigned int ty=0;
-                    while(ty<Ht)
-                    {
-                        unsigned int tx=0;
-                        while(tx<Wt)
-                        {
-                            if(LoadMapAll::haveCityEntry(LoadMapAll::citiesCoordToIndex, tx/mw, ty/mh))
-                            {
-                                const unsigned int lx=tx%mw, ly=ty%mh;
-                                if(lx>=ring && lx<mw-ring && ly>=ring && ly<mh-ring)
-                                {
-                                    const unsigned int bit=tx+ty*Wt;
-                                    MapBrush::mapMask[bit/8]|=(1<<(7-bit%8));
-                                }
-                            }
-                            //cave chunk: NATURAL vegetation everywhere (the cave is
-                            //interior-only); its mouth pockets are masked at carve time
-                            tx++;
-                        }
-                        ty++;
-                    }
-                }
+                //the town holes were masked before the transitions already
+                //(maskCityHoles), so no tree is planted inside a town here; the
+                //frame of trees AROUND it is exactly the unmasked rest of the chunk.
+                //A cave chunk keeps NATURAL vegetation everywhere (the cave is
+                //interior-only), its mouth pockets are masked at carve time.
                 t.start();
                 MapPlants::addVegetation(tiledMap,VoronioForTiledMapTmx::voronoiMap);
                 //a tree canopy (WalkBehind) must never hide a city sign

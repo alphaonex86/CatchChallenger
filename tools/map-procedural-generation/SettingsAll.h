@@ -21,6 +21,10 @@ public:
         //references. The pool is refilled at each startup from the tool's own
         //tileset/ and from --datapack, so this is never destructive.
         bool cleanTileset;
+        //[General] cityDebug: add an Object layer "City" to all.tmx holding, per
+        //town, the polygon of the hole it was laid out in and a ONE LINE label
+        //with its name, size and key variables.
+        bool cityDebug;
         std::vector<std::string> citiesNames;
         float scale_City;
         bool doallmap;
@@ -57,18 +61,36 @@ public:
         std::string gymTrainerSkin;
         std::string gymLeaderSkin;
 
-        //[city] avenue/plaza ground comes from a template tmx (template/<name>.tmx):
-        //its Walkable fill tile is the path terrain, its OnGrass 3x3 ring the border.
-        //Empty template name = no avenue for that city size. useAsBase additionally
-        //brushes the template tmx itself, centered, as the city base ground.
-        QString cityBigTemplate;
-        bool cityBigUseAsBase;
-        QString cityMediumTemplate;
-        bool cityMediumUseAsBase;
-        //sign tile styles ("tileset/idx" like fetchTile) per city type; ONE style is
-        //picked per city for all its signs. Empty list = no signs.
-        std::vector<std::string> cityBigSignTiles;
-        std::vector<std::string> cityMediumSignTiles;
+        //[city] small\ medium\ big\: everything that depends on the SIZE of a town,
+        //one entry per CityType (index 0 small, 1 medium, 2 big — the LoadMapAll
+        //CityType order; SettingsAll cannot include LoadMapAll.h, it is the other
+        //way round).
+        struct CitySize
+        {
+            //avenue/plaza ground comes from a template tmx (template/<name>.tmx):
+            //its Walkable fill tile is the path terrain, its OnGrass 3x3 ring the
+            //border. Empty name = no avenue for that size. useAsBase additionally
+            //brushes the template tmx itself, centered, as the city base ground.
+            QString templateName;
+            bool useAsBase;
+            //sign tile styles ("tileset/idx" like fetchTile); ONE style is picked
+            //per city for all its signs. Empty list = no signs.
+            std::vector<std::string> signTiles;
+            //The city HOLE: percent of the chunk, centered, the town is laid out in.
+            //A small town spread over the whole 44x44 chunk read as an empty field,
+            //so it gets a SMALLER hole and the terrain vegetation grows back around
+            //it. Always clamped to leave the vegetation border ring of the chunk.
+            unsigned int holePercent;
+            //Max share of that hole the building COLLISION footprints may take. A
+            //building that would push the total over is denied. Upper limit only —
+            //it cannot be hit exactly.
+            unsigned int densityPercent;
+            //How many buildings to try to place, NOT counting the heal and the
+            //market (they are always placed first). Best effort: densityPercent and
+            //the free ground still decide.
+            unsigned int minBuilding;
+        };
+        CitySize citySize[3];
         //[city] flatten*: the height/moisure noise under a town is forced to its
         //DOMINANT terrain, so a city is never cut in half by two terrains, then it
         //ramps back to the natural noise over flattenFalloff tiles - the gradient

@@ -125,8 +125,7 @@ static QString claimBotFightLookAt(const QString &wanted,const int &x,const int 
 unsigned int ** LoadMapAll::roadData = NULL;
 int LoadMapAll::botId = 0;
 LoadMapAll::RoadMountain LoadMapAll::mountain;
-LoadMapAll::CityGround LoadMapAll::cityGroundBig;
-LoadMapAll::CityGround LoadMapAll::cityGroundMedium;
+LoadMapAll::CityGround LoadMapAll::cityGround[3];
 std::vector<LoadMapAll::CitySign> LoadMapAll::citySigns;
 std::vector<LoadMapAll::BuildingRect> LoadMapAll::cityBuildingRects;
 std::map<std::pair<uint16_t,uint16_t>,LoadMapAll::CavePlan> LoadMapAll::cavePlans;
@@ -883,7 +882,28 @@ struct AvenueLotState
     unsigned int scaleWidth,scaleHeight,scale,mapWidth,mapHeight,chunkX,chunkY;
     unsigned int hy0,hy1;
     int aboveRight,aboveLeft,belowRight,belowLeft;
+    //the HOLE this town is laid out in, chunk-local tiles: no building is ever
+    //placed outside it, so the rest of the chunk keeps its natural terrain
+    unsigned int holeX,holeY,holeWidth,holeHeight;
+    //[city] <size>\densityPercent: how much collision footprint the buildings of
+    //this town may take inside the hole. A building that would push the total
+    //over is denied — an upper limit, it cannot be hit exactly.
+    unsigned int areaBudget;
+    unsigned int *areaUsed;
+    unsigned int *placedCount;
 };
+
+//would this footprint push the town over its density limit?
+static bool cityDensityAllows(const AvenueLotState &lots,const MapBrush::MapTemplate &temp)
+{
+    return (*lots.areaUsed)+temp.width*temp.height<=lots.areaBudget;
+}
+
+static void cityDensityAccount(AvenueLotState &lots,const MapBrush::MapTemplate &temp)
+{
+    (*lots.areaUsed)+=temp.width*temp.height;
+    (*lots.placedCount)++;
+}
 
 //door-front tiles (the engine "push" cell of each door) must stay free or the
 //player can never enter; band cells are fine (the avenue paint clears them)
@@ -1016,9 +1036,17 @@ static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
         const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters,
         const LoadMapAll::BuildingVariant &variant)
 {
+    //the town would go over its density limit: deny, whatever room is left
+    if(!cityDensityAllows(lots,temp))
+        return false;
     const int bandTopTile=(int)lots.hy0*(int)lots.scale;
     const int bandBottomTile=((int)lots.hy1+1)*(int)lots.scale;
     const int center=(int)lots.mapWidth/2;
+    //the lot row never leaves the hole
+    const int holeLeft=(int)lots.holeX;
+    const int holeRight=(int)(lots.holeX+lots.holeWidth);
+    const int holeTop=(int)lots.holeY;
+    const int holeBottom=(int)(lots.holeY+lots.holeHeight);
     int side=0;
     while(side<2)
     {
@@ -1026,7 +1054,7 @@ static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
         if(side==1 && !facadeOnly)
             return false;
         const int posY=(side==0) ? bandTopTile-(int)temp.height : bandBottomTile;
-        if(posY>=2 && posY+(int)temp.height<=(int)lots.mapHeight-2)
+        if(posY>=holeTop && posY+(int)temp.height<=holeBottom)
         {
             int &rightCursor=(side==0) ? lots.aboveRight : lots.belowRight;
             int &leftCursor=(side==0) ? lots.aboveLeft : lots.belowLeft;
@@ -1037,8 +1065,8 @@ static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
             {
                 const bool goRight=(direction==0) ? firstGoRight : !firstGoRight;
                 int posX=goRight ? rightCursor : leftCursor-(int)temp.width;
-                while((goRight && posX+(int)temp.width<(int)lots.mapWidth-3)
-                        || (!goRight && posX>=3))
+                while((goRight && posX+(int)temp.width<=holeRight)
+                        || (!goRight && posX>=holeLeft))
                 {
                     bool valid=true;
                     const unsigned int bx=posX/(int)lots.scale;
@@ -1069,6 +1097,7 @@ static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
                                           lots.chunkX,lots.chunkY,lots.mapWidth,lots.mapHeight,pos,
                                           city,cityLowerCaseName,setting,
                                           gymTypeName,gymTypeMonsters,variant);
+                        cityDensityAccount(lots,temp);
                         cy=by;
                         while(cy<ey)
                         {
@@ -1096,11 +1125,11 @@ static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
                     else
                         posX-=2;
                 }
-                //this direction is exhausted: park the cursor at the edge
+                //this direction is exhausted: park the cursor at the hole edge
                 if(goRight)
-                    rightCursor=(int)lots.mapWidth;
+                    rightCursor=holeRight;
                 else
-                    leftCursor=0;
+                    leftCursor=holeLeft;
                 direction++;
             }
         }
@@ -1801,25 +1830,29 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
     //world tileset per gym type, added on first use
     std::map<std::string,Tiled::Tileset*> gymTypeWorldTilesets;
 
-    //city avenue/plaza path terrain comes from an editable template tmx ([city])
-    cityGroundBig.valid=false;
-    cityGroundMedium.valid=false;
-    MapBrush::MapTemplate mapTemplateCityBig;
-    MapBrush::MapTemplate mapTemplateCityMedium;
-    bool haveCityBigTemplate=false;
-    bool haveCityMediumTemplate=false;
-    if(!setting.cityBigTemplate.isEmpty() && QFile::exists("template/"+setting.cityBigTemplate+".tmx"))
+    //city avenue/plaza path terrain comes from an editable template tmx ([city]),
+    //one per SIZE — a small town has an avenue too now, it is what turns it from
+    //a building lost in a field into a readable village
+    MapBrush::MapTemplate mapTemplateCity[3];
+    bool haveCityTemplate[3]={false,false,false};
     {
-        loadMapTemplate("",mapTemplateCityBig,setting.cityBigTemplate,mapWidth,mapHeight,worldMap);
-        deriveCityGround(mapTemplateCityBig,cityGroundBig);
-        haveCityBigTemplate=true;
+        unsigned int sizeIndex=0;
+        while(sizeIndex<3)
+        {
+            cityGround[sizeIndex].valid=false;
+            const QString &templateName=setting.citySize[sizeIndex].templateName;
+            if(!templateName.isEmpty() && QFile::exists("template/"+templateName+".tmx"))
+            {
+                loadMapTemplate("",mapTemplateCity[sizeIndex],templateName,mapWidth,mapHeight,worldMap);
+                deriveCityGround(mapTemplateCity[sizeIndex],cityGround[sizeIndex]);
+                haveCityTemplate[sizeIndex]=true;
+            }
+            sizeIndex++;
+        }
     }
-    if(!setting.cityMediumTemplate.isEmpty() && QFile::exists("template/"+setting.cityMediumTemplate+".tmx"))
-    {
-        loadMapTemplate("",mapTemplateCityMedium,setting.cityMediumTemplate,mapWidth,mapHeight,worldMap);
-        deriveCityGround(mapTemplateCityMedium,cityGroundMedium);
-        haveCityMediumTemplate=true;
-    }
+    //the debug overlay reports what each town really got
+    cityBuildingCount.assign(cities.size(),0);
+    cityBuildingArea.assign(cities.size(),0);
 
     //assign an ELEMENT TYPE to every city from its surrounding terrain (water
     //city by the sea, stone in the mountains, plant in the grass...) while
@@ -2333,8 +2366,22 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                     //template tmx (see settings [city]).
                     const bool isBigCity=(city!=NULL && city->type==CityType_big);
                     const bool isMediumCity=(city!=NULL && city->type==CityType_medium);
-                    const bool avenueGroundOk=(isBigCity && cityGroundBig.valid)
-                            || (isMediumCity && cityGroundMedium.valid);
+                    //everything that depends on the SIZE of this town, including the
+                    //HOLE it is laid out in: outside it the terrain stays natural and
+                    //keeps its trees, so a small town is framed instead of lost
+                    const unsigned int citySizeIndex=(city==NULL)?(unsigned int)CityType_small:(unsigned int)city->type;
+                    const SettingsAll::SettingsExtra::CitySize &citySizeSetting=setting.citySize[citySizeIndex];
+                    const CityHole hole=cityHole((CityType)citySizeIndex,mapWidth,mapHeight,setting);
+                    //same rect on the scale grid the placement works on
+                    const unsigned int holeCellX0=hole.x/scale;
+                    const unsigned int holeCellY0=hole.y/scale;
+                    const unsigned int holeCellX1=(hole.x+hole.width)/scale;
+                    const unsigned int holeCellY1=(hole.y+hole.height)/scale;
+                    //the collision footprint the buildings of this town may take
+                    const unsigned int holeAreaBudget=hole.width*hole.height*citySizeSetting.densityPercent/100;
+                    unsigned int holeAreaUsed=0;
+                    unsigned int cityPlacedCount=0;
+                    const bool avenueGroundOk=(city!=NULL && cityGround[citySizeIndex].valid);
                     bool haveHorizontalBand=false;
                     bool haveVerticalBand=false;
                     const unsigned int hy0=scaleHeight/2-1, hy1=scaleHeight/2;
@@ -2375,11 +2422,11 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         }
                         //use the template tmx directly as base terrain: brushed
                         //centered, so the owner can shape the city ground in Tiled
-                        const bool useAsBase=isBigCity ? setting.cityBigUseAsBase : setting.cityMediumUseAsBase;
-                        const bool haveTemplate=isBigCity ? haveCityBigTemplate : haveCityMediumTemplate;
+                        const bool useAsBase=citySizeSetting.useAsBase;
+                        const bool haveTemplate=haveCityTemplate[citySizeIndex];
                         if(useAsBase && haveTemplate)
                         {
-                            const MapBrush::MapTemplate &cityTemplate=isBigCity ? mapTemplateCityBig : mapTemplateCityMedium;
+                            const MapBrush::MapTemplate &cityTemplate=mapTemplateCity[citySizeIndex];
                             const int templateW=cityTemplate.tiledMap->width();
                             const int templateH=cityTemplate.tiledMap->height();
                             const int patchX=(int)(mapWidth-templateW)/2;
@@ -2496,13 +2543,10 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         templateVariant.push_back(&variant);
                     }
 
-                    //a big city has more buildings, aligned around the avenue;
-                    //most of them are doorless facades (no content)
-                    int building;
-                    if(isBigCity)
-                        building = rand()%4 + 4;
-                    else
-                        building = rand()%4 + 2;
+                    //[city] <size>\minBuilding houses to TRY for, plus a little
+                    //variety above it; densityPercent and the free ground decide
+                    //how many really land
+                    const int building=(int)citySizeSetting.minBuilding+rand()%3;
 
                     //the filler houses come from the style folder of the city,
                     //without repeating the same variant twice in a row
@@ -2603,6 +2647,13 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         lots.aboveLeft=(int)mapWidth/2;
                         lots.belowRight=(int)mapWidth/2;
                         lots.belowLeft=(int)mapWidth/2;
+                        lots.holeX=hole.x;
+                        lots.holeY=hole.y;
+                        lots.holeWidth=hole.width;
+                        lots.holeHeight=hole.height;
+                        lots.areaBudget=holeAreaBudget;
+                        lots.areaUsed=&holeAreaUsed;
+                        lots.placedCount=&cityPlacedCount;
 
                         unsigned int templateIndex=0;
                         while(templateIndex<(unsigned int)templates.size()){
@@ -2620,15 +2671,20 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                     interiorHouseDone=true;
                             }
                             bool placed=false;
-                            //big city: street-front lots filled center-out so the
-                            //buildings line up along the avenue
-                            if(isBigCity && haveHorizontalBand)
+                            //ORDERED placement, every city size: street-front lots
+                            //filled center-out so the buildings line up along the
+                            //avenue instead of being scattered over the chunk (a
+                            //small town then reads as a village, not as a field
+                            //with one house in it)
+                            if(haveHorizontalBand)
                                 placed=placeOnAvenueLot(lots,temp,slotKind,slotBaseName,facadeOnly,
                                                         *city,cityLowerCaseName,setting,
                                                         gymTypeName,gymTypeMonsters,*slotVariant);
                             int i=0;
                             int limit = 500;
-                            if(!placed)
+                            //the random fallback only runs while the town is still
+                            //under its density limit ([city] <size>\densityPercent)
+                            if(!placed && cityDensityAllows(lots,temp))
                             for(i=0; i<limit; i++){
                                 double index = rand() / (double) RAND_MAX;
                                 ZoneMarker* zone = zones[(1-index*index)*zones.size()];
@@ -2647,7 +2703,11 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                     const unsigned int ex=(pos.first+temp.width+scale-1)/scale;
                                     const unsigned int ey=(pos.second+temp.height+scale-1)/scale;
 
-                                    if(ex < scaleWidth && ey < scaleHeight){
+                                    //never outside the HOLE: the rest of the chunk
+                                    //keeps its natural terrain and its vegetation
+                                    if(bx<holeCellX0 || by<holeCellY0 || ex>holeCellX1 || ey>holeCellY1)
+                                        valid=false;
+                                    else if(ex < scaleWidth && ey < scaleHeight){
                                         for(unsigned int tx = bx; tx<ex; tx++){
                                             for(unsigned int ty = by; ty<ey; ty++){
                                                 if(map[tx+ty*scaleWidth]!= 1){
@@ -2684,6 +2744,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                             placeCityBuilding(worldMap,temp,slotKind,slotBaseName,facadeOnly,
                                                               x,y,mapWidth,mapHeight,pos,*city,cityLowerCaseName,
                                                               setting,gymTypeName,gymTypeMonsters,*slotVariant);
+                                            cityDensityAccount(lots,temp);
                                             zone->type = 5;
                                             //mark the footprint BEFORE the door path: the
                                             //route must never cross the building cells
@@ -2755,11 +2816,13 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         }
 
                         //big city: plaza patches — the city template tmx brushed as
-                        //"alternative floor" islands on free ground
-                        if(isBigCity && haveCityBigTemplate && !setting.cityBigUseAsBase)
+                        //"alternative floor" islands on free ground, inside the hole
+                        if(isBigCity && haveCityTemplate[citySizeIndex] && !citySizeSetting.useAsBase
+                                && (int)hole.width>mapTemplateCity[citySizeIndex].tiledMap->width()
+                                && (int)hole.height>mapTemplateCity[citySizeIndex].tiledMap->height())
                         {
-                            const int templateW=mapTemplateCityBig.tiledMap->width();
-                            const int templateH=mapTemplateCityBig.tiledMap->height();
+                            const int templateW=mapTemplateCity[citySizeIndex].tiledMap->width();
+                            const int templateH=mapTemplateCity[citySizeIndex].tiledMap->height();
                             int patches=1+rand()%2;
                             while(patches>0)
                             {
@@ -2767,8 +2830,8 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                 bool patchPlaced=false;
                                 while(tries<40 && !patchPlaced)
                                 {
-                                    const int patchX=2+rand()%((int)mapWidth-templateW-4);
-                                    const int patchY=2+rand()%((int)mapHeight-templateH-4);
+                                    const int patchX=(int)hole.x+rand()%((int)hole.width-templateW);
+                                    const int patchY=(int)hole.y+rand()%((int)hole.height-templateH);
                                     bool valid=true;
                                     const unsigned int bx=patchX/(int)scale;
                                     const unsigned int by=patchY/(int)scale;
@@ -2788,7 +2851,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                     }
                                     if(valid)
                                     {
-                                        MapBrush::brushTheMap(worldMap,mapTemplateCityBig,x*mapWidth+patchX,y*mapHeight+patchY,MapBrush::mapMask,true);
+                                        MapBrush::brushTheMap(worldMap,mapTemplateCity[citySizeIndex],x*mapWidth+patchX,y*mapHeight+patchY,MapBrush::mapMask,true);
                                         cy=by;
                                         while(cy<ey)
                                         {
@@ -2812,10 +2875,8 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         //style per city, picked from the per-city-type tile list
                         {
                             const std::vector<std::string> *signTiles=NULL;
-                            if(isBigCity && !setting.cityBigSignTiles.empty())
-                                signTiles=&setting.cityBigSignTiles;
-                            else if(isMediumCity && !setting.cityMediumSignTiles.empty())
-                                signTiles=&setting.cityMediumSignTiles;
+                            if(!citySizeSetting.signTiles.empty())
+                                signTiles=&citySizeSetting.signTiles;
                             if(signTiles!=NULL && (haveHorizontalBand || haveVerticalBand))
                             {
                                 Tiled::Tile * const signTile=fetchTile(worldMap,QString::fromStdString(signTiles->at(rand()%signTiles->size())));
@@ -2936,6 +2997,16 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                         signIndex++;
                                     }
                                 }
+                            }
+                        }
+
+                        //what this town really got, for the cityDebug overlay
+                        {
+                            const unsigned int cityIndex=citiesCoordToIndex.at(x).at(y);
+                            if(cityIndex<cityBuildingCount.size())
+                            {
+                                cityBuildingCount[cityIndex]=cityPlacedCount;
+                                cityBuildingArea[cityIndex]=holeAreaUsed;
                             }
                         }
                     }
@@ -3129,10 +3200,15 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
     }
     //the building templates live in buildingGroups until the end of the run (the
     //same variant is brushed in many cities), libtiled frees the maps itself
-    if(haveCityBigTemplate)
-        LoadMapAll::deleteMapList(mapTemplateCityBig);
-    if(haveCityMediumTemplate)
-        LoadMapAll::deleteMapList(mapTemplateCityMedium);
+    {
+        unsigned int sizeIndex=0;
+        while(sizeIndex<3)
+        {
+            if(haveCityTemplate[sizeIndex])
+                LoadMapAll::deleteMapList(mapTemplateCity[sizeIndex]);
+            sizeIndex++;
+        }
+    }
 }
 
 bool checkEmptyRoad( const SettingsAll::SettingsExtra &setting, int tx, int ty){
@@ -3380,14 +3456,23 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                 if(isCity)
                 {
                     const City &paintCity=cities.at(citiesCoordToIndex.at(x).at(y));
-                    if(paintCity.type==CityType_big)
-                        paintGround=&cityGroundBig;
-                    else if(paintCity.type==CityType_medium)
-                        paintGround=&cityGroundMedium;
+                    if(cityGround[(unsigned int)paintCity.type].valid)
+                        paintGround=&cityGround[(unsigned int)paintCity.type];
                 }
                 bool chunkIsCave=false;
                 if(!isCity && caveTilesOk)
                     chunkIsCave=isCaveChunk(x,y);
+                //the HOLE of this town: the rock border decoration below is drawn on
+                //every cell the road/zone grid does not claim, which inside a town
+                //meant rock ridges cutting the square into a maze. The hole is meant
+                //to be free ground, so it is left alone.
+                LoadMapAll::CityHole paintHole;
+                paintHole.x=0;
+                paintHole.y=0;
+                paintHole.width=0;
+                paintHole.height=0;
+                if(isCity)
+                    paintHole=cityHole(cities.at(citiesCoordToIndex.at(x).at(y)).type,mapWidth,mapHeight,setting);
 
                 // Paint the road
                 const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
@@ -3401,13 +3486,15 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                         unsigned int type = map[(dx/scale) + (dy/scale)*scaleWidth];
                         if(chunkIsCave)
                             type=0;
+                        const bool insideCityHole=(dx>=paintHole.x && dx<paintHole.x+paintHole.width
+                                                   && dy>=paintHole.y && dy<paintHole.y+paintHole.height);
 
                         if(type != 0 && type != 0x9) {
                             const unsigned int &bitMask=tx+ty*worldMap.width();
                             if(bitMask/8>=maxMapSize)
                                 abort();
                             MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
-                        }else if(!checkTerrain(terrains, terrainLayers, terrainIsMountain, tx, ty)){
+                        }else if(!insideCityHole && !checkTerrain(terrains, terrainLayers, terrainIsMountain, tx, ty)){
                             uint8_t to_type_match=0;
                             if(tx>0 && ty>0)
                             {

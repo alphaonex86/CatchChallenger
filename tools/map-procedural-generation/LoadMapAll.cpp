@@ -5,6 +5,7 @@
 #include "../../general/base/cpp11addition.hpp"
 
 #include "../map-procedural-generation-terrain/LoadMap.h"
+#include "../map-procedural-generation-terrain/MapBrush.h"
 
 #include <unordered_set>
 #include <unordered_map>
@@ -16,6 +17,8 @@ uint8_t * LoadMapAll::mapPathDirection=NULL;
 std::vector<LoadMapAll::Road> LoadMapAll::roads;
 std::unordered_map<uint16_t,std::unordered_map<uint16_t,LoadMapAll::RoadIndex> > LoadMapAll::roadCoordToIndex;
 std::unordered_map<std::string,LoadMapAll::Zone> LoadMapAll::zones;
+std::vector<unsigned int> LoadMapAll::cityBuildingCount;
+std::vector<unsigned int> LoadMapAll::cityBuildingArea;
 
 void LoadMapAll::seedChunk(const unsigned int &seed, const unsigned int &chunkX, const unsigned int &chunkY,
                            const ChunkPass &pass)
@@ -35,6 +38,115 @@ void LoadMapAll::seedChunk(const unsigned int &seed, const unsigned int &chunkX,
     h*=0x846CA68Bu;
     h^=h>>16;
     srand((unsigned int)h);
+}
+
+LoadMapAll::CityHole LoadMapAll::cityHole(const CityType &type,const unsigned int &mapWidth,const unsigned int &mapHeight,
+                                          const SettingsAll::SettingsExtra &setting)
+{
+    const SettingsAll::SettingsExtra::CitySize &citySize=setting.citySize[(unsigned int)type];
+    CityHole hole;
+    //never eat the vegetation border ring, even at holePercent=100: a town whose
+    //buildings touch the chunk border has no frame and reads as a field
+    unsigned int maxWidth=0;
+    unsigned int maxHeight=0;
+    if(mapWidth>2*cityHoleBorderRing)
+        maxWidth=mapWidth-2*cityHoleBorderRing;
+    if(mapHeight>2*cityHoleBorderRing)
+        maxHeight=mapHeight-2*cityHoleBorderRing;
+    hole.width=mapWidth*citySize.holePercent/100;
+    hole.height=mapHeight*citySize.holePercent/100;
+    if(hole.width>maxWidth)
+        hole.width=maxWidth;
+    if(hole.height>maxHeight)
+        hole.height=maxHeight;
+    //centered, and on an EVEN offset so the hole aligns with the scale-2 grid the
+    //placement works on (an odd offset made a footprint spill one cell further)
+    hole.x=((mapWidth-hole.width)/2)&~1u;
+    hole.y=((mapHeight-hole.height)/2)&~1u;
+    return hole;
+}
+
+void LoadMapAll::maskCityHoles(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting)
+{
+    if(MapBrush::mapMask==NULL)
+    {
+        std::cerr << "maskCityHoles called before MapBrush::initialiseMapMask" << std::endl;
+        return;
+    }
+    const unsigned int mapWidth=setting.mapWidth;
+    const unsigned int mapHeight=setting.mapHeight;
+    const unsigned int worldWidth=(unsigned int)worldMap.width();
+    const unsigned int worldHeight=(unsigned int)worldMap.height();
+    unsigned int index=0;
+    while(index<cities.size())
+    {
+        const City &city=cities.at(index);
+        const CityHole hole=cityHole(city.type,mapWidth,mapHeight,setting);
+        unsigned int localY=0;
+        while(localY<hole.height)
+        {
+            unsigned int localX=0;
+            while(localX<hole.width)
+            {
+                const unsigned int tileX=city.x*mapWidth+hole.x+localX;
+                const unsigned int tileY=city.y*mapHeight+hole.y+localY;
+                if(tileX<worldWidth && tileY<worldHeight)
+                {
+                    const unsigned int bit=tileX+tileY*worldWidth;
+                    MapBrush::mapMask[bit/8]|=(1<<(7-bit%8));
+                }
+                localX++;
+            }
+            localY++;
+        }
+        index++;
+    }
+}
+
+void LoadMapAll::addDebugCityLimits(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting)
+{
+    Tiled::ObjectGroup * const layerCity=new Tiled::ObjectGroup("City",0,0);
+    layerCity->setColor(QColor("#ff3860"));
+    worldMap.addLayer(layerCity);
+    const unsigned int mapWidth=worldMap.width()/setting.mapXCount;
+    const unsigned int mapHeight=worldMap.height()/setting.mapYCount;
+    const int tileWidth=worldMap.tileWidth();
+    const int tileHeight=worldMap.tileHeight();
+    unsigned int index=0;
+    while(index<cities.size())
+    {
+        const City &city=cities.at(index);
+        const SettingsAll::SettingsExtra::CitySize &citySize=setting.citySize[(unsigned int)city.type];
+        const CityHole hole=cityHole(city.type,mapWidth,mapHeight,setting);
+        const char *sizeName="small";
+        if(city.type==CityType_medium)
+            sizeName="medium";
+        else if(city.type==CityType_big)
+            sizeName="big";
+        const unsigned int holeArea=hole.width*hole.height;
+        const unsigned int placedCount=(index<cityBuildingCount.size())?cityBuildingCount.at(index):0;
+        const unsigned int placedArea=(index<cityBuildingArea.size())?cityBuildingArea.at(index):0;
+        //ONE short line: name, size, level, element type, house style, chunk, the
+        //hole it was laid out in, the density reached over the density limit, and
+        //the buildings placed over the minimum asked for
+        const QString label=QString::fromStdString(city.name)+
+                " "+QString::fromLatin1(sizeName)+
+                " lvl"+QString::number(city.level)+
+                " "+QString::fromStdString(city.elementType.empty()?std::string("-"):city.elementType)+
+                " "+QString::fromStdString(city.style.empty()?std::string("-"):city.style)+
+                " chunk"+QString::number(city.x)+","+QString::number(city.y)+
+                " hole"+QString::number(hole.width)+"x"+QString::number(hole.height)+
+                " dens"+QString::number(holeArea==0?0:placedArea*100/holeArea)+"/"+QString::number(citySize.densityPercent)+"%"+
+                " bld"+QString::number(placedCount)+"/"+QString::number(citySize.minBuilding);
+        const int pixelX=(int)(city.x*mapWidth+hole.x)*tileWidth;
+        const int pixelY=(int)(city.y*mapHeight+hole.y)*tileHeight;
+        Tiled::MapObject * const objectPolygon=new Tiled::MapObject(label,"",QPointF(pixelX,pixelY),QSizeF(0.0,0.0));
+        objectPolygon->setPolygon(QPolygonF(QRectF(0,0,hole.width*tileWidth,hole.height*tileHeight)));
+        objectPolygon->setShape(Tiled::MapObject::Polygon);
+        layerCity->addObject(objectPolygon);
+        index++;
+    }
+    layerCity->setVisible(false);
 }
 
 void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight)
