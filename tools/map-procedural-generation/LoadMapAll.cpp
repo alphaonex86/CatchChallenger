@@ -149,6 +149,37 @@ void LoadMapAll::addDebugCityLimits(Tiled::Map &worldMap, const SettingsAll::Set
     layerCity->setVisible(false);
 }
 
+std::string LoadMapAll::chunkDebugName(const unsigned int &x, const unsigned int &y)
+{
+    if(haveCityEntry(citiesCoordToIndex,x,y))
+    {
+        const City &city=cities.at(citiesCoordToIndex.at(x).at(y));
+        const char *sizeName="small";
+        if(city.type==CityType_medium)
+            sizeName="medium";
+        else if(city.type==CityType_big)
+            sizeName="big";
+        return city.name+" ("+std::string(sizeName)+" city)";
+    }
+    if(roadCoordToIndex.find((uint16_t)x)==roadCoordToIndex.cend()
+            || roadCoordToIndex.at((uint16_t)x).find((uint16_t)y)==roadCoordToIndex.at((uint16_t)x).cend())
+        return std::string();//no map written for this chunk
+    const RoadIndex &roadIndex=roadCoordToIndex.at((uint16_t)x).at((uint16_t)y);
+    const Road &road=roads.at(roadIndex.roadIndex);
+    std::string name="Road "+std::to_string(roadIndex.roadIndex+1);
+    if(road.haveOnlySegmentNearCity)
+    {
+        //a one-chunk road: it is written INSIDE the city folder it touches
+        if(!roadIndex.cityIndex.empty())
+            name+=" of "+cities.at(roadIndex.cityIndex.front().cityIndex).name;
+    }
+    else
+        name+=" #"+std::to_string(vectorindexOf(road.coords,std::pair<uint16_t,uint16_t>(x,y))+1);
+    if(roadIndex.isCave)
+        name+=" (cave)";
+    return name;
+}
+
 void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight)
 {
     Tiled::ObjectGroup *layerCity=new Tiled::ObjectGroup("City",0,0); // ObjectGroup contructor no longer accept width and height 

@@ -291,6 +291,12 @@ public:
     static void seedChunk(const unsigned int &seed, const unsigned int &chunkX, const unsigned int &chunkY,
                           const ChunkPass &pass);
 
+    //Label of a chunk in the debug "Chunk" object layer of all.tmx: the REAL name
+    //the chunk is kept under (the city, the road and its step, the cave), not the
+    //"x,y" grid coordinates — those are already readable from the polygon.
+    //Empty string when no map is written for that chunk.
+    static std::string chunkDebugName(const unsigned int &x, const unsigned int &y);
+
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     //[General] cityDebug: Object layer "City" with the hole polygon of every town
     //and a ONE LINE label (name, size, level, type, style, hole, density, buildings)
