@@ -4,6 +4,10 @@ displayzone=false
 dominimap=false
 dotransition=true
 dovegetation=true
+; the map LABEL the terrain is written under: dest/map/main/<maincode>/. Spelled
+; out so the generator never has to add it back: this file is the one the build
+; directories link to, and a write-back would strip these comments.
+maincode=generated
 mapHeight=44
 mapWidth=44
 mapXCount=4

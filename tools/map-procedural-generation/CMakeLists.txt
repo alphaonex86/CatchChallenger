@@ -64,15 +64,15 @@ endif()
 # This is a target of its OWN, always built: a POST_BUILD command only runs when
 # the binary is relinked, so editing a template would never reach the build dir.
 set(CC_RUNTIME_STAGE_COMMANDS)
+# LINKED, not copied: the build directory then uses the very folders of the
+# sources, so a template edited on either side is the same file and a folder
+# deleted from the sources disappears here too. They were rm -rf'd and copied
+# again on every build, so nothing local can be lost by replacing that copy.
 foreach(runtimeDir template skin tileset)
-    # remove first: copy_directory MERGES, so a template folder deleted from the
-    # sources would stay forever in an old build directory and still be used
     list(APPEND CC_RUNTIME_STAGE_COMMANDS
-        COMMAND ${CMAKE_COMMAND} -E rm -rf
-                $<TARGET_FILE_DIR:map-procedural-generation>/${runtimeDir}
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-                ${CMAKE_CURRENT_LIST_DIR}/${runtimeDir}
-                $<TARGET_FILE_DIR:map-procedural-generation>/${runtimeDir})
+        COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/${runtimeDir}
+                -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation>/${runtimeDir}
+                -DREPLACE=1 -P ${CC_REPO_ROOT}/general/link-runtime.cmake)
 endforeach()
 # npc-slots.json is the REVIEWED npc line bank (git tracked): it is copied on
 # every build, so what the generator writes is what was validated in the repo.
@@ -80,18 +80,25 @@ foreach(runtimeFile cities.txt dialog.txt npc-slots.json informations.xml start.
                     minimap-1way.png minimap-2way1.png minimap-2way2.png
                     minimap-3way.png minimap-4way.png minimap-citybig.png
                     minimap-citymedium.png minimap-citysmall.png
-                    miniMapColor.png settings-reference.xml)
+                    miniMapColor.png)
     list(APPEND CC_RUNTIME_STAGE_COMMANDS
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 ${CMAKE_CURRENT_LIST_DIR}/${runtimeFile}
                 $<TARGET_FILE_DIR:map-procedural-generation>/${runtimeFile})
 endforeach()
-# settings.xml is EDITED in the build directory (the generator writes its
-# defaults back), so it is only seeded when absent
+# The config files are LINKED too, so there is ONE of each: editing the
+# checked-in settings.xml is editing what every build directory runs. Both hold
+# maincode already, so the write-back of the generator changes nothing in them.
+# settings.xml keeps an existing build-local file (it may hold local edits, the
+# cmake message says how to opt in); settings-reference.xml was overwritten on
+# every build anyway, so it is replaced.
 list(APPEND CC_RUNTIME_STAGE_COMMANDS
     COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/settings.xml
             -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation>/settings.xml
-            -P ${CMAKE_CURRENT_LIST_DIR}/copy-if-absent.cmake)
+            -P ${CC_REPO_ROOT}/general/link-runtime.cmake
+    COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/settings-reference.xml
+            -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation>/settings-reference.xml
+            -DREPLACE=1 -P ${CC_REPO_ROOT}/general/link-runtime.cmake)
 add_custom_target(map-procedural-generation-runtime ALL
     ${CC_RUNTIME_STAGE_COMMANDS}
     COMMENT "Staging template/ skin/ tileset/ and the inputs next to the binary")

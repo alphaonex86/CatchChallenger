@@ -30,6 +30,10 @@ dovegetation=true
 levelmapmax=50
 levelmapmin=2
 levelmapscale=0.05
+; the map LABEL written under dest/map/main/<maincode>/, spelled out so the
+; generator never writes it back into this linked file (it would strip the
+; comments above)
+maincode=generated
 mapHeight=40
 mapWidth=40
 mapXCount=64

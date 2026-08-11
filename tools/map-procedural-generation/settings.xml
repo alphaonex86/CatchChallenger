@@ -10,6 +10,10 @@ dovegetation=true
 levelmapmax=50
 levelmapmin=2
 levelmapscale=0.05
+; the map LABEL the world is written under: dest/map/main/<maincode>/. Spelled
+; out so the generator never has to add it back: this file is the one the build
+; directories link to, and a write-back would strip these comments.
+maincode=generated
 mapHeight=44
 mapWidth=44
 mapXCount=32

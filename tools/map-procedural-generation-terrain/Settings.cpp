@@ -21,8 +21,10 @@ void Settings::putDefaultSettings(QSettings &settings)
         settings.setValue("mapXCount",3);
     if(!settings.contains("mapYCount"))
         settings.setValue("mapYCount",3);
+    //400 is the seed of the shipped world: a config that does not name one gets
+    //that world, not a different one
     if(!settings.contains("seed"))
-        settings.setValue("seed",0);
+        settings.setValue("seed",400);
     if(!settings.contains("displayzone"))
         settings.setValue("displayzone",false);
     if(!settings.contains("dotransition"))
@@ -287,7 +289,7 @@ void Settings::populateSettings(QSettings &settings, Settings::Setting& config)
         std::cerr << "mapYCount not number into the config file" << std::endl;
         abort();
     }
-    config.seed=settings.value("seed").toUInt(&ok);
+    config.seed=settings.value("seed",400).toUInt(&ok);
     if(ok==false)
     {
         std::cerr << "seed not number into the config file" << std::endl;
