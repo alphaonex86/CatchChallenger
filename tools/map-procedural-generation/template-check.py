@@ -406,7 +406,7 @@ def check_objects(path, text, problems, warnings, fixes):
                 warnings.append((path, "skin not in skin/: " + props["skin"] +
                                  " (bot id " + props.get("id", "?") +
                                  ") - the generator remaps it to the role "
-                                 "skin of settings.xml"))
+                                 "skin of settings.ini"))
     for bot_id, count in seen_ids.items():
         if count > 1:
             warnings.append((path, "bot object id " + bot_id + " used " +

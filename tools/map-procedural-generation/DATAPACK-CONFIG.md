@@ -3,14 +3,14 @@
 The generator's config is datapack-specific: tileset paths, terrain/wall/floor/
 furniture tile indices, wild-monster ids, shop item ids and bot skins all depend
 on the target datapack. Pick the config with `--config <file>` (defaults to
-`settings.xml` next to the binary).
+`settings.ini` next to the binary).
 
 Two configs ship here:
 
 | datapack | config | status |
 |---|---|---|
-| `CatchChallenger-datapack` | `settings.xml` | complete (native) |
-| an external reference datapack | `settings-reference.xml` | **scaffold** — tile indices are best-guess, marked `; TODO tune` |
+| `CatchChallenger-datapack` | `settings.ini` | complete (native) |
+| an external reference datapack | `settings-reference.ini` | **scaffold** — tile indices are best-guess, marked `; TODO tune` |
 
 ## Bots / key buildings (`[building]` section)
 
@@ -32,7 +32,7 @@ side files any more.
 
 ## Run / staging
 
-The generator resolves `settings.xml` tileset paths relative to its CWD and the
+The generator resolves `settings.ini` tileset paths relative to its CWD and the
 bundled `template/*.tmx` reference tilesets as `../dest/map/tileset/<x>.tsx` (or
 `../../dest/map/tileset/<x>.tsx` for `building-*/floor-*.tmx`); output is written
 to `<binary dir>/dest/map/main/<maincode>/`. So the run dir must contain
@@ -41,14 +41,14 @@ Keep each datapack in its own run dir so their tilesets don't collide. Never
 write tilesets back into a source datapack tree (read-only).
 
 * **CatchChallenger-datapack**: copy `CatchChallenger-datapack/map/tileset/*` into
-  `<run>/dest/map/tileset/`, then run with `settings.xml`.
+  `<run>/dest/map/tileset/`, then run with `settings.ini`.
 * **an external reference datapack**: if its `.tsx` live flat in `map/` (not in
   a `tileset/` subdir), copy `map/*.tsx` + `*.png` into `<run>/dest/map/tileset/`,
-  then run with `--config settings-reference.xml`.
+  then run with `--config settings-reference.ini`.
 
 ## Reference-datapack tile indices — derived from its hand-authored maps
 
-`settings-reference.xml` tile indices were **decoded from that datapack's
+`settings-reference.ini` tile indices were **decoded from that datapack's
 hand-authored maps** (after running `datapack-tileset-deduplicate` on its `map/`
 to collapse duplicate tiles to a canonical one). The full per-layer decode lives
 with the dataset, outside this repo. Data-derived & confident: ground `tileset-1/1`,

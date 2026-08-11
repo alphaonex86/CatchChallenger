@@ -1,7 +1,7 @@
 # map-procedural-generation — TODO
 
 What is left to make the generated world better, split by who can do it. Every
-number here was measured on a full run (107 cities / 617 maps, `settings.xml` of
+number here was measured on a full run (107 cities / 617 maps, `settings.ini` of
 `build/release`), not estimated.
 
 State of the generator today: 617 maps, 652 teleports, **0 problem** from
