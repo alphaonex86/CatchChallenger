@@ -69,9 +69,9 @@ int main(int argc, char *argv[])
 
     //Optional "--config <path>" selects a per-datapack settings file so the same
     //binary can target different datapacks (each datapack needs its own tile
-    //indices / tileset paths / item & monster ids). Defaults to settings.xml next
-    //to the binary, preserving the previous behaviour.
-    QString settingsPath=QCoreApplication::applicationDirPath()+"/settings.xml";
+    //indices / tileset paths / item & monster ids). Defaults to settings.ini next
+    //to the binary.
+    QString settingsPath=QCoreApplication::applicationDirPath()+"/settings.ini";
     QString datapackPath;
     {
         const QStringList args=a.arguments();
@@ -93,51 +93,31 @@ int main(int argc, char *argv[])
             ai++;
         }
     }
+    //Run staging pool. "--datapack <dir>" goes FIRST so a datapack tileset always
+    //wins over the tool's own copy of the same file name; the tool's tileset/ then
+    //fills whatever is left, which is what lets a fresh clone build and generate
+    //with no argument at all.
     if(!datapackPath.isEmpty())
     {
-        const QDir source(datapackPath+"/map/tileset");
-        if(!source.exists())
+        if(!QDir(datapackPath+"/map/tileset").exists())
         {
             std::cerr << "No map/tileset/ in the datapack " << datapackPath.toStdString() << std::endl;
-            abort();
+            return 1;
         }
-        //map/tileset/ is the canonical datapack dir; map/main/tileset/ is the
-        //run-staging path the settings use
-        const QStringList destinations=QStringList()
-                <<(QCoreApplication::applicationDirPath()+"/dest/map/tileset/")
-                <<(QCoreApplication::applicationDirPath()+"/dest/map/main/tileset/");
-        const QStringList files=source.entryList(QDir::Files,QDir::Name);
-        int destinationIndex=0;
-        while(destinationIndex<destinations.size())
-        {
-            const QString &destination=destinations.at(destinationIndex);
-            if(!QDir().mkpath(destination))
-            {
-                std::cerr << "Unable to create " << destination.toStdString() << std::endl;
-                abort();
-            }
-            int fileIndex=0;
-            while(fileIndex<files.size())
-            {
-                const QString target=destination+files.at(fileIndex);
-                if(!QFile::exists(target))
-                {
-                    if(!QFile::copy(source.absoluteFilePath(files.at(fileIndex)),target))
-                    {
-                        std::cerr << "Unable to stage " << files.at(fileIndex).toStdString()
-                                  << " into " << destination.toStdString() << std::endl;
-                        abort();
-                    }
-                }
-                fileIndex++;
-            }
-            destinationIndex++;
-        }
-        std::cout << "Staged " << files.size() << " datapack tileset files into dest/map/tileset/" << std::endl;
+        if(!LoadMap::stageTilesetPool(datapackPath+"/map/tileset"))
+            return 1;
     }
+    if(!LoadMap::stageTilesetPool(QCoreApplication::applicationDirPath()+"/tileset"))
+        return 1;
     if(!QFile::exists(settingsPath))
-        QFile::copy(":/settings.xml",settingsPath);
-    QSettings settings(settingsPath,QSettings::NativeFormat);
+    {
+        std::cerr << "No settings file at " << settingsPath.toStdString()
+                  << " (build the map-procedural-generation-runtime target, or pass --config <file>)" << std::endl;
+        return 1;
+    }
+    //IniFormat, not NativeFormat: NativeFormat only means "ini file" on Unix — on
+    //Windows it is the system REGISTRY and the file would be silently ignored
+    QSettings settings(settingsPath,QSettings::IniFormat);
     //the label the world is written under, once, for every path below
     LoadMap::resolveMainCode(settings);
     std::cout << "Generating the map label \"" << LoadMap::mainCode().toStdString() << "\"" << std::endl;
@@ -179,7 +159,7 @@ int main(int argc, char *argv[])
     {
         //no <options> block here: the generator settings are neither read by the engine nor
         //useful to the player who receives this datapack, and they don't allow rebuilding
-        //another server either. The settings stay in settings.xml, next to the generator.
+        //another server either. The settings stay in settings.ini, next to the generator.
         QString content("<?xml version='1.0'?>\n"
                             "<informations color=\"#23c71f\">\n"
                             "    <name>Generated map</name>\n"
@@ -695,6 +675,11 @@ int main(int argc, char *argv[])
     //the npc lines that were generated, with their city context: npcfill.py
     //rewrites them with the local LLM (the datapack is already valid without it)
     LoadMapAll::writeNpcSlots(config);
+
+    //a tileset the staging pool holds but no generated map references only makes
+    //the next run slower and the folder confusing; the pool is refilled at startup
+    if(config.cleanTileset)
+        LoadMap::cleanTilesetPool();
 
     qDebug("Total time %lld ms", total.elapsed());
 

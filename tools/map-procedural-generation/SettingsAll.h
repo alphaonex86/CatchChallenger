@@ -16,6 +16,11 @@ public:
     {
         bool displaycity;
         bool displayregion;
+        //[General] cleanTileset: after the run, drop from the staging pool
+        //(dest/map/tileset/, dest/map/main/tileset/) every tileset no generated map
+        //references. The pool is refilled at each startup from the tool's own
+        //tileset/ and from --datapack, so this is never destructive.
+        bool cleanTileset;
         std::vector<std::string> citiesNames;
         float scale_City;
         bool doallmap;

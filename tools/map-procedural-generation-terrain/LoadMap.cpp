@@ -2,6 +2,8 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
+#include <QSet>
 #include <QCoreApplication>
 #include <QRegularExpression>
 #include <iostream>
@@ -101,6 +103,139 @@ QString LoadMap::pooledTileset(const QString &fileName)
     if(QFile::exists(mainPool))
         return mainPool;
     return QString();
+}
+
+//the two dirs of the run staging pool: dest/map/tileset/ is the canonical one,
+//dest/map/main/tileset/ is the path the "main/tileset/x.tsx" settings values use
+static QStringList tilesetPoolDirs()
+{
+    return QStringList()
+            <<(QCoreApplication::applicationDirPath()+"/dest/map/tileset/")
+            <<(QCoreApplication::applicationDirPath()+"/dest/map/main/tileset/");
+}
+
+bool LoadMap::stageTilesetPool(const QString &sourceDir)
+{
+    const QDir source(sourceDir);
+    if(!source.exists())
+        return true;//nothing to stage from, not an error: the pool may already be filled
+    const QStringList files=source.entryList(QDir::Files,QDir::Name);
+    const QStringList destinations=tilesetPoolDirs();
+    unsigned int staged=0;
+    int destinationIndex=0;
+    while(destinationIndex<destinations.size())
+    {
+        const QString &destination=destinations.at(destinationIndex);
+        if(!QDir().mkpath(destination))
+        {
+            std::cerr << "Unable to create " << destination.toStdString() << std::endl;
+            return false;
+        }
+        int fileIndex=0;
+        while(fileIndex<files.size())
+        {
+            const QString target=destination+files.at(fileIndex);
+            //never overwrite: the first stager wins, so --datapack keeps priority
+            //over the tilesets the tool ships itself
+            if(!QFile::exists(target))
+            {
+                if(!QFile::copy(source.absoluteFilePath(files.at(fileIndex)),target))
+                {
+                    std::cerr << "Unable to stage " << files.at(fileIndex).toStdString()
+                              << " into " << destination.toStdString() << std::endl;
+                    return false;
+                }
+                staged++;
+            }
+            fileIndex++;
+        }
+        destinationIndex++;
+    }
+    if(staged>0)
+        std::cout << "Staged " << staged << " tileset file(s) from "
+                  << source.absolutePath().toStdString() << " into the run pool" << std::endl;
+    return true;
+}
+
+//the image files a tsx references, by file NAME (they sit next to it)
+static QStringList tilesetImageNames(const QString &tsxPath)
+{
+    QStringList images;
+    QFile tsxFile(tsxPath);
+    if(!tsxFile.open(QFile::ReadOnly))
+        return images;
+    const QString content=QString::fromUtf8(tsxFile.readAll());
+    tsxFile.close();
+    int imageIndex=content.indexOf("<image source=\"");
+    while(imageIndex>=0)
+    {
+        const int start=imageIndex+(int)QString("<image source=\"").size();
+        const int end=content.indexOf("\"",start);
+        if(end>start)
+            images << QFileInfo(content.mid(start,end-start)).fileName();
+        imageIndex=content.indexOf("<image source=\"",imageIndex+1);
+    }
+    return images;
+}
+
+void LoadMap::cleanTilesetPool()
+{
+    //what the generated maps really reference is exactly what shipTileset() copied
+    //into the label; everything else in the pool was staged and never used
+    const QDir shipped(shippedTilesetDir());
+    if(!shipped.exists())
+    {
+        std::cerr << "cleanTileset: no " << shippedTilesetDir().toStdString()
+                  << ", the pool is left untouched" << std::endl;
+        return;
+    }
+    QSet<QString> keep;
+    const QStringList shippedFiles=shipped.entryList(QDir::Files,QDir::Name);
+    int shippedIndex=0;
+    while(shippedIndex<shippedFiles.size())
+    {
+        const QString &name=shippedFiles.at(shippedIndex);
+        keep.insert(name);
+        if(name.endsWith(".tsx"))
+        {
+            const QStringList images=tilesetImageNames(shipped.absoluteFilePath(name));
+            int imageIndex=0;
+            while(imageIndex<images.size())
+            {
+                keep.insert(images.at(imageIndex));
+                imageIndex++;
+            }
+        }
+        shippedIndex++;
+    }
+    unsigned int dropped=0;
+    const QStringList pools=tilesetPoolDirs();
+    int poolIndex=0;
+    while(poolIndex<pools.size())
+    {
+        const QDir pool(pools.at(poolIndex));
+        if(pool.exists())
+        {
+            const QStringList poolFiles=pool.entryList(QDir::Files,QDir::Name);
+            int fileIndex=0;
+            while(fileIndex<poolFiles.size())
+            {
+                const QString &name=poolFiles.at(fileIndex);
+                if(!keep.contains(name))
+                {
+                    if(QFile::remove(pool.absoluteFilePath(name)))
+                        dropped++;
+                    else
+                        std::cerr << "cleanTileset: unable to drop "
+                                  << pool.absoluteFilePath(name).toStdString() << std::endl;
+                }
+                fileIndex++;
+            }
+        }
+        poolIndex++;
+    }
+    std::cout << "cleanTileset: " << keep.size() << " file(s) used, " << dropped
+              << " dropped from the run pool" << std::endl;
 }
 
 bool LoadMap::copyTilesetWithImages(const QString &sourceTsx,const QString &destinationDir)

@@ -50,15 +50,26 @@ if(CC_LINKER)
     target_link_options(map-procedural-generation-terrain PRIVATE -fuse-ld=${CC_LINKER})
 endif()
 
-# The settings.xml of the build directory is a LINK to the checked-in one, so
-# there is ONE config: editing it here is editing what the build runs. It holds
-# maincode already, so the write-back of the generator changes nothing in it.
-# Its own target, always built, so a settings edit reaches the build directory
-# even when the binary is not relinked. An existing build-local settings.xml is
-# kept (see link-runtime.cmake).
+# Runtime data next to the binary, so a fresh build directory generates with no
+# manual copy: template/ and tileset/ are LINKED (one folder, editable on either
+# side), and the binary stages tileset/ into its own dest/map/tileset/ run pool
+# at startup. The settings.ini of the build directory is a LINK to the checked-in
+# one, so there is ONE config: editing it here is editing what the build runs. It
+# holds maincode already, so the write-back of the generator changes nothing in
+# it. Its own target, always built, so an edit reaches the build directory even
+# when the binary is not relinked. An existing build-local settings.ini is kept
+# (see link-runtime.cmake).
+set(CC_TERRAIN_RUNTIME_STAGE_COMMANDS)
+foreach(runtimeDir template tileset)
+    list(APPEND CC_TERRAIN_RUNTIME_STAGE_COMMANDS
+        COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/${runtimeDir}
+                -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation-terrain>/${runtimeDir}
+                -DREPLACE=1 -P ${CC_REPO_ROOT}/general/link-runtime.cmake)
+endforeach()
 add_custom_target(map-procedural-generation-terrain-runtime ALL
-    COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/settings.xml
-            -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation-terrain>/settings.xml
+    ${CC_TERRAIN_RUNTIME_STAGE_COMMANDS}
+    COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/settings.ini
+            -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation-terrain>/settings.ini
             -P ${CC_REPO_ROOT}/general/link-runtime.cmake
-    COMMENT "Linking settings.xml next to the binary")
+    COMMENT "Staging template/ tileset/ and settings.ini next to the binary")
 add_dependencies(map-procedural-generation-terrain-runtime map-procedural-generation-terrain)

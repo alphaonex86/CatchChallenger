@@ -77,6 +77,16 @@ public:
     //the run staging pool holding <fileName> (dest/map/tileset/, then the
     //dest/map/main/tileset/ the settings paths use), empty when neither has it
     static QString pooledTileset(const QString &fileName);
+    //Fill the run staging pool (dest/map/tileset/ + dest/map/main/tileset/) with
+    //every file of sourceDir, WITHOUT overwriting: whoever staged first wins, so a
+    //--datapack copy keeps priority over the tilesets the tool ships itself. This
+    //is what makes "clone, cmake, run" work with no argument at all. Returns false
+    //on an I/O error (the caller reports and stops), true when sourceDir is absent.
+    static bool stageTilesetPool(const QString &sourceDir);
+    //Delete from the run staging pool every tileset the generated maps do not
+    //reference ([General] cleanTileset). shippedTilesetDir() is the OUTPUT and is
+    //never touched here — only the pool dirs the next run would reuse.
+    static void cleanTilesetPool();
     //copy a tileset (the tsx and the images it references) into destinationDir
     static bool copyTilesetWithImages(const QString &sourceTsx,const QString &destinationDir);
     //ship a tileset next to the generated maps and return the absolute path of

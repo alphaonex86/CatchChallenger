@@ -87,17 +87,17 @@ foreach(runtimeFile cities.txt dialog.txt npc-slots.json informations.xml start.
                 $<TARGET_FILE_DIR:map-procedural-generation>/${runtimeFile})
 endforeach()
 # The config files are LINKED too, so there is ONE of each: editing the
-# checked-in settings.xml is editing what every build directory runs. Both hold
+# checked-in settings.ini is editing what every build directory runs. Both hold
 # maincode already, so the write-back of the generator changes nothing in them.
-# settings.xml keeps an existing build-local file (it may hold local edits, the
-# cmake message says how to opt in); settings-reference.xml was overwritten on
+# settings.ini keeps an existing build-local file (it may hold local edits, the
+# cmake message says how to opt in); settings-reference.ini was overwritten on
 # every build anyway, so it is replaced.
 list(APPEND CC_RUNTIME_STAGE_COMMANDS
-    COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/settings.xml
-            -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation>/settings.xml
+    COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/settings.ini
+            -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation>/settings.ini
             -P ${CC_REPO_ROOT}/general/link-runtime.cmake
-    COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/settings-reference.xml
-            -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation>/settings-reference.xml
+    COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/settings-reference.ini
+            -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation>/settings-reference.ini
             -DREPLACE=1 -P ${CC_REPO_ROOT}/general/link-runtime.cmake)
 add_custom_target(map-procedural-generation-runtime ALL
     ${CC_RUNTIME_STAGE_COMMANDS}

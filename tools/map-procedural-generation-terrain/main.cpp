@@ -2,6 +2,8 @@
 #include <QSettings>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QDir>
+#include <QCoreApplication>
 #include <iostream>
 
 #include <libtiled/mapwriter.h>
@@ -43,12 +45,26 @@ int main(int argc, char *argv[])
     a.setApplicationName(QStringLiteral("map-procedural-generation-terrain"));
     a.setApplicationVersion(QStringLiteral("1.0"));
 
-    if(!QFile::exists(QCoreApplication::applicationDirPath()+"/settings.xml"))
-        QFile::copy(":/settings.xml",QCoreApplication::applicationDirPath()+"/settings.xml");
-    QSettings settings(QCoreApplication::applicationDirPath()+"/settings.xml",QSettings::NativeFormat);
+    if(!QFile::exists(QCoreApplication::applicationDirPath()+"/settings.ini"))
+        QFile::copy(":/settings.ini",QCoreApplication::applicationDirPath()+"/settings.ini");
+    //IniFormat, not NativeFormat: NativeFormat only means "ini file" on Unix — on
+    //Windows it is the system REGISTRY and the file would be ignored
+    QSettings settings(QCoreApplication::applicationDirPath()+"/settings.ini",QSettings::IniFormat);
+    //the tool ships the tilesets it needs; stage them so a fresh build directory
+    //generates with no manual copy and no datapack at hand
+    if(!LoadMap::stageTilesetPool(QCoreApplication::applicationDirPath()+"/tileset"))
+        return 1;
     //the label the base terrain is written under, once, for every path below
     LoadMap::resolveMainCode(settings);
     std::cout << "Generating the map label \"" << LoadMap::mainCode().toStdString() << "\"" << std::endl;
+    //Created NOW, not at write time: the template tilesets are resolved as
+    //"<label dir>/../../tileset/x.tsx", and the kernel cannot walk ".." through a
+    //directory that does not exist yet, so every template load would fail.
+    if(!QDir().mkpath(LoadMap::destMainDir()))
+    {
+        std::cerr << "Unable to create " << LoadMap::destMainDir().toStdString() << std::endl;
+        return 1;
+    }
     Settings::putDefaultSettings(settings);
     Settings::Setting config;
     Settings::populateSettings(settings, config);
@@ -156,7 +172,12 @@ int main(int argc, char *argv[])
 
             tiledMap.setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
 
-            maprwriter.writeMap(&tiledMap,LoadMap::destMainDir()+"all.tmx");
+            if(!maprwriter.writeMap(&tiledMap,LoadMap::destMainDir()+"all.tmx"))
+            {
+                std::cerr << "Unable to write " << LoadMap::destMainDir().toStdString() << "all.tmx: "
+                          << maprwriter.errorString().toStdString() << std::endl;
+                return 1;
+            }
         }
         //do tmx split
     }
