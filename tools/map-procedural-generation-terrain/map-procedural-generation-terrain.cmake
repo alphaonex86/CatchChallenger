@@ -20,6 +20,7 @@ if(NOT TARGET map_procgen_terrain_lib)
         ${CMAKE_CURRENT_LIST_DIR}/znoise/cpp/Worley.cpp
         ${CMAKE_CURRENT_LIST_DIR}/VoronioForTiledMapTmx.cpp
         ${CMAKE_CURRENT_LIST_DIR}/LoadMap.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/TerrainShaper.cpp
         ${CMAKE_CURRENT_LIST_DIR}/TransitionTerrain.cpp
         ${CMAKE_CURRENT_LIST_DIR}/Settings.cpp
         ${CMAKE_CURRENT_LIST_DIR}/MapPlants.cpp

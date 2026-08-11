@@ -7,6 +7,7 @@
 #include <QPainter>
 
 #include "VoronioForTiledMapTmx.h"
+#include "TerrainShaper.h"
 #include <thread>
 #include <vector>
 #include <cmath>
@@ -31,6 +32,10 @@ static void miniMapNoiseRows(unsigned int y0,unsigned int y1,unsigned int destW,
             float yMap=(float)y*worldScale/miniMapDivisor;
             float height=heightmap->Get({xMap/100,yMap/100},noiseMapScaleMap);
             float moisure=moisuremap->Get({xMap/100,yMap/100},noiseMapScaleMoisure);
+            //same hook as the terrain itself, else this preview would show the raw
+            //noise while the map is drawn from a shaped one. xMap/yMap are scaled
+            //by worldScale (SCALE), the shaper works in world tiles.
+            TerrainShaper::active()->shape(xMap/worldScale,yMap/worldScale,height,moisure);
             height=(height+1.0)/2.0;
             moisure=(moisure+1.0)/2.0;
             unsigned int cx=floor(moisure*(mcW+0));

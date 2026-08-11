@@ -14,6 +14,7 @@
 #include <libtiled/mapobject.h>
 
 #include "../../general/base/cpp11addition.hpp"
+#include "TerrainShaper.h"
 
 extern std::vector<Tiled::SharedTileset> LoadMap_tilesets_hack;
 extern std::vector<std::unique_ptr<Tiled::Map>> LoadMap_map_hack;
@@ -552,8 +553,14 @@ void LoadMap::addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> >
         if(!edges.isEmpty())
         {
             //const QPointF &edge=edges.first();
-            const unsigned int &height=floatToHigh(heightmap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScaleMap));
-            const unsigned int &moisure=floatToMoisure(moisuremap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScaleMoisure));
+            float heightFloat=heightmap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScaleMap);
+            float moisureFloat=moisuremap.Get({(float)centroid.x()/100,(float)centroid.y()/100},noiseMapScaleMoisure);
+            //the grid is stored scaled by SCALE, the shaper works in world tiles
+            TerrainShaper::active()->shape((float)centroid.x()/(float)VoronioForTiledMapTmx::SCALE,
+                                           (float)centroid.y()/(float)VoronioForTiledMapTmx::SCALE,
+                                           heightFloat,moisureFloat);
+            const unsigned int height=floatToHigh(heightFloat);
+            const unsigned int moisure=floatToMoisure(moisureFloat);
             if(height==0)
             {
                 layerZoneWaterPolygon->addObject(objectPolygon);
@@ -596,6 +603,12 @@ void LoadMap::addTerrain(const Grid &grid,
             float yMap=(float)centroid.y();
             zone.heightFloat=heightmap.Get({xMap/100,yMap/100},noiseMapScaleMap);
             zone.moisureFloat=moisuremap.Get({xMap/100,yMap/100},noiseMapScaleMoisure);
+            //the ONE place a zone gets its terrain: a shaper may force it flat here.
+            //xMap/yMap come from the grid, stored scaled by SCALE; the shaper works
+            //in world tiles.
+            TerrainShaper::active()->shape(xMap/(float)VoronioForTiledMapTmx::SCALE,
+                                           yMap/(float)VoronioForTiledMapTmx::SCALE,
+                                           zone.heightFloat,zone.moisureFloat);
             zone.height=floatToHigh(zone.heightFloat);
             zone.moisure=floatToMoisure(zone.moisureFloat);
             Terrain &terrain=LoadMap::terrainList[zone.height][zone.moisure-1];

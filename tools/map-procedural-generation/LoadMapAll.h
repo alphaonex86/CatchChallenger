@@ -17,6 +17,8 @@
 #include <string>
 #include <cstdint>
 
+class TerrainFlattener;
+
 class LoadMapAll
 {
 public:
@@ -252,6 +254,15 @@ public:
                         const unsigned int &maxCityLinks, const unsigned int &cityRadius,
                         const Simplex &levelmap, const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax,
                         const Simplex &heightmap, const Simplex &moisuremap, const float &noiseMapScaleMoisure,const float &noiseMapScaleMap);
+    //Declare one FLAT zone per city to the terrain shaper: a town cut in half by
+    //two terrains looks wrong, so the height/moisure noise of its chunk is forced
+    //to the DOMINANT terrain already found there (water excluded, a town is on
+    //land) and ramps back to the natural noise outside over [city] flattenFalloff
+    //tiles. Every Voronoi zone painting inside the shape is bound to it, so no
+    //seam survives. Must run AFTER addCity (it needs the city list) and BEFORE the
+    //terrain is drawn.
+    static void addCityFlatZones(TerrainFlattener &flattener,const unsigned int worldWidth,const unsigned int worldHeight,
+                                 const SettingsAll::SettingsExtra &config);
     static bool haveCityEntryInternal(const std::unordered_map<uint32_t,std::unordered_map<uint32_t,CityInternal *> > &positionsAndIndex,
                               const unsigned int &x, const unsigned int &y);
     static bool haveCityEntry(const std::unordered_map<uint16_t, std::unordered_map<uint16_t, unsigned int> > &positionsAndIndex,

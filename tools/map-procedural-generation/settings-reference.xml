@@ -52,6 +52,11 @@ big\signTiles=
 medium\template=
 medium\useAsBase=false
 medium\signTiles=
+; a town sits on ONE terrain, the gradient restarts at its level outside
+flatten=true
+flattenShape=rectangle
+flattenMargin=0
+flattenFalloff=44
 
 [plants]
 ; tree-*.tmx templates reference CC tilesets internally -> wrong tree art here

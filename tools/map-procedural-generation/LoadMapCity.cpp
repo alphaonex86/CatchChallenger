@@ -2,6 +2,7 @@
 
 #include "../map-procedural-generation-terrain/LoadMap.h"
 #include "../map-procedural-generation-terrain/MapBrush.h"
+#include "TerrainFlattener.h"
 
 #include <libtiled/tileset.h>
 #include <libtiled/tile.h>
@@ -17,6 +18,131 @@
 #include <QDir>
 #include <QCoreApplication>
 #include <QDebug>
+
+void LoadMapAll::addCityFlatZones(TerrainFlattener &flattener,const unsigned int worldWidth,const unsigned int worldHeight,
+                                  const SettingsAll::SettingsExtra &config)
+{
+    flattener.setWorldSize(worldWidth,worldHeight);
+    if(VoronioForTiledMapTmx::voronoiMap.tileToPolygonZoneIndex==NULL)
+    {
+        std::cerr << "addCityFlatZones called before the voronoi map is computed" << std::endl;
+        abort();
+    }
+    unsigned int margin=config.cityFlattenMargin;
+    if(margin*2>=config.mapWidth || margin*2>=config.mapHeight)
+    {
+        std::cerr << "[city] flattenMargin " << margin << " eats the whole chunk, ignored" << std::endl;
+        margin=0;
+    }
+    unsigned int indexCity=0;
+    while(indexCity<cities.size())
+    {
+        const City &city=cities.at(indexCity);
+        const QRectF chunk(city.x*config.mapWidth+margin,city.y*config.mapHeight+margin,
+                           config.mapWidth-2*margin,config.mapHeight-2*margin);
+        //rectangle / circle / octagon are three ways to build ONE polygon
+        QPolygonF polygon;
+        if(config.cityFlattenShape=="circle")
+        {
+            float radius=chunk.width()/2.0;
+            if(chunk.height()/2.0<radius)
+                radius=chunk.height()/2.0;
+            polygon=TerrainFlattener::circlePolygon(chunk.center(),radius,32);
+        }
+        else
+        {
+            if(config.cityFlattenShape=="octagon")
+                polygon=TerrainFlattener::octagonPolygon(chunk,chunk.width()/4.0);
+            else
+                polygon=QPolygonF(chunk);
+        }
+        //the terrain the town already sits on: the band MOST of its cells have
+        //(band 0 is water, a town is not built on it), and the mean noise value of
+        //that band so the forced value stays inside it
+        unsigned int heightCount[5];
+        float heightSum[5];
+        unsigned int moisureCount[7];
+        float moisureSum[7];
+        unsigned int bandIndex=0;
+        while(bandIndex<5)
+        {
+            heightCount[bandIndex]=0;
+            heightSum[bandIndex]=0.0;
+            bandIndex++;
+        }
+        bandIndex=0;
+        while(bandIndex<7)
+        {
+            moisureCount[bandIndex]=0;
+            moisureSum[bandIndex]=0.0;
+            bandIndex++;
+        }
+        //every voronoi zone painting a cell of the shape: those are the ones that
+        //would cut the town, they must all take the flat value
+        std::unordered_set<unsigned int> paintingZones;
+        unsigned int tileY=city.y*config.mapHeight;
+        while(tileY<city.y*config.mapHeight+config.mapHeight)
+        {
+            unsigned int tileX=city.x*config.mapWidth;
+            while(tileX<city.x*config.mapWidth+config.mapWidth)
+            {
+                if(tileX<worldWidth && tileY<worldHeight
+                        && polygon.containsPoint(QPointF(tileX+0.5,tileY+0.5),Qt::OddEvenFill))
+                {
+                    const unsigned int zoneIndex=VoronioForTiledMapTmx::voronoiMap.tileToPolygonZoneIndex[tileX+tileY*worldWidth].index;
+                    const VoronioForTiledMapTmx::PolygonZone &zone=VoronioForTiledMapTmx::voronoiMap.zones.at(zoneIndex);
+                    paintingZones.insert(zoneIndex);
+                    if(zone.height<5)
+                    {
+                        heightCount[zone.height]++;
+                        heightSum[zone.height]+=zone.heightFloat;
+                    }
+                    if(zone.moisure<7)
+                    {
+                        moisureCount[zone.moisure]++;
+                        moisureSum[zone.moisure]+=zone.moisureFloat;
+                    }
+                }
+                tileX++;
+            }
+            tileY++;
+        }
+        //dominant land height band
+        unsigned int bestHeight=0;
+        bandIndex=1;
+        while(bandIndex<5)
+        {
+            if(heightCount[bandIndex]>0)
+                if(bestHeight==0 || heightCount[bandIndex]>heightCount[bestHeight])
+                    bestHeight=bandIndex;
+            bandIndex++;
+        }
+        unsigned int bestMoisure=0;
+        bandIndex=1;
+        while(bandIndex<7)
+        {
+            if(moisureCount[bandIndex]>0)
+                if(bestMoisure==0 || moisureCount[bandIndex]>moisureCount[bestMoisure])
+                    bestMoisure=bandIndex;
+            bandIndex++;
+        }
+        if(bestHeight==0 || bestMoisure==0)
+            std::cerr << "No land under the city " << city.name << ", left unflattened" << std::endl;
+        else
+        {
+            const float flatHeight=heightSum[bestHeight]/(float)heightCount[bestHeight];
+            const float flatMoisure=moisureSum[bestMoisure]/(float)moisureCount[bestMoisure];
+            const unsigned int flatIndex=flattener.addPolygon(polygon,flatHeight,flatMoisure,config.cityFlattenFalloff);
+            std::unordered_set<unsigned int>::const_iterator zoneIterator=paintingZones.cbegin();
+            while(zoneIterator!=paintingZones.cend())
+            {
+                flattener.bindZone(*zoneIterator,flatIndex);
+                ++zoneIterator;
+            }
+        }
+        indexCity++;
+    }
+}
 
 void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string &description, const MapBrush::MapTemplate &mapTemplatebuilding, Tiled::Map &worldMap,
                                   const uint32_t &x, const uint32_t &y, const unsigned int mapWidth, const unsigned int mapHeight,

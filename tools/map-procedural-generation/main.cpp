@@ -24,6 +24,7 @@
 #include "LoadMapAll.h"
 #include "PartialMap.h"
 #include "MiniMapAll.h"
+#include "TerrainFlattener.h"
 
 
 // A hack to keep all smart pointers alive during the whole program lifetime
@@ -226,36 +227,60 @@ int main(int argc, char *argv[])
         qDebug("computeVoronoi took %lld ms", t.elapsed());
 
         Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth,totalHeight,16,16);
+        //stays alive as long as the map: it is installed as the terrain shaper and
+        //every later terrain sample (vegetation, minimap) goes through it
+        TerrainFlattener cityFlattener;
         {
             QHash<QString,Tiled::Tileset *> cachedTileset;
             LoadMap::addTerrainLayer(tiledMap,config.dotransition);
             LoadMap::loadAllTileset(cachedTileset,tiledMap);
 
-            Tiled::ObjectGroup *layerObject=new Tiled::ObjectGroup("Object",0,0); // ObjectGroup contructor no longer accept width and height 
+            Tiled::ObjectGroup *layerObject=new Tiled::ObjectGroup("Object",0,0); // ObjectGroup contructor no longer accept width and height
             tiledMap.addLayer(layerObject);
 
-            if(config.displayzone)
             {
-                std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainPolygon;
-                Tiled::ObjectGroup *layerZoneWaterPolygon=LoadMap::addDebugLayer(tiledMap,arrayTerrainPolygon,true);
-                std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainTile;
-                Tiled::ObjectGroup *layerZoneWaterTile=LoadMap::addDebugLayer(tiledMap,arrayTerrainTile,false);
-                LoadMap::addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,
-                                            VoronioForTiledMapTmx::voronoiMap,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
-                                            tiledMap.width(),tiledMap.height());
-            }
-            {
+                t.start();
+                //FIRST terrain pass, nothing drawn: the city picker only needs the
+                //per zone height, to know how much land a chunk has
+                LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
+                                    tiledMap.width(),tiledMap.height(),0,0,false);
+                LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
+                                    tiledMap.width(),tiledMap.height(),0,0,false);
+                qDebug("Add terrain took %lld ms", t.elapsed());
+                t.start();
+                LoadMapAll::addCity(tiledMap,gridCity,config.citiesNames,config.mapXCount,config.mapYCount,config.maxCityLinks,config.cityRadius,
+                                    levelmap,config.levelmapscale,config.levelmapmin,config.levelmapmax,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap);
+                qDebug("place cities took %lld ms", t.elapsed());
+                //Now that the towns are known, FLATTEN the terrain under each of
+                //them and sample the terrain AGAIN, this time drawing it: a town cut
+                //in half by two terrains looks wrong, and the gradient restarting at
+                //the town level keeps the mountain wall away from its border.
+                if(config.cityFlatten)
+                {
+                    t.start();
+                    LoadMapAll::addCityFlatZones(cityFlattener,tiledMap.width(),tiledMap.height(),config);
+                    TerrainShaper::setActive(&cityFlattener);
+                    qDebug("flatten %u cities took %lld ms", cityFlattener.size(), t.elapsed());
+                }
                 t.start();
                 LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
                                     tiledMap.width(),tiledMap.height());
                 LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
                                     tiledMap.width(),tiledMap.height(),0,0,false);
-                qDebug("Add terrain took %lld ms", t.elapsed());
+                qDebug("Draw terrain took %lld ms", t.elapsed());
                 MapBrush::initialiseMapMask(tiledMap);
-                t.start();
-                LoadMapAll::addCity(tiledMap,gridCity,config.citiesNames,config.mapXCount,config.mapYCount,config.maxCityLinks,config.cityRadius,
-                                    levelmap,config.levelmapscale,config.levelmapmin,config.levelmapmax,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap);
-                qDebug("place cities took %lld ms", t.elapsed());
+                //the debug zone overlay must show the terrain that was DRAWN, so it
+                //comes after the flattening pass
+                if(config.displayzone)
+                {
+                    std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainPolygon;
+                    Tiled::ObjectGroup *layerZoneWaterPolygon=LoadMap::addDebugLayer(tiledMap,arrayTerrainPolygon,true);
+                    std::vector<std::vector<Tiled::ObjectGroup *> > arrayTerrainTile;
+                    Tiled::ObjectGroup *layerZoneWaterTile=LoadMap::addDebugLayer(tiledMap,arrayTerrainTile,false);
+                    LoadMap::addPolygoneTerrain(arrayTerrainPolygon,layerZoneWaterPolygon,arrayTerrainTile,layerZoneWaterTile,grid,
+                                                VoronioForTiledMapTmx::voronoiMap,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
+                                                tiledMap.width(),tiledMap.height());
+                }
                 if(config.dotransition)
                 {
 

@@ -64,6 +64,16 @@ public:
         //picked per city for all its signs. Empty list = no signs.
         std::vector<std::string> cityBigSignTiles;
         std::vector<std::string> cityMediumSignTiles;
+        //[city] flatten*: the height/moisure noise under a town is forced to its
+        //DOMINANT terrain, so a city is never cut in half by two terrains, then it
+        //ramps back to the natural noise over flattenFalloff tiles - the gradient
+        //restarts at the town level, so no mountain wall lands against the border.
+        //flattenShape: "rectangle" (the whole chunk), "circle" or "octagon"; all
+        //three are built as a polygon. flattenMargin shrinks the shape in tiles.
+        bool cityFlatten;
+        QString cityFlattenShape;
+        unsigned int cityFlattenMargin;
+        float cityFlattenFalloff;
 
         //[road] cave\*: percent of road chunks turned into a cave. The overworld
         //keeps its NATURAL terrain — only a small pocket + the cave mouth
