@@ -248,6 +248,27 @@ public:
     };
     static std::vector<BuildingRect> cityBuildingRects;
 
+    //Re-seed rand() for a CHUNK-LOCAL pass, from the world seed and the chunk
+    //coordinates. Every chunk then draws from its OWN stream: changing how many
+    //random numbers one chunk consumes (a new feature, a reordered block) can no
+    //longer shift the content of every other chunk of the world, so a diff stays
+    //readable and a regression stays local.
+    //ONLY for passes whose result depends on that chunk alone. The height /
+    //moisure / voronoi noise is global by construction and keeps the single
+    //global sequence — reseeding it per chunk would tile the world.
+    //pass distinguishes the successive passes over the same chunk, so pass N+1
+    //does not replay the numbers pass N already drew.
+    enum ChunkPass : uint8_t
+    {
+        ChunkPass_roadContent=1,//generateRoadContent: zones, buildings, caves plan
+        ChunkPass_roadPaint=2,//addRoadContent: ground paint, ledges, bots
+        ChunkPass_townsfolk=3,//addCityTownsfolk
+        ChunkPass_caveInterior=4,//writeCaveInterior
+        ChunkPass_chunkBots=5//emitRoadBotsForChunk
+    };
+    static void seedChunk(const unsigned int &seed, const unsigned int &chunkX, const unsigned int &chunkY,
+                          const ChunkPass &pass);
+
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
                         const unsigned int &mapXCount, const unsigned int &mapYCount,
