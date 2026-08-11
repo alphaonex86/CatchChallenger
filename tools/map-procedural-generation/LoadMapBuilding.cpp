@@ -548,15 +548,30 @@ void LoadMapAll::scanBuildingTemplates(Tiled::Map &worldMap,const unsigned int m
     //stage every tileset the templates use into the generated datapack, so a
     //written map never references a tsx that is not shipped with it
     {
-        const QStringList groups=templateDir.entryList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
-        int groupIndex=0;
-        while(groupIndex<groups.size())
+        //QDirIterator walks in FILESYSTEM order, which is not the same in two
+        //copies of the same folder: sort, else the staging order - and with it
+        //every firstgid, so every tile id written in the world - depends on the
+        //layout of the disk, and the same seed gives a different world on another
+        //machine. The precheck above sorts for the same reason.
+        std::vector<QString> tmxPaths;
         {
-            QDirIterator tmxIterator(templateDir.absoluteFilePath(groups.at(groupIndex)),
-                                     QStringList("*.tmx"),QDir::Files,QDirIterator::Subdirectories);
-            while(tmxIterator.hasNext())
+            const QStringList groups=templateDir.entryList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+            int groupIndex=0;
+            while(groupIndex<groups.size())
             {
-                const QString tmxPath=tmxIterator.next();
+                QDirIterator tmxIterator(templateDir.absoluteFilePath(groups.at(groupIndex)),
+                                         QStringList("*.tmx"),QDir::Files,QDirIterator::Subdirectories);
+                while(tmxIterator.hasNext())
+                    tmxPaths.push_back(tmxIterator.next());
+                groupIndex++;
+            }
+        }
+        std::sort(tmxPaths.begin(),tmxPaths.end());
+        unsigned int tmxIndex=0;
+        while(tmxIndex<tmxPaths.size())
+        {
+            {
+                const QString tmxPath=tmxPaths.at(tmxIndex);
                 QFile tmxFile(tmxPath);
                 if(!tmxFile.open(QFile::ReadOnly))
                 {
@@ -587,7 +602,7 @@ void LoadMapAll::scanBuildingTemplates(Tiled::Map &worldMap,const unsigned int m
                     sourceIndex=content.indexOf("<tileset firstgid=",sourceIndex+1);
                 }
             }
-            groupIndex++;
+            tmxIndex++;
         }
     }
     const QStringList groups=templateDir.entryList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
