@@ -49,3 +49,16 @@ set_target_properties(map-procedural-generation-terrain PROPERTIES
 if(CC_LINKER)
     target_link_options(map-procedural-generation-terrain PRIVATE -fuse-ld=${CC_LINKER})
 endif()
+
+# The settings.xml of the build directory is a LINK to the checked-in one, so
+# there is ONE config: editing it here is editing what the build runs. It holds
+# maincode already, so the write-back of the generator changes nothing in it.
+# Its own target, always built, so a settings edit reaches the build directory
+# even when the binary is not relinked. An existing build-local settings.xml is
+# kept (see link-runtime.cmake).
+add_custom_target(map-procedural-generation-terrain-runtime ALL
+    COMMAND ${CMAKE_COMMAND} -DSOURCE=${CMAKE_CURRENT_LIST_DIR}/settings.xml
+            -DDESTINATION=$<TARGET_FILE_DIR:map-procedural-generation-terrain>/settings.xml
+            -P ${CC_REPO_ROOT}/general/link-runtime.cmake
+    COMMENT "Linking settings.xml next to the binary")
+add_dependencies(map-procedural-generation-terrain-runtime map-procedural-generation-terrain)
