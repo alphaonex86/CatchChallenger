@@ -248,8 +248,10 @@ int main(int argc, char *argv[])
                                     tiledMap.width(),tiledMap.height(),0,0,false);
                 qDebug("Add terrain took %lld ms", t.elapsed());
                 t.start();
+                //the terrain a road takes its wild monsters from is read from the
+                //voronoi zones, not sampled again from the noise
                 LoadMapAll::addCity(tiledMap,gridCity,config.citiesNames,config.mapXCount,config.mapYCount,config.maxCityLinks,config.cityRadius,
-                                    levelmap,config.levelmapscale,config.levelmapmin,config.levelmapmax,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap);
+                                    levelmap,config.levelmapscale,config.levelmapmin,config.levelmapmax);
                 qDebug("place cities took %lld ms", t.elapsed());
                 //Now that the towns are known, FLATTEN the terrain under each of
                 //them and sample the terrain AGAIN, this time drawing it: a town cut

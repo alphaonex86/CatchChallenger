@@ -252,8 +252,7 @@ public:
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
                         const unsigned int &mapXCount, const unsigned int &mapYCount,
                         const unsigned int &maxCityLinks, const unsigned int &cityRadius,
-                        const Simplex &levelmap, const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax,
-                        const Simplex &heightmap, const Simplex &moisuremap, const float &noiseMapScaleMoisure,const float &noiseMapScaleMap);
+                        const Simplex &levelmap, const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax);
     //Declare one FLAT zone per city to the terrain shaper: a town cut in half by
     //two terrains looks wrong, so the height/moisure noise of its chunk is forced
     //to the DOMINANT terrain already found there (water excluded, a town is on

@@ -191,8 +191,7 @@ std::string LoadMapAll::orientationToString(const Orientation &orientation)
 void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
                          const unsigned int &mapXCount, const unsigned int &mapYCount,
                          const unsigned int &maxCityLinks, const unsigned int &cityRadius, const Simplex &levelmap,
-                         const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax,
-                         const Simplex &heightmap, const Simplex &moisuremap, const float &noiseMapScaleMoisure, const float &noiseMapScaleMap)
+                         const float &levelmapscale, const unsigned int &levelmapmin, const unsigned int &levelmapmax)
 {
     if(grid.empty())
         return;
@@ -979,16 +978,27 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
 
             //for now fixed number of monster
             const unsigned int numberOfMonster=5;
-            //to fine grass use: VoronioForTiledMapTmx::voronoiMap;
-            //but to do simpler, do height,moisure by map, not 4x4
-            const unsigned int &height=LoadMap::floatToHigh(heightmap.Get({(float)x/100,(float)y/100},noiseMapScaleMap));
-            const unsigned int &moisure=LoadMap::floatToMoisure(moisuremap.Get({(float)x,(float)y/100},noiseMapScaleMoisure));
+            //The wild monsters of a road must match the terrain the player walks on,
+            //so take the terrain of the voronoi zone at the CENTRE of that chunk:
+            //the very zone the chunk is painted from. Re-sampling the noise here is
+            //a trap and was wrong: x and y are CHUNK indices while the terrain
+            //samples world tiles scaled by VoronioForTiledMapTmx::SCALE, so it read
+            //a completely different place of the noise - and the moisure sample was
+            //missing its /100 on x on top of that.
+            const unsigned int centerX=x*singleMapWitdh+singleMapWitdh/2;
+            const unsigned int centerY=y*singleMapHeight+singleMapHeight/2;
+            const VoronioForTiledMapTmx::PolygonZone &centerZone=
+                    VoronioForTiledMapTmx::voronoiMap.zones.at(
+                        VoronioForTiledMapTmx::voronoiMap.tileToPolygonZoneIndex[centerX+centerY*worldMap.width()].index);
+            const unsigned int height=centerZone.height;
+            //moisure is 1-6, terrainList is indexed 0-5 like everywhere else
+            const unsigned int moisureIndex=centerZone.moisure-1;
             //take the monster list and clean it
             std::map<unsigned int,std::vector<LoadMap::TerrainMonster> > terrainMonsterMap;
             std::map<unsigned int,std::vector<LoadMap::TerrainMonster> > terrainMonsterMapBack;
             //keep the higthest number with the percent at more than 30%
             unsigned int hightestLuck=0;
-            for(const auto& z:LoadMap::terrainList[height][moisure].terrainMonsters)
+            for(const auto& z:LoadMap::terrainList[height][moisureIndex].terrainMonsters)
             {
                 const unsigned int luckWeight=z.first;
                 if(hightestLuck<luckWeight)
@@ -1014,7 +1024,7 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                 }
             }
             //drop if current spawn rate on populated map is > rate
-            for(const auto& z:LoadMap::terrainList[height][moisure].terrainMonsters)
+            for(const auto& z:LoadMap::terrainList[height][moisureIndex].terrainMonsters)
             {
                 const unsigned int luckWeight=z.first;
                 std::vector<LoadMap::TerrainMonster> monsters=z.second;
