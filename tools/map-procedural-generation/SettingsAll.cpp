@@ -338,6 +338,24 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     mountain.tsx = settings.value("mountain_tsx").toString();
     LoadMapAll::mountain = mountain;
     settings.endGroup();
+
+    //[road] level, NOT [road] region\: this is about the whole chunk
+    config.roadExtraSpacePercentMin=settings.value("extraSpacePercentMin",8).toUInt();
+    config.roadExtraSpacePercentMax=settings.value("extraSpacePercentMax",65).toUInt();
+    config.roadExtraSpacePercentVariance=settings.value("extraSpacePercentVariance",100).toUInt();
+    if(config.roadExtraSpacePercentMin>100)
+        config.roadExtraSpacePercentMin=100;
+    if(config.roadExtraSpacePercentMax>100)
+        config.roadExtraSpacePercentMax=100;
+    if(config.roadExtraSpacePercentMax<config.roadExtraSpacePercentMin)
+    {
+        std::cerr << "[road] extraSpacePercentMax " << config.roadExtraSpacePercentMax
+                  << " is below extraSpacePercentMin " << config.roadExtraSpacePercentMin
+                  << ", using the min for both" << std::endl;
+        config.roadExtraSpacePercentMax=config.roadExtraSpacePercentMin;
+    }
+    if(config.roadExtraSpacePercentVariance>100)
+        config.roadExtraSpacePercentVariance=100;
     settings.endGroup();
 
     settings.beginGroup("building");

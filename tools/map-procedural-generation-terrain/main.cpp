@@ -47,9 +47,24 @@ int main(int argc, char *argv[])
 
     if(!QFile::exists(QCoreApplication::applicationDirPath()+"/settings.ini"))
         QFile::copy(":/settings.ini",QCoreApplication::applicationDirPath()+"/settings.ini");
+    //Work on a COPY: QSettings rewrites the whole file when putDefaultSettings
+    //adds a key it does not have yet, and that strips every comment out of the
+    //operator's config. The generator reads the settings, it never edits them.
+    const QString settingsRunPath=QCoreApplication::applicationDirPath()+"/settings-run.ini";
+    if(QFile::exists(settingsRunPath))
+        if(!QFile::remove(settingsRunPath))
+        {
+            std::cerr << "Unable to replace " << settingsRunPath.toStdString() << std::endl;
+            return 1;
+        }
+    if(!QFile::copy(QCoreApplication::applicationDirPath()+"/settings.ini",settingsRunPath))
+    {
+        std::cerr << "Unable to copy settings.ini to " << settingsRunPath.toStdString() << std::endl;
+        return 1;
+    }
     //IniFormat, not NativeFormat: NativeFormat only means "ini file" on Unix — on
     //Windows it is the system REGISTRY and the file would be ignored
-    QSettings settings(QCoreApplication::applicationDirPath()+"/settings.ini",QSettings::IniFormat);
+    QSettings settings(settingsRunPath,QSettings::IniFormat);
     //the tool ships the tilesets it needs; stage them so a fresh build directory
     //generates with no manual copy and no datapack at hand
     if(!LoadMap::stageTilesetPool(QCoreApplication::applicationDirPath()+"/tileset"))
