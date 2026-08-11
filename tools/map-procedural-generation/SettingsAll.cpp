@@ -17,6 +17,8 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
         settings.setValue("displayregion",false);
     if(!settings.contains("cleanTileset"))
         settings.setValue("cleanTileset",true);
+    if(!settings.contains("cityDebug"))
+        settings.setValue("cityDebug",false);
     if(!settings.contains("scale_City"))
         settings.setValue("scale_City",1.0);
     if(!settings.contains("doallmap"))
@@ -41,22 +43,35 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
         settings.setValue("flattenMargin",0);
     if(!settings.contains("flattenFalloff"))
         settings.setValue("flattenFalloff",44);
-    settings.beginGroup("big");
-    if(!settings.contains("template"))
-        settings.setValue("template","city-big");
-    if(!settings.contains("useAsBase"))
-        settings.setValue("useAsBase",false);
-    if(!settings.contains("signTiles"))
-        settings.setValue("signTiles","");
-    settings.endGroup();
-    settings.beginGroup("medium");
-    if(!settings.contains("template"))
-        settings.setValue("template","city-medium");
-    if(!settings.contains("useAsBase"))
-        settings.setValue("useAsBase",false);
-    if(!settings.contains("signTiles"))
-        settings.setValue("signTiles","");
-    settings.endGroup();
+    {
+        //index 0 small, 1 medium, 2 big — the CityType order
+        static const char * const sizeGroup[3]={"small","medium","big"};
+        static const char * const sizeTemplate[3]={"city-small","city-medium","city-big"};
+        //a small town laid out over the whole chunk read as an empty field: it gets
+        //a smaller hole, a denser packing and fewer buildings than a capital
+        static const unsigned int sizeHolePercent[3]={55,75,100};
+        static const unsigned int sizeDensityPercent[3]={45,40,35};
+        static const unsigned int sizeMinBuilding[3]={2,4,6};
+        unsigned int sizeIndex=0;
+        while(sizeIndex<3)
+        {
+            settings.beginGroup(sizeGroup[sizeIndex]);
+            if(!settings.contains("template"))
+                settings.setValue("template",sizeTemplate[sizeIndex]);
+            if(!settings.contains("useAsBase"))
+                settings.setValue("useAsBase",false);
+            if(!settings.contains("signTiles"))
+                settings.setValue("signTiles","");
+            if(!settings.contains("holePercent"))
+                settings.setValue("holePercent",sizeHolePercent[sizeIndex]);
+            if(!settings.contains("densityPercent"))
+                settings.setValue("densityPercent",sizeDensityPercent[sizeIndex]);
+            if(!settings.contains("minBuilding"))
+                settings.setValue("minBuilding",sizeMinBuilding[sizeIndex]);
+            settings.endGroup();
+            sizeIndex++;
+        }
+    }
     settings.endGroup();
 
     settings.beginGroup("road");
@@ -194,6 +209,7 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.displaycity=settings.value("displaycity").toBool();
     config.displayregion=settings.value("displayregion").toBool();
     config.cleanTileset=settings.value("cleanTileset",true).toBool();
+    config.cityDebug=settings.value("cityDebug",false).toBool();
     config.scale_City=settings.value("scale_City").toFloat();
     config.doallmap=settings.value("doallmap").toBool();
     config.maxCityLinks=settings.value("maxCityLinks").toUInt();
@@ -216,38 +232,54 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.cityFlattenFalloff=settings.value("flattenFalloff",44).toFloat();
     if(config.cityFlattenFalloff<0)
         config.cityFlattenFalloff=0;
-    settings.beginGroup("big");
-    config.cityBigTemplate=settings.value("template","city-big").toString();
-    config.cityBigUseAsBase=settings.value("useAsBase",false).toBool();
-    config.cityBigSignTiles.clear();
     {
-        const QStringList signList=settings.value("signTiles","").toString().split(",");
-        unsigned int indexSign=0;
-        while(indexSign<(unsigned int)signList.size())
+        static const char * const sizeGroup[3]={"small","medium","big"};
+        static const char * const sizeTemplate[3]={"city-small","city-medium","city-big"};
+        static const unsigned int sizeHolePercent[3]={55,75,100};
+        static const unsigned int sizeDensityPercent[3]={45,40,35};
+        static const unsigned int sizeMinBuilding[3]={2,4,6};
+        unsigned int sizeIndex=0;
+        while(sizeIndex<3)
         {
-            const std::string signTile=signList.at(indexSign).trimmed().toStdString();
-            if(!signTile.empty())
-                config.cityBigSignTiles.push_back(signTile);
-            indexSign++;
+            SettingsExtra::CitySize &citySize=config.citySize[sizeIndex];
+            settings.beginGroup(sizeGroup[sizeIndex]);
+            citySize.templateName=settings.value("template",sizeTemplate[sizeIndex]).toString();
+            citySize.useAsBase=settings.value("useAsBase",false).toBool();
+            citySize.signTiles.clear();
+            {
+                const QStringList signList=settings.value("signTiles","").toString().split(",");
+                unsigned int indexSign=0;
+                while(indexSign<(unsigned int)signList.size())
+                {
+                    const std::string signTile=signList.at(indexSign).trimmed().toStdString();
+                    if(!signTile.empty())
+                        citySize.signTiles.push_back(signTile);
+                    indexSign++;
+                }
+            }
+            citySize.holePercent=settings.value("holePercent",sizeHolePercent[sizeIndex]).toUInt();
+            //below ~20% of the chunk not even the heal center fits; above 100 is
+            //the whole chunk anyway (the hole is clamped to the vegetation ring)
+            if(citySize.holePercent<20 || citySize.holePercent>100)
+            {
+                std::cerr << "[city] " << sizeGroup[sizeIndex] << "\\holePercent "
+                          << citySize.holePercent << " is out of 20..100, using "
+                          << sizeHolePercent[sizeIndex] << std::endl;
+                citySize.holePercent=sizeHolePercent[sizeIndex];
+            }
+            citySize.densityPercent=settings.value("densityPercent",sizeDensityPercent[sizeIndex]).toUInt();
+            if(citySize.densityPercent<1 || citySize.densityPercent>100)
+            {
+                std::cerr << "[city] " << sizeGroup[sizeIndex] << "\\densityPercent "
+                          << citySize.densityPercent << " is out of 1..100, using "
+                          << sizeDensityPercent[sizeIndex] << std::endl;
+                citySize.densityPercent=sizeDensityPercent[sizeIndex];
+            }
+            citySize.minBuilding=settings.value("minBuilding",sizeMinBuilding[sizeIndex]).toUInt();
+            settings.endGroup();
+            sizeIndex++;
         }
     }
-    settings.endGroup();
-    settings.beginGroup("medium");
-    config.cityMediumTemplate=settings.value("template","city-medium").toString();
-    config.cityMediumUseAsBase=settings.value("useAsBase",false).toBool();
-    config.cityMediumSignTiles.clear();
-    {
-        const QStringList signList=settings.value("signTiles","").toString().split(",");
-        unsigned int indexSign=0;
-        while(indexSign<(unsigned int)signList.size())
-        {
-            const std::string signTile=signList.at(indexSign).trimmed().toStdString();
-            if(!signTile.empty())
-                config.cityMediumSignTiles.push_back(signTile);
-            indexSign++;
-        }
-    }
-    settings.endGroup();
     settings.endGroup();
 
     settings.beginGroup("road");

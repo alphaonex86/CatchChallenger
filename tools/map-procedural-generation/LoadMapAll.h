@@ -226,8 +226,30 @@ public:
         Tiled::Cell border[3][3];//[y][x], center unused
         bool valid;
     };
-    static CityGround cityGroundBig;
-    static CityGround cityGroundMedium;
+    //one avenue ground per city SIZE (index = CityType)
+    static CityGround cityGround[3];
+    //The HOLE a town is laid out in: the centered part of its chunk that holds the
+    //avenue and every building, in chunk-local tiles. Everything outside stays
+    //natural terrain and keeps its vegetation, which is what makes a small town
+    //read as a town instead of a building lost in an empty field.
+    //Pure function of the city size and the settings, so every pass (placement,
+    //vegetation mask, debug overlay) agrees without storing anything.
+    struct CityHole
+    {
+        unsigned int x,y,width,height;
+    };
+    static CityHole cityHole(const CityType &type,const unsigned int &mapWidth,const unsigned int &mapHeight,
+                             const SettingsAll::SettingsExtra &setting);
+    //Mark every city hole in MapBrush::mapMask, right after the mask is created and
+    //BEFORE the terrain transitions run. That one mask drives three passes: the
+    //outer-border pass then draws no mountain COLLISION ridge across the town
+    //square (which is what refused every building lot), the transition pass leaves
+    //the flattened ground alone, and the vegetation pass plants no tree inside.
+    //Outside the hole nothing is masked, so the town keeps its natural tree frame.
+    static void maskCityHoles(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting);
+    //tiles of vegetation kept between the hole and the chunk border, always
+    //(a town with trees right up against its border reads as a clearing)
+    static const unsigned int cityHoleBorderRing=5;
     //city sign cells: re-asserted AFTER vegetation so a tree canopy (WalkBehind)
     //or any later decoration can never hide a sign
     struct CitySign
@@ -270,6 +292,13 @@ public:
                           const ChunkPass &pass);
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
+    //[General] cityDebug: Object layer "City" with the hole polygon of every town
+    //and a ONE LINE label (name, size, level, type, style, hole, density, buildings)
+    static void addDebugCityLimits(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting);
+    //buildings really placed in each city, filled by the city pass, read by the
+    //debug overlay (index = city index)
+    static std::vector<unsigned int> cityBuildingCount;
+    static std::vector<unsigned int> cityBuildingArea;
     static void addCity(Tiled::Map &worldMap, const Grid &grid, const std::vector<std::string> &citiesNames,
                         const unsigned int &mapXCount, const unsigned int &mapYCount,
                         const unsigned int &maxCityLinks, const unsigned int &cityRadius,
