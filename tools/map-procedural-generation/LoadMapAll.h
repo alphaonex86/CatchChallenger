@@ -13,6 +13,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <map>
+#include <set>
 #include <vector>
 #include <string>
 #include <cstdint>
@@ -229,6 +230,31 @@ public:
     static void loadCityStyleOverrides();
     //the forced style of a city, empty when the file has no line for it
     static std::string cityStyleOverride(const std::string &cityName);
+    //template/on-<terrain>/<name>/ : a DECORATION brushed on the terrain it is
+    //named after, as often as its OWN how-use.ini says (per variant, not per
+    //group). <terrain> is a [terrain] name — on-grass, on-water, on-mountain,
+    //on-sand, on-snow... — or "cave" for the floor of a cave interior. It is NOT
+    //a building: no door is wired, no interior is written, it is only brushed.
+    //Discovered on disk like everything else, nothing to declare.
+    struct DecorationVariant
+    {
+        std::string folder;//"on-grass/flower1"
+        MapBrush::MapTemplate mapTemplate;
+        TemplateUse use;
+    };
+    struct DecorationGroup
+    {
+        std::string terrain;//"grass", "water", "cave"...
+        std::vector<DecorationVariant> variants;
+    };
+    static std::vector<DecorationGroup> decorationGroups;
+    static void scanDecorationTemplates(Tiled::Map &worldMap,const unsigned int mapWidth,const unsigned int mapHeight);
+    //brush the decorations of every chunk, on the cells whose terrain matches.
+    //Runs BEFORE the vegetation so a decoration can mask the trees off itself.
+    static void addTerrainDecorations(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting);
+    //the tiles a [terrain] name paints with, for the terrain match above
+    static std::set<Tiled::Tile*> terrainTiles(const std::string &terrainName);
+
     static std::map<std::string,BuildingGroup> buildingGroups;
     //the discovered "*-city" style groups, in scan order
     static std::vector<std::string> cityStyles;
@@ -338,7 +364,8 @@ public:
         ChunkPass_roadPaint=2,//addRoadContent: ground paint, ledges, bots
         ChunkPass_townsfolk=3,//addCityTownsfolk
         ChunkPass_caveInterior=4,//writeCaveInterior
-        ChunkPass_chunkBots=5//emitRoadBotsForChunk
+        ChunkPass_chunkBots=5,//emitRoadBotsForChunk
+        ChunkPass_decoration=6//addTerrainDecorations
     };
     static void seedChunk(const unsigned int &seed, const unsigned int &chunkX, const unsigned int &chunkY,
                           const ChunkPass &pass);

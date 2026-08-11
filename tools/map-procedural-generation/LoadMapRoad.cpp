@@ -1887,6 +1887,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
     //desert-city...). The groups are DISCOVERED on disk, so adding a style is
     //dropping a folder in template/.
     scanBuildingTemplates(worldMap,mapWidth,mapHeight);
+    scanDecorationTemplates(worldMap,mapWidth,mapHeight);
 
     citySigns.clear();
     cityBuildingRects.clear();
@@ -4485,6 +4486,193 @@ QString LoadMapAll::emitCityBotsForChunk(Tiled::Map &worldMap,
         index++;
     }
     return out;
+}
+
+void LoadMapAll::addTerrainDecorations(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting)
+{
+    if(decorationGroups.empty())
+        return;
+    Tiled::TileLayer * const walkLayer=LoadMap::searchTileLayerByName(worldMap,"Walkable");
+    Tiled::TileLayer * const waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
+    if(walkLayer==NULL)
+        return;
+    //every layer that already carries something on a cell: a decoration must not
+    //land on a wall, a building, a tree trunk or a canopy
+    std::vector<Tiled::TileLayer*> blockingLayers;
+    {
+        unsigned int layerIndex=0;
+        while(layerIndex<(unsigned int)worldMap.layerCount())
+        {
+            Tiled::Layer * const layer=worldMap.layerAt(layerIndex);
+            if(layer->isTileLayer()
+                    && (layer->name()=="Collisions" || layer->name()=="WalkBehind"))
+                blockingLayers.push_back(static_cast<Tiled::TileLayer *>(layer));
+            layerIndex++;
+        }
+    }
+    //cells already carrying an object (a road trainer, a city sign, a door): a
+    //decoration brushed there buries the character under its canopy
+    std::set<std::pair<unsigned int,unsigned int> > objectCells;
+    {
+        static const char * const objectGroupNames[2]={"Object","Moving"};
+        unsigned int groupIndex=0;
+        while(groupIndex<2)
+        {
+            Tiled::ObjectGroup * const group=LoadMap::searchObjectGroupByName(worldMap,objectGroupNames[groupIndex]);
+            if(group!=NULL)
+            {
+                const QList<Tiled::MapObject*> &objects=group->objects();
+                unsigned int objectIndex=0;
+                while(objectIndex<(unsigned int)objects.size())
+                {
+                    const Tiled::MapObject * const object=objects.at(objectIndex);
+                    const unsigned int objectX=(unsigned int)(object->x()/worldMap.tileWidth());
+                    //cover both conventions in one go (bots carry the -1 row,
+                    //doors and borders do not): a decoration has no business on
+                    //either cell
+                    const int objectY=(int)(object->y()/worldMap.tileHeight());
+                    objectCells.insert(std::pair<unsigned int,unsigned int>(objectX,(unsigned int)objectY));
+                    if(objectY>0)
+                        objectCells.insert(std::pair<unsigned int,unsigned int>(objectX,(unsigned int)(objectY-1)));
+                    objectIndex++;
+                }
+            }
+            groupIndex++;
+        }
+    }
+    //the tiles each named terrain paints with, resolved once
+    std::vector<std::set<Tiled::Tile*> > groupTiles;
+    {
+        unsigned int groupIndex=0;
+        while(groupIndex<decorationGroups.size())
+        {
+            groupTiles.push_back(terrainTiles(decorationGroups.at(groupIndex).terrain));
+            if(groupTiles.back().empty())
+                std::cerr << "template/on-" << decorationGroups.at(groupIndex).terrain
+                          << "/ names no [terrain], nothing will be placed on it" << std::endl;
+            groupIndex++;
+        }
+    }
+    const unsigned int mapWidth=setting.mapWidth;
+    const unsigned int mapHeight=setting.mapHeight;
+    unsigned int placedTotal=0;
+    unsigned int chunkY=0;
+    while(chunkY<setting.mapYCount)
+    {
+        unsigned int chunkX=0;
+        while(chunkX<setting.mapXCount)
+        {
+            //only the chunks a map is written for, and its own random stream
+            if(mapPathDirection[chunkX+chunkY*setting.mapXCount]!=0)
+            {
+                seedChunk(setting.seed,chunkX,chunkY,ChunkPass_decoration);
+                const bool chunkIsCity=haveCityEntry(citiesCoordToIndex,chunkX,chunkY);
+                const std::string citySizeName=chunkIsCity
+                        ? std::string((cities.at(citiesCoordToIndex.at(chunkX).at(chunkY)).type==CityType_big)?"big":
+                                      ((cities.at(citiesCoordToIndex.at(chunkX).at(chunkY)).type==CityType_medium)?"medium":"small"))
+                        : std::string();
+                unsigned int groupIndex=0;
+                while(groupIndex<decorationGroups.size())
+                {
+                    const DecorationGroup &group=decorationGroups.at(groupIndex);
+                    const std::set<Tiled::Tile*> &wantedTiles=groupTiles.at(groupIndex);
+                    unsigned int variantIndex=0;
+                    while(variantIndex<group.variants.size())
+                    {
+                        const DecorationVariant &variant=group.variants.at(variantIndex);
+                        bool allowedHere=!wantedTiles.empty();
+                        //optional cityTypes filter: "" also means "not in a town"
+                        if(allowedHere && !variant.use.cityTypes.empty())
+                            allowedHere=chunkIsCity && vectorcontainsAtLeastOne(variant.use.cityTypes,citySizeName);
+                        if(allowedHere)
+                        {
+                            unsigned int wanted=templateUseCount(variant.use);
+                            const int width=(int)variant.mapTemplate.width;
+                            const int height=(int)variant.mapTemplate.height;
+                            int tries=0;
+                            while(wanted>0 && tries<120)
+                            {
+                                tries++;
+                                if(width<(int)mapWidth-4 && height<(int)mapHeight-4)
+                                {
+                                    const int localX=2+rand()%((int)mapWidth-4-width);
+                                    const int localY=2+rand()%((int)mapHeight-4-height);
+                                    bool valid=true;
+                                    int cellY=0;
+                                    while(cellY<height && valid)
+                                    {
+                                        int cellX=0;
+                                        while(cellX<width && valid)
+                                        {
+                                            const unsigned int tileX=chunkX*mapWidth+localX+cellX;
+                                            const unsigned int tileY=chunkY*mapHeight+localY+cellY;
+                                            //the ground under EVERY cell must be the
+                                            //terrain this group is named after
+                                            if(wantedTiles.find(walkLayer->cellAt(tileX,tileY).tile())==wantedTiles.cend()
+                                                    && (waterLayer==NULL
+                                                        || wantedTiles.find(waterLayer->cellAt(tileX,tileY).tile())==wantedTiles.cend()))
+                                                valid=false;
+                                            else
+                                            {
+                                                unsigned int layerIndex=0;
+                                                while(layerIndex<blockingLayers.size() && valid)
+                                                {
+                                                    if(blockingLayers.at(layerIndex)->cellAt(tileX,tileY).tile()!=NULL)
+                                                        valid=false;
+                                                    layerIndex++;
+                                                }
+                                            }
+                                            if(valid && objectCells.find(std::pair<unsigned int,unsigned int>(tileX,tileY))!=objectCells.cend())
+                                                valid=false;
+                                            //never on a building the town placed
+                                            unsigned int rectIndex=0;
+                                            while(rectIndex<cityBuildingRects.size() && valid)
+                                            {
+                                                const BuildingRect &rect=cityBuildingRects.at(rectIndex);
+                                                if(tileX>=rect.x && tileX<rect.x+rect.w
+                                                        && tileY>=rect.y && tileY<rect.y+rect.h)
+                                                    valid=false;
+                                                rectIndex++;
+                                            }
+                                            cellX++;
+                                        }
+                                        cellY++;
+                                    }
+                                    if(valid)
+                                    {
+                                        MapBrush::brushTheMap(worldMap,variant.mapTemplate,
+                                                              chunkX*mapWidth+localX,chunkY*mapHeight+localY,
+                                                              MapBrush::mapMask,true);
+                                        //the vegetation comes after: keep it off the
+                                        //decoration so a tree cannot bury it
+                                        int maskY=0;
+                                        while(maskY<height)
+                                        {
+                                            int maskX=0;
+                                            while(maskX<width)
+                                            {
+                                                maskVegetationAround(worldMap,chunkX*mapWidth+localX+maskX,
+                                                                     chunkY*mapHeight+localY+maskY,0);
+                                                maskX++;
+                                            }
+                                            maskY++;
+                                        }
+                                        placedTotal++;
+                                        wanted--;
+                                    }
+                                }
+                            }
+                        }
+                        variantIndex++;
+                    }
+                    groupIndex++;
+                }
+            }
+            chunkX++;
+        }
+        chunkY++;
+    }
+    std::cout << "decorations: " << placedTotal << " placed" << std::endl;
 }
 
 void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting,
