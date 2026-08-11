@@ -534,6 +534,182 @@ bool LoadMapAll::precheckTemplates(std::vector<std::string> &errors)
     return errors.empty();
 }
 
+//comma list of an ini value, trimmed and lowercased, empty entries dropped
+static std::vector<std::string> iniStringList(const QString &value)
+{
+    std::vector<std::string> list;
+    const QStringList parts=value.split(",");
+    int index=0;
+    while(index<parts.size())
+    {
+        const std::string entry=parts.at(index).trimmed().toLower().toStdString();
+        if(!entry.empty())
+            list.push_back(entry);
+        index++;
+    }
+    return list;
+}
+
+LoadMapAll::TemplateUse LoadMapAll::readTemplateUse(const QString &folderPath)
+{
+    TemplateUse use;
+    use.valid=false;
+    use.mapPercent=0;
+    use.minCount=0;
+    use.maxCount=0;
+    const QString path=folderPath+"/how-use.ini";
+    if(!QFile::exists(path))
+        return use;
+    QSettings file(path,QSettings::IniFormat);
+    file.beginGroup("use");
+    use.mapPercent=file.value("mapPercent",100).toUInt();
+    use.minCount=file.value("min",1).toUInt();
+    use.maxCount=file.value("max",use.minCount).toUInt();
+    use.terrains=iniStringList(file.value("terrains","").toString());
+    use.cityTypes=iniStringList(file.value("cityTypes","").toString());
+    file.endGroup();
+    if(use.mapPercent>100)
+    {
+        std::cerr << path.toStdString() << ": mapPercent " << use.mapPercent
+                  << " is over 100, using 100" << std::endl;
+        use.mapPercent=100;
+    }
+    if(use.maxCount<use.minCount)
+    {
+        std::cerr << path.toStdString() << ": max " << use.maxCount << " is below min "
+                  << use.minCount << ", using min" << std::endl;
+        use.maxCount=use.minCount;
+    }
+    use.valid=true;
+    return use;
+}
+
+unsigned int LoadMapAll::templateUseCount(const TemplateUse &use)
+{
+    if(!use.valid || use.mapPercent==0 || use.maxCount==0)
+        return 0;
+    //the caller has already re-seeded rand() for this chunk (seedChunk), so this
+    //is deterministic and local to the map being built
+    if((unsigned int)(rand()%100)>=use.mapPercent)
+        return 0;
+    if(use.maxCount==use.minCount)
+        return use.minCount;
+    return use.minCount+(unsigned int)(rand()%(use.maxCount-use.minCount+1));
+}
+
+std::string LoadMapAll::cityStyleStem(const std::string &style)
+{
+    static const std::string suffix("-city");
+    if(style.size()>suffix.size() && style.compare(style.size()-suffix.size(),suffix.size(),suffix)==0)
+        return style.substr(0,style.size()-suffix.size());
+    return style;
+}
+
+//first group of the list that exists on disk, NULL when none does
+static LoadMapAll::BuildingGroup *firstExistingGroup(const std::vector<std::string> &names)
+{
+    unsigned int index=0;
+    while(index<names.size())
+    {
+        LoadMapAll::BuildingGroup * const group=LoadMapAll::buildingGroup(names.at(index));
+        if(group!=NULL)
+            return group;
+        index++;
+    }
+    return NULL;
+}
+
+LoadMapAll::CityBuildingSet LoadMapAll::cityBuildingSet(const std::string &style, const std::string &sizeSuffix)
+{
+    const std::string stem=cityStyleStem(style);
+    CityBuildingSet set;
+    set.marketHealCombined=false;
+    //ONE building serving both roles wins over two separate ones
+    BuildingGroup * const combined=stem.empty() ? NULL : buildingGroup(stem+"-market-heal");
+    if(combined!=NULL)
+    {
+        set.market=combined;
+        set.heal=combined;
+        set.marketHealCombined=true;
+    }
+    else
+    {
+        std::vector<std::string> marketNames;
+        std::vector<std::string> healNames;
+        if(!stem.empty())
+        {
+            marketNames.push_back(stem+"-market");
+            marketNames.push_back(stem+"-market-"+sizeSuffix);
+            healNames.push_back(stem+"-heal");
+            healNames.push_back(stem+"-heal-"+sizeSuffix);
+        }
+        marketNames.push_back("shop-"+sizeSuffix);
+        healNames.push_back("heal-"+sizeSuffix);
+        set.market=firstExistingGroup(marketNames);
+        set.heal=firstExistingGroup(healNames);
+    }
+    {
+        std::vector<std::string> gymNames;
+        if(!stem.empty())
+            gymNames.push_back(stem+"-gym");
+        gymNames.push_back("gym-building");
+        set.gym=firstExistingGroup(gymNames);
+    }
+    set.special=stem.empty() ? NULL : buildingGroup(stem+"-special-building");
+    return set;
+}
+
+//cities-types.ini: lowercase city name -> forced style folder
+static std::map<std::string,std::string> cityStyleOverrideMap;
+static bool cityStyleOverridesLoaded=false;
+
+void LoadMapAll::loadCityStyleOverrides()
+{
+    cityStyleOverrideMap.clear();
+    cityStyleOverridesLoaded=true;
+    const QString path=QCoreApplication::applicationDirPath()+"/cities-types.ini";
+    if(!QFile::exists(path))
+        return;
+    QSettings file(path,QSettings::IniFormat);
+    //flat "name=style" lines land in the implicit General group
+    const QStringList keys=file.childKeys();
+    int index=0;
+    unsigned int loaded=0;
+    while(index<keys.size())
+    {
+        const std::string cityName=lowerCase(keys.at(index).trimmed().toStdString());
+        const std::string styleName=file.value(keys.at(index)).toString().trimmed().toStdString();
+        if(!cityName.empty() && !styleName.empty())
+        {
+            if(buildingGroup(styleName)==NULL)
+                std::cerr << "cities-types.ini: \"" << cityName << "=" << styleName
+                          << "\" but template/" << styleName << "/ does not exist, ignored" << std::endl;
+            else
+            {
+                cityStyleOverrideMap[cityName]=styleName;
+                loaded++;
+            }
+        }
+        index++;
+    }
+    if(loaded>0)
+        std::cout << "cities-types.ini: " << loaded << " forced city style(s)" << std::endl;
+}
+
+std::string LoadMapAll::cityStyleOverride(const std::string &cityName)
+{
+    if(!cityStyleOverridesLoaded)
+    {
+        std::cerr << "cityStyleOverride before loadCityStyleOverrides" << std::endl;
+        return std::string();
+    }
+    const std::map<std::string,std::string>::const_iterator found=
+            cityStyleOverrideMap.find(lowerCase(cityName));
+    if(found==cityStyleOverrideMap.cend())
+        return std::string();
+    return found->second;
+}
+
 void LoadMapAll::scanBuildingTemplates(Tiled::Map &worldMap,const unsigned int mapWidth,const unsigned int mapHeight)
 {
     buildingGroups.clear();
@@ -632,6 +808,7 @@ void LoadMapAll::scanBuildingTemplates(Tiled::Map &worldMap,const unsigned int m
                 variantIndex++;
             }
         }
+        group.use=readTemplateUse(groupDir.absolutePath());
         if(!group.variants.empty())
         {
             buildingGroups[group.name]=group;
@@ -642,6 +819,8 @@ void LoadMapAll::scanBuildingTemplates(Tiled::Map &worldMap,const unsigned int m
     }
     std::cout << "Building templates: " << buildingGroups.size() << " groups, "
               << cityStyles.size() << " city styles" << std::endl;
+    //the forced styles are validated against the groups just discovered
+    loadCityStyleOverrides();
 }
 
 //deterministic index from a text seed: the same building of the same city
