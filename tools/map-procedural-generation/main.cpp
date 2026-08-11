@@ -313,26 +313,6 @@ int main(int argc, char *argv[])
                 qDebug("add road content took %lld ms", t.elapsed());
                 //TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
-            //WALKABILITY GUARD: the world is finished, nothing is written yet.
-            //A chunk whose borders do not join, or a building door the player
-            //cannot walk to, is a broken world — report every one of them and
-            //generate nothing rather than ship it.
-            {
-                std::vector<std::string> walkErrors;
-                if(!LoadMapAll::checkWalkability(tiledMap,config,walkErrors))
-                {
-                    std::cerr << walkErrors.size() << " walkability error(s), nothing was generated:" << std::endl;
-                    unsigned int errorIndex=0;
-                    while(errorIndex<walkErrors.size() && errorIndex<40)
-                    {
-                        std::cerr << "  " << walkErrors.at(errorIndex) << std::endl;
-                        errorIndex++;
-                    }
-                    if(walkErrors.size()>40)
-                        std::cerr << "  ... and " << (walkErrors.size()-40) << " more" << std::endl;
-                    return 1;
-                }
-            }
             if(config.displaycity)
                 LoadMapAll::addDebugCity(tiledMap,config.mapWidth,config.mapHeight);
             //the hole every town was laid out in, with its key numbers on one line
@@ -344,6 +324,13 @@ int main(int argc, char *argv[])
                 //MiniMap::makeMap(heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),miniMapDivisor).save(QCoreApplication::applicationDirPath()+"/miniMapLinear.png","PNG");
                 MiniMapAll::makeMapTiled(tiledMap.width(),tiledMap.height(),config.mapWidth,config.mapHeight).save(QCoreApplication::applicationDirPath()+"/miniMapPixel.png","PNG");
                 qDebug("dominimap %lld ms", t.elapsed());
+            }
+            //template/on-<terrain>/ decorations, BEFORE the vegetation so each one
+            //can mask the trees off its own footprint
+            {
+                t.start();
+                LoadMapAll::addTerrainDecorations(tiledMap,config);
+                qDebug("terrain decorations took %lld ms", t.elapsed());
             }
             if(config.dovegetation)
             {
@@ -371,6 +358,26 @@ int main(int argc, char *argv[])
             //was already placed and the character is drawn inside the trunk.
             LoadMapAll::addCityTownsfolk(tiledMap, config, config.mapWidth, config.mapHeight);
             qDebug("add city townsfolk took %lld ms", t.elapsed());
+            //WALKABILITY GUARD, on the FINAL map: it has to run after the last
+            //pass that can add a COLLISION — the terrain decorations and the
+            //vegetation both do, and a tree dropped on the road would otherwise
+            //cut a chunk in two behind the guard's back.
+            {
+                std::vector<std::string> walkErrors;
+                if(!LoadMapAll::checkWalkability(tiledMap,config,walkErrors))
+                {
+                    std::cerr << walkErrors.size() << " walkability error(s), nothing was generated:" << std::endl;
+                    unsigned int errorIndex=0;
+                    while(errorIndex<walkErrors.size() && errorIndex<40)
+                    {
+                        std::cerr << "  " << walkErrors.at(errorIndex) << std::endl;
+                        errorIndex++;
+                    }
+                    if(walkErrors.size()>40)
+                        std::cerr << "  ... and " << (walkErrors.size()-40) << " more" << std::endl;
+                    return 1;
+                }
+            }
             t.start();
             {
                 Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0); // ObjectGroup contructor no longer accepts width and height 

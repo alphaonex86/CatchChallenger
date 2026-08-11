@@ -710,6 +710,86 @@ std::string LoadMapAll::cityStyleOverride(const std::string &cityName)
     return found->second;
 }
 
+std::vector<LoadMapAll::DecorationGroup> LoadMapAll::decorationGroups;
+
+std::set<Tiled::Tile*> LoadMapAll::terrainTiles(const std::string &terrainName)
+{
+    std::set<Tiled::Tile*> tiles;
+    int height=0;
+    while(height<5)
+    {
+        int moisure=0;
+        while(moisure<6)
+        {
+            const LoadMap::Terrain &terrain=LoadMap::terrainList[height][moisure];
+            if(terrain.tile!=NULL
+                    && terrain.terrainName.toLower().toStdString()==terrainName)
+                tiles.insert(terrain.tile);
+            moisure++;
+        }
+        height++;
+    }
+    return tiles;
+}
+
+void LoadMapAll::scanDecorationTemplates(Tiled::Map &worldMap,const unsigned int mapWidth,const unsigned int mapHeight)
+{
+    decorationGroups.clear();
+    const QDir templateDir(QCoreApplication::applicationDirPath()+"/template");
+    if(!templateDir.exists())
+        return;
+    const QStringList groups=templateDir.entryList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+    unsigned int variantTotal=0;
+    int groupIndex=0;
+    while(groupIndex<groups.size())
+    {
+        const QString groupName=groups.at(groupIndex);
+        if(groupName.startsWith("on-"))
+        {
+            DecorationGroup group;
+            group.terrain=groupName.mid(3).toLower().toStdString();
+            const QDir groupDir(templateDir.absoluteFilePath(groupName));
+            const QStringList variantNames=groupDir.entryList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+            int variantIndex=0;
+            while(variantIndex<variantNames.size())
+            {
+                const QDir variantDir(groupDir.absoluteFilePath(variantNames.at(variantIndex)));
+                const QStringList tmxNames=variantDir.entryList(QStringList("*.tmx"),QDir::Files,QDir::Name);
+                if(tmxNames.isEmpty())
+                    std::cerr << "template/" << groupName.toStdString() << "/"
+                              << variantNames.at(variantIndex).toStdString()
+                              << "/ holds no tmx, ignored" << std::endl;
+                else
+                {
+                    DecorationVariant variant;
+                    variant.folder=(groupName+"/"+variantNames.at(variantIndex)).toStdString();
+                    variant.use=readTemplateUse(variantDir.absolutePath());
+                    if(!variant.use.valid)
+                        std::cerr << "template/" << variant.folder
+                                  << "/ has no how-use.ini, it would never be placed" << std::endl;
+                    else
+                    {
+                        //a decoration is only brushed: no door is wired, no interior
+                        //is written, so it does NOT go through loadBuildingVariant
+                        const QString base=tmxNames.at(0).left(tmxNames.at(0).size()-4);
+                        loadMapTemplate((groupName+"/"+variantNames.at(variantIndex)+"/").toUtf8().constData(),
+                                        variant.mapTemplate,base,mapWidth,mapHeight,worldMap);
+                        group.variants.push_back(variant);
+                        variantTotal++;
+                    }
+                }
+                variantIndex++;
+            }
+            if(!group.variants.empty())
+                decorationGroups.push_back(group);
+        }
+        groupIndex++;
+    }
+    if(variantTotal>0)
+        std::cout << "Decoration templates: " << decorationGroups.size() << " terrain(s), "
+                  << variantTotal << " variant(s)" << std::endl;
+}
+
 void LoadMapAll::scanBuildingTemplates(Tiled::Map &worldMap,const unsigned int mapWidth,const unsigned int mapHeight)
 {
     buildingGroups.clear();
@@ -786,6 +866,14 @@ void LoadMapAll::scanBuildingTemplates(Tiled::Map &worldMap,const unsigned int m
     while(groupIndex<groups.size())
     {
         const QString groupName=groups.at(groupIndex);
+        //on-<terrain>/ folders are DECORATIONS, not buildings: they must not go
+        //through the door wiring, which would invent a door and an interior for a
+        //flower bed. scanDecorationTemplates loads them.
+        if(groupName.startsWith("on-"))
+        {
+            groupIndex++;
+            continue;
+        }
         BuildingGroup group;
         group.name=groupName.toStdString();
         const QDir groupDir(templateDir.absoluteFilePath(groupName));
