@@ -313,6 +313,26 @@ int main(int argc, char *argv[])
                 qDebug("add road content took %lld ms", t.elapsed());
                 //TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
+            //WALKABILITY GUARD: the world is finished, nothing is written yet.
+            //A chunk whose borders do not join, or a building door the player
+            //cannot walk to, is a broken world — report every one of them and
+            //generate nothing rather than ship it.
+            {
+                std::vector<std::string> walkErrors;
+                if(!LoadMapAll::checkWalkability(tiledMap,config,walkErrors))
+                {
+                    std::cerr << walkErrors.size() << " walkability error(s), nothing was generated:" << std::endl;
+                    unsigned int errorIndex=0;
+                    while(errorIndex<walkErrors.size() && errorIndex<40)
+                    {
+                        std::cerr << "  " << walkErrors.at(errorIndex) << std::endl;
+                        errorIndex++;
+                    }
+                    if(walkErrors.size()>40)
+                        std::cerr << "  ... and " << (walkErrors.size()-40) << " more" << std::endl;
+                    return 1;
+                }
+            }
             if(config.displaycity)
                 LoadMapAll::addDebugCity(tiledMap,config.mapWidth,config.mapHeight);
             //the hole every town was laid out in, with its key numbers on one line

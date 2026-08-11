@@ -2392,10 +2392,17 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                 }
                                 else
                                 {
-                                    //small rock outcrop on the flat ground, the mouth
-                                    //(always south-facing) on its bottom line middle
+                                    //Small rock outcrop on the flat ground. The player
+                                    //always comes FROM the border, so the mouth has to
+                                    //face that way: from the TOP border it is a cliff
+                                    //seen from above (entranceTopTile) with the
+                                    //landing ABOVE it. It used to be bottom-facing on
+                                    //every side, so the 3x3 rock block stood BETWEEN
+                                    //the top border and its own mouth and plugged the
+                                    //3-wide approach — the border opening itself ended
+                                    //up inside the rock.
                                     planSide.outcrop=1;
-                                    planSide.mouthKind=1;
+                                    planSide.mouthKind=(side==2) ? 2 : 1;
                                     if(side==0)
                                     {
                                         planSide.mouthX=3;
@@ -2417,7 +2424,8 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                         planSide.mouthY=(int)mapHeight-4;
                                     }
                                     planSide.landX=planSide.mouthX;
-                                    planSide.landY=planSide.mouthY+1;
+                                    //landing on the BORDER side of the mouth
+                                    planSide.landY=(side==2) ? planSide.mouthY-1 : planSide.mouthY+1;
                                 }
                             }
                             side++;
@@ -3899,8 +3907,13 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 const unsigned int hty=y*mapHeight+planSide.mouthY;
                                 if(planSide.outcrop!=0 && !rockTiles.empty())
                                 {
-                                    //small rock outcrop standing free: the 3x3
-                                    //block, mouth on its bottom line at the middle
+                                    //Small rock outcrop standing free. The mouth is on
+                                    //the line of the block FACING THE PLAYER: bottom
+                                    //line for a bottom-facing mouth (block above it),
+                                    //top line for a top-facing one (block below it),
+                                    //so the rock never stands between the border and
+                                    //its own mouth.
+                                    const int blockTopOffset=(planSide.mouthKind==2) ? 0 : -2;
                                     int blockRow=0;
                                     while(blockRow<3)
                                     {
@@ -3908,7 +3921,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                         while(blockColumn<3)
                                         {
                                             const unsigned int btx=htx-1+blockColumn;
-                                            const unsigned int bty=hty-2+blockRow;
+                                            const unsigned int bty=hty+blockTopOffset+blockRow;
                                             Tiled::Tile *blockTile=rockTiles.front();
                                             if(rockTiles.size()>=9)
                                                 blockTile=rockTiles.at(blockRow*3+blockColumn);

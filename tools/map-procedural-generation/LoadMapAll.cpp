@@ -149,6 +149,486 @@ void LoadMapAll::addDebugCityLimits(Tiled::Map &worldMap, const SettingsAll::Set
     layerCity->setVisible(false);
 }
 
+//flood the walkable cells of ONE chunk and label each with its component index;
+//returns the number of components. blocked cells keep the label 0xFFFF.
+static const uint16_t walkNoComponent=0xFFFF;
+static unsigned int floodChunkComponents(const std::vector<unsigned char> &blocked,
+                                         const unsigned int width, const unsigned int height,
+                                         std::vector<uint16_t> &component)
+{
+    component.assign(width*height,walkNoComponent);
+    unsigned int componentCount=0;
+    std::vector<unsigned int> queue;
+    unsigned int startCell=0;
+    while(startCell<width*height)
+    {
+        if(blocked.at(startCell)==0 && component.at(startCell)==walkNoComponent)
+        {
+            const uint16_t label=(uint16_t)componentCount;
+            componentCount++;
+            component[startCell]=label;
+            queue.clear();
+            queue.push_back(startCell);
+            unsigned int queueIndex=0;
+            while(queueIndex<queue.size())
+            {
+                const unsigned int cell=queue.at(queueIndex);
+                queueIndex++;
+                const unsigned int cellX=cell%width;
+                const unsigned int cellY=cell/width;
+                const int stepX[4]={-1,1,0,0};
+                const int stepY[4]={0,0,-1,1};
+                unsigned int direction=0;
+                while(direction<4)
+                {
+                    const int nextX=(int)cellX+stepX[direction];
+                    const int nextY=(int)cellY+stepY[direction];
+                    if(nextX>=0 && nextY>=0 && nextX<(int)width && nextY<(int)height)
+                    {
+                        const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*width;
+                        if(blocked.at(next)==0 && component.at(next)==walkNoComponent)
+                        {
+                            component[next]=label;
+                            queue.push_back(next);
+                        }
+                    }
+                    direction++;
+                }
+            }
+        }
+        startCell++;
+    }
+    return componentCount;
+}
+
+//Carve a walkable corridor from any cell of component `fromComponent` to the cell
+//`toCell`, and open it for real on the map: the Collisions of the crossed cells
+//are cleared, whatever hangs above the player with them, and the ground is filled
+//with the tile the chunk already uses. Blocked cells cost far more than open ones,
+//so the corridor follows the existing ground and only cuts the cliff where it has
+//to — a narrow notch, not a trench. Returns false when even that is impossible.
+static bool carveChunkCorridor(Tiled::Map &worldMap,const std::vector<Tiled::TileLayer*> &collisionLayers,
+                               const std::vector<uint16_t> &component,const uint16_t fromComponent,
+                               const unsigned int toCell,
+                               const unsigned int chunkX,const unsigned int chunkY,
+                               const unsigned int mapWidth,const unsigned int mapHeight)
+{
+    Tiled::TileLayer * const walkLayer=LoadMap::searchTileLayerByName(worldMap,"Walkable");
+    if(walkLayer==NULL)
+        return false;
+    std::vector<Tiled::TileLayer*> abovePlayerLayers;
+    {
+        unsigned int layerIndex=0;
+        while(layerIndex<(unsigned int)worldMap.layerCount())
+        {
+            Tiled::Layer * const layer=worldMap.layerAt(layerIndex);
+            if(layer->isTileLayer() && layer->name()=="WalkBehind")
+                abovePlayerLayers.push_back(static_cast<Tiled::TileLayer *>(layer));
+            layerIndex++;
+        }
+    }
+    const unsigned int x0=chunkX*mapWidth;
+    const unsigned int y0=chunkY*mapHeight;
+    //the ground this chunk stands on, to fill what the notch opens
+    Tiled::Tile *groundTile=NULL;
+    {
+        std::map<Tiled::Tile*,unsigned int> tileCount;
+        unsigned int cell=0;
+        while(cell<mapWidth*mapHeight)
+        {
+            Tiled::Tile * const tile=walkLayer->cellAt(x0+cell%mapWidth,y0+cell/mapWidth).tile();
+            if(tile!=NULL)
+                tileCount[tile]++;
+            cell++;
+        }
+        unsigned int bestCount=0;
+        std::map<Tiled::Tile*,unsigned int>::const_iterator tileIterator=tileCount.cbegin();
+        while(tileIterator!=tileCount.cend())
+        {
+            if(tileIterator->second>bestCount)
+            {
+                bestCount=tileIterator->second;
+                groundTile=tileIterator->first;
+            }
+            ++tileIterator;
+        }
+    }
+    if(groundTile==NULL)
+        return false;
+    //cheapest path from toCell back to the target component (walking the search
+    //backwards means the parent chain already points the right way)
+    static const unsigned int costOpen=1;
+    static const unsigned int costBlocked=60;
+    static const unsigned int costUnreachable=0xFFFFFFFF;
+    std::vector<unsigned int> cost(mapWidth*mapHeight,costUnreachable);
+    std::vector<int> parent(mapWidth*mapHeight,-1);
+    //plain Dijkstra with two buckets is overkill here; the grid is 44x44, a simple
+    //repeated relaxation is small and obviously correct
+    cost[toCell]=0;
+    bool changed=true;
+    while(changed)
+    {
+        changed=false;
+        unsigned int cell=0;
+        while(cell<mapWidth*mapHeight)
+        {
+            if(cost.at(cell)!=costUnreachable)
+            {
+                const int cellX=(int)(cell%mapWidth);
+                const int cellY=(int)(cell/mapWidth);
+                const int stepX[4]={-1,1,0,0};
+                const int stepY[4]={0,0,-1,1};
+                unsigned int direction=0;
+                while(direction<4)
+                {
+                    const int nextX=cellX+stepX[direction];
+                    const int nextY=cellY+stepY[direction];
+                    if(nextX>=0 && nextY>=0 && nextX<(int)mapWidth && nextY<(int)mapHeight)
+                    {
+                        const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapWidth;
+                        const unsigned int stepCost=(component.at(next)==walkNoComponent)?costBlocked:costOpen;
+                        if(cost.at(cell)+stepCost<cost.at(next))
+                        {
+                            cost[next]=cost.at(cell)+stepCost;
+                            parent[next]=(int)cell;
+                            changed=true;
+                        }
+                    }
+                    direction++;
+                }
+            }
+            cell++;
+        }
+    }
+    //the cheapest cell of the target component
+    int bestCell=-1;
+    {
+        unsigned int cell=0;
+        while(cell<mapWidth*mapHeight)
+        {
+            if(component.at(cell)==fromComponent && cost.at(cell)!=costUnreachable)
+                if(bestCell<0 || cost.at(cell)<cost.at((unsigned int)bestCell))
+                    bestCell=(int)cell;
+            cell++;
+        }
+    }
+    if(bestCell<0)
+        return false;
+    //walk the parent chain back to toCell, opening every cell on the way
+    int walkCell=bestCell;
+    while(walkCell>=0)
+    {
+        const unsigned int tileX=x0+(unsigned int)walkCell%mapWidth;
+        const unsigned int tileY=y0+(unsigned int)walkCell/mapWidth;
+        unsigned int layerIndex=0;
+        while(layerIndex<collisionLayers.size())
+        {
+            if(collisionLayers.at(layerIndex)->cellAt(tileX,tileY).tile()!=NULL)
+            {
+                collisionLayers.at(layerIndex)->setCell(tileX,tileY,Tiled::Cell());
+                unsigned int aboveIndex=0;
+                while(aboveIndex<abovePlayerLayers.size())
+                {
+                    abovePlayerLayers.at(aboveIndex)->setCell(tileX,tileY,Tiled::Cell());
+                    aboveIndex++;
+                }
+            }
+            layerIndex++;
+        }
+        if(walkLayer->cellAt(tileX,tileY).tile()==NULL)
+            walkLayer->setCell(tileX,tileY,Tiled::Cell(groundTile));
+        walkCell=parent.at((unsigned int)walkCell);
+    }
+    return true;
+}
+
+bool LoadMapAll::checkWalkability(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting,
+                                  std::vector<std::string> &errors)
+{
+    //every layer named Collisions: the engine OR-merges them, so a cell is
+    //blocked as soon as ONE of them holds a tile
+    std::vector<Tiled::TileLayer*> collisionLayers;
+    {
+        unsigned int layerIndex=0;
+        while(layerIndex<(unsigned int)worldMap.layerCount())
+        {
+            Tiled::Layer * const layer=worldMap.layerAt(layerIndex);
+            if(layer->isTileLayer() && layer->name()=="Collisions")
+                collisionLayers.push_back(static_cast<Tiled::TileLayer *>(layer));
+            layerIndex++;
+        }
+    }
+    if(collisionLayers.empty())
+    {
+        errors.push_back("no Collisions layer in the world map, walkability cannot be checked");
+        return false;
+    }
+    const unsigned int mapWidth=setting.mapWidth;
+    const unsigned int mapHeight=setting.mapHeight;
+    const int tileWidth=worldMap.tileWidth();
+    const int tileHeight=worldMap.tileHeight();
+
+    //the cells the player crosses a border on, and the doorsteps of the
+    //buildings, both read from the Moving group the generator itself filled
+    std::map<std::pair<unsigned int,unsigned int>,std::vector<std::pair<unsigned int,unsigned int> > > borderCells;
+    std::map<std::pair<unsigned int,unsigned int>,std::vector<std::pair<unsigned int,unsigned int> > > doorCells;
+    {
+        Tiled::ObjectGroup * const movingGroup=LoadMap::searchObjectGroupByName(worldMap,"Moving");
+        if(movingGroup==NULL)
+        {
+            errors.push_back("no Moving object group in the world map");
+            return false;
+        }
+        const QList<Tiled::MapObject*> &objects=movingGroup->objects();
+        unsigned int objectIndex=0;
+        while(objectIndex<(unsigned int)objects.size())
+        {
+            const Tiled::MapObject * const object=objects.at(objectIndex);
+            //Door / teleport / border objects are stored ON the cell the player
+            //stands on (wireBuildingDoors and addMapChange both write
+            //doorY*tileHeight). The -1 row offset is a BOT rule, not a general
+            //one — applying it here pointed one row up, onto the collision door
+            //tile above every doorstep, and reported 340 good doors as broken.
+            int tileX=(int)(object->x()/tileWidth);
+            int tileY=(int)(object->y()/tileHeight);
+            const QString type=object->type();
+            if(tileX>=0 && tileY>=0 && tileX<worldMap.width() && tileY<worldMap.height())
+            {
+                if(type.startsWith("border-"))
+                {
+                    //border-bottom sits on the FIRST row of the next chunk: the cell
+                    //the player actually walks from is the last row of this one
+                    if(type=="border-bottom")
+                        tileY--;
+                    if(tileY>=0)
+                    {
+                        const std::pair<unsigned int,unsigned int> chunk((unsigned int)tileX/mapWidth,
+                                                                        (unsigned int)tileY/mapHeight);
+                        borderCells[chunk].push_back(std::pair<unsigned int,unsigned int>(
+                                                         (unsigned int)tileX%mapWidth,(unsigned int)tileY%mapHeight));
+                    }
+                }
+                else if(type=="door" || type=="teleport on it" || type=="teleport on push")
+                {
+                    const std::pair<unsigned int,unsigned int> chunk((unsigned int)tileX/mapWidth,
+                                                                    (unsigned int)tileY/mapHeight);
+                    doorCells[chunk].push_back(std::pair<unsigned int,unsigned int>(
+                                                   (unsigned int)tileX%mapWidth,(unsigned int)tileY%mapHeight));
+                }
+            }
+            objectIndex++;
+        }
+    }
+
+    std::vector<unsigned char> blocked(mapWidth*mapHeight,0);
+    std::vector<uint16_t> component;
+    unsigned int brokenBorders=0;
+    unsigned int unreachableDoors=0;
+    unsigned int repairedChunks=0;
+    unsigned int chunkY=0;
+    while(chunkY<setting.mapYCount)
+    {
+        unsigned int chunkX=0;
+        while(chunkX<setting.mapXCount)
+        {
+            const std::pair<unsigned int,unsigned int> chunk(chunkX,chunkY);
+            //only the chunks a map is written for
+            if(mapPathDirection[chunkX+chunkY*setting.mapXCount]!=0)
+            {
+                //CHECK AND REPAIR: pass 0 carves a corridor through whatever cuts
+                //the chunk in two (the zone growth gives up after its retry budget
+                //and leaves a cliff across the road), pass 1 re-measures and only
+                //then reports. A problem that survives the repair is a real one.
+                unsigned int repairPass=0;
+                bool repaired=false;
+                while(repairPass<2)
+                {
+                    const bool reportPass=(repairPass==1);
+                {
+                    unsigned int localY=0;
+                    while(localY<mapHeight)
+                    {
+                        unsigned int localX=0;
+                        while(localX<mapWidth)
+                        {
+                            const unsigned int tileX=chunkX*mapWidth+localX;
+                            const unsigned int tileY=chunkY*mapHeight+localY;
+                            unsigned char cellBlocked=0;
+                            unsigned int layerIndex=0;
+                            while(layerIndex<collisionLayers.size())
+                            {
+                                if(collisionLayers.at(layerIndex)->cellAt(tileX,tileY).tile()!=NULL)
+                                    cellBlocked=1;
+                                layerIndex++;
+                            }
+                            blocked[localX+localY*mapWidth]=cellBlocked;
+                            localX++;
+                        }
+                        localY++;
+                    }
+                }
+                floodChunkComponents(blocked,mapWidth,mapHeight,component);
+                //the BIGGEST walkable component: the one the town square, the road
+                //and the borders live in
+                uint16_t biggestComponent=walkNoComponent;
+                {
+                    std::map<uint16_t,unsigned int> componentSize;
+                    unsigned int cell=0;
+                    while(cell<mapWidth*mapHeight)
+                    {
+                        if(component.at(cell)!=walkNoComponent)
+                            componentSize[component.at(cell)]++;
+                        cell++;
+                    }
+                    unsigned int bestSize=0;
+                    std::map<uint16_t,unsigned int>::const_iterator sizeIterator=componentSize.cbegin();
+                    while(sizeIterator!=componentSize.cend())
+                    {
+                        if(sizeIterator->second>bestSize)
+                        {
+                            bestSize=sizeIterator->second;
+                            biggestComponent=sizeIterator->first;
+                        }
+                        ++sizeIterator;
+                    }
+                }
+                const std::string chunkName=chunkDebugName(chunkX,chunkY);
+                //A CAVE chunk is the one case where the borders are MEANT to be
+                //separated: that is what forces the player through the corridor
+                //instead of walking around it. There the rule is per side — each
+                //border opening must reach the cave mouth on its own side.
+                const bool chunkIsCave=isCaveChunk(chunkX,chunkY);
+                //1) the border openings
+                if(borderCells.find(chunk)!=borderCells.cend())
+                {
+                    const std::vector<std::pair<unsigned int,unsigned int> > &cells=borderCells.at(chunk);
+                    uint16_t reference=walkNoComponent;
+                    unsigned int cellIndex=0;
+                    while(cellIndex<cells.size())
+                    {
+                        const unsigned int cell=cells.at(cellIndex).first+cells.at(cellIndex).second*mapWidth;
+                        const uint16_t cellComponent=component.at(cell);
+                        const std::string where=std::to_string(cells.at(cellIndex).first)+","+
+                                std::to_string(cells.at(cellIndex).second);
+                        if(cellComponent==walkNoComponent)
+                        {
+                            //the opening itself is walled: open it and everything
+                            //between it and the biggest component
+                            if(!reportPass && biggestComponent!=walkNoComponent)
+                                repaired|=carveChunkCorridor(worldMap,collisionLayers,component,
+                                                             biggestComponent,cell,chunkX,chunkY,
+                                                             mapWidth,mapHeight);
+                            else if(reportPass)
+                            {
+                                errors.push_back(chunkName+": the border opening "+where+" is a collision");
+                                brokenBorders++;
+                            }
+                        }
+                        else if(chunkIsCave)
+                        {
+                            //this side must open on a cave mouth, else the player
+                            //walks in and is stuck in a dead-end pocket
+                            int nearestMouth=-1;
+                            bool reachesAMouth=false;
+                            if(doorCells.find(chunk)!=doorCells.cend())
+                            {
+                                const std::vector<std::pair<unsigned int,unsigned int> > &doors=doorCells.at(chunk);
+                                unsigned int doorIndex=0;
+                                while(doorIndex<doors.size())
+                                {
+                                    const unsigned int doorCell=doors.at(doorIndex).first+doors.at(doorIndex).second*mapWidth;
+                                    if(component.at(doorCell)==cellComponent)
+                                        reachesAMouth=true;
+                                    //nearest by chunk distance, the corridor cost does the rest
+                                    if(nearestMouth<0
+                                            || (abs((int)(doorCell%mapWidth)-(int)(cell%mapWidth))
+                                                +abs((int)(doorCell/mapWidth)-(int)(cell/mapWidth)))
+                                               <(abs((int)((unsigned int)nearestMouth%mapWidth)-(int)(cell%mapWidth))
+                                                 +abs((int)((unsigned int)nearestMouth/mapWidth)-(int)(cell/mapWidth))))
+                                        nearestMouth=(int)doorCell;
+                                    doorIndex++;
+                                }
+                            }
+                            if(!reachesAMouth)
+                            {
+                                //join this border to its own mouth ONLY: joining the
+                                //two borders would let the player walk around the
+                                //cave, which is the whole point of the chunk
+                                if(!reportPass && nearestMouth>=0)
+                                    repaired|=carveChunkCorridor(worldMap,collisionLayers,component,
+                                                                 cellComponent,(unsigned int)nearestMouth,
+                                                                 chunkX,chunkY,mapWidth,mapHeight);
+                                else if(reportPass)
+                                {
+                                    errors.push_back(chunkName+": the border opening "+where+
+                                                     " opens on a dead end, no cave mouth is reachable from it");
+                                    brokenBorders++;
+                                }
+                            }
+                        }
+                        else if(reference==walkNoComponent)
+                            reference=cellComponent;
+                        else if(cellComponent!=reference)
+                        {
+                            if(!reportPass)
+                                repaired|=carveChunkCorridor(worldMap,collisionLayers,component,
+                                                             reference,cell,chunkX,chunkY,
+                                                             mapWidth,mapHeight);
+                            else
+                            {
+                                errors.push_back(chunkName+": the border opening "+where+
+                                                 " cannot be walked to from the other borders of the chunk");
+                                brokenBorders++;
+                            }
+                        }
+                        cellIndex++;
+                    }
+                }
+                //2) every door of this chunk in the BIGGEST component. A cave chunk
+                //is exempt: its mouths sit in the separate pockets of rule 1, which
+                //already checked that each is reachable from its own border.
+                if(!chunkIsCave && doorCells.find(chunk)!=doorCells.cend() && biggestComponent!=walkNoComponent)
+                {
+                    const std::vector<std::pair<unsigned int,unsigned int> > &cells=doorCells.at(chunk);
+                    unsigned int cellIndex=0;
+                    while(cellIndex<cells.size())
+                    {
+                        const unsigned int cell=cells.at(cellIndex).first+cells.at(cellIndex).second*mapWidth;
+                        if(component.at(cell)!=biggestComponent)
+                        {
+                            if(!reportPass)
+                                repaired|=carveChunkCorridor(worldMap,collisionLayers,component,
+                                                             biggestComponent,cell,chunkX,chunkY,
+                                                             mapWidth,mapHeight);
+                            else
+                            {
+                                errors.push_back(chunkName+": the door at "+
+                                                 std::to_string(cells.at(cellIndex).first)+","+
+                                                 std::to_string(cells.at(cellIndex).second)+
+                                                 (component.at(cell)==walkNoComponent
+                                                  ? " stands on a collision"
+                                                  : " is walled off from the rest of the chunk"));
+                                unreachableDoors++;
+                            }
+                        }
+                        cellIndex++;
+                    }
+                }
+                if(repaired)
+                    repairedChunks++;
+                repairPass++;
+                }
+            }
+            chunkX++;
+        }
+        chunkY++;
+    }
+    std::cout << "walkability: " << repairedChunks << " chunk(s) repaired, "
+              << brokenBorders << " broken border link(s) left, "
+              << unreachableDoors << " unreachable door(s) left" << std::endl;
+    return errors.empty();
+}
+
 std::string LoadMapAll::chunkDebugName(const unsigned int &x, const unsigned int &y)
 {
     if(haveCityEntry(citiesCoordToIndex,x,y))
