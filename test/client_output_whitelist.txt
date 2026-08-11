@@ -12,17 +12,13 @@
 "Player is logged, cash: <n>"
 "PlayerCPU is logged, cash: <n>"
 "QtDatapackClientLoader::parseDatapack()"
-"listDatapack(): remove invalid file: .claude<path>"
-"listDatapack(): remove invalid file: .git<path>"
+"listDatapack(): remove invalid file: <path>"
 "listDatapack(): remove invalid file: README.md"
 "listDatapack(): remove invalid file: datapack-change.md"
-"listDatapack(): remove invalid file: items<path>"
-"listDatapack(): remove invalid file: monsters<path>"
+"remove the file: <path>"
 - id=<n> pseudo="Player" skin=<n> played=<n>
 -> MATCH: teleporting to map=<n>(<n>,<n>)
-<hash> and size <n>, cursor: <n>
 <hash> hash for datapack loaded base, <hash> hash for datapack loaded main, <hash> hash for datapack loaded sub
-<n>
 <n> SQL city loaded
 <n> SQL clan max id
 <n> SQL map dictionary
@@ -30,44 +26,29 @@
 <n> SQL skin dictionary
 <n> audio ambiance(s) link loaded
 <n> bot linked with quest(s) loaded
-<n> cache=<n>
 <n> crafting recipe(s) loaded
-<n> current_map=<n>
-<n> current_map=<n> tempMapObject=<ptr>
 <n> event(s) loaded
 <n> files for datapack loaded
-<n> item(s) extra loaded
 <n> items(s) loaded
-<n> map(s) extra loaded
 <n> map(s) loaded into <n>ms
-<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n>
 <n> monster buff(s) loaded
 <n> monster drop(s) loaded
 <n> monster evolution items(s) loaded
 <n> monster items(s) to learn loaded
 <n> monster skill(s) loaded
 <n> monster(s) collisions loaded
-<n> monster(s) loaded
 <n> monters drop(s) loaded
 <n> parseIncommingData(): !haveData_dataSize
+<n> parseIncommingData(): need more to recompose: <n>
 <n> parseIncommingData(): remaining data: <n>, buffer data: <hash>
 <n> parseIncommingData(): remaining data: <n>, returnVal: <n>
 <n> parseIncommingData(): socket->bytesAvailable(): ?, header_cut: <n>
 <n> plant(s) loaded
-<n> profile loaded
 <n> profile text(s) loaded
 <n> profile(s) loaded
-<n> quest(s) extra loaded
 <n> quest(s) loaded
 <n> quest(s) text loaded
-<n> reputation(s) extra loaded
 <n> reputation(s) loaded
-<n> resolvedFileName=<path>
-<n> resolvedFileName=<path> mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n>
-<n> resolvedFileName=MapItem::addMap() layers.size()=<n>
-<n> resolvedFileName=MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n>
-<n> resolvedFileName=MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<path>
-<n> return __atomic_load_n(&_M_p, int(__m));
 <n> server profile(s) loaded
 <n> skill(s) extra loaded
 <n> skin(s) loaded
@@ -75,18 +56,11 @@
 <n> type(s) extra loaded
 <n> type(s) loaded
 <n> visual cat loaded
-<n> x=<n> y=<n> mHaveTheDatapack=<n> player_informations_is_set=<n>
-<n> zone(s) extra loaded
 <n> zone(s) loaded
-<path>
 <path> Parse error: Error=XML_ERROR_PARSING_ATTRIBUTE ErrorID=<n> (<ptr>) Line number=<n>: XMLElement name=monster, error id: <n>
 <path> bot id <n> bot step type is unknown: learn
 <path> bot id <n> crosses the line of sight of bot id <n> at <n>,<n>: only the first one triggers there
 <path> bot id <n> is not found
-<path> layers.size()=<n>
-<path> mapIndex=<n> current_map=<n>
-<ptr> playerLayerIndex=<n> cache=<n>
-A debugging session is active.
 Api_client_real::datapackChecksumDoneBase
 Api_client_real::datapackDownloadFinishedBase()
 Api_client_real::sendDatapackContentBase()
@@ -101,10 +75,10 @@ Api_protocol::selectCharacter() reply for <ptr> <ptr> <path>
 Api_protocol::selectCharacter(): <ptr>, select char: <n>, charactersGroupIndex: <n>, serverUniqueKey: <n>, line: <path> <n>
 Api_protocol::selectCharacter(uint<n>_t,uint<n>_t)
 Api_protocol::selectCharacter(uint<n>_t,uint<n>_t,uint<n>_t,uint<n>_t)
-Api_protocol::send_player_move_internal() moved_unit=<n> into look at bottom
-Api_protocol::send_player_move_internal() moved_unit=<n> into look at top
+Api_protocol::send_player_move_internal() moved_unit=<n> into look at left
+Api_protocol::send_player_move_internal() moved_unit=<n> into look at right
 Api_protocol::send_player_move_internal() moved_unit=<n> into move at bottom
-Api_protocol::send_player_move_internal() moved_unit=<n> into move at top
+Api_protocol::send_player_move_internal() moved_unit=<n> into move at left
 Api_protocol::tryLogin()
 Api_protocol_Qt::haveTheDatapack()
 Api_protocol_Qt::have_current_player_info()
@@ -113,21 +87,18 @@ AutoArgs: --autosolo dump
 AutoArgs: --autosolo no savegame found, creating one
 AutoArgs: --autosolo playing savegame: <path>
 AutoArgs: --autosolo timeout (<n>s) reached, dumping and exiting
-AutoArgs: --test-dialogoverflow, checking dialog wordwrap<path>
+AutoArgs: --test-dialogoverflow, checking dialog <path>
 AutoArgs: auto-selected pool server <n> "Server official <n>"
 AutoArgs: server="" host="" port=<n> url="" autologin=false character="" closeWhenOnMap=false closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=true mainDatapackCodeOverride="" takeScreenshotPath=""
-AutoArgs: server="" host="" port=<n> url="" autologin=false character="" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=true mainDatapackCodeOverride="" takeScreenshotPath=""
+AutoArgs: server="" host="" port=<n> url="" autologin=false character="" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=true mainDatapackCodeOverride="test" takeScreenshotPath=""
 AutoArgs: server="" host="<n>.<n>" port=<n> url="" autologin=true character="TestPlayerLive" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=false mainDatapackCodeOverride="" takeScreenshotPath=""
-AutoArgs: server="" host="<n>:<n>::<n>:<n>" port=<n> url="" autologin=true character="TestPlayerLive" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=false mainDatapackCodeOverride="" takeScreenshotPath=""
 AutoArgs: server="" host="<n>:<n>::<n>:ff<n>" port=<n> url="" autologin=true character="PlayerCPU" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=false mainDatapackCodeOverride="" takeScreenshotPath=""
 AutoArgs: server="" host="localhost" port=<n> url="" autologin=true character="PlayerCPU" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=false mainDatapackCodeOverride="" takeScreenshotPath=""
 AutoSelect character: PlayerGL id=<n>
 AutoSelect character: TestPlayerLive id=<n>
 Base: Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote <hash>
-BaseServer::preload_<n>_sync_the_map() unknown bot step type: wild, object_x: <n>, object_y: <n>, map index: <n>, file: kanto<path>
-BaseServer::preload_<n>_sync_the_map() unknown bot step type: wild, object_x: <n>, object_y: <n>, map index: <n>, file: sevii-islands<path>
+BaseServer::preload_<n>_sync_the_map() unknown bot step type: wild, object_x: <n>, object_y: <n>, map index: <n>, file: <path>
 BaseWindow::botHaveQuest(), mapId not found: <n>
-BaseWindow::currentMapLoaded(): map: <n> with type: ""
 BaseWindow::protocol_is_good()
 BaseWindow::stopped_in_front_of() mapIndex=<n> x=<n> y=<n>
 BaseWindow::stopped_in_front_of_check_bot() mapIndex=<n> x=<n> y=<n>
@@ -137,13 +108,12 @@ CatchChallenger::CommonDatapack::commonDatapack.parseDatapack end took <n>ms to 
 CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() other took <n>ms to parse <path>
 CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took <n>ms to parse <path>
 CliClientOptions: --closewhenonmap, exiting in <n>s
-CliClientOptions: --test-dialogoverflow, checking dialog wordwrap<path>
 CliClientOptions: errorString with --closewhenonmap[after], exiting with rc=<n>
 CommonDatapackServerSpec::applyMonstersRate() drop dual call
 CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase is now:
 CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase is now: https:<path>
 CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer is now:
-CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer is now: https:<path>
+Compressed file to create:
 Connected to SQLite at <path>
 ConnexionManager::stateChanged(<n>)
 Convertion failed and repported at <path>
@@ -151,58 +121,27 @@ Datapack is not empty and get nothing from serveur because the local datapack ha
 Datapack, base: <path>
 File excluded because don't match the regex (<n>): README.md
 File excluded because don't match the regex (<n>): datapack-change.md
-File excluded because don't match the regex (<n>): items<path>
-File excluded because don't match the regex (<n>): map<path>
-File excluded because don't match the regex (<n>): monsters<path>
 Function "__throw_out_of_range" not defined.
 Got new server list
 Hash not same CommonSettingsCommon::commonSettingsCommon.datapackHashBase "<hash>" hashBase ""
 Hash not same CommonSettingsCommon::commonSettingsCommon.datapackHashBase "<hash>" hashBase "<hash>"
 ImageFormats:ani,avif,avifs,bmp,bw,cur,dds,ff,gif,hdr,icns,ico,iff,ilbm,im<n>,im<n>,im<n>,im<n>,jfif,jpeg,jpg,jxl,kra,lbm,mng,ora,pbm,pcx,pdd,pdf,pfm,pgm,phm,pic,png,ppm,psb,psd,psdt,pxr,qoi,ras,rgb,rgba,sct,sgi,sun,svg,svgz,tga,tif,tiff,tim,wbmp,webp,xbm,xcf,xpm
-Inferior <n> [process <n>] will be killed.
 Loaded map and other <n>ms
 Loaded the common datapack into <n>ms
 Loaded the server SQL datapack into <n>ms
 Loaded the server static datapack into <n>ms
 Main: Datapack is empty or hash don't match, get from server, hash local: "<hash>" , hash on server: "<hash>"
-Main: Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote <hash>
 MainWindow::newError(): Internal error, file: <path> parseReplyData(): return false, need be aborted before, packetCode: <n>, data: <n>
 MainWindow::stateChanged(<n>)
 MainWindow::stateChanged(<n>) mostly quit
 MapController::loadBotOnTheMap() skin empty
 MapControllerMP::datapackParsedMainSub()
-MapControllerMP::loadCurrentPlayer() mapId=
-MapControllerMP::loadCurrentPlayer() mapId=<n> x=<n> y=<n> mHaveTheDatapack=<n> player_informations_is_set=
 MapControllerMP::loadCurrentPlayer() mapId=<n> x=<n> y=<n> mHaveTheDatapack=<n> player_informations_is_set=<n>
-MapControllerMP::loadCurrentPlayer() mapId=<n> x=<n> y=<n> mHaveTheDatapack=<n><path>
-MapControllerMP::loadCurrentPlayer() mapId=<n> x=<n> y=<n> mHaveTheDatapack=<n>MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapControllerMP::loadCurrentPlayer() mapId=<n><path>
-MapControllerMP::loadCurrentPlayer() mapId=<path>
 MapControllerMP::reinject_signals() loading current player on mapId=<n> x=<n> y=<n> maps.size()=<n>
 MapControllerMP::resetAll()
 MapItem::addMap() done mapIndex=<n> <n> layers, <n> items added (width=<n> height=<n>)
 MapItem::addMap() layers.size()=<n>
-MapItem::addMap() layers.size()=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapItem::addMap() mapIndex= resolvedFileName=<path>
 MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n>
-MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n>MapVisualiserThread::loadOtherMap() mapIndex=<n>
-MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n>MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=MapVisualiserThread::loadOtherMap() mapIndex=<n> cache=<n>
-MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr>MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr>x<n>e<n> resolvedFileName=<path>
-MapItem::addMap() mapIndex=<n> map=<ptr> renderer=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapItem::addMap() mapIndex=<n> map=<ptr> renderer=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<ptr> playerLayerIndex=<n> cache=<n>
-MapItem::addMap() mapIndex=<n> map=<ptr> renderer=MapVisualiserThread::loadOtherMap() mapIndex=<ptr>x<n>fffe<n>dff<n> playerLayerIndex=<n> cache=<n>
-MapItem::addMap() mapIndex=<n> map=<ptr> resolvedFileName=<path>
-MapItem::addMap() mapIndex=<n> map=<ptr>MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName= renderer=<ptr> playerLayerIndex=<n> cache=<n>
-MapItem::addMap() mapIndex=<n> map=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapItem::addMap() mapIndex=<n> map=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path> renderer=<ptr> playerLayerIndex=<n>
-MapItem::addMap() mapIndex=<n> map=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path> renderer=<ptr> playerLayerIndex=<n> cache=<n>
-MapItem::addMap() mapIndex=<n> resolvedFileName=<path>
-MapItem::addMap() mapIndex=<n>MapVisualiserThread::loadOtherMap() mapIndex= map=<ptr> renderer=<ptr> playerLayerIndex=<n> resolvedFileName=<path>
-MapItem::addMap() mapIndex=<n>MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapItem::addMap() mapIndex=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
 MapItem::setMapPosition() map=<ptr> global_x=-<n> global_y=<n>
 MapItem::setMapPosition() map=<ptr> global_x=<n> global_y=-<n>
 MapItem::setMapPosition() map=<ptr> global_x=<n> global_y=<n>
@@ -210,29 +149,9 @@ MapVisualiser::MapVisualiser() debugTags=<n> useCache=<n> openGL=<n>
 MapVisualiser::MapVisualiser() ready, mScene=<ptr> mapItem=<ptr>
 MapVisualiser::applyTheAnimationTimer() : !isUsed for timer: <n>
 MapVisualiser::asyncDetectBorder() mapIndex=<n> current_map=<n>
-MapVisualiser::asyncDetectBorder() mapIndex=<n> current_map=<n>MapVisualiserThread::loadOtherMap() mapIndex=<n>
-MapVisualiser::asyncDetectBorder() mapIndex=<n> current_map=<n>MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=
-MapVisualiser::asyncDetectBorder() mapIndex=<n> current_map=MapVisualiserThread::loadOtherMap() mapIndex=<n>
-MapVisualiser::asyncDetectBorder() mapIndex=<n> current_map=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapVisualiser::asyncDetectBorder() mapIndex=<n> resolvedFileName=<path>
-MapVisualiser::asyncDetectBorder() mapIndex=<n>MapVisualiserThread::loadOtherMap() mapIndex= current_map=<n>
-MapVisualiser::asyncDetectBorder() mapIndex=<n>MapVisualiserThread::loadOtherMap() mapIndex=<n> current_map=<n>
-MapVisualiser::asyncDetectBorder() mapIndex=<n>MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapVisualiser::asyncDetectBorder() mapIndex=<n>MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path> current_map=
-MapVisualiser::asyncDetectBorder() mapIndex=MapVisualiserThread::loadOtherMap() mapIndex=<n> current_map=<n> resolvedFileName=<path>
-MapVisualiser::asyncDetectBorder() mapIndex=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapVisualiser::asyncDetectBorder() mapIndex=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path> current_map=<n>
-MapVisualiser::asyncMapLoaded() mapIndex=<n> current_map=<n> tempMapObject=<path>
 MapVisualiser::asyncMapLoaded() mapIndex=<n> current_map=<n> tempMapObject=<ptr>
-MapVisualiser::asyncMapLoaded() mapIndex=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
 MapVisualiser::loadOtherMap() mapIndex=<n> current_map=<n>
-MapVisualiser::loadOtherMap() mapIndex=<n>MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapVisualiser::loadOtherMap() mapIndex=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName= current_map=<n>
-MapVisualiser::loadOtherMap() mapIndex=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path> current_map=<n>
 MapVisualiserPlayer::asyncMapLoaded() mapIndex=<n> current_map=<n>
-MapVisualiserPlayer::asyncMapLoaded() mapIndex=<n> current_map=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapVisualiserPlayer::asyncMapLoaded() mapIndex=<n>MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapVisualiserPlayer::asyncMapLoaded() mapIndex=MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
 MapVisualiserPlayer::canGoTo() MoveOnTheMap::canGoTo returned false dir=<n> map=<n> pos=(<n>,<n>) checkCollision=<n>
 MapVisualiserPlayer::finalPlayerStep()
 MapVisualiserPlayer::insert_player_internal()
@@ -246,57 +165,13 @@ MapVisualiserPlayer::setDatapackPath(<path>
 MapVisualiserPlayer::updatePlayerMonsterTile() image not found: <path>
 MapVisualiserPlayer::updatePlayerMonsterTile() monster=<n>
 MapVisualiserPlayer::updatePlayerMonsterTile() monsterMapObject created
-MapVisualiserThread::loadOtherMap() mapIndex="Player is logged, cash: <n>"
 MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path> --closewhenonmap, exiting in <n>s
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path> layers.size()=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path> mapIndex=<n> current_map=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path> mapIndex=<n> map=<ptr>
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=<path> mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=CliClientOptions: --closewhenonmap, exiting in <n>s
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=MapItem::addMap() layers.size()=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<path>
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr><path>
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=MapItem::addMap() mapIndex=<n><path>
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=MapVisualiser::asyncMapLoaded() mapIndex=<n> current_map=<n> tempMapObject=<ptr><path>
-MapVisualiserThread::loadOtherMap() mapIndex=<n> resolvedFileName=MapVisualiserPlayer::asyncMapLoaded() mapIndex=<n> current_map=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=<n>CliClientOptions: --closewhenonmap, exiting in <n>s
-MapVisualiserThread::loadOtherMap() mapIndex=<n>MapItem::addMap() layers.size()=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=<n>MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=<n>MapItem::addMap() mapIndex=<n> resolvedFileName=<path>
-MapVisualiserThread::loadOtherMap() mapIndex=<n>MapVisualiser::asyncDetectBorder() mapIndex=<n> current_map=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=<n>MapVisualiser::loadOtherMap() mapIndex=<n> current_map=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=<n>MapVisualiserPlayer::asyncMapLoaded() mapIndex=<n> current_map=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=<n>MapVisualiserPlayer::asyncMapLoaded() mapIndex=<n> resolvedFileName= current_map=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=CliClientOptions: --closewhenonmap, exiting in <n>s
-MapVisualiserThread::loadOtherMap() mapIndex=MapItem::addMap() done mapIndex=<n> <n> layers, <n> items added (width=<n> height=<n>)
-MapVisualiserThread::loadOtherMap() mapIndex=MapItem::addMap() layers.size()=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=MapItem::addMap() mapIndex=<n> map=<n> resolvedFileName=<path>
-MapVisualiserThread::loadOtherMap() mapIndex=MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n> resolvedFileName=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> playerLayerIndex=<n> resolvedFileName=<path>
-MapVisualiserThread::loadOtherMap() mapIndex=MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr> resolvedFileName=<path>
-MapVisualiserThread::loadOtherMap() mapIndex=MapItem::addMap() mapIndex=<n> map=<ptr> renderer=<ptr>xbd resolvedFileName=<path>
-MapVisualiserThread::loadOtherMap() mapIndex=MapItem::addMap() mapIndex=<n> resolvedFileName= map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=MapItem::addMap() mapIndex=<n> resolvedFileName=<path>
-MapVisualiserThread::loadOtherMap() mapIndex=MapVisualiser::asyncDetectBorder() mapIndex=<n> current_map=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=MapVisualiser::asyncDetectBorder() mapIndex=<n> current_map=<n> resolvedFileName=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=MapVisualiser::asyncDetectBorder() mapIndex=<n> resolvedFileName=<path>
-MapVisualiserThread::loadOtherMap() mapIndex=MapVisualiser::loadOtherMap() mapIndex=<n> current_map=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=MapVisualiser::loadOtherMap() mapIndex=<n> resolvedFileName=<n> current_map=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=MapVisualiser::loadOtherMap() mapIndex=<n> resolvedFileName=<path>
-MapVisualiserThread::loadOtherMap() mapIndex=MapVisualiserPlayer::asyncMapLoaded() mapIndex=<n> current_map=<n>
-MapVisualiserThread::loadOtherMap() mapIndex=MapVisualiserPlayer::setDatapackPath(<path>
 Missing "object" properties (item) for the bot: object, file: <path> text: object
 Missing attribute: child->Name(): monster, file: <path>
 Missing map,x or y, type: teleport on it, file: <path>
 No stack.
 OverMapLogic::currentMapLoaded(): map: <n> with type: ""
-Path not found into <n>ms
 Path result into <n>ms
-Player: <n> parseIncommingData(): remaining data: <n>, returnVal: <n>
-Player: <n> parseIncommingData(): socket->bytesAvailable(): ?, header_cut: <n>
 Player: internalPackOutcommingData(): start
 Preload data for server version <n>.<n>
 Profile <n> has no resolved start map, profile disabled
@@ -311,29 +186,28 @@ QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) "<path>"
 QTimer negative interval at <path> value: <n>
 QTimer::start: negative intervals aren't allowed; the interval will be set to <n>ms.
 QtDatapackChecksum::doDifferedChecksumBase
-QtDatapackChecksum::doDifferedChecksumBasewait: haveTheDatapack()
 QtServer::stop()
 QtServer::stop_internal_server()
 QtServer::stop_internal_server() emit stop_internal_server_signal()
 QtServer::stop_internal_server() moveToThread(QThread::currentThread())
-Quit anyway? (y or n) [answered Y; input not from terminal]
+Raw file to create:
 ScreenTransition::closeEvent()
 ScreenTransition::closeEvent: internalServer->isFinished()
 ScreenTransition::errorString()
 ScreenTransition::errorString(Internal error, file: <path>
 ScreenTransition::errorString(Too recently disconnected)
 ScreenTransition::is_started(<n>)
+Select character: <n>
 Selected character not found, reason: Too recently disconnected, data: <n>
 Start split: <hash> and size <n>, cursor: <n>
-Start split: <n> and size <n>, cursor: <n>
+Start split: <n>A<n>ADD<n>A<n> and size <n>, cursor: <n>
 Start split: <n>F<n>F<n> and size <n>, cursor: <n>
 Start split: A<n>F<n>CD<n>D<n> and size <n>, cursor: <n>
 Stop character loading for now, then character_selected=false
 This plugin does not support propagateSizeHints()
-Thread <n> "QtDatapackClien" received signal SIGSEGV, Segmentation fault.
 Try create account: login: <hash> and pass: <hash>
 Try stop
-Unable to open the file: <path> "bot" has no map= attribute and no map<path> format
+Unable to open the file: <path> "bot" has no map= attribute and no <path> format
 Unable to open: <path> errno: <n>
 Using host libthread_db library "<path>".
 WARNING Api_client_real::datapackChecksumDoneMain(): local Main datapack file list is empty
@@ -357,14 +231,16 @@ WARNING Api_client_real::datapackChecksumDoneMain(): local Main datapack file li
 [KEYBOARDTEST] arrow-walking to the sign at (<n>,<n>), foot tile (<n>,<n>) from (<n>,<n>)
 [KEYBOARDTEST] pressed Escape to close the dialog
 [KEYBOARDTEST] start on map <n>
-[MOVE] keyboard down: map <n>(<n>,<n>) -> map <n>(<n>,<n>)
-[MOVE] keyboard up: map <n>(<n>,<n>) -> map <n>(<n>,<n>)
-[MOVE] mouse<path> up: map <n>(<n>,<n>) -> map <n>(<n>,<n>)
+[MOVE] <path> down: map <n>(<n>,<n>) -> map <n>(<n>,<n>)
+[MOVE] <path> right: map <n>(<n>,<n>) -> map <n>(<n>,<n>)
+[MOVE] <path> up: map <n>(<n>,<n>) -> map <n>(<n>,<n>)
+[MOVE] keyboard left: map <n>(<n>,<n>) -> map <n>(<n>,<n>)
+[MOVE] keyboard right: map <n>(<n>,<n>) -> map <n>(<n>,<n>)
 [New Thread <ptr> (LWP <n>)]
 [New process <n>]
 [OVERFLOWTEST] qtcpu<n><ptr> viewport=<n>x<n> content=<n>x<n> vScrollbar=yes fitsWidth=yes fitsHeightOrScroll=yes -> PASS
 [OVERFLOWTEST] qtopengl wrapWidth=<n> doc=<n>x<n> box=<n> wrapped=yes fitsBox=yes -> PASS
-[SIGNTEST] FAIL timeout: never reached<path> the sign at (<n>,<n>)
+[SIGNTEST] PASS player walked to (<n>,<n>), faced and acted on the clicked tile (<n>,<n>) like Enter was pressed
 [SIGNTEST] clicking interactable at (<n>,<n>) from player (<n>,<n>), expected walk distance=<n>
 [SIGNTEST] zoom=<n>: sign tile (<n>,<n>) on-screen pixel resolves to (<n>,<n>) MATCH
 [SPAWN] player spawned on map <n> at (<n>,<n>)
@@ -372,113 +248,24 @@ WARNING Api_client_real::datapackChecksumDoneMain(): local Main datapack file li
 [SQL exec-sync] INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item) VALUES(<n>,<n>,'Player',<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,'<hash>','','<n>','<hash>');
 [SQL exec-sync] INSERT INTO character(id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item) VALUES(<n>,<n>,'Player',<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,'<hash>','<n>','<n>','<n>');
 [SQL exec-sync] INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,quest) VALUES(<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,'');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'allar<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'anglandope<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'artsophow<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'artsophowes<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'bedalefell<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'blacrags<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'blencomb<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'bowscalfell<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'branglan<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'buckbarrock<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'calepike<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'carcrag<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'carknotts<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'cartsophow<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'castlehead<path>');
+[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'<path>');
 [SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'cave');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'cawfellfell<path>');
 [SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'city');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'crags<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'dalecrag<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'denmoor<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'firbankrigg<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'gavencrag<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'glankfell<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'gowbarrock<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'gowbarrow<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'greatall<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'greatcarf<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'greatchhill<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'greatcrags<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'greet<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'grisdal<path>');
 [SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'gym');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'hallan<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'hallar<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'hallockcrag<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'hardcrag<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'haycockcomb<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'haycragfell<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'hencrag<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'hencraghill<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'hencrags<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'highcrags<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'hights<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'hinrighpike<path>');
 [SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'house<n>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'illacefell<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'kanto<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'kiddlefell<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'knotts<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'landsfells<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'littlemoor<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'lonscarf<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'lowfellpike<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'lowscafell<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'muncathra<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'mungrise<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'nabscalva<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'netherlam<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'outbell<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'outherfell<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'pillan<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'plackcomb<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'ramara<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'ramaramara<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'ransfell<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'ranstrees<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'redscale<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'redscarf<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'redscrag<path>');
 [SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'road');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'road-<n><path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'sallackcrag<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'scale<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'scalecrags<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'scarf<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'scark<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'scarterside<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'sevii-islands<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'slighpike<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'souterfell<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'southerlam<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'stonoldman<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'stypike<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'thurspike<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'ullscarcrag<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'ullscarrow<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'wandal<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'wandalefell<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'wandalepike<path>');
-[SQL exec-sync] INSERT INTO dictionary_map(id,map) VALUES(<n>,'wanstrees<path>');
 [SQL exec-sync] INSERT INTO dictionary_reputation(id,reputation) VALUES(<n>,'crafting');
 [SQL exec-sync] INSERT INTO dictionary_reputation(id,reputation) VALUES(<n>,'farming');
 [SQL exec-sync] INSERT INTO dictionary_reputation(id,reputation) VALUES(<n>,'nation');
 [SQL exec-sync] INSERT INTO dictionary_reputation(id,reputation) VALUES(<n>,'teamrocket');
 [SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'bandit');
-[SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'boy');
 [SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'ghost');
-[SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'girl');
 [SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'girlplayer');
-[SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'player');
 [SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'rocketboy');
 [SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'rocketgirl');
 [SQL exec-sync] INSERT INTO dictionary_skin(id,skin) VALUES(<n>,'terranite');
 [SQL exec-sync] INSERT INTO dictionary_starter(id,starter) VALUES(<n>,'Normal');
 [SQL exec-sync] INSERT INTO dictionary_starter(id,starter) VALUES(<n>,'normal');
-[SQL exec-sync] INSERT INTO dictionary_starter(id,starter) VALUES(<n>,'rocket');
 [SQL exec-sync] INSERT INTO monster(id,character,place,hp,monster,level,xp,captured_with,gender,egg_step,character_origin,position,buffs,skills,skills_endurance) VALUES(<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,'','<n>C<n>','<n>')
 [SQL exec-sync] INSERT INTO monster(id,character,place,hp,monster,level,xp,captured_with,gender,egg_step,character_origin,position,buffs,skills,skills_endurance) VALUES(<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,<n>,'','C<n>','<n>')
 [SQL exec-sync] SELECT * FROM account
@@ -486,26 +273,6 @@ WARNING Api_client_real::datapackChecksumDoneMain(): local Main datapack file li
 [SQL exec-sync] SELECT * FROM character_forserver
 [SQL exec-sync] SELECT * FROM dictionary_reputation
 [SQL exec-sync] UPDATE character SET last_connect=<n> WHERE id=<n>
-[SQL exec] SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow_create_clan,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,date,lastdaillygift FROM character WHERE id=<n>
-[SQL exec] SELECT clan FROM city WHERE city='allar'
-[SQL exec] SELECT clan FROM city WHERE city='altering-cave'
-[SQL exec] SELECT clan FROM city WHERE city='test'
-[SQL exec] SELECT id FROM account ORDER BY id DESC LIMIT <n>,<n>;
-[SQL exec] SELECT id FROM character ORDER BY id DESC LIMIT <n>,<n>;
-[SQL exec] SELECT id FROM character WHERE pseudo='Player'
-[SQL exec] SELECT id FROM clan ORDER BY id DESC LIMIT <n>,<n>;
-[SQL exec] SELECT id FROM monster ORDER BY id DESC LIMIT <n>,<n>;
-[SQL exec] SELECT id,character,place,hp,monster,level,xp,captured_with,gender,egg_step,character_origin,buffs,skills,skills_endurance FROM monster WHERE character=<n> ORDER BY position ASC
-[SQL exec] SELECT id,map FROM dictionary_map ORDER BY map
-[SQL exec] SELECT id,password FROM account WHERE login='<hash>'
-[SQL exec] SELECT id,pseudo,skin,time_to_delete,played_time,last_connect FROM character WHERE account=<n>
-[SQL exec] SELECT id,reputation FROM dictionary_reputation ORDER BY id
-[SQL exec] SELECT id,resources,products,last_update FROM factory
-[SQL exec] SELECT id,skin FROM dictionary_skin ORDER BY id
-[SQL exec] SELECT id,starter FROM dictionary_starter ORDER BY id
-[SQL exec] SELECT map,plants,items,fights,industries FROM character_bymap WHERE character=<n>
-[SQL exec] SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,quest,date FROM character_forserver WHERE character=<n>
-[SQL exec] SELECT server,played_time,last_connect FROM server_time WHERE account=<n>
 [SQL read] SELECT account,pseudo,skin,type,clan,cash,warehouse_cash,clan_leader,time_to_delete,starter,allow_create_clan,item,item_warehouse,recipes,reputations,encyclopedia_monster,encyclopedia_item,achievements,date,lastdaillygift FROM character WHERE id=<n>
 [SQL read] SELECT clan FROM city WHERE city='allar'
 [SQL read] SELECT clan FROM city WHERE city='altering-cave'
@@ -526,22 +293,19 @@ WARNING Api_client_real::datapackChecksumDoneMain(): local Main datapack file li
 [SQL read] SELECT map,plants,items,fights,industries FROM character_bymap WHERE character=<n>
 [SQL read] SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,quest,date FROM character_forserver WHERE character=<n>
 [SQL read] SELECT server,played_time,last_connect FROM server_time WHERE account=<n>
-[Switching to Thread <ptr> (LWP <n>)]
 [TELEPORT] map <n>(<n>,<n>) -> map <n>(<n>,<n>)
 [Thread <ptr> (LWP <n>) exited]
 [Thread debugging using libthread_db enabled]
 animation properties not found for the door at <n> , <n>
-cache=<n>
 character groups: <n>
 characterSelected: true
 cityCaptureUpdateTime(): next capture time is in the past (-<n>ms), stop timer
 client <ptr> ProtocolParsingInputOutput::parseIncommingData() start
 correctly loaded at <path>
 created character with id: <n>, returnCode: <n>, line: <path> <n>
-current map: "haycragfell<path>"
+current map: "<path>"
 current mapId: <n>
 current pseudo: "Player"
-current_map=<n>
 database dictionary_map query finish
 display mergedConnexionInfoList.size(): <n>
 dropped connexion, info seam wrong
@@ -554,35 +318,28 @@ have character
 id is not a number or known monster name: child->Name(): monster, file: <path>
 industry point have not the industry attribute: for bot at: <n>,<n>
 info.public_informations.pseudo: Player
-info.public_informations.pseudo: PlayerGL
 info.public_informations.pseudo: TestPlayerLive
+informations.xml
 internalPackOutcommingData(): start
 layer Object, unknown object at <n> , <n> type: ""
 layers options parsed
 mainNeedUpdate CommonSettingsCommon::commonSettingsCommon.datapackHashBase "<hash>" hashBase ""
 map have empty monster layer:<path> luck is not egal to <n> (<n>) for grass, monsters dropped: child->Name(): lava, file: <path>
 map: <ptr>
-map=<ptr> renderer=<ptr> playerLayerIndex=<n> cache=<n>
 merge the music: <n>ms
-mergedConnexionInfoList.size(): <n>
 moveStepSlot(): final step dir=<n> from map=<n>(<n>,<n>) -> map=<n>(<n>,<n>)
 newConnection(): new CatchChallenger::QtClient connected by fake socket
-parseDatapackMainSub took <n>Api_protocol_Qt::have_current_player_info()ms to parse <path>
+on main:
 parseDatapackMainSub took <n>ms to parse <path>
 parseQuestsExtra too big: <n>/
 parseReplyData(): return false, need be aborted before, packetCode: <n>, data: <n>)
-playerLayerIndex=<n> cache=<n>
-player_informations_is_set=<n>
 qt.core.qmetatype.deprecated: QMetaType: copy construction of type 'QSqlQuery' is deprecated
 qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version <n>.<n> GPL version <n> or later
-renderer=<ptr> playerLayerIndex=<n> cache=<n>
-resolvedFileName=<path>
-resolvedFileName=MapItem::addMap() layers.size()=<n>
 set playerTileset here from: <n>
 spaVisitChoice: parse error "Object: size <n>, type Spa:Pod:Object:Param:Format (<n>), id Spa:Enum:ParamId:EnumFormat (<n>)" " Prop: key Spa:Pod:Object:Param:Format:mediaType (<n>), flags <n>" " Id <n> (Spa:Enum:MediaType:audio)" " Prop: key Spa:Pod:Object:Param:Format:mediaSubtype (<n>), flags <n>" " Id <n> (Spa:Enum:MediaSubtype:iec<n>)" " Prop: key Spa:Pod:Object:Param:Format:Audio:iec<n>Codec (<n>), flags <n>" " Choice: type Spa:Enum:Choice:Enum, flags <n> <n> <n>" " Id <n> (Spa:Enum:AudioIEC<n>Codec:PCM)" " Id <n> (Spa:Enum:AudioIEC<n>Codec:PCM)" " Id <n> (Spa:Enum:AudioIEC<n>Codec:AC<n>)" " Id <n> (Spa:Enum:AudioIEC<n>Codec:EAC<n>)" " Id <n> (Spa:Enum:AudioIEC<n>Codec:TrueHD)" " Prop: key Spa:Pod:Object:Param:Format:Audio:rate (<n>), flags <n>" " Choice: type Spa:Enum:Choice:Range, flags <n> <n> <n>" " Int <n>" " Int <n>" " Int <n>"
 start PathFinding::internalSearchPath(): <n> (<n>,<n>) -> <n> (<n>,<n>), simplifiedMapList.size(): <n>
-std::__atomic_base<QMutexPrivate*>::load (this=<ptr>, __m=std::memory_order_relaxed) at <path>
-the map terrapionera<path> left map: chantiville<path> but the right map have not a right map
+start.xml
+the map <path> left map: <path> but the right map have not a right map
 this->current_map==current_map && this->x==x && this->y==y
 time audio: <n>ms
 time image: <n>ms
@@ -590,7 +347,6 @@ total luck is not egal to <n> (<n>) for grass, monsters dropped: child->Name(): 
 tp[<n>] src=(<n>,<n>) -> map=<n>(<n>,<n>)
 try connect Internal on: : <n>
 try connect TCP on: <n>.<n>: <n>
-try connect TCP on: <n>:<n>::<n>:<n>: <n>
 try connect TCP on: <n>:<n>::<n>:ff<n>: <n>
 try connect TCP on: catchchallenger.herman-brule.com: <n>
 try connect TCP on: localhost: <n>
@@ -598,11 +354,8 @@ values.at(index): <ptr>
 wait database dictionary_map query
 wait: haveTheDatapack()
 without header cut <hash> and size <n>
-without header cut <n> and size <n>
+without header cut <n>A<n>ADD<n>A<n> and size <n>
 without header cut <n>F<n>F<n> and size <n>
 without header cut A<n>F<n>CD<n>D<n> and size <n>
-without header cut MapVisualiserThread::loadOtherMap() mapIndex=<hash> and size <n>
 wrong teleporter on the map: gym(<n>,<n>), to gym(<n>,<n>) because the tp is out of range
-x=<n> y=<n> mHaveTheDatapack=<n> player_informations_is_set=<n>
-zone<path>
 zonecapture point have not the zone attribute: for bot id: <n>,<n>
