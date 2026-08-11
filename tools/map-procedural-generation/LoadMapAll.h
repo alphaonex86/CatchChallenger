@@ -405,6 +405,14 @@ public:
     //Returns false when the world must not be written.
     static bool checkWalkability(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting,
                                  std::vector<std::string> &errors);
+    //NO ISOLATED MAP: flood the chunk graph — every pair of chunks joined by a
+    //border teleport, plus every boat crossing — from the chunk of the first
+    //start city. A written map the player can never reach is a broken world, so
+    //the ones that are not reachable are reported and nothing is generated.
+    //This is what makes "go to any map from any map, walking or from water" a
+    //guarantee instead of an intention.
+    static bool checkNoIsolatedMap(const SettingsAll::SettingsExtra &setting,
+                                   std::vector<std::string> &errors);
 
     //WATER BODIES: connected components of the Water layer over the whole world.
     //A component holding at least [water] seaMinTiles cells is a SEA — big enough
@@ -442,6 +450,17 @@ public:
                               std::vector<std::pair<uint16_t,uint16_t> > &boatChunks);
     static void linkChunkToNeighbour(const unsigned int &from,const unsigned int &to,
                                      const unsigned int &mapXCount);
+    //Paint ONE sea chunk: a water channel from border to border along its travel
+    //axis, walled on both sides by a CONTINUOUS chain of borderTile rock whose
+    //position wanders, so the player can cross but never wander off into the open
+    //sea. What lies beyond the wall keeps its natural terrain and is simply never
+    //reachable. A closed BOAT chunk is walled all round instead, with the boat
+    //tile and its push-teleport. Called from addRoadContent, after the terrain
+    //transitions, so nothing repaints over it.
+    static void paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX,const unsigned int &chunkY,
+                                const unsigned int &mapWidth,const unsigned int &mapHeight,
+                                const RoadIndex &roadIndex,const uint8_t &zoneOrientation,
+                                const SettingsAll::SettingsExtra &setting);
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     //[General] cityDebug: Object layer "City" with the hole polygon of every town

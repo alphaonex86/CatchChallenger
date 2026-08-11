@@ -372,6 +372,28 @@ int main(int argc, char *argv[])
             //vegetation both do, and a tree dropped on the road would otherwise
             //cut a chunk in two behind the guard's back.
             {
+                //NO ISOLATED MAP is reported, not fatal: the world comes out of
+                //the LAND router in several land masses (it cannot cross water),
+                //and the sea routes only join the ones with a routable shore. The
+                //rest is a pre-existing defect of the land router, so aborting on
+                //it would mean the generator produces nothing at all — it is
+                //logged loudly instead, with the maps named.
+                {
+                    std::vector<std::string> isolatedErrors;
+                    if(!LoadMapAll::checkNoIsolatedMap(config,isolatedErrors))
+                    {
+                        std::cerr << isolatedErrors.size() << " map(s) cannot be reached from the start town"
+                                     " (land masses the sea routes could not join):" << std::endl;
+                        unsigned int errorIndex=0;
+                        while(errorIndex<isolatedErrors.size() && errorIndex<10)
+                        {
+                            std::cerr << "  " << isolatedErrors.at(errorIndex) << std::endl;
+                            errorIndex++;
+                        }
+                        if(isolatedErrors.size()>10)
+                            std::cerr << "  ... and " << (isolatedErrors.size()-10) << " more" << std::endl;
+                    }
+                }
                 std::vector<std::string> walkErrors;
                 if(!LoadMapAll::checkWalkability(tiledMap,config,walkErrors))
                 {

@@ -36,7 +36,9 @@ public:
         //never become a shipping lane. bodyDebugMinTiles only filters the debug
         //overlay, so a world map is not buried under puddle outlines.
         unsigned int waterSeaMinTiles;
-        unsigned int waterBodyDebugMinTiles;
+        //a body of at least lakeMinTiles (and under seaMinTiles) is a LAKE;
+        //anything smaller is a puddle and is not named at all
+        unsigned int waterLakeMinTiles;
         //debug outlines are traced on a DOWNSAMPLED grid of this many tiles per
         //block: at tile resolution a noisy coastline gives over a million corners
         unsigned int waterBodyDebugStep;
@@ -47,6 +49,29 @@ public:
         unsigned int waterPathPercentOfLand;
         unsigned int waterChunkSeaPercent;
         unsigned int waterBoatPercent;
+        //how many chunks from a town the coast may be for it to count as a PORT
+        unsigned int waterHarbourChunkRadius;
+        //[water] the CHANNEL painted across a sea chunk: a corridor of water
+        //halfWidth tiles either side of the travel axis, walled by borderTile
+        //rock. The wall is a CONTINUOUS chain whose position wanders by up to
+        //wanderAmplitude tiles, so it does not read as a drawn corridor; what
+        //lies beyond it is never reachable.
+        QString waterBorderTile;
+        unsigned int waterChannelHalfWidth;
+        unsigned int waterWanderAmplitude;
+        //ISLANDS inside the channel: islandPercent of the chunks get one, of at
+        //least islandMinTiles tiles, mountain core, ringed by at most
+        //islandSandMax tiles of sand. islandLandablePercent of them are walkable
+        //islets, the rest are bare rock scenery.
+        unsigned int waterIslandPercent;
+        unsigned int waterIslandMinTiles;
+        unsigned int waterIslandSandMax;
+        unsigned int waterIslandLandablePercent;
+        //swimmers met on the channel
+        unsigned int waterMinFighter;
+        unsigned int waterMaxFighter;
+        //the tile the boat sits on in a closed crossing chunk
+        QString waterBoatTile;
         std::vector<std::string> citiesNames;
         float scale_City;
         bool doallmap;

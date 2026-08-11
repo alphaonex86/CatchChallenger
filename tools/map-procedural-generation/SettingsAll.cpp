@@ -216,7 +216,7 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
 
     settings.beginGroup("water");
     config.waterSeaMinTiles=settings.value("seaMinTiles",4000).toUInt();
-    config.waterBodyDebugMinTiles=settings.value("bodyDebugMinTiles",200).toUInt();
+    config.waterLakeMinTiles=settings.value("lakeMinTiles",200).toUInt();
     config.waterBodyDebugStep=settings.value("bodyDebugStep",32).toUInt();
     config.waterPathPercentOfLand=settings.value("pathPercentOfLand",0).toUInt();
     config.waterChunkSeaPercent=settings.value("chunkSeaPercent",80).toUInt();
@@ -225,6 +225,19 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.waterBoatPercent=settings.value("boatPercent",30).toUInt();
     if(config.waterBoatPercent>100)
         config.waterBoatPercent=100;
+    config.waterHarbourChunkRadius=settings.value("harbourChunkRadius",3).toUInt();
+    config.waterBorderTile=settings.value("borderTile","").toString();
+    config.waterChannelHalfWidth=settings.value("channelHalfWidth",6).toUInt();
+    config.waterWanderAmplitude=settings.value("wanderAmplitude",3).toUInt();
+    config.waterIslandPercent=settings.value("islandPercent",35).toUInt();
+    config.waterIslandMinTiles=settings.value("islandMinTiles",20).toUInt();
+    config.waterIslandSandMax=settings.value("islandSandMax",2).toUInt();
+    config.waterIslandLandablePercent=settings.value("islandLandablePercent",50).toUInt();
+    config.waterMinFighter=settings.value("minFighter",1).toUInt();
+    config.waterMaxFighter=settings.value("maxFighter",3).toUInt();
+    if(config.waterMaxFighter<config.waterMinFighter)
+        config.waterMaxFighter=config.waterMinFighter;
+    config.waterBoatTile=settings.value("boatTile","").toString();
     if(config.waterBodyDebugStep<1)
         config.waterBodyDebugStep=1;
     settings.endGroup();

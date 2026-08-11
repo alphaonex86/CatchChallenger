@@ -77,6 +77,9 @@ endforeach()
 # npc-slots.json is the REVIEWED npc line bank (git tracked): it is copied on
 # every build, so what the generator writes is what was validated in the repo.
 foreach(runtimeFile cities.txt cities-types.ini dialog.txt npc-slots.json informations.xml start.xml
+                    minimap-1way-water.png minimap-2way1-water.png
+                    minimap-2way2-water.png minimap-3way-water.png
+                    minimap-4way-water.png
                     minimap-1way.png minimap-2way1.png minimap-2way2.png
                     minimap-3way.png minimap-4way.png minimap-citybig.png
                     minimap-citymedium.png minimap-citysmall.png
