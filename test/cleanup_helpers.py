@@ -166,6 +166,20 @@ _already_armed = False
 _run_successful = False
 
 
+def keep_build_dir(path):
+    """Undo register_build_dir(): this dir SURVIVES a successful exit.
+
+    build_paths.build_path() registers every dir it hands out, which is right for a
+    build only its own script uses. It is wrong for the ones a LATER script of the
+    same all.sh run consumes: testingcluster.py and testingbyIA.py both drive the
+    client testingclient.py built, and wiping it on success made them fail with
+    "client binary missing - run testingclient.py first" the first time
+    testingclient.py went green.
+    """
+    if path:
+        _registered_dirs.discard(os.path.abspath(path))
+
+
 def register_build_dir(path):
     """Mark a build dir for removal when the current script exits
     *successfully*. See mark_run_successful() — without it, the

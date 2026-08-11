@@ -99,6 +99,14 @@ CLIENT_GL_PRO    = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopengl.
 CLIENT_GL_BUILD  = build_paths.build_path("client/qtopengl/build/testing-gl" + _DIAG_SUFFIX)
 CLIENT_GL_BIN    = "catchchallenger"
 
+# build_paths.build_path() registers every dir it returns for removal-on-success;
+# these three must survive it, so take them back out. Keep in step with the note
+# below: testingcluster.py / testingbyIA.py run LATER in the same all.sh and drive
+# the client binaries built here.
+cleanup_helpers.keep_build_dir(SERVER_BUILD)
+cleanup_helpers.keep_build_dir(CLIENT_CPU_BUILD)
+cleanup_helpers.keep_build_dir(CLIENT_GL_BUILD)
+
 # Build dirs intentionally NOT registered for atexit cleanup —
 # testing-filedb / testing-cpu / testing-gl are SHARED with
 # testingbots.py, testinghttp.py, testingserver.py,
