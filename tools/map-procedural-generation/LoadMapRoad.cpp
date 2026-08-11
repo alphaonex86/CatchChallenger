@@ -255,6 +255,9 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
                                    const RoadIndex &roadIndex, const SettingsAll::SettingsExtra &setting,
                                    const std::string &overworldFile, const std::string &zoneName)
 {
+    //own random stream for this cave chunk (see seedChunk): written at split
+    //time, long after the overworld pass, so it needs its own pass id
+    seedChunk(setting.seed,chunkX,chunkY,ChunkPass_caveInterior);
     //the no-go zone may be a 3x3 repeating rock block (9-tile comma list)
     std::vector<Tiled::Tile *> wallTiles;
     {
@@ -2041,6 +2044,11 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
             const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
             const bool isCity=haveCityEntry(citiesCoordToIndex,x,y);
 
+            //this chunk draws from its own random stream (see seedChunk): the
+            //content of a chunk no longer depends on how many numbers the chunks
+            //generated before it happened to consume
+            seedChunk(setting.seed,x,y,ChunkPass_roadContent);
+
             if((zoneOrientation&(Orientation_bottom|Orientation_left|Orientation_right|Orientation_top)) != 0){
 
                 //a configurable percent of road chunks becomes a CAVE: the
@@ -3361,6 +3369,9 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
             const uint8_t &zoneOrientation=mapPathDirection[x+y*w];
             const bool isCity=haveCityEntry(citiesCoordToIndex,x,y);
 
+            //own random stream for this chunk, second pass (see seedChunk)
+            seedChunk(setting.seed,x,y,ChunkPass_roadPaint);
+
             if((zoneOrientation&(Orientation_bottom|Orientation_left|Orientation_right|Orientation_top)) != 0){
                 map = LoadMapAll::roadData[x+y*w];
 
@@ -4117,6 +4128,9 @@ QString LoadMapAll::emitRoadBotsForChunk(Tiled::Map &worldMap,
     Tiled::ObjectGroup *objectLayer=LoadMap::searchObjectGroupByName(worldMap,"Object");
     if(objectLayer==NULL)
         return out;
+    //own random stream for this chunk (see seedChunk): the trainer teams built
+    //here must not depend on how many bots the chunks written before produced
+    seedChunk(setting.seed,chunkTileX,chunkTileY,ChunkPass_chunkBots);
     const unsigned int x0=chunkTileX*singleMapWidth;
     const unsigned int y0=chunkTileY*singleMapHeight;
     const unsigned int x1=x0+singleMapWidth;
@@ -4300,6 +4314,8 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
     while(ci<cities.size())
     {
         const City &city=cities.at(ci);
+        //own random stream for this city chunk (see seedChunk)
+        seedChunk(setting.seed,city.x,city.y,ChunkPass_townsfolk);
         const int x0=(int)(city.x*mapWidth), y0=(int)(city.y*mapHeight);
         //scale map of this chunk: used to keep flower tufts off the paved avenue
         unsigned int *chunkMap=NULL;

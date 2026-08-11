@@ -17,6 +17,26 @@ std::vector<LoadMapAll::Road> LoadMapAll::roads;
 std::unordered_map<uint16_t,std::unordered_map<uint16_t,LoadMapAll::RoadIndex> > LoadMapAll::roadCoordToIndex;
 std::unordered_map<std::string,LoadMapAll::Zone> LoadMapAll::zones;
 
+void LoadMapAll::seedChunk(const unsigned int &seed, const unsigned int &chunkX, const unsigned int &chunkY,
+                           const ChunkPass &pass)
+{
+    //Mix the four inputs, then avalanche: neighbouring chunks must not get
+    //correlated streams (a plain seed+x+y*w would give chunk (1,0) and (0,1) the
+    //same value on a square world, and consecutive chunks near-identical ones).
+    //Cheap integer hash, no dependency, deterministic on every platform because
+    //everything is unsigned 32 bit.
+    uint32_t h=(uint32_t)seed;
+    h^=(uint32_t)chunkX*0x9E3779B1u;
+    h^=(uint32_t)chunkY*0x85EBCA77u;
+    h^=(uint32_t)pass*0xC2B2AE3Du;
+    h^=h>>16;
+    h*=0x7FEB352Du;
+    h^=h>>15;
+    h*=0x846CA68Bu;
+    h^=h>>16;
+    srand((unsigned int)h);
+}
+
 void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight)
 {
     Tiled::ObjectGroup *layerCity=new Tiled::ObjectGroup("City",0,0); // ObjectGroup contructor no longer accept width and height 
