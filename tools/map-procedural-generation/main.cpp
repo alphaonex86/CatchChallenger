@@ -268,6 +268,9 @@ int main(int argc, char *argv[])
                 LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
                                     tiledMap.width(),tiledMap.height(),0,0,false);
                 qDebug("Draw terrain took %lld ms", t.elapsed());
+                //what is a SEA and what is only a lake, from the water that was
+                //just drawn: a water path is only ever routed on a sea
+                LoadMapAll::detectWaterBodies(tiledMap,config);
                 MapBrush::initialiseMapMask(tiledMap);
                 //BEFORE the transitions: the outer-border pass is mask-gated, so
                 //this is what keeps the mountain COLLISION ridge out of the town
@@ -318,6 +321,9 @@ int main(int argc, char *argv[])
             //the hole every town was laid out in, with its key numbers on one line
             if(config.cityDebug)
                 LoadMapAll::addDebugCityLimits(tiledMap,config);
+            //the outline of every sea and lake
+            if(config.terrainDebug)
+                LoadMapAll::addDebugWaterBodies(tiledMap,config);
             if(config.dominimap)
             {
                 t.start();

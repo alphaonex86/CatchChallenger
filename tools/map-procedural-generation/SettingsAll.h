@@ -25,6 +25,21 @@ public:
         //town, the polygon of the hole it was laid out in and a ONE LINE label
         //with its name, size and key variables.
         bool cityDebug;
+        //[General] terrainDebug: add an Object layer "Terrain" holding the OUTLINE
+        //polygon of every sea and lake, so what the generator calls a sea can be
+        //seen in Tiled.
+        bool terrainDebug;
+
+        //[water] a WATER BODY is a connected component of the Water layer.
+        //seaMinTiles is what separates a SEA (big enough to sail, and the only
+        //thing a water path is routed on) from a LAKE — a pond in a field must
+        //never become a shipping lane. bodyDebugMinTiles only filters the debug
+        //overlay, so a world map is not buried under puddle outlines.
+        unsigned int waterSeaMinTiles;
+        unsigned int waterBodyDebugMinTiles;
+        //debug outlines are traced on a DOWNSAMPLED grid of this many tiles per
+        //block: at tile resolution a noisy coastline gives over a million corners
+        unsigned int waterBodyDebugStep;
         std::vector<std::string> citiesNames;
         float scale_City;
         bool doallmap;
