@@ -115,9 +115,27 @@ int main(int argc, char *argv[])
                   << " (build the map-procedural-generation-runtime target, or pass --config <file>)" << std::endl;
         return 1;
     }
+    //QSettings WRITES BACK on sync: putDefaultSettings adds any key the file does
+    //not have yet, and QSettings then rewrites the whole file — which strips every
+    //comment out of the operator's config. The generator reads the settings, it
+    //has no business editing them, so it works on a COPY and the checked-in
+    //settings.ini keeps its comments whatever defaults are added later.
+    const QString settingsRunPath=QCoreApplication::applicationDirPath()+"/settings-run.ini";
+    if(QFile::exists(settingsRunPath))
+        if(!QFile::remove(settingsRunPath))
+        {
+            std::cerr << "Unable to replace " << settingsRunPath.toStdString() << std::endl;
+            return 1;
+        }
+    if(!QFile::copy(settingsPath,settingsRunPath))
+    {
+        std::cerr << "Unable to copy " << settingsPath.toStdString()
+                  << " to " << settingsRunPath.toStdString() << std::endl;
+        return 1;
+    }
     //IniFormat, not NativeFormat: NativeFormat only means "ini file" on Unix — on
     //Windows it is the system REGISTRY and the file would be silently ignored
-    QSettings settings(settingsPath,QSettings::IniFormat);
+    QSettings settings(settingsRunPath,QSettings::IniFormat);
     //the label the world is written under, once, for every path below
     LoadMap::resolveMainCode(settings);
     std::cout << "Generating the map label \"" << LoadMap::mainCode().toStdString() << "\"" << std::endl;

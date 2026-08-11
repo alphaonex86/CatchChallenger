@@ -42,6 +42,16 @@ public:
         QString walkway;
         QString extratileset;
         float roadWaterChance;
+        //[road] extraSpacePercent*: how much of a road chunk is filled with
+        //walkable content (path + grass/water blobs) beyond the minimum needed to
+        //join its borders. Low = a simple track crossing an untouched landscape,
+        //high = most of the chunk is walkable. Rolled once per chunk with a
+        //TRIANGULAR distribution, so most roads sit near the middle of the range
+        //and the extremes stay rare; variance scales how far a chunk may go from
+        //that middle (0 pins every chunk to it, 100 uses the whole range).
+        unsigned int roadExtraSpacePercentMin;
+        unsigned int roadExtraSpacePercentMax;
+        unsigned int roadExtraSpacePercentVariance;
         unsigned int regionTry;
         unsigned int walkwayTry;
         unsigned int roadRetry;

@@ -576,14 +576,20 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
             int placed=0,tries=0;
             static const char* const lookDirs[4]={"bottom","top","left","right"};
             std::set<std::pair<int,int> > claimedFightCells;
+            //cells already holding a trainer: nothing stopped two of them landing
+            //on the SAME cell, which the engine cannot render and check-generated
+            //rejects. claimedFightCells above is about the fight RAY, not the cell.
+            std::set<std::pair<int,int> > usedBotCells;
             while(placed<wanted && tries<200)
             {
                 tries++;
                 const int lx=4+rand()%((int)singleMapWidth-8);
                 const int ly=4+rand()%((int)singleMapHeight-8);
                 if(floorGrid[lx+ly*singleMapWidth]!=0
-                        && colliLayer->cellAt(x0+lx,y0+ly).tile()==NULL)
+                        && colliLayer->cellAt(x0+lx,y0+ly).tile()==NULL
+                        && usedBotCells.find(std::pair<int,int>(lx,ly))==usedBotCells.cend())
                 {
+                    usedBotCells.insert(std::pair<int,int>(lx,ly));
                     Tiled::MapObject *bot=new Tiled::MapObject("","bot",
                         QPointF((x0+lx)*worldMap.tileWidth(),(y0+ly+1)*worldMap.tileHeight()),
                         QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
@@ -1311,7 +1317,127 @@ void findAreaMarker(ZoneMarker *marker, const unsigned int &mapw, unsigned int* 
     }
 }
 
-std::vector<ZoneMarker*> placeZones(unsigned int* map, unsigned int w, unsigned int h, unsigned int orientation, const SettingsAll::SettingsExtra &setting){
+//cells covered by the zones that still exist: how much of the chunk is walkable
+//content rather than untouched terrain
+static unsigned int zoneCoverage(const std::vector<ZoneMarker*> &zones)
+{
+    unsigned int covered=0;
+    unsigned int index=0;
+    while(index<zones.size())
+    {
+        const ZoneMarker * const zone=zones.at(index);
+        if(zone->type!=0)
+            covered+=(unsigned int)(zone->w*zone->h);
+        index++;
+    }
+    return covered;
+}
+
+//ONE attempt at growing a new zone against an existing one. Returns true when a
+//zone was added. Extracted so the same growth runs twice: first to CONNECT the
+//borders, then to fill the chunk up to [road] extraSpacePercent*.
+static bool growOneZone(std::vector<ZoneMarker*> &zones, const unsigned int *area,
+                        const unsigned int w, const unsigned int h,
+                        const int margin, int &id)
+{
+    static const unsigned int maxsize=4;
+    static const unsigned int minsize=2;
+    static const unsigned int maxsizevertical=6;
+    static const unsigned int minsizevertical=3;
+    const unsigned int index=rand()%zones.size();
+    const ZoneMarker * const zone=zones[index];
+    //a zone that was already dropped is no anchor to grow from
+    if(zone->type==0)
+        return false;
+    unsigned int s1,s2;
+    if(rand()%2==1){
+        s1 = minsize+(rand()%(maxsize-minsize));
+        s2 = minsizevertical+(rand()%(maxsizevertical-minsizevertical));
+    }else{
+        s2 = minsize+(rand()%(maxsize-minsize));
+        s1 = minsizevertical+(rand()%(maxsizevertical-minsizevertical));
+    }
+    ZoneMarker *tmp=NULL;
+    switch (rand()%4) {
+    case 0:
+        tmp = new ZoneMarker(zone->x + zone->w, zone->y + (rand()%(zone->h*2-3)-zone->h+1), s1, s2, id, 0, 0xFE, index);
+        break;
+    case 1:
+        tmp = new ZoneMarker(zone->x + (rand()%(zone->w*2-3)-zone->w+1), zone->y+zone->h, s1, s2, id, 0, 0xFE, index);
+        break;
+    case 2:
+        tmp = new ZoneMarker(zone->x-s1, zone->y + (rand()%(zone->h*2-3)-zone->h+1), s1, s2, id, 0, 0xFE, index);
+        break;
+    case 3:
+        tmp = new ZoneMarker(zone->x + (rand()%(zone->w*2-3)-zone->w+1), zone->y-s2, s1, s2, id, 0, 0xFE, index);
+        break;
+    default:
+        std::cerr << "Invalid rand() ?! ";
+        abort();
+        break;
+    }
+    if(tmp->x < margin || tmp->y < margin || tmp->x + tmp->w > (int)w-margin || tmp->y + tmp->h > (int)h-margin){
+        delete tmp;
+        return false;
+    }
+    for(const ZoneMarker* box2: zones){
+        if((box2->x < tmp->x + tmp->w)
+            && (box2->x + box2->w > tmp->x)
+            && (box2->y < tmp->y + tmp->h)
+            && (box2->y + box2->h > tmp->y))
+        {
+            delete tmp;
+            return false;
+        }
+    }
+    {
+        const unsigned int right=tmp->x+tmp->w;
+        const unsigned int bottom=tmp->y+tmp->h;
+        for(unsigned int x=tmp->x; x<right; x++){
+            for(unsigned int y=tmp->y; y<bottom; y++){
+                if(area[w*y+x] == 0){
+                    delete tmp;
+                    return false;
+                }
+            }
+        }
+    }
+    tmp->id = id;
+    zones.push_back(tmp);
+    id++;
+    return true;
+}
+
+//[road] extraSpacePercent*: how much of a road chunk is filled with walkable
+//content (path, grass and water blobs) beyond the minimum needed to join its
+//borders. Low = a simple track crossing an untouched landscape, high = most of
+//the chunk is walkable. Rolled ONCE per chunk, from the chunk's own random
+//stream (seedChunk), with a TRIANGULAR distribution so most chunks sit near the
+//middle of the range and the extremes stay rare — "the gradient in the middle".
+//variance scales how far from that middle a chunk may go: 0 pins every chunk to
+//it, 100 uses the whole min..max range.
+static unsigned int rollExtraSpacePercent(const SettingsAll::SettingsExtra &setting)
+{
+    const int minimum=(int)setting.roadExtraSpacePercentMin;
+    const int maximum=(int)setting.roadExtraSpacePercentMax;
+    if(maximum<=minimum)
+        return (unsigned int)minimum;
+    const int middle=(minimum+maximum)/2;
+    const int half=(maximum-minimum)/2;
+    //average of two uniforms in [-100,100] = triangular around 0
+    const int spread=((rand()%201-100)+(rand()%201-100))/2;
+    int percent=middle+half*spread*(int)setting.roadExtraSpacePercentVariance/10000;
+    if(percent<minimum)
+        percent=minimum;
+    if(percent>maximum)
+        percent=maximum;
+    return (unsigned int)percent;
+}
+
+//isCity: [road] extraSpacePercent* is about ROADS. A city chunk turns every
+//surviving zone into buildable ground, so filling or pruning here would change
+//how much room the town has for its buildings — it keeps the plain behaviour.
+std::vector<ZoneMarker*> placeZones(unsigned int* map, unsigned int w, unsigned int h, unsigned int orientation, const SettingsAll::SettingsExtra &setting, const bool isCity){
     std::vector<ZoneMarker*> zones = std::vector<ZoneMarker*>();
 
     unsigned int* area = new unsigned int[w*h]; // All diffrents area
@@ -1410,83 +1536,8 @@ std::vector<ZoneMarker*> placeZones(unsigned int* map, unsigned int w, unsigned 
 
     bool isDone = false;
     while(!isDone && limit > 0){
-        for(int i=0; i<pass; i++){
-            const unsigned int index = rand()%zones.size();
-            const ZoneMarker* zone = zones[index];
-
-            ZoneMarker *tmp = NULL;
-            unsigned int s1, s2; // Different size
-
-            if(rand()%2 == 1){
-                s1 = minsize+(rand()%(maxsize-minsize));
-                s2 = minsizevertical+(rand()%(maxsizevertical-minsizevertical));
-            }else{
-                s2 = minsize+(rand()%(maxsize-minsize));
-                s1 = minsizevertical+(rand()%(maxsizevertical-minsizevertical));
-            }
-
-            switch (rand()%4) {
-            case 0:
-                tmp = new ZoneMarker(zone->x + zone->w, zone->y + (rand()%(zone->h*2-3)-zone->h+1), s1, s2, id, 0, 0xFE, index);
-                break;
-            case 1:
-                tmp = new ZoneMarker(zone->x + (rand()%(zone->w*2-3)-zone->w+1), zone->y+zone->h, s1, s2, id, 0, 0xFE, index);
-                break;
-            case 2:
-                tmp = new ZoneMarker(zone->x-s1, zone->y + (rand()%(zone->h*2-3)-zone->h+1), s1, s2, id, 0, 0xFE, index);
-                break;
-            case 3:
-                tmp = new ZoneMarker(zone->x + (rand()%(zone->w*2-3)-zone->w+1), zone->y-s2, s1, s2, id, 0, 0xFE, index);
-                break;
-            default:
-                std::cerr << "Invalid rand() ?! ";
-                abort();
-                break;
-            }
-
-            if(tmp->x < margin || tmp->y < margin || tmp->x + tmp->w > (int)w-margin || tmp->y + tmp->h > (int)h-margin){
-                delete tmp;
-                tmp = NULL;
-                continue;
-            }else{
-                for(const ZoneMarker* box2: zones){
-                    if((box2->x < tmp->x + tmp->w)
-                        && (box2->x + box2->w > tmp->x)
-                        && (box2->y < tmp->y + tmp->h)
-                        && (box2->y + box2->h > tmp->y))
-                    {
-                        delete tmp;
-                        tmp = NULL;
-                        break;
-                    }
-                }
-
-                if(tmp != NULL){
-                    unsigned int right = tmp->x+tmp->w;
-                    unsigned int bottom = tmp->y+tmp->h;
-
-                    for(unsigned int x=tmp->x; x<right; x++){
-                        for(unsigned int y=tmp->y; y<bottom; y++){
-                            if(area[w*y+x] == 0){
-                                delete tmp;
-                                tmp = NULL;
-                                break;
-                            }
-                        }
-
-                        if(tmp == NULL){
-                            break;
-                        }
-                    }
-
-                    if(tmp != NULL){
-                        tmp->id = id;
-                        zones.push_back(tmp);
-                        id++;
-                    }
-                }
-            }
-        }
+        for(int i=0; i<pass; i++)
+            growOneZone(zones,area,w,h,margin,id);
 
         // If all path are ok, break
         bool* validated = new bool[id];
@@ -1622,6 +1673,23 @@ std::vector<ZoneMarker*> placeZones(unsigned int* map, unsigned int w, unsigned 
         pass = retry;
     }
 
+    //The borders are joined; now decide how much of the chunk this road FILLS
+    //([road] extraSpacePercent*). Growing here, after the connectivity is
+    //settled, cannot break it: the extra zones only add walkable content.
+    const unsigned int extraSpacePercent=isCity ? 100 : rollExtraSpacePercent(setting);
+    if(limit > 0 && !isCity)
+    {
+        const unsigned int targetCells=w*h*extraSpacePercent/100;
+        //bounded: a chunk whose free ground is small can never reach a high
+        //target, and a failed growth attempt costs one try
+        int fillTries=(int)(w*h);
+        while(zoneCoverage(zones)<targetCells && fillTries>0)
+        {
+            growOneZone(zones,area,w,h,margin,id);
+            fillTries--;
+        }
+    }
+
     // Do the pathing
     if(limit > 0){
         std::vector<std::vector<int>> paths = std::vector<std::vector<int>>();
@@ -1750,6 +1818,24 @@ std::vector<ZoneMarker*> placeZones(unsigned int* map, unsigned int w, unsigned 
                     toCheck = waitingList;
                     waitingList = tmp;
                 }
+            }
+        }
+
+        //Under the target the chunk was filled; OVER it, drop content back down.
+        //Only the grass/water blobs (2 and 3) are droppable: the path zones (1, 4)
+        //and the border entries (0xFF) are what joins the borders and must stay,
+        //so this can never disconnect the chunk. Dropped from the LAST grown
+        //first, which is the farthest from the entries.
+        if(!isCity)
+        {
+            const unsigned int targetCells=w*h*extraSpacePercent/100;
+            unsigned int zoneIndex=zones.size();
+            while(zoneIndex>0 && zoneCoverage(zones)>targetCells)
+            {
+                zoneIndex--;
+                ZoneMarker * const zone=zones.at(zoneIndex);
+                if(zone->type==2 || zone->type==3)
+                    zone->type=0;
             }
         }
 
@@ -2362,7 +2448,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                 }
 
                 // Step 2: place the random zone
-                std::vector<ZoneMarker*> zones = placeZones(map, scaleWidth, scaleHeight, zoneOrientation, setting);
+                std::vector<ZoneMarker*> zones = placeZones(map, scaleWidth, scaleHeight, zoneOrientation, setting, isCity);
 
                 // If can join all the path
                 for(unsigned int x = 0; x<scaleWidth; x++){
