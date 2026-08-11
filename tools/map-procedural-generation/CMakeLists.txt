@@ -25,6 +25,7 @@ add_executable(map-procedural-generation
     LoadMapAll.cpp
     LoadMapBuilding.cpp
     LoadMapCity.cpp
+    TerrainFlattener.cpp
     PartialMap.cpp
     MiniMapAll.cpp
     LoadMapRoad.cpp

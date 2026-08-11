@@ -35,6 +35,16 @@ big\signTiles="t1.tsx/100,t1.tsx/103"
 medium\template=city-medium
 medium\useAsBase=false
 medium\signTiles="t1.tsx/100"
+; flatten: force the height/moisure noise under a town to its DOMINANT terrain,
+; so a city is never cut in half by two terrains. flattenShape picks the area:
+; rectangle (the whole chunk), circle or octagon - all three are one polygon.
+; flattenMargin shrinks it in tiles; flattenFalloff is how many tiles the terrain
+; takes to ramp from the town level back to the natural noise (the gradient
+; restarts at the town level, so no mountain wall lands on the town border).
+flatten=true
+flattenShape=rectangle
+flattenMargin=0
+flattenFalloff=44
 
 [plants]
 tree-1\heightmoisurelist="3,1;3,2;3,3;3,4;3,5;3,6"

@@ -31,6 +31,14 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
         settings.setValue("levelmapmax",50);
 
     settings.beginGroup("city");
+    if(!settings.contains("flatten"))
+        settings.setValue("flatten",true);
+    if(!settings.contains("flattenShape"))
+        settings.setValue("flattenShape","rectangle");
+    if(!settings.contains("flattenMargin"))
+        settings.setValue("flattenMargin",0);
+    if(!settings.contains("flattenFalloff"))
+        settings.setValue("flattenFalloff",44);
     settings.beginGroup("big");
     if(!settings.contains("template"))
         settings.setValue("template","city-big");
@@ -193,6 +201,18 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.levelmapmax=settings.value("levelmapmax").toUInt();
 
     settings.beginGroup("city");
+    config.cityFlatten=settings.value("flatten",true).toBool();
+    config.cityFlattenShape=settings.value("flattenShape","rectangle").toString().trimmed().toLower();
+    if(config.cityFlattenShape!="rectangle" && config.cityFlattenShape!="circle" && config.cityFlattenShape!="octagon")
+    {
+        std::cerr << "[city] flattenShape \"" << config.cityFlattenShape.toStdString()
+                  << "\" is not rectangle/circle/octagon, using rectangle" << std::endl;
+        config.cityFlattenShape="rectangle";
+    }
+    config.cityFlattenMargin=settings.value("flattenMargin",0).toUInt();
+    config.cityFlattenFalloff=settings.value("flattenFalloff",44).toFloat();
+    if(config.cityFlattenFalloff<0)
+        config.cityFlattenFalloff=0;
     settings.beginGroup("big");
     config.cityBigTemplate=settings.value("template","city-big").toString();
     config.cityBigUseAsBase=settings.value("useAsBase",false).toBool();
