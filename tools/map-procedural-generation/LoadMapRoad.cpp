@@ -2088,8 +2088,14 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                 //overworld stays natural terrain and the cave CANNOT be
                 //bypassed — the chunk qualifies only when its road connections
                 //are SEPARATED by the terrain (cliffs/water); each connection
-                //gets a mouth placed directly ON the cliff collision line
+                //gets a mouth placed directly ON the cliff collision line.
+                //A mouth is only drawable on a HORIZONTAL collision line (the
+                //entranceTile / entranceTopTile art is a cliff seen from the front),
+                //so the overworld hole may only sit on the TOP or BOTTOM border. A
+                //chunk with a left or right road connection would need a mouth on a
+                //vertical cliff face and is left as a normal road.
                 if(!isCity && setting.cavePercent>0
+                        && (zoneOrientation&(Orientation_left|Orientation_right))==0
                         && !setting.caveWallTile.isEmpty() && !setting.caveFloorTile.isEmpty()
                         && !setting.caveEntranceTile.isEmpty() && !setting.caveEntranceTopTile.isEmpty()
                         && !setting.caveExitBottomTile.isEmpty() && !setting.caveExitTopTile.isEmpty()

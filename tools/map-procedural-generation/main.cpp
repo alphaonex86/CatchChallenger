@@ -345,7 +345,14 @@ int main(int argc, char *argv[])
                     unsigned int mapX=0;
                     while(mapX<config.mapXCount)
                     {
-                        Tiled::MapObject *object = new Tiled::MapObject(QString::number(mapX)+","+QString::number(mapY),"",QPointF(0,0), QSizeF(0.0,0.0));
+                        //the REAL name the chunk is kept under (city, road + step,
+                        //cave); the x,y grid position is already the polygon itself.
+                        //Chunks that produce no map keep their coordinates so the
+                        //grid stays complete when the layer is shown in Tiled.
+                        QString chunkName=QString::fromStdString(LoadMapAll::chunkDebugName(mapX,mapY));
+                        if(chunkName.isEmpty())
+                            chunkName=QString::number(mapX)+","+QString::number(mapY);
+                        Tiled::MapObject *object = new Tiled::MapObject(chunkName,"",QPointF(0,0), QSizeF(0.0,0.0));
 
                         unsigned int tiles_x = mapX*config.mapWidth;
                         unsigned int tiles_y = mapY*config.mapHeight;
