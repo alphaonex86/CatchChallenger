@@ -447,7 +447,9 @@ public:
     //is a LAKE: a pond in a field must not become a shipping lane.
     struct WaterBody
     {
-        unsigned int size;
+        //64 bit: a world of 65536x65536 tiles overflows a 32 bit count, and a
+        //silently wrapped size would call an ocean a puddle
+        uint64_t size;
         bool isSea;
         //bounding box in world tiles, and one cell known to belong to it
         unsigned int minX,minY,maxX,maxY;
@@ -456,6 +458,9 @@ public:
     static std::vector<WaterBody> waterBodies;
     //world-sized, waterNoBody on land: which body a tile belongs to
     static std::vector<uint16_t> waterBodyOfTile;
+    //A COUNT OF TILES, as a human reads it: 254 tiles, 42k tiles, 52M tiles,
+    //444G tiles. A raw 690208 says nothing at a glance.
+    static std::string tileCountText(const uint64_t &count);
     enum : uint16_t { waterNoBody=0xFFFF };
     static void detectWaterBodies(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting);
     //[General] terrainDebug: Object layer "Terrain" with the OUTLINE polygon of

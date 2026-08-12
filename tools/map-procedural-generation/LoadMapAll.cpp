@@ -1147,6 +1147,20 @@ void LoadMapAll::wireBoatCrossings()
 std::vector<LoadMapAll::WaterBody> LoadMapAll::waterBodies;
 std::vector<uint16_t> LoadMapAll::waterBodyOfTile;
 
+std::string LoadMapAll::tileCountText(const uint64_t &count)
+{
+    //one significant unit, no decimals: 254 tiles, 42k tiles, 52M tiles, 444G
+    static const char * const unitName[5]={"","k","M","G","T"};
+    uint64_t scaled=count;
+    unsigned int unit=0;
+    while(scaled>=1000 && unit<4)
+    {
+        scaled/=1000;
+        unit++;
+    }
+    return std::to_string(scaled)+unitName[unit];
+}
+
 void LoadMapAll::detectWaterBodies(Tiled::Map &worldMap, const SettingsAll::SettingsExtra &setting)
 {
     waterBodies.clear();
@@ -1251,7 +1265,7 @@ void LoadMapAll::detectWaterBodies(Tiled::Map &worldMap, const SettingsAll::Sett
         startCell++;
     }
     unsigned int seaCount=0;
-    unsigned int biggest=0;
+    uint64_t biggest=0;
     unsigned int bodyIndex=0;
     while(bodyIndex<waterBodies.size())
     {
@@ -1262,9 +1276,9 @@ void LoadMapAll::detectWaterBodies(Tiled::Map &worldMap, const SettingsAll::Sett
         bodyIndex++;
     }
     std::cout << "water: " << waterBodies.size() << " bod(y|ies), " << seaCount
-              << " sea(s) of at least " << setting.waterSeaMinTiles << " tiles and "
+              << " sea(s) of at least " << tileCountText(setting.waterSeaMinTiles) << " tiles and "
               << setting.waterSeaMinSpan << " tiles long, biggest "
-              << biggest << " tiles" << std::endl;
+              << tileCountText(biggest) << " tiles" << std::endl;
 }
 
 //Outline of a mask as a closed polygon of CELL CORNERS, by following the boundary
@@ -1286,9 +1300,15 @@ static QPolygonF traceMaskOutline(const std::vector<unsigned char> &mask,
     int cornerX=(int)seedX;
     int cornerY=(int)seedY;
     int direction=0;
-    const int startX=cornerX;
-    const int startY=cornerY;
-    const int startDirection=direction;
+    //STOP ON THE STATE AFTER THE FIRST STEP, not on the state before it. The walk
+    //rarely leaves the seed heading RIGHT — it turns as soon as the shape asks —
+    //so "back at the seed corner heading right" never came true and the tracer
+    //walked the same ring over and over until the guard: one lake of the
+    //reference world came out with 5162 points for an 8 point outline.
+    bool firstStep=true;
+    int stopX=0;
+    int stopY=0;
+    int stopDirection=0;
     unsigned int guard=0;
     //one step per boundary edge; a coastline cannot be longer than every edge of
     //the grid, and the polygon is capped well below that anyway
@@ -1333,9 +1353,21 @@ static QPolygonF traceMaskOutline(const std::vector<unsigned char> &mask,
         }
         if(!turned)
             break;//a single isolated cell, or a shape the walk cannot follow
+        if(firstStep)
+        {
+            stopX=cornerX;
+            stopY=cornerY;
+            stopDirection=direction;
+            firstStep=false;
+        }
+        else if(cornerX==stopX && cornerY==stopY && direction==stopDirection)
+            break;
         guard++;
     }
-    while((cornerX!=startX || cornerY!=startY || direction!=startDirection) && guard<guardLimit);
+    while(guard<guardLimit);
+    //close it: the last point is the corner the walk came back to
+    if(outline.size()>=3 && outline.first()!=outline.last())
+        outline << outline.first();
     return outline;
 }
 
@@ -1399,7 +1431,8 @@ void LoadMapAll::addDebugWaterBodies(Tiled::Map &worldMap, const SettingsAll::Se
             if(outline.size()>=3)
             {
                 const QString label=QString::fromLatin1(body.isSea?"sea ":"lake ")+
-                        QString::number(bodyIndex)+" "+QString::number(body.size)+" tiles";
+                        QString::number(bodyIndex)+" "+
+                        QString::fromStdString(tileCountText(body.size))+" tiles";
                 //the polygon points are relative to the object position
                 const QPointF origin=outline.first();
                 unsigned int pointIndex=0;
