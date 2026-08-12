@@ -4669,149 +4669,6 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
     }
     const bool horizontal=((zoneOrientation&(Orientation_left|Orientation_right))!=0);
 
-    //A CLOSED boat chunk: every WATER cell is rocked off except a corridor from
-    //the border the town is on, and the small boat sits at its end.
-    if(roadIndex.isBoat)
-    {
-        const int axis=(int)(horizontal?mapHeight:mapWidth)/2;
-        std::vector<Tiled::TileLayer*> abovePlayerLayers;
-        {
-            unsigned int layerIndex=0;
-            while(layerIndex<(unsigned int)worldMap.layerCount())
-            {
-                Tiled::Layer * const layer=worldMap.layerAt(layerIndex);
-                if(layer->isTileLayer() && layer->name()=="WalkBehind")
-                    abovePlayerLayers.push_back(static_cast<Tiled::TileLayer *>(layer));
-                layerIndex++;
-            }
-        }
-        unsigned int localY=0;
-        while(localY<mapHeight)
-        {
-            unsigned int localX=0;
-            while(localX<mapWidth)
-            {
-                const unsigned int tileX=x0+localX;
-                const unsigned int tileY=y0+localY;
-                if(waterLayer->cellAt(tileX,tileY).tile()!=NULL)
-                {
-                    //the corridor: a 5 wide lane on the axis, from the town border
-                    //inward, left open so the player can reach the boat
-                    const bool inCorridor=(horizontal
-                            ? (labs((long)localY-(long)axis)<=2
-                               && ((zoneOrientation&Orientation_left)!=0 ? localX<10 : localX>=mapWidth-10))
-                            : (labs((long)localX-(long)axis)<=2
-                               && ((zoneOrientation&Orientation_top)!=0 ? localY<10 : localY>=mapHeight-10)));
-                    if(!inCorridor)
-                        colliLayer->setCell(tileX,tileY,Tiled::Cell(rockTile));
-                }
-                //THE HARBOUR APPROACH is the one place a boat chunk opens the
-                //ground: the lane from the town border to the boat has to be
-                //walkable or the crossing can never be used, and a natural cliff
-                //on the shore was leaving 4 of them sealed. It is 5 tiles wide in
-                //a chunk that is solid rock otherwise — not a coast bulldozed
-                //across the world, which is what the channel must never do.
-                {
-                    const bool inCorridor=(horizontal
-                            ? (labs((long)localY-(long)axis)<=2
-                               && ((zoneOrientation&Orientation_left)!=0 ? localX<10 : localX>=mapWidth-10))
-                            : (labs((long)localX-(long)axis)<=2
-                               && ((zoneOrientation&Orientation_top)!=0 ? localY<10 : localY>=mapHeight-10)));
-                    if(inCorridor)
-                    {
-                        colliLayer->setCell(tileX,tileY,Tiled::Cell());
-                        //and keep the VEGETATION off it: the mask above only
-                        //covers the water, so a tree was planted back onto the
-                        //harbour lane where it crosses the shore
-                        {
-                            const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);
-                            const unsigned int bitMask=tileX+tileY*worldMap.width();
-                            if(bitMask/8<maxMapSize)
-                                MapBrush::mapMask[bitMask/8]|=(1<<(7-bitMask%8));
-                        }
-                        unsigned int aboveIndex=0;
-                        while(aboveIndex<abovePlayerLayers.size())
-                        {
-                            abovePlayerLayers.at(aboveIndex)->setCell(tileX,tileY,Tiled::Cell());
-                            aboveIndex++;
-                        }
-                    }
-                }
-                localX++;
-            }
-            localY++;
-        }
-        //the SMALL boat at the inner end of the corridor, and the push-teleport
-        //that carries the player to the other shore of this crossing
-        //The harbour lane is 10 tiles deep from the town border and 5 wide on the
-        //axis. Everything below is placed INSIDE it: the 4x3 boat at its inner
-        //end, the push-teleport on the boat cell facing the town, and the landing
-        //(where the far shore drops the player) 4 tiles in — outside the lane the
-        //cell is rock and the crossing dead-ends, which is what happened.
-        const bool towardsLow=horizontal?((zoneOrientation&Orientation_left)!=0)
-                                        :((zoneOrientation&Orientation_top)!=0);
-        const unsigned int boatX=x0+(horizontal?(towardsLow?6:mapWidth-10):(unsigned int)axis-2);
-        const unsigned int boatY=y0+(horizontal?(unsigned int)axis-1:(towardsLow?6:mapHeight-9));
-        //waterLayer NOT passed: the quay boat is moored at the end of the harbour
-        //lane, which is as often shore as water — only the cells being free matters
-        stampTileRect(worldMap,colliLayer,setting.waterShipUsable,boatX,boatY,NULL);
-        int otherX=-1,otherY=-1;
-        {
-            unsigned int crossingIndex=0;
-            while(crossingIndex<boatCrossings.size())
-            {
-                const BoatCrossing &crossing=boatCrossings.at(crossingIndex);
-                if(crossing.fromX==chunkX && crossing.fromY==chunkY)
-                {
-                    otherX=crossing.toX;
-                    otherY=crossing.toY;
-                }
-                else if(crossing.toX==chunkX && crossing.toY==chunkY)
-                {
-                    otherX=crossing.fromX;
-                    otherY=crossing.fromY;
-                }
-                crossingIndex++;
-            }
-        }
-        Tiled::ObjectGroup * const movingGroup=LoadMap::searchObjectGroupByName(worldMap,"Moving");
-        if(otherX>=0 && movingGroup!=NULL)
-        {
-            //the far shore's landing, computed exactly like this one from ITS own
-            //orientation: a boat crossing is symmetric
-            const uint8_t otherOrientation=mapPathDirection[otherX+otherY*setting.mapXCount];
-            const bool otherHorizontal=((otherOrientation&(Orientation_left|Orientation_right))!=0);
-            const int otherAxis=(int)(otherHorizontal?mapHeight:mapWidth)/2;
-            const bool otherTowardsLow=otherHorizontal?((otherOrientation&Orientation_left)!=0)
-                                                      :((otherOrientation&Orientation_top)!=0);
-            const unsigned int landX=otherHorizontal
-                    ?(otherTowardsLow?4:mapWidth-5):(unsigned int)otherAxis;
-            const unsigned int landY=otherHorizontal
-                    ?(unsigned int)otherAxis:(otherTowardsLow?4:mapHeight-5);
-            const QDir mapDir(QFileInfo(QString::fromStdString(getMapFile(chunkX,chunkY))).absoluteDir());
-            const QString targetMap=mapDir.relativeFilePath(
-                        QString::fromStdString(getMapFile((unsigned int)otherX,(unsigned int)otherY)));
-            //ON the boat cell that faces the town: the player walks into it
-            const unsigned int pushX=horizontal?(towardsLow?boatX:boatX+3):x0+(unsigned int)axis;
-            const unsigned int pushY=horizontal?y0+(unsigned int)axis:(towardsLow?boatY:boatY+2);
-            Tiled::MapObject * const boat=new Tiled::MapObject("","teleport on push",
-                QPointF(pushX*worldMap.tileWidth(),pushY*worldMap.tileHeight()),
-                QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
-            boat->setProperty("map",targetMap);
-            boat->setProperty("x",QString::number(landX));
-            boat->setProperty("y",QString::number(landY));
-            const Tiled::Tileset * const invisibleTileset=LoadMap::searchTilesetByName(worldMap,"invisible");
-            if(invisibleTileset!=NULL)
-            {
-                Tiled::Cell boatCell;
-                boatCell.setTile(invisibleTileset->tileAt(2));
-                boat->setCell(boatCell);
-            }
-            movingGroup->addObject(boat);
-        }
-        return;
-    }
-
     //A SWIMMABLE CHANNEL that FOLLOWS THE WATER. A straight band across the axis
     //was wrong twice over: it opened the sides the chunk is not connected on, so
     //the player swam off into chunks that have no map, and where a cliff jutted
@@ -4863,6 +4720,19 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                         openings.push_back((unsigned int)best);
                 }
                 side++;
+            }
+        }
+        //A chunk whose connected border carries no water at all still needs its
+        //lane — a boat chunk is picked for HAVING sea, not for having it against
+        //the town gate. Seed from its own water so the boat has somewhere to sit.
+        if(openings.empty())
+        {
+            unsigned int cell=0;
+            while(cell<mapWidth*mapHeight && openings.empty())
+            {
+                if(isWater.at(cell)!=0)
+                    openings.push_back(cell);
+                cell++;
             }
         }
         //shortest water route from the first opening to each of the others
@@ -4918,6 +4788,10 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                         walkCell=parent.at((unsigned int)walkCell);
                     }
                 }
+                else
+                    std::cerr << "the sea of the chunk " << chunkX << "," << chunkY
+                              << " does not join its two sides; the route through it cannot be sailed"
+                              << std::endl;
                 openingIndex++;
             }
             //widen the route to the channel, through WATER only
@@ -4971,6 +4845,51 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
             }
         }
     }
+    //The BORDER TELEPORT sits at the MIDPOINT of each connected side (addMapChange
+    //puts it there), so the lane has to reach that exact cell. The lane opens on
+    //the nearest water of that border, which can be some tiles along it, so the
+    //shore between the two is taken into the lane — ALONG THE BORDER LINE only,
+    //never inward: marching inward cut a corridor through the forest.
+    {
+        const Orientation bit[4]={Orientation_left,Orientation_right,Orientation_top,Orientation_bottom};
+        unsigned int side=0;
+        while(side<4)
+        {
+            if((zoneOrientation&bit[side])!=0)
+            {
+                const unsigned int lineLength=(side<2)?mapHeight:mapWidth;
+                const unsigned int middle=lineLength/2;
+                //nearest lane cell on this border line
+                int nearest=-1;
+                unsigned int step=0;
+                while(step<lineLength)
+                {
+                    const unsigned int localX=(side==0)?0:((side==1)?mapWidth-1:step);
+                    const unsigned int localY=(side==2)?0:((side==3)?mapHeight-1:step);
+                    if(channelCell.at(localX+localY*mapWidth)!=0)
+                        if(nearest<0 || labs((long)step-(long)middle)<labs((long)nearest-(long)middle))
+                            nearest=(int)step;
+                    step++;
+                }
+                if(nearest>=0)
+                {
+                    unsigned int walk=middle;
+                    while(true)
+                    {
+                        const unsigned int localX=(side==0)?0:((side==1)?mapWidth-1:walk);
+                        const unsigned int localY=(side==2)?0:((side==3)?mapHeight-1:walk);
+                        channelCell[localX+localY*mapWidth]=1;
+                        colliLayer->setCell(x0+localX,y0+localY,Tiled::Cell());
+                        if(walk==(unsigned int)nearest)
+                            break;
+                        walk+=(((unsigned int)nearest>walk)?1:-1);
+                    }
+                }
+            }
+            side++;
+        }
+    }
+
     //A LINE of rock around the channel, not a sea filled with it: every WATER
     //cell that TOUCHES the lane without being in it, one tile thick. It closes
     //the open sea off the lane, and the sides the chunk is not connected on are
@@ -5006,6 +4925,121 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                 localX++;
             }
             localY++;
+        }
+    }
+
+    //THE BOAT of a crossing: on a WATER cell of the lane that touches the land,
+    //which is where a boat is moored — at the limit of the sea and the shore. The
+    //chunk keeps its ordinary sea lane, it is NOT filled with rock: a wall of
+    //rock around the harbour was never the point, the boat is.
+    if(roadIndex.isBoat)
+    {
+        int boatCell=-1;
+        {
+            //nearest to the border the town is on, so the walk is short
+            const bool towardsLow=horizontal?((zoneOrientation&Orientation_left)!=0)
+                                            :((zoneOrientation&Orientation_top)!=0);
+            int bestDistance=0;
+            unsigned int localY=1;
+            while(localY+3<mapHeight)
+            {
+                unsigned int localX=1;
+                while(localX+4<mapWidth)
+                {
+                    const unsigned int tileX=x0+localX;
+                    const unsigned int tileY=y0+localY;
+                    if(channelCell.at(localX+localY*mapWidth)!=0
+                            && waterLayer->cellAt(tileX,tileY).tile()!=NULL
+                            && colliLayer->cellAt(tileX,tileY).tile()==NULL)
+                    {
+                        //touching the shore: a neighbour that is walkable ground
+                        bool touchesLand=false;
+                        const int stepX[4]={-1,1,0,0};
+                        const int stepY[4]={0,0,-1,1};
+                        unsigned int direction=0;
+                        while(direction<4)
+                        {
+                            const unsigned int neighbourX=tileX+stepX[direction];
+                            const unsigned int neighbourY=tileY+stepY[direction];
+                            if(walkLayer->cellAt(neighbourX,neighbourY).tile()!=NULL
+                                    && colliLayer->cellAt(neighbourX,neighbourY).tile()==NULL)
+                                touchesLand=true;
+                            direction++;
+                        }
+                        //the shore is where a boat is moored, so it wins; but a
+                        //lane that is all open water still gets its boat, as
+                        //close to the town border as the lane reaches — the
+                        //player arrives there swimming, water IS walkable
+                        const int distance=horizontal
+                                ?(towardsLow?(int)localX:(int)(mapWidth-localX))
+                                :(towardsLow?(int)localY:(int)(mapHeight-localY));
+                        const int score=touchesLand?distance:(distance+10000);
+                        if(boatCell<0 || score<bestDistance)
+                        {
+                            boatCell=(int)(localX+localY*mapWidth);
+                            bestDistance=score;
+                        }
+                    }
+                    localX++;
+                }
+                localY++;
+            }
+        }
+        if(boatCell<0)
+            std::cerr << "no shore in the sea lane of the boat chunk " << chunkX << "," << chunkY
+                      << ", the crossing has no boat" << std::endl;
+        else
+        {
+            const unsigned int boatX=x0+(unsigned int)boatCell%mapWidth;
+            const unsigned int boatY=y0+(unsigned int)boatCell/mapWidth;
+            //ON the water, at the shore
+            stampTileRect(worldMap,colliLayer,setting.waterShipUsable,boatX,boatY,waterLayer);
+            int otherX=-1,otherY=-1;
+            {
+                unsigned int crossingIndex=0;
+                while(crossingIndex<boatCrossings.size())
+                {
+                    const BoatCrossing &crossing=boatCrossings.at(crossingIndex);
+                    if(crossing.fromX==chunkX && crossing.fromY==chunkY)
+                    {
+                        otherX=crossing.toX;
+                        otherY=crossing.toY;
+                    }
+                    else if(crossing.toX==chunkX && crossing.toY==chunkY)
+                    {
+                        otherX=crossing.fromX;
+                        otherY=crossing.fromY;
+                    }
+                    crossingIndex++;
+                }
+            }
+            Tiled::ObjectGroup * const movingGroup=LoadMap::searchObjectGroupByName(worldMap,"Moving");
+            if(otherX>=0 && movingGroup!=NULL)
+            {
+                //the far shore drops the player next to ITS boat; the exact cell is
+                //recorded when that chunk is painted, so both sides agree
+                boatLandingCells[std::pair<uint16_t,uint16_t>((uint16_t)chunkX,(uint16_t)chunkY)]=
+                        std::pair<uint8_t,uint8_t>((uint8_t)((unsigned int)boatCell%mapWidth),
+                                                   (uint8_t)((unsigned int)boatCell/mapWidth));
+                Tiled::MapObject * const boat=new Tiled::MapObject("","teleport on push",
+                    QPointF(boatX*worldMap.tileWidth(),boatY*worldMap.tileHeight()),
+                    QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
+                const QDir mapDir(QFileInfo(QString::fromStdString(getMapFile(chunkX,chunkY))).absoluteDir());
+                boat->setProperty("map",mapDir.relativeFilePath(
+                                      QString::fromStdString(getMapFile((unsigned int)otherX,(unsigned int)otherY))));
+                //filled in once BOTH shores are painted (see wireBoatCrossings)
+                boat->setProperty("x","0");
+                boat->setProperty("y","0");
+                const Tiled::Tileset * const invisibleTileset=LoadMap::searchTilesetByName(worldMap,"invisible");
+                if(invisibleTileset!=NULL)
+                {
+                    Tiled::Cell boatMarker;
+                    boatMarker.setTile(invisibleTileset->tileAt(2));
+                    boat->setCell(boatMarker);
+                }
+                movingGroup->addObject(boat);
+                boatTeleportObjects[std::pair<uint16_t,uint16_t>((uint16_t)chunkX,(uint16_t)chunkY)]=boat;
+            }
         }
     }
 
