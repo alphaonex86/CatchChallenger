@@ -104,6 +104,64 @@ static Tiled::Tile *seaChunkGroundTile(Tiled::TileLayer * const walkLayer,
     return best;
 }
 
+//THE CHUNK AS THE PLAYER WALKS IT ON FOOT — water is a wall here ON PURPOSE.
+//A ferry map is mostly sea, so its biggest walkable component is the basin, and
+//a quay that can only be reached by swimming is reached by nobody: the boat is
+//what the player takes when they CANNOT swim. -1 = not walkable on foot.
+static void seaFootComponents(const std::vector<unsigned char> &water,
+                              const std::vector<unsigned char> &blocked,
+                              const unsigned int &worldWidth,
+                              const unsigned int &chunkX,const unsigned int &chunkY,
+                              const unsigned int &mapWidth,const unsigned int &mapHeight,
+                              std::vector<int> &component)
+{
+    component.assign(mapWidth*mapHeight,-1);
+    const unsigned int x0=chunkX*mapWidth;
+    const unsigned int y0=chunkY*mapHeight;
+    int componentCount=0;
+    std::vector<unsigned int> queue;
+    unsigned int startCell=0;
+    while(startCell<mapWidth*mapHeight)
+    {
+        const unsigned int startWorld=(x0+startCell%mapWidth)+(y0+startCell/mapWidth)*worldWidth;
+        if(component.at(startCell)<0 && blocked.at(startWorld)==0 && water.at(startWorld)==0)
+        {
+            component[startCell]=componentCount;
+            queue.clear();
+            queue.push_back(startCell);
+            unsigned int queueIndex=0;
+            while(queueIndex<queue.size())
+            {
+                const unsigned int cell=queue.at(queueIndex);
+                queueIndex++;
+                const int cellX=(int)(cell%mapWidth);
+                const int cellY=(int)(cell/mapWidth);
+                const int stepX[4]={-1,1,0,0};
+                const int stepY[4]={0,0,-1,1};
+                unsigned int direction=0;
+                while(direction<4)
+                {
+                    const int nextX=cellX+stepX[direction];
+                    const int nextY=cellY+stepY[direction];
+                    if(nextX>=0 && nextY>=0 && nextX<(int)mapWidth && nextY<(int)mapHeight)
+                    {
+                        const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapWidth;
+                        const unsigned int nextWorld=(x0+(unsigned int)nextX)+(y0+(unsigned int)nextY)*worldWidth;
+                        if(component.at(next)<0 && blocked.at(nextWorld)==0 && water.at(nextWorld)==0)
+                        {
+                            component[next]=componentCount;
+                            queue.push_back(next);
+                        }
+                    }
+                    direction++;
+                }
+            }
+            componentCount++;
+        }
+        startCell++;
+    }
+}
+
 //template/sea/<name>/: the decorations of a swimmable route. Same shape as
 //template/on-<terrain>/ — one tmx per variant plus its how-use.ini — but they are
 //brushed on the WATER of a route and carry a fight bot.
@@ -876,6 +934,34 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                 const unsigned int otherY=(side==0)?crossing.toY:crossing.fromY;
                 const unsigned int x0=chunkX*mapWidth;
                 const unsigned int y0=chunkY*mapHeight;
+                //WHERE THE PLAYER ARRIVES ON FOOT: the ground the linked borders
+                //of this map open on. The boat has to be moored against THAT, not
+                //against any coast — a ship tied to the far side of a wood is a
+                //ferry nobody can take.
+                std::vector<int> footComponent;
+                std::set<int> arrivalComponent;
+                seaFootComponents(water,blocked,worldWidth,chunkX,chunkY,mapWidth,mapHeight,footComponent);
+                {
+                    const uint8_t links=mapPathDirection[chunkX+chunkY*mapXCount];
+                    unsigned int step=0;
+                    while(step<mapHeight)
+                    {
+                        if((links&Orientation_left)!=0 && footComponent.at(step*mapWidth)>=0)
+                            arrivalComponent.insert(footComponent.at(step*mapWidth));
+                        if((links&Orientation_right)!=0 && footComponent.at(mapWidth-1+step*mapWidth)>=0)
+                            arrivalComponent.insert(footComponent.at(mapWidth-1+step*mapWidth));
+                        step++;
+                    }
+                    step=0;
+                    while(step<mapWidth)
+                    {
+                        if((links&Orientation_top)!=0 && footComponent.at(step)>=0)
+                            arrivalComponent.insert(footComponent.at(step));
+                        if((links&Orientation_bottom)!=0 && footComponent.at(step+(mapHeight-1)*mapWidth)>=0)
+                            arrivalComponent.insert(footComponent.at(step+(mapHeight-1)*mapWidth));
+                        step++;
+                    }
+                }
                 int bestCell=-1;
                 int bestScore=-1;
                 unsigned int localY=0;
@@ -902,33 +988,42 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                         if(berthFree)
                         {
                             //the shore along the LENGTH of the ship (its horizontal
-                            //sides) is what makes a berth: a quay it can be tied to
-                            unsigned int alongShore=0;
+                            //sides) is what makes a berth: a quay it can be tied to.
+                            //A quay the player REACHES ON FOOT from the border of
+                            //the map is worth far more than any other, and a bare
+                            //cliff coast is the last resort.
+                            unsigned int connectedShore=0;
+                            unsigned int walkableShore=0;
                             unsigned int anyShore=0;
                             unsigned int shipColumn=0;
                             while(shipColumn<shipWidth)
                             {
-                                const unsigned int aboveCell=(x0+localX+shipColumn)
-                                        +(y0+localY-1)*worldWidth;
-                                const unsigned int belowCell=(x0+localX+shipColumn)
-                                        +(y0+localY+shipHeight)*worldWidth;
-                                if(localY>0 && water.at(aboveCell)==0)
+                                unsigned int quaySide=0;
+                                while(quaySide<2)
                                 {
-                                    anyShore++;
-                                    if(blocked.at(aboveCell)==0)
-                                        alongShore++;
-                                }
-                                if(localY+shipHeight<mapHeight && water.at(belowCell)==0)
-                                {
-                                    anyShore++;
-                                    if(blocked.at(belowCell)==0)
-                                        alongShore++;
+                                    const bool above=(quaySide==0);
+                                    if((above && localY>0) || (!above && localY+shipHeight<mapHeight))
+                                    {
+                                        const unsigned int quayLocalX=localX+shipColumn;
+                                        const unsigned int quayLocalY=above?(localY-1):(localY+shipHeight);
+                                        const unsigned int quayCell=(x0+quayLocalX)+(y0+quayLocalY)*worldWidth;
+                                        if(water.at(quayCell)==0)
+                                        {
+                                            anyShore++;
+                                            if(blocked.at(quayCell)==0)
+                                            {
+                                                walkableShore++;
+                                                if(arrivalComponent.find(footComponent.at(
+                                                       quayLocalX+quayLocalY*mapWidth))!=arrivalComponent.cend())
+                                                    connectedShore++;
+                                            }
+                                        }
+                                    }
+                                    quaySide++;
                                 }
                                 shipColumn++;
                             }
-                            //a walkable quay beats a cliff coast, a cliff coast
-                            //beats nothing at all
-                            const int score=(int)(alongShore*100+anyShore);
+                            const int score=(int)(connectedShore*10000+walkableShore*100+anyShore);
                             if(anyShore>0 && score>bestScore)
                             {
                                 bestScore=score;
@@ -962,9 +1057,15 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                             shipRow++;
                         }
                     }
-                    //the ship tile the land touches, the most centred one, and the
-                    //quay cell in front of it the far side will land on
+                    //THE CELL THE PLAYER PUSHES, and the QUAY they land on. The
+                    //teleport goes on the ship tile the LAND touches, the most
+                    //centred one; the quay is that land cell. Ranked: ground the
+                    //border of the map really reaches on foot, then any open
+                    //ground, then a coast that has to be opened — and only if the
+                    //ship touches no land at all does it fall back to the water,
+                    //which needs the swim item and is no ferry berth.
                     int teleportX=-1,teleportY=-1,landX=-1,landY=-1;
+                    int bestQuayRank=0;
                     {
                         const int middle=(int)shipX+(int)shipWidth/2;
                         int bestDistance=0;
@@ -983,25 +1084,34 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                                 {
                                     const int quayX=(int)tileX+stepX[direction];
                                     const int quayY=(int)tileY+stepY[direction];
-                                    if(quayX>=0 && quayY>=0 && quayX<(int)worldWidth && quayY<(int)worldHeight)
+                                    if(quayX>=0 && quayY>=0 && quayX<(int)worldWidth && quayY<(int)worldHeight
+                                            && (unsigned int)quayX/mapWidth==chunkX
+                                            && (unsigned int)quayY/mapHeight==chunkY)
                                     {
                                         const unsigned int quay=(unsigned int)quayX+(unsigned int)quayY*worldWidth;
-                                        //the quay must be walkable and in the same
-                                        //map, else the player lands in a wall
-                                        if(blocked.at(quay)==0
-                                                && (unsigned int)quayX/mapWidth==chunkX
-                                                && (unsigned int)quayY/mapHeight==chunkY
-                                                && (water.at(quay)==0 || allowed.at(quay)!=0))
+                                        const unsigned int quayLocal=((unsigned int)quayX%mapWidth)
+                                                +((unsigned int)quayY%mapHeight)*mapWidth;
+                                        int rank=0;
+                                        if(water.at(quay)==0)
                                         {
-                                            const int distance=abs((int)tileX-middle);
-                                            if(teleportX<0 || distance<bestDistance)
-                                            {
-                                                bestDistance=distance;
-                                                teleportX=(int)tileX;
-                                                teleportY=(int)tileY;
-                                                landX=quayX;
-                                                landY=quayY;
-                                            }
+                                            if(blocked.at(quay)==0)
+                                                rank=(arrivalComponent.find(footComponent.at(quayLocal))
+                                                      !=arrivalComponent.cend())?4:3;
+                                            else
+                                                rank=2;//a coast to open, like a road corridor
+                                        }
+                                        else if(allowed.at(quay)!=0 && blocked.at(quay)==0)
+                                            rank=1;//open water: the last resort
+                                        const int distance=abs((int)tileX-middle);
+                                        if(rank>0 && (rank>bestQuayRank
+                                                      || (rank==bestQuayRank && distance<bestDistance)))
+                                        {
+                                            bestQuayRank=rank;
+                                            bestDistance=distance;
+                                            teleportX=(int)tileX;
+                                            teleportY=(int)tileY;
+                                            landX=quayX;
+                                            landY=quayY;
                                         }
                                     }
                                     direction++;
@@ -1009,6 +1119,36 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                                 shipRow++;
                             }
                             shipColumn++;
+                        }
+                    }
+                    //a quay under a tree or on the cliff edge is OPENED: whole
+                    //plants only, and whatever hung above the player with them
+                    if(bestQuayRank==2 && landX>=0)
+                    {
+                        const unsigned int quay=(unsigned int)landX+(unsigned int)landY*worldWidth;
+                        MapPlants::removePlantAt(worldMap,(unsigned int)landX,(unsigned int)landY);
+                        unsigned int layerIndex=0;
+                        while(layerIndex<collisionLayers.size())
+                        {
+                            collisionLayers.at(layerIndex)->setCell((unsigned int)landX,(unsigned int)landY,
+                                                                    Tiled::Cell());
+                            layerIndex++;
+                        }
+                        unsigned int aboveIndex=0;
+                        while(aboveIndex<abovePlayerLayers.size())
+                        {
+                            abovePlayerLayers.at(aboveIndex)->setCell((unsigned int)landX,(unsigned int)landY,
+                                                                      Tiled::Cell());
+                            aboveIndex++;
+                        }
+                        blocked[quay]=0;
+                        if(walkLayer->cellAt((unsigned int)landX,(unsigned int)landY).tile()==NULL)
+                        {
+                            Tiled::Tile * const groundTile=seaChunkGroundTile(walkLayer,chunkX,chunkY,
+                                                                             mapWidth,mapHeight);
+                            if(groundTile!=NULL)
+                                walkLayer->setCell((unsigned int)landX,(unsigned int)landY,
+                                                   Tiled::Cell(groundTile));
                         }
                     }
                     if(teleportX<0 || movingGroup==NULL)
@@ -1037,6 +1177,62 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                         movingGroup->addObject(boat);
                         boatTeleportObjects[std::pair<uint16_t,uint16_t>((uint16_t)chunkX,(uint16_t)chunkY)]=boat;
                         maskVegetationAround(worldMap,(unsigned int)landX,(unsigned int)landY,1);
+                        //THE WALK FROM THE BORDER TO THE QUAY IS MASKED, like a road
+                        //masks its own way. The vegetation is brushed after this
+                        //pass: a wood grown across the shore left the boat visible
+                        //and unreachable, and the repair then had to cut a trench
+                        //through it — the way is kept clear instead of reopened.
+                        {
+                            std::vector<int> parent(mapWidth*mapHeight,-2);
+                            std::vector<unsigned int> queue;
+                            const unsigned int quayLocal=((unsigned int)landX%mapWidth)
+                                    +((unsigned int)landY%mapHeight)*mapWidth;
+                            parent[quayLocal]=-1;
+                            queue.push_back(quayLocal);
+                            int reached=-1;
+                            unsigned int queueIndex=0;
+                            while(queueIndex<queue.size() && reached<0)
+                            {
+                                const unsigned int cell=queue.at(queueIndex);
+                                queueIndex++;
+                                if(arrivalComponent.find(footComponent.at(cell))!=arrivalComponent.cend())
+                                    reached=(int)cell;
+                                else
+                                {
+                                    const int cellX=(int)(cell%mapWidth);
+                                    const int cellY=(int)(cell/mapWidth);
+                                    const int stepX[4]={-1,1,0,0};
+                                    const int stepY[4]={0,0,-1,1};
+                                    unsigned int direction=0;
+                                    while(direction<4)
+                                    {
+                                        const int nextX=cellX+stepX[direction];
+                                        const int nextY=cellY+stepY[direction];
+                                        if(nextX>=0 && nextY>=0 && nextX<(int)mapWidth && nextY<(int)mapHeight)
+                                        {
+                                            const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapWidth;
+                                            const unsigned int nextWorld=(x0+(unsigned int)nextX)
+                                                    +(y0+(unsigned int)nextY)*worldWidth;
+                                            //on foot: dry ground, nothing else
+                                            if(parent.at(next)==-2 && blocked.at(nextWorld)==0
+                                                    && water.at(nextWorld)==0)
+                                            {
+                                                parent[next]=(int)cell;
+                                                queue.push_back(next);
+                                            }
+                                        }
+                                        direction++;
+                                    }
+                                }
+                            }
+                            int walkCell=reached;
+                            while(walkCell>=0)
+                            {
+                                maskVegetationAround(worldMap,x0+(unsigned int)walkCell%mapWidth,
+                                                     y0+(unsigned int)walkCell/mapWidth,1);
+                                walkCell=parent.at((unsigned int)walkCell);
+                            }
+                        }
                         mooredBoats++;
                     }
                 }
