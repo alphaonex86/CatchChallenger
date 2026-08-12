@@ -1164,6 +1164,11 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                             {
                                 const unsigned int tileX=shipX+shipColumn;
                                 const unsigned int tileY=shipY+shipRow;
+                                //ONLY A TILE OF THE BOAT. The sprite is a block of
+                                //the sheet and its corners are empty: a cell of the
+                                //block the stamp left untouched is water, not boat,
+                                //and a teleport there is a teleport in the open sea.
+                                bool onTheBoat=(colliLayer->cellAt(tileX,tileY).tile()!=NULL);
                                 bool hasQuay=false;
                                 const int stepX[4]={0,0,-1,1};
                                 const int stepY[4]={-1,1,0,0};
@@ -1193,7 +1198,7 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                                     }
                                     direction++;
                                 }
-                                if(hasQuay)
+                                if(onTheBoat && hasQuay)
                                 {
                                     Tiled::MapObject * const boat=new Tiled::MapObject("","teleport on push",
                                         QPointF(tileX*worldMap.tileWidth(),tileY*worldMap.tileHeight()),
