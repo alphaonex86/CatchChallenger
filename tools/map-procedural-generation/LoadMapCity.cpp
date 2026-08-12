@@ -513,7 +513,17 @@ void LoadMapAll::addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCoun
                 if(zoneOrientation&Orientation_left)
                 {
                     int tiles_x = x*mapWidth;
-                    int tiles_y = y*mapHeight+mapHeight/2;
+                    //ROW 0 OF THE MAP, not the middle of the side. The engine does
+                    //NOT read this object as a teleport on one cell: it stores the
+                    //neighbour plus an OFFSET taken from the object itself
+                    //(Map_loaderMain.cpp: y_offset=objectTileY-1) and a crossing at
+                    //row y lands at row y+offset on the other map
+                    //(MoveOnTheMap.hpp). The middle of the side therefore shifted
+                    //every crossing by 21 rows onto whatever was there, and 612 of
+                    //the 804 border links of a world had no crossable row left at
+                    //all. Row 0 (written as row 1, the -1 object convention) is an
+                    //offset of 0: the player comes out where they went in.
+                    int tiles_y = y*mapHeight+1;
 
                     // Convert to pixel units when creating a new Tiled::MapObject
                     // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
@@ -529,7 +539,8 @@ void LoadMapAll::addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCoun
                 if(zoneOrientation&Orientation_right)
                 {
                     int tiles_x = x*mapWidth+mapWidth-1;
-                    int tiles_y = y*mapHeight+mapHeight/2;
+                    //row 0, for an offset of 0 — see border-left above
+                    int tiles_y = y*mapHeight+1;
 
                     // Convert to pixel units when creating a new Tiled::MapObject
                     // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
@@ -544,7 +555,10 @@ void LoadMapAll::addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCoun
                 }
                 if(zoneOrientation&Orientation_top)
                 {
-                    qreal tiles_x = x*mapWidth+mapWidth/2;
+                    //column 0, for an offset of 0: the engine takes x_offset from
+                    //the object column (no -1 on x) and a crossing at column x
+                    //lands at column x+offset — see border-left above
+                    qreal tiles_x = x*mapWidth;
                     qreal tiles_y = y*mapHeight+1;
 
 #ifdef DEBUG_DANIJEL
@@ -565,7 +579,8 @@ void LoadMapAll::addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCoun
                 }
                 if(zoneOrientation&Orientation_bottom)
                 {
-                    qreal tiles_x = x*mapWidth+mapWidth/2;
+                    //column 0, for an offset of 0 — see border-top above
+                    qreal tiles_x = x*mapWidth;
                     qreal tiles_y = y*mapHeight+mapHeight;
 
 #ifdef DEBUG_DANIJEL

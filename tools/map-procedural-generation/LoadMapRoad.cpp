@@ -4731,15 +4731,67 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
         }
         //A chunk whose connected border carries no water at all still needs its
         //lane — a boat chunk is picked for HAVING sea, not for having it against
-        //the town gate. Seed from its own water so the boat has somewhere to sit.
+        //the town gate. Seed from its BIGGEST body of water: the first water cell
+        //in scan order is as likely to be a puddle in a field, and the boat then
+        //had nowhere to moor at all.
         if(openings.empty())
         {
-            unsigned int cell=0;
-            while(cell<mapWidth*mapHeight && openings.empty())
+            std::vector<int> bodyOfCell(mapWidth*mapHeight,-1);
+            int bestBody=-1;
+            unsigned int bestBodySize=0;
+            int bodyCount=0;
+            unsigned int start=0;
+            while(start<mapWidth*mapHeight)
             {
-                if(isWater.at(cell)!=0)
-                    openings.push_back(cell);
-                cell++;
+                if(isWater.at(start)!=0 && bodyOfCell.at(start)<0)
+                {
+                    std::vector<unsigned int> bodyQueue;
+                    bodyOfCell[start]=bodyCount;
+                    bodyQueue.push_back(start);
+                    unsigned int bodyIndex=0;
+                    while(bodyIndex<bodyQueue.size())
+                    {
+                        const unsigned int cell=bodyQueue.at(bodyIndex);
+                        bodyIndex++;
+                        const int cellX=(int)(cell%mapWidth);
+                        const int cellY=(int)(cell/mapWidth);
+                        const int stepX[4]={-1,1,0,0};
+                        const int stepY[4]={0,0,-1,1};
+                        unsigned int direction=0;
+                        while(direction<4)
+                        {
+                            const int nextX=cellX+stepX[direction];
+                            const int nextY=cellY+stepY[direction];
+                            if(nextX>=0 && nextY>=0 && nextX<(int)mapWidth && nextY<(int)mapHeight)
+                            {
+                                const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapWidth;
+                                if(isWater.at(next)!=0 && bodyOfCell.at(next)<0)
+                                {
+                                    bodyOfCell[next]=bodyCount;
+                                    bodyQueue.push_back(next);
+                                }
+                            }
+                            direction++;
+                        }
+                    }
+                    if(bodyQueue.size()>bestBodySize)
+                    {
+                        bestBodySize=(unsigned int)bodyQueue.size();
+                        bestBody=bodyCount;
+                    }
+                    bodyCount++;
+                }
+                start++;
+            }
+            if(bestBody>=0)
+            {
+                unsigned int cell=0;
+                while(cell<mapWidth*mapHeight && openings.empty())
+                {
+                    if(bodyOfCell.at(cell)==bestBody)
+                        openings.push_back(cell);
+                    cell++;
+                }
             }
         }
         //shortest water route from the first opening to each of the others
@@ -4810,6 +4862,33 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                 halfWidth=2;
             if(roadIndex.isBoat)
                 halfWidth=(int)(mapWidth+mapHeight);
+            //THE WALL IS A LINE THAT FLUCTUATES. A constant half width gave a
+            //drawn corridor with two straight rock rails; the channel now widens
+            //and narrows along the travel axis by up to wanderAmplitude tiles, so
+            //the rock reads as a natural reef. It stays CLOSED at any width: the
+            //wall is every water cell touching the channel, so no step out of the
+            //channel ever reaches the open sea. And it never closes the LAND —
+            //only water takes rock, so the shore, and the border line the next map
+            //is entered by, stay open.
+            std::vector<int> halfWidthAlong((horizontal?mapWidth:mapHeight),halfWidth);
+            if(!roadIndex.isBoat && setting.waterWanderAmplitude>0)
+            {
+                const int amplitude=(int)setting.waterWanderAmplitude;
+                int current=halfWidth;
+                unsigned int along=0;
+                while(along<halfWidthAlong.size())
+                {
+                    current+=(rand()%3)-1;
+                    if(current>halfWidth+amplitude)
+                        current=halfWidth+amplitude;
+                    if(current<halfWidth-amplitude)
+                        current=halfWidth-amplitude;
+                    if(current<2)
+                        current=2;
+                    halfWidthAlong[along]=current;
+                    along++;
+                }
+            }
             std::vector<unsigned int> ring;
             std::vector<int> depth(mapWidth*mapHeight,-1);
             {
@@ -4830,7 +4909,6 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
             {
                 const unsigned int cell=ring.at(ringIndex);
                 ringIndex++;
-                if(depth.at(cell)<halfWidth)
                 {
                     const int cellX=(int)(cell%mapWidth);
                     const int cellY=(int)(cell/mapWidth);
@@ -4846,9 +4924,16 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                             const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapWidth;
                             if(depth.at(next)<0 && isWater.at(next)!=0)
                             {
-                                depth[next]=depth.at(cell)+1;
-                                channelCell[next]=1;
-                                ring.push_back(next);
+                                //the width the channel is allowed HERE: the BFS
+                                //never comes back to a cell, so a refusal is final
+                                const int allowed=halfWidthAlong.at(horizontal?(unsigned int)nextX
+                                                                              :(unsigned int)nextY);
+                                if(depth.at(cell)+1<=allowed)
+                                {
+                                    depth[next]=depth.at(cell)+1;
+                                    channelCell[next]=1;
+                                    ring.push_back(next);
+                                }
                             }
                         }
                         direction++;
@@ -4912,6 +4997,10 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                     {
                         channelCell[(unsigned int)localX+(unsigned int)localY*mapWidth]=1;
                         colliLayer->setCell(x0+(unsigned int)localX,y0+(unsigned int)localY,Tiled::Cell());
+                        //and NOTHING grows back on it: the vegetation is brushed
+                        //after this pass, and a tree landing on the entrance would
+                        //have to be cut cell by cell later — half a tree
+                        maskVegetationAround(worldMap,x0+(unsigned int)localX,y0+(unsigned int)localY,1);
                         unsigned int aboveIndex=0;
                         while(aboveIndex<abovePlayerLayers.size())
                         {
@@ -4933,6 +5022,8 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                         const unsigned int localY=(side==2)?0:((side==3)?mapHeight-1:walk);
                         channelCell[localX+localY*mapWidth]=1;
                         colliLayer->setCell(x0+localX,y0+localY,Tiled::Cell());
+                        //nothing grows back on the way to the border either
+                        maskVegetationAround(worldMap,x0+localX,y0+localY,1);
                         //and whatever hangs ABOVE the player with it: clearing the
                         //trunk alone left half a tree standing in the air
                         {
@@ -4950,44 +5041,6 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                 }
             }
             side++;
-        }
-    }
-
-    //A LINE of rock around the channel, not a sea filled with it: every WATER
-    //cell that TOUCHES the lane without being in it, one tile thick. It closes
-    //the open sea off the lane, and the sides the chunk is not connected on are
-    //never opened in the first place. Land is never touched — where the lane runs
-    //along the shore the coast is the wall, and the player can land there.
-    {
-        unsigned int localY=0;
-        while(localY<mapHeight)
-        {
-            unsigned int localX=0;
-            while(localX<mapWidth)
-            {
-                if(channelCell.at(localX+localY*mapWidth)==0)
-                {
-                    bool touchesChannel=false;
-                    const int stepX[4]={-1,1,0,0};
-                    const int stepY[4]={0,0,-1,1};
-                    unsigned int direction=0;
-                    while(direction<4)
-                    {
-                        const int nextX=(int)localX+stepX[direction];
-                        const int nextY=(int)localY+stepY[direction];
-                        if(nextX>=0 && nextY>=0 && nextX<(int)mapWidth && nextY<(int)mapHeight)
-                            if(channelCell.at((unsigned int)nextX+(unsigned int)nextY*mapWidth)!=0)
-                                touchesChannel=true;
-                        direction++;
-                    }
-                    const unsigned int tileX=x0+localX;
-                    const unsigned int tileY=y0+localY;
-                    if(touchesChannel && waterLayer->cellAt(tileX,tileY).tile()!=NULL)
-                        colliLayer->setCell(tileX,tileY,Tiled::Cell(rockTile));
-                }
-                localX++;
-            }
-            localY++;
         }
     }
 
@@ -5012,6 +5065,13 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                 shipHeight=1;
         }
         int boatCell=-1;
+        //FIRST in the lane, and if the ship fits nowhere in it, ANYWHERE on the
+        //water of the chunk: a crossing with no boat leaves its far shore with a
+        //teleport pointing at nothing, and the player can never come back. The
+        //cells it ends up on join the lane, and the walkability guard opens the
+        //way to them like it does for any door.
+        unsigned int relaxed=0;
+        while(relaxed<2 && boatCell<0)
         {
             //nearest to the border the town is on, so the walk is short
             const bool towardsLow=horizontal?((zoneOrientation&Orientation_left)!=0)
@@ -5039,7 +5099,7 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                                 const unsigned int cellX=localX+shipColumn;
                                 const unsigned int cellY=localY+shipRow;
                                 if(cellX>=mapWidth || cellY>=mapHeight
-                                        || channelCell.at(cellX+cellY*mapWidth)==0
+                                        || (relaxed==0 && channelCell.at(cellX+cellY*mapWidth)==0)
                                         || waterLayer->cellAt(x0+cellX,y0+cellY).tile()==NULL
                                         || colliLayer->cellAt(x0+cellX,y0+cellY).tile()!=NULL)
                                     shipFits=false;
@@ -5082,12 +5142,30 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                 }
                 localY++;
             }
+            relaxed++;
         }
         if(boatCell<0)
-            std::cerr << "no shore in the sea lane of the boat chunk " << chunkX << "," << chunkY
+            std::cerr << "no water big enough for a ship in the boat chunk " << chunkX << "," << chunkY
                       << ", the crossing has no boat" << std::endl;
         else
         {
+            //whatever it took, the ship and its berth are part of the lane
+            {
+                unsigned int shipRow=0;
+                while(shipRow<shipHeight)
+                {
+                    unsigned int shipColumn=0;
+                    while(shipColumn<shipWidth)
+                    {
+                        const unsigned int cellX=(unsigned int)boatCell%mapWidth+shipColumn;
+                        const unsigned int cellY=(unsigned int)boatCell/mapWidth+shipRow;
+                        if(cellX<mapWidth && cellY<mapHeight)
+                            channelCell[cellX+cellY*mapWidth]=1;
+                        shipColumn++;
+                    }
+                    shipRow++;
+                }
+            }
             const unsigned int boatX=x0+(unsigned int)boatCell%mapWidth;
             const unsigned int boatY=y0+(unsigned int)boatCell/mapWidth;
             //ON the water, at the shore
@@ -5138,6 +5216,75 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                 movingGroup->addObject(boat);
                 boatTeleportObjects[std::pair<uint16_t,uint16_t>((uint16_t)chunkX,(uint16_t)chunkY)]=boat;
             }
+        }
+    }
+
+    //A LINE of rock around the channel, not a sea filled with it: every WATER
+    //cell that TOUCHES the lane without being in it, one tile thick. It closes
+    //the open sea off the lane, and the sides the chunk is not connected on are
+    //never opened in the first place. Land is never touched — where the lane runs
+    //along the shore the coast is the wall, and the player can land there.
+    {
+        unsigned int localY=0;
+        while(localY<mapHeight)
+        {
+            unsigned int localX=0;
+            while(localX<mapWidth)
+            {
+                if(channelCell.at(localX+localY*mapWidth)==0)
+                {
+                    bool touchesChannel=false;
+                    const int stepX[4]={-1,1,0,0};
+                    const int stepY[4]={0,0,-1,1};
+                    unsigned int direction=0;
+                    while(direction<4)
+                    {
+                        const int nextX=(int)localX+stepX[direction];
+                        const int nextY=(int)localY+stepY[direction];
+                        if(nextX>=0 && nextY>=0 && nextX<(int)mapWidth && nextY<(int)mapHeight)
+                            if(channelCell.at((unsigned int)nextX+(unsigned int)nextY*mapWidth)!=0)
+                                touchesChannel=true;
+                        direction++;
+                    }
+                    //AND THE BORDER LINE ITSELF. The engine crosses a border on
+                    //the WHOLE side of the map (Map_loaderMain.cpp), so the open
+                    //sea of one chunk joined the open sea of the next all along
+                    //their shared edge and the wall could simply be walked around:
+                    //31 of the 38 sea maps let the player out that way. On a side
+                    //the chunk IS linked on, every water cell that is not the lane
+                    //takes the rock, so the only way through is the lane. Land is
+                    //never touched, so the shore and the road side of a harbour
+                    //stay open.
+                    const bool onBorderLine=(localX==0 || localY==0
+                                             || localX==mapWidth-1 || localY==mapHeight-1);
+                    const unsigned int tileX=x0+localX;
+                    const unsigned int tileY=y0+localY;
+                    if((touchesChannel || onBorderLine) && waterLayer->cellAt(tileX,tileY).tile()!=NULL)
+                        colliLayer->setCell(tileX,tileY,Tiled::Cell(rockTile));
+                }
+                else
+                {
+                    //A side the chunk is NOT linked on is closed WHOLE, lane or
+                    //not: there is no map to walk into over there, and a harbour
+                    //basin is open water from side to side, so nothing else held
+                    //the player back. Water only — the coast keeps its own shape.
+                    bool onClosedBorder=false;
+                    if(localX==0 && (zoneOrientation&Orientation_left)==0)
+                        onClosedBorder=true;
+                    if(localX==mapWidth-1 && (zoneOrientation&Orientation_right)==0)
+                        onClosedBorder=true;
+                    if(localY==0 && (zoneOrientation&Orientation_top)==0)
+                        onClosedBorder=true;
+                    if(localY==mapHeight-1 && (zoneOrientation&Orientation_bottom)==0)
+                        onClosedBorder=true;
+                    const unsigned int tileX=x0+localX;
+                    const unsigned int tileY=y0+localY;
+                    if(onClosedBorder && waterLayer->cellAt(tileX,tileY).tile()!=NULL)
+                        colliLayer->setCell(tileX,tileY,Tiled::Cell(rockTile));
+                }
+                localX++;
+            }
+            localY++;
         }
     }
 

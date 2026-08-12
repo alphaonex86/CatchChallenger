@@ -51,6 +51,14 @@ public:
         unsigned int waterBoatPercent;
         //how many chunks from a town the coast may be for it to count as a PORT
         unsigned int waterHarbourChunkRadius;
+        //A SHORTCUT crossing: two towns already joined by land, but so far apart
+        //on the road graph that the player has to tour the whole world to go from
+        //one to the other. It is built when the road detour is at least
+        //shortcutMinDetour chunks AND the sea route costs at most
+        //shortcutMaxPercent of it. Everything else stays forbidden: a sea link
+        //between two towns the road already joins closely buys nothing.
+        unsigned int waterShortcutMinDetour;
+        unsigned int waterShortcutMaxPercent;
         //[water] the CHANNEL painted across a sea chunk: a corridor of water
         //halfWidth tiles either side of the travel axis, walled by borderTile
         //rock. The wall is a CONTINUOUS chain whose position wanders by up to

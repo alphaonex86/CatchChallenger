@@ -91,6 +91,23 @@ def blocked(layers, width, height, x, y):
     return False
 
 
+def border_offset(objectType, x, y):
+    """What the engine shifts a crossing by, from the border object itself.
+
+    Map_loaderMain.cpp reads a border-* object as the WHOLE side of the map plus
+    an offset: y_offset=objectTileY-1 for left/right (the -1 is the Tiled object
+    convention), x_offset=objectTileX for top/bottom. MoveOnTheMap.hpp then lands
+    the player at y+int8(y_offset) / x+int8(x_offset) on the other map. So the
+    object is NOT a teleport on one cell, and putting it anywhere but row 0 /
+    column 0 shifts every crossing of that side.
+    """
+    if objectType in ("border-left", "border-right"):
+        raw = (y - 1) & 0xFF
+    else:
+        raw = x & 0xFF
+    return raw - 256 if raw > 127 else raw
+
+
 def covered(layers, width, height, x, y):
     """A tile is drawn ABOVE the player on that cell (tree canopy, roof)."""
     if layers is None:
@@ -210,6 +227,45 @@ def main():
                 problems.append((path, "tileset OUTSIDE the generated map "
                                  "label: " + tileset))
         for obj in objects:
+            #A BORDER is the whole side of the map plus an offset, so what has to
+            #be checked is that SOME row (or column) of it is walkable on BOTH
+            #maps once the offset is applied. A border object left in the middle
+            #of its side shifts every crossing by 21 rows and the link is dead:
+            #612 of 804 links of a world were unusable that way.
+            if obj["type"] in ("border-left", "border-right",
+                               "border-top", "border-bottom"):
+                target = obj["properties"].get("map")
+                if target is None:
+                    problems.append((path, obj["type"] + " without a map property"))
+                else:
+                    if not target.endswith(".tmx"):
+                        target += ".tmx"
+                    targetPath = os.path.normpath(os.path.join(folder, target))
+                    if targetPath not in maps:
+                        problems.append((path, obj["type"] + " to a missing map: " +
+                                         target))
+                    else:
+                        tw, th, tlayers, _ = maps[targetPath]
+                        offset = border_offset(obj["type"], obj["x"], obj["y"])
+                        usable = 0
+                        if obj["type"] in ("border-left", "border-right"):
+                            fromX = 0 if obj["type"] == "border-left" else width - 1
+                            toX = tw - 1 if obj["type"] == "border-left" else 0
+                            for y in range(height):
+                                if not blocked(layers, width, height, fromX, y):
+                                    if not blocked(tlayers, tw, th, toX, y + offset):
+                                        usable += 1
+                        else:
+                            fromY = 0 if obj["type"] == "border-top" else height - 1
+                            toY = th - 1 if obj["type"] == "border-top" else 0
+                            for x in range(width):
+                                if not blocked(layers, width, height, x, fromY):
+                                    if not blocked(tlayers, tw, th, x + offset, toY):
+                                        usable += 1
+                        if usable == 0:
+                            problems.append((path, obj["type"] + " to " + target +
+                                             " has NO crossable row/column"
+                                             " (offset %d)" % offset))
             if obj["type"] in ("door", "teleport on it", "teleport on push"):
                 doors += 1
                 exits += 1
