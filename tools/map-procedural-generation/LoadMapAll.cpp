@@ -698,12 +698,17 @@ bool LoadMapAll::checkWalkability(Tiled::Map &worldMap, const SettingsAll::Setti
                     //teleport object itself is skipped here.
                     bool boatTeleport=false;
                     {
-                        std::map<std::pair<uint16_t,uint16_t>,Tiled::MapObject*>::const_iterator boatIterator=
-                                boatTeleportObjects.cbegin();
+                        std::map<std::pair<uint16_t,uint16_t>,std::vector<Tiled::MapObject*> >::const_iterator
+                                boatIterator=boatTeleportObjects.cbegin();
                         while(boatIterator!=boatTeleportObjects.cend() && !boatTeleport)
                         {
-                            if(boatIterator->second==object)
-                                boatTeleport=true;
+                            unsigned int objectIndex=0;
+                            while(objectIndex<boatIterator->second.size() && !boatTeleport)
+                            {
+                                if(boatIterator->second.at(objectIndex)==object)
+                                    boatTeleport=true;
+                                objectIndex++;
+                            }
                             ++boatIterator;
                         }
                     }
@@ -1074,7 +1079,7 @@ bool LoadMapAll::checkWalkability(Tiled::Map &worldMap, const SettingsAll::Setti
 std::vector<unsigned char> LoadMapAll::portCity;
 std::vector<LoadMapAll::BoatCrossing> LoadMapAll::boatCrossings;
 std::map<std::pair<uint16_t,uint16_t>,std::pair<uint8_t,uint8_t> > LoadMapAll::boatLandingCells;
-std::map<std::pair<uint16_t,uint16_t>,Tiled::MapObject*> LoadMapAll::boatTeleportObjects;
+std::map<std::pair<uint16_t,uint16_t>,std::vector<Tiled::MapObject*> > LoadMapAll::boatTeleportObjects;
 
 void LoadMapAll::wireBoatCrossings()
 {
@@ -1102,25 +1107,32 @@ void LoadMapAll::wireBoatCrossings()
             const std::pair<uint16_t,uint16_t> &there=(side==0)?to:from;
             if(boatTeleportObjects.find(here)!=boatTeleportObjects.cend())
             {
-                Tiled::MapObject * const object=boatTeleportObjects.at(here);
-                if(complete)
+                const std::vector<Tiled::MapObject*> objects=boatTeleportObjects.at(here);
+                unsigned int objectIndex=0;
+                while(objectIndex<objects.size())
                 {
-                    //each side lands NEXT TO the other side's boat, on the shore
-                    //cell it touches — the boat tile itself is the teleport,
-                    //standing on it would bounce the player straight back
-                    const std::pair<uint8_t,uint8_t> &landing=boatLandingCells.at(there);
-                    object->setProperty("x",QString::number(landing.first));
-                    object->setProperty("y",QString::number(landing.second));
-                    wired++;
+                    Tiled::MapObject * const object=objects.at(objectIndex);
+                    if(complete)
+                    {
+                        //each side lands NEXT TO the other side's boat, on the
+                        //shore cell it touches — the boat tile itself is the
+                        //teleport, standing on it would bounce the player back
+                        const std::pair<uint8_t,uint8_t> &landing=boatLandingCells.at(there);
+                        object->setProperty("x",QString::number(landing.first));
+                        object->setProperty("y",QString::number(landing.second));
+                        wired++;
+                    }
+                    else
+                    {
+                        Tiled::ObjectGroup * const group=object->objectGroup();
+                        if(group!=NULL)
+                            group->removeObject(object);
+                        delete object;
+                    }
+                    objectIndex++;
                 }
-                else
-                {
-                    Tiled::ObjectGroup * const group=object->objectGroup();
-                    if(group!=NULL)
-                        group->removeObject(object);
+                if(!complete)
                     boatTeleportObjects.erase(here);
-                    delete object;
-                }
             }
             side++;
         }
