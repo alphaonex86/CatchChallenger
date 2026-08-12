@@ -360,17 +360,22 @@ def main():
                 #is the ship, and the player pushes it from the quay beside it.
                 #That quay has to be walkable ON FOOT from a border of the map —
                 #the ferry is what you take when you cannot swim.
-                #(a push teleport on a collision that stands ON THE WATER is a
-                #boat; the same object on dry land is the exit of an interior)
-                if obj["type"] == "teleport on push" \
-                        and blocked(layers, width, height, obj["x"], obj["y"]) \
-                        and water_at(layers, width, height, obj["x"], obj["y"]):
+                #THE ENGINE READS EVERY OBJECT ONE ROW UP (Map_loaderMain.cpp:
+                #object_y = y/tileheight - 1, and the hand-drawn datapack writes
+                #its doors that way), so the cell a teleport really acts on is the
+                #one above the object. A push teleport on a collision standing ON
+                #THE WATER is a boat; the same object on dry land is the exit of
+                #an interior.
+                boatX, boatY = obj["x"], obj["y"] - 1
+                if obj["type"] == "teleport on push" and boatY >= 0 \
+                        and blocked(layers, width, height, boatX, boatY) \
+                        and water_at(layers, width, height, boatX, boatY):
                     #the cell beside it must be GROUND THE PLAYER STANDS ON:
                     #no water, a Walkable tile, no collision — and a SIDE of the
                     #tile, never a corner
                     quays = set()
                     for (stepX, stepY) in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-                        qx, qy = obj["x"] + stepX, obj["y"] + stepY
+                        qx, qy = boatX + stepX, boatY + stepY
                         if 0 <= qx < width and 0 <= qy < height \
                                 and not blocked(layers, width, height, qx, qy) \
                                 and not water_at(layers, width, height, qx, qy) \
@@ -379,12 +384,12 @@ def main():
                     if not quays:
                         problems.append((path, "the boat at %d,%d has no quay beside"
                                          " it (walkable ground, no water, no"
-                                         " collision)" % (obj["x"], obj["y"])))
+                                         " collision)" % (boatX, boatY)))
                     elif not foot_reachable_from_border(layers, objects, width,
                                                         height, quays):
                         problems.append((path, "the boat at %d,%d cannot be "
                                          "walked to from a border of the map"
-                                         % (obj["x"], obj["y"])))
+                                         % (boatX, boatY)))
             if obj["type"] == "bot":
                 skin = obj["properties"].get("skin")
                 if skins and skin and skin not in skins:
