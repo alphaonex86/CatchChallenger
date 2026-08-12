@@ -126,6 +126,57 @@ FIGHT_DIRECTIONS = {"bottom": (0, 1), "top": (0, -1),
                     "left": (-1, 0), "right": (1, 0)}
 
 
+def water_at(layers, width, height, x, y):
+    """the Water layer holds a tile there: walkable with the swim item, a WALL
+    for anyone who does not own it — which is exactly who takes the ferry"""
+    if x < 0 or y < 0 or x >= width or y >= height:
+        return False
+    for grid in layers.get("Water", []):
+        if grid[x + y * width]:
+            return True
+    return False
+
+
+def foot_reachable_from_border(layers, objects, width, height, targets):
+    """can the player WALK (no swimming) from a border of this map to one of
+    `targets`? The quay of a moored boat has to be, else the ferry is a picture:
+    a sea map is mostly water, so "reachable" measured with the water walkable
+    is always true and says nothing."""
+    starts = []
+    for obj in objects:
+        if obj["type"] == "border-left":
+            starts += [(0, y) for y in range(height)]
+        elif obj["type"] == "border-right":
+            starts += [(width - 1, y) for y in range(height)]
+        elif obj["type"] == "border-top":
+            starts += [(x, 0) for x in range(width)]
+        elif obj["type"] == "border-bottom":
+            starts += [(x, height - 1) for x in range(width)]
+    seen = set()
+    queue = []
+    for (x, y) in starts:
+        if (x, y) not in seen and not blocked(layers, width, height, x, y) \
+                and not water_at(layers, width, height, x, y):
+            seen.add((x, y))
+            queue.append((x, y))
+    if not queue:
+        return True  # entered by water anyway, nothing better to ask for
+    index = 0
+    while index < len(queue):
+        (x, y) = queue[index]
+        index += 1
+        if (x, y) in targets:
+            return True
+        for (stepX, stepY) in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+            nx, ny = x + stepX, y + stepY
+            if 0 <= nx < width and 0 <= ny < height and (nx, ny) not in seen:
+                if not blocked(layers, width, height, nx, ny) \
+                        and not water_at(layers, width, height, nx, ny):
+                    seen.add((nx, ny))
+                    queue.append((nx, ny))
+    return False
+
+
 def check_fight_lines(path, xmlPath, objects, layers, width, height, problems):
     """No two trainers may claim the same line-of-sight cell.
 
@@ -294,6 +345,30 @@ def main():
                             problems.append((path, "teleport lands on a "
                                              "COLLISION of " + target + " at " +
                                              tx + "," + ty))
+                #THE BOAT OF A CROSSING: a push-teleport standing ON a collision
+                #is the ship, and the player pushes it from the quay beside it.
+                #That quay has to be walkable ON FOOT from a border of the map —
+                #the ferry is what you take when you cannot swim.
+                #(a push teleport on a collision that stands ON THE WATER is a
+                #boat; the same object on dry land is the exit of an interior)
+                if obj["type"] == "teleport on push" \
+                        and blocked(layers, width, height, obj["x"], obj["y"]) \
+                        and water_at(layers, width, height, obj["x"], obj["y"]):
+                    quays = set()
+                    for (stepX, stepY) in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+                        qx, qy = obj["x"] + stepX, obj["y"] + stepY
+                        if 0 <= qx < width and 0 <= qy < height \
+                                and not blocked(layers, width, height, qx, qy) \
+                                and not water_at(layers, width, height, qx, qy):
+                            quays.add((qx, qy))
+                    if not quays:
+                        problems.append((path, "the boat at %d,%d has no dry quay"
+                                         % (obj["x"], obj["y"])))
+                    elif not foot_reachable_from_border(layers, objects, width,
+                                                        height, quays):
+                        problems.append((path, "the boat at %d,%d cannot be "
+                                         "walked to from a border of the map"
+                                         % (obj["x"], obj["y"])))
             if obj["type"] == "bot":
                 skin = obj["properties"].get("skin")
                 if skins and skin and skin not in skins:

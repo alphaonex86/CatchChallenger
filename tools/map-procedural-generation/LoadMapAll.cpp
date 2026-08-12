@@ -217,7 +217,8 @@ static bool carveChunkCorridor(Tiled::Map &worldMap,const std::vector<Tiled::Til
                                const std::vector<uint16_t> &component,const uint16_t fromComponent,
                                const unsigned int toCell,
                                const unsigned int chunkX,const unsigned int chunkY,
-                               const unsigned int mapWidth,const unsigned int mapHeight)
+                               const unsigned int mapWidth,const unsigned int mapHeight,
+                               const std::vector<unsigned char> *forbidden=NULL)
 {
     Tiled::TileLayer * const walkLayer=LoadMap::searchTileLayerByName(worldMap,"Walkable");
     if(walkLayer==NULL)
@@ -316,8 +317,16 @@ static bool carveChunkCorridor(Tiled::Map &worldMap,const std::vector<Tiled::Til
                         //THE SEA WALL IS NEVER OPENED. A repair that cut through it
                         //would hand the player the open sea, which is exactly what
                         //the rock is there to stop: the corridor goes round it.
+                        //what the caller forbids, chunk-local: the ON FOOT repair
+                        //of a boat quay forbids the water. Without it the corridor
+                        //happily "opened" a way through the harbour — clearing
+                        //nothing, filling nothing (water needs no ground), so the
+                        //quay stayed walled off and the pass ate a tile of the boat.
                         bool wallCell=false;
-                        if(!LoadMapAll::seaWallCells.empty())
+                        if(forbidden!=NULL)
+                            if(forbidden->at(next)!=0)
+                                wallCell=true;
+                        if(!wallCell && !LoadMapAll::seaWallCells.empty())
                         {
                             const unsigned int worldCell=(x0+(unsigned int)nextX)
                                     +(y0+(unsigned int)nextY)*(unsigned int)worldMap.width();
@@ -593,6 +602,8 @@ bool LoadMapAll::checkWalkability(Tiled::Map &worldMap, const SettingsAll::Setti
     const unsigned int mapHeight=setting.mapHeight;
     const int tileWidth=worldMap.tileWidth();
     const int tileHeight=worldMap.tileHeight();
+    //the sea, for the ON FOOT rule of the boat quays below
+    Tiled::TileLayer * const waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
 
     //the cells the player crosses a border on, and the doorsteps of the
     //buildings, both read from the Moving group the generator itself filled
@@ -693,22 +704,6 @@ bool LoadMapAll::checkWalkability(Tiled::Map &worldMap, const SettingsAll::Setti
                 }
             }
             objectIndex++;
-        }
-    }
-    //...and the QUAY of every moored boat is a door of its chunk: the player has
-    //to be able to walk to it, both to take the ferry and to arrive on it. When it
-    //is walled off (a cliff shore, a wood behind the beach) the repair below opens
-    //the way, exactly like it does for a building door.
-    {
-        std::map<std::pair<uint16_t,uint16_t>,std::pair<uint8_t,uint8_t> >::const_iterator landingIterator=
-                boatLandingCells.cbegin();
-        while(landingIterator!=boatLandingCells.cend())
-        {
-            const std::pair<unsigned int,unsigned int> chunk(landingIterator->first.first,
-                                                             landingIterator->first.second);
-            doorCells[chunk].push_back(std::pair<unsigned int,unsigned int>(
-                                           landingIterator->second.first,landingIterator->second.second));
-            ++landingIterator;
         }
     }
 
@@ -976,6 +971,74 @@ bool LoadMapAll::checkWalkability(Tiled::Map &worldMap, const SettingsAll::Setti
                             }
                         }
                         cellIndex++;
+                    }
+                }
+                //3) THE QUAY OF A MOORED BOAT, reached ON FOOT from a border of its
+                //map. Rule 2 cannot answer this: a ferry map is mostly sea, so its
+                //BIGGEST component is the water basin and a quay sitting in it
+                //passes while the player — who takes the boat precisely because
+                //they cannot swim — never reaches the shore at all. Here the water
+                //is a wall, and the quay must share its ground with a border.
+                if(boatLandingCells.find(std::pair<uint16_t,uint16_t>((uint16_t)chunkX,(uint16_t)chunkY))
+                        !=boatLandingCells.cend()
+                        && borderLines.find(chunk)!=borderLines.cend())
+                {
+                    std::vector<unsigned char> footBlocked(mapWidth*mapHeight,0);
+                    std::vector<unsigned char> footWater(mapWidth*mapHeight,0);
+                    {
+                        unsigned int cell=0;
+                        while(cell<mapWidth*mapHeight)
+                        {
+                            const unsigned int tileX=chunkX*mapWidth+cell%mapWidth;
+                            const unsigned int tileY=chunkY*mapHeight+cell/mapWidth;
+                            if(waterLayer!=NULL && waterLayer->cellAt(tileX,tileY).tile()!=NULL)
+                                footWater[cell]=1;
+                            if(blocked.at(cell)!=0 || footWater.at(cell)!=0)
+                                footBlocked[cell]=1;
+                            cell++;
+                        }
+                    }
+                    std::vector<uint16_t> footComponent;
+                    floodChunkComponents(footBlocked,mapWidth,mapHeight,footComponent);
+                    //the ground the linked borders of this map open on
+                    std::set<uint16_t> arrival;
+                    {
+                        const std::vector<std::vector<std::pair<unsigned int,unsigned int> > > &lines=
+                                borderLines.at(chunk);
+                        unsigned int lineIndex=0;
+                        while(lineIndex<lines.size())
+                        {
+                            unsigned int cellIndex=0;
+                            while(cellIndex<lines.at(lineIndex).size())
+                            {
+                                const unsigned int cell=lines.at(lineIndex).at(cellIndex).first
+                                        +lines.at(lineIndex).at(cellIndex).second*mapWidth;
+                                if(footComponent.at(cell)!=walkNoComponent)
+                                    arrival.insert(footComponent.at(cell));
+                                cellIndex++;
+                            }
+                            lineIndex++;
+                        }
+                    }
+                    const std::pair<uint8_t,uint8_t> &landing=boatLandingCells.at(
+                                std::pair<uint16_t,uint16_t>((uint16_t)chunkX,(uint16_t)chunkY));
+                    const unsigned int landingCell=(unsigned int)landing.first
+                            +(unsigned int)landing.second*mapWidth;
+                    //a map whose borders open on no dry ground at all is entered by
+                    //water anyway: there is nothing better to ask for there
+                    if(!arrival.empty() && arrival.find(footComponent.at(landingCell))==arrival.cend())
+                    {
+                        if(!reportPass)
+                            repaired|=carveChunkCorridor(worldMap,collisionLayers,footComponent,
+                                                         *arrival.cbegin(),landingCell,chunkX,chunkY,
+                                                         mapWidth,mapHeight,&footWater);
+                        else
+                        {
+                            errors.push_back(chunkName+": the boat quay at "+
+                                             std::to_string(landing.first)+","+std::to_string(landing.second)+
+                                             " cannot be walked to from the border of the map");
+                            unreachableDoors++;
+                        }
                     }
                 }
                 if(repaired)
