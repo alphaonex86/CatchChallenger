@@ -5,6 +5,7 @@
 QImage MiniMapAll::minimapcitybig;
 QImage MiniMapAll::minimapcitymedium;
 QImage MiniMapAll::minimapcitysmall;
+QImage MiniMapAll::minimapboat;
 
 QImage MiniMapAll::minimap1way;
 QImage MiniMapAll::minimap2way1;
@@ -109,6 +110,8 @@ QImage MiniMapAll::makeMapTiled(const unsigned int worldWidthMap, const unsigned
     MiniMapAll::minimapcitymedium=QImage(QCoreApplication::applicationDirPath()+"/minimap-citymedium.png");
     MiniMapAll::minimapcitysmall=QImage(QCoreApplication::applicationDirPath()+"/minimap-citysmall.png");
 
+    MiniMapAll::minimapboat=QImage(QCoreApplication::applicationDirPath()+"/boat.png");
+
     MiniMapAll::minimap1way=QImage(QCoreApplication::applicationDirPath()+"/minimap-1way.png");
     MiniMapAll::minimap2way1=QImage(QCoreApplication::applicationDirPath()+"/minimap-2way1.png");
     MiniMapAll::minimap2way2=QImage(QCoreApplication::applicationDirPath()+"/minimap-2way2.png");
@@ -172,6 +175,12 @@ QImage MiniMapAll::makeMapTiled(const unsigned int worldWidthMap, const unsigned
                         && LoadMapAll::roadCoordToIndex.at((uint16_t)x).find((uint16_t)y)!=LoadMapAll::roadCoordToIndex.at((uint16_t)x).cend())
                     water=LoadMapAll::roadCoordToIndex.at((uint16_t)x).at((uint16_t)y).isWater;
                 drawRoad(zoneOrientation,p,x,y,mapWidth,mapHeight,water);
+                //a boat crossing is a PLACE on the world map, like a town: the
+                //route leaves the coast there and comes back on the far shore
+                if(LoadMapAll::roadCoordToIndex.at((uint16_t)x).at((uint16_t)y).isBoat
+                        && !minimapboat.isNull())
+                    p.drawImage(QPoint(x*mapWidth+mapWidth/2-minimapboat.width()/2,
+                                       y*mapHeight+mapHeight/2-minimapboat.height()/2),minimapboat);
             }
             indexCoord++;
         }

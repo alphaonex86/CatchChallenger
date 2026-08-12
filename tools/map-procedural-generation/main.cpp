@@ -334,6 +334,9 @@ int main(int argc, char *argv[])
                 MiniMapAll::makeMapTiled(tiledMap.width(),tiledMap.height(),config.mapWidth,config.mapHeight).save(QCoreApplication::applicationDirPath()+"/miniMapPixel.png","PNG");
                 qDebug("dominimap %lld ms", t.elapsed());
             }
+            //both shores of every boat crossing are painted now: point each
+            //teleport at the cell the other side moored on
+            LoadMapAll::wireBoatCrossings();
             //template/on-<terrain>/ decorations, BEFORE the vegetation so each one
             //can mask the trees off its own footprint
             {

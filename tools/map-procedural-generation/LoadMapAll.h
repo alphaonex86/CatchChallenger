@@ -131,6 +131,12 @@ public:
         uint16_t toX,toY;
     };
     static std::vector<BoatCrossing> boatCrossings;
+    //where each boat chunk moored its boat, and the teleport object waiting for
+    //the far shore's cell: a crossing can only be wired once BOTH are painted
+    static std::map<std::pair<uint16_t,uint16_t>,std::pair<uint8_t,uint8_t> > boatLandingCells;
+    static std::map<std::pair<uint16_t,uint16_t>,Tiled::MapObject*> boatTeleportObjects;
+    //second pass: point each boat teleport at the cell the other shore moored on
+    static void wireBoatCrossings();
     //plan of one cave chunk, decided at selection time: the chunk qualifies only
     //when its road connections are SEPARATED by the natural terrain (cliffs) so
     //the cave cannot be bypassed; each side enters through a mouth placed ON the

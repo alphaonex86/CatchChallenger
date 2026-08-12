@@ -16,6 +16,8 @@ public:
     static QImage minimapcitybig;
     static QImage minimapcitymedium;
     static QImage minimapcitysmall;
+    //boat.png: a crossing is a place on the world map, like a town
+    static QImage minimapboat;
 
     static QImage minimap1way;
     static QImage minimap2way1;
