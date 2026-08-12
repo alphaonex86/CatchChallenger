@@ -2216,8 +2216,32 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                 //chunk with a left or right road connection would need a mouth on a
                 //vertical cliff face and is left as a normal road.
                 //a SEA chunk is never a cave: the corridor would be dug in the
-                //middle of the water and its mouths walled off by the channel
-                if(!isCity && setting.cavePercent>0
+                //middle of the water and its mouths walled off by the channel.
+                //Neither is a chunk the SEA reaches, route or not — the mouth is a
+                //cliff seen from the front and it ended up opening onto the water,
+                //or the whole cave sat on an islet with the sea all around it.
+                bool seaInTheChunk=false;
+                {
+                    unsigned int localY=0;
+                    while(localY<mapHeight && !seaInTheChunk)
+                    {
+                        unsigned int localX=0;
+                        while(localX<mapWidth && !seaInTheChunk)
+                        {
+                            const unsigned int worldCell=(x*mapWidth+localX)
+                                    +(y*mapHeight+localY)*(unsigned int)worldMap.width();
+                            if(worldCell<waterBodyOfTile.size())
+                            {
+                                const uint16_t body=waterBodyOfTile.at(worldCell);
+                                if(body!=waterNoBody && waterBodies.at(body).isSea)
+                                    seaInTheChunk=true;
+                            }
+                            localX++;
+                        }
+                        localY++;
+                    }
+                }
+                if(!isCity && setting.cavePercent>0 && !seaInTheChunk
                         && !(roadCoordToIndex.find(x)!=roadCoordToIndex.cend()
                              && roadCoordToIndex.at(x).find(y)!=roadCoordToIndex.at(x).cend()
                              && roadCoordToIndex.at(x).at(y).isWater)
@@ -5110,29 +5134,48 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                     }
                     if(shipFits)
                     {
-                        //touching the shore: a neighbour that is walkable ground
+                        //A BOAT IS MOORED AT THE SHORE, never in the middle of the
+                        //sea: the WHOLE ship block has to touch land. Walkable
+                        //ground wins — that is a quay the player can step off onto
+                        //— but a cliff coast still counts as the shore.
                         bool touchesLand=false;
-                        const int stepX[4]={-1,1,0,0};
-                        const int stepY[4]={0,0,-1,1};
-                        unsigned int direction=0;
-                        while(direction<4)
+                        bool touchesWalkableLand=false;
                         {
-                            const unsigned int neighbourX=tileX+stepX[direction];
-                            const unsigned int neighbourY=tileY+stepY[direction];
-                            if(walkLayer->cellAt(neighbourX,neighbourY).tile()!=NULL
-                                    && colliLayer->cellAt(neighbourX,neighbourY).tile()==NULL)
-                                touchesLand=true;
-                            direction++;
+                            unsigned int shipRow=0;
+                            while(shipRow<shipHeight)
+                            {
+                                unsigned int shipColumn=0;
+                                while(shipColumn<shipWidth)
+                                {
+                                    const unsigned int cellX=tileX+shipColumn;
+                                    const unsigned int cellY=tileY+shipRow;
+                                    const int stepX[4]={-1,1,0,0};
+                                    const int stepY[4]={0,0,-1,1};
+                                    unsigned int direction=0;
+                                    while(direction<4)
+                                    {
+                                        const unsigned int neighbourX=cellX+stepX[direction];
+                                        const unsigned int neighbourY=cellY+stepY[direction];
+                                        if(waterLayer->cellAt(neighbourX,neighbourY).tile()==NULL
+                                                && walkLayer->cellAt(neighbourX,neighbourY).tile()!=NULL)
+                                        {
+                                            touchesLand=true;
+                                            if(colliLayer->cellAt(neighbourX,neighbourY).tile()==NULL)
+                                                touchesWalkableLand=true;
+                                        }
+                                        direction++;
+                                    }
+                                    shipColumn++;
+                                }
+                                shipRow++;
+                            }
                         }
-                        //the shore is where a boat is moored, so it wins; but a
-                        //lane that is all open water still gets its boat, as
-                        //close to the town border as the lane reaches — the
-                        //player arrives there swimming, water IS walkable
+                        //nearest to the border the town is on, so the walk is short
                         const int distance=horizontal
                                 ?(towardsLow?(int)localX:(int)(mapWidth-localX))
                                 :(towardsLow?(int)localY:(int)(mapHeight-localY));
-                        const int score=touchesLand?distance:(distance+10000);
-                        if(boatCell<0 || score<bestDistance)
+                        const int score=touchesWalkableLand?distance:(distance+1000);
+                        if(touchesLand && (boatCell<0 || score<bestDistance))
                         {
                             boatCell=(int)(localX+localY*mapWidth);
                             bestDistance=score;
