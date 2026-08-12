@@ -220,34 +220,34 @@ QImage MiniMapAll::makeMapTiled(const unsigned int worldWidthMap, const unsigned
             {
                 std::vector<int> parent(worldWidthMap*worldHeightMap,-2);
                 std::vector<unsigned int> queue;
-                //every water cell of the shore chunk is a starting point
+                //FROM THE BOAT TO THE BOAT: the leg starts and ends where the two
+                //ships are moored, so it comes out between the two icons instead
+                //of hugging whichever edge of the strait happens to be nearest
+                unsigned int fromCell=(crossing.fromX*mapWidth+mapWidth/2)
+                        +(crossing.fromY*mapHeight+mapHeight/2)*worldWidthMap;
+                unsigned int toCell=(crossing.toX*mapWidth+mapWidth/2)
+                        +(crossing.toY*mapHeight+mapHeight/2)*worldWidthMap;
                 {
-                    unsigned int localY=0;
-                    while(localY<mapHeight)
-                    {
-                        unsigned int localX=0;
-                        while(localX<mapWidth)
-                        {
-                            const unsigned int cell=(crossing.fromX*mapWidth+localX)
-                                    +(crossing.fromY*mapHeight+localY)*worldWidthMap;
-                            if(LoadMapAll::waterBodyOfTile.at(cell)!=LoadMapAll::waterNoBody)
-                            {
-                                parent[cell]=-1;
-                                queue.push_back(cell);
-                            }
-                            localX++;
-                        }
-                        localY++;
-                    }
+                    const std::pair<uint16_t,uint16_t> from(crossing.fromX,crossing.fromY);
+                    const std::pair<uint16_t,uint16_t> to(crossing.toX,crossing.toY);
+                    if(LoadMapAll::boatLandingCells.find(from)!=LoadMapAll::boatLandingCells.cend())
+                        fromCell=(crossing.fromX*mapWidth+LoadMapAll::boatLandingCells.at(from).first)
+                                +(crossing.fromY*mapHeight+LoadMapAll::boatLandingCells.at(from).second)
+                                 *worldWidthMap;
+                    if(LoadMapAll::boatLandingCells.find(to)!=LoadMapAll::boatLandingCells.cend())
+                        toCell=(crossing.toX*mapWidth+LoadMapAll::boatLandingCells.at(to).first)
+                                +(crossing.toY*mapHeight+LoadMapAll::boatLandingCells.at(to).second)
+                                 *worldWidthMap;
                 }
+                parent[fromCell]=-1;
+                queue.push_back(fromCell);
                 int reached=-1;
                 unsigned int queueIndex=0;
                 while(queueIndex<queue.size() && reached<0)
                 {
                     const unsigned int cell=queue.at(queueIndex);
                     queueIndex++;
-                    if((cell%worldWidthMap)/mapWidth==crossing.toX
-                            && (cell/worldWidthMap)/mapHeight==crossing.toY)
+                    if(cell==toCell)
                         reached=(int)cell;
                     else
                     {
@@ -263,8 +263,10 @@ QImage MiniMapAll::makeMapTiled(const unsigned int worldWidthMap, const unsigned
                             if(nextX>=0 && nextY>=0 && nextX<(int)worldWidthMap && nextY<(int)worldHeightMap)
                             {
                                 const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*worldWidthMap;
+                                //over the water, and onto the far quay to finish
                                 if(parent.at(next)==-2
-                                        && LoadMapAll::waterBodyOfTile.at(next)!=LoadMapAll::waterNoBody)
+                                        && (LoadMapAll::waterBodyOfTile.at(next)!=LoadMapAll::waterNoBody
+                                            || next==toCell))
                                 {
                                     parent[next]=(int)cell;
                                     queue.push_back(next);
