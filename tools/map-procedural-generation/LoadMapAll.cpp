@@ -1876,6 +1876,22 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
     //would go AROUND a third group is not a neighbour link, and two sea links
     //never cross. The groups with the FEWEST links are served first, so an
     //isolated one is joined before a well connected one gets a second route.
+    //WHAT IS A DIRECT NEIGHBOUR, without a magic number: A and B are neighbours
+    //when NO third group C is closer to BOTH of them than they are to each other
+    //(the relative neighbourhood graph). Testing only "the straight line crosses
+    //no map" is not enough — a link happily ran 32 maps down the coast over open
+    //water between two groups their common neighbour already joined in 6.
+    std::vector<unsigned int> groupDistance(groupCount*groupCount,0xFFFFFFFF);
+    {
+        unsigned int linkIndex=0;
+        while(linkIndex<groupLinks.size())
+        {
+            const GroupLink &link=groupLinks.at(linkIndex);
+            groupDistance[link.groupA+link.groupB*groupCount]=link.distance;
+            groupDistance[link.groupB+link.groupA*groupCount]=link.distance;
+            linkIndex++;
+        }
+    }
     std::vector<unsigned int> linkCount(groupCount,0);
     std::vector<GroupLink> accepted;
     std::vector<unsigned char> linkDone(groupLinks.size(),0);
@@ -1906,11 +1922,39 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                 const GroupLink &link=groupLinks.at(linkIndex);
                 const unsigned int degree=(linkCount.at(link.groupA)<linkCount.at(link.groupB))
                         ?linkCount.at(link.groupA):linkCount.at(link.groupB);
-                if(best<0 || degree<bestDegree || (degree==bestDegree && link.distance<bestDistance))
+                //the mesh is served least-connected first; once the rules are
+                //relaxed the only goal left is to join what is still on its own,
+                //and there the SHORTEST link is always the right one
+                const bool better=(best<0)
+                        || (relaxed==0 && (degree<bestDegree
+                                           || (degree==bestDegree && link.distance<bestDistance)))
+                        || (relaxed>0 && link.distance<bestDistance);
+                if(better)
                 {
+                    //A DIRECT NEIGHBOUR: no third group is closer to both ends
+                    //than they are to one another
+                    bool throughAnother=false;
+                    {
+                        unsigned int otherGroup=0;
+                        while(otherGroup<groupCount && !throughAnother)
+                        {
+                            if(otherGroup!=link.groupA && otherGroup!=link.groupB)
+                            {
+                                const unsigned int toA=groupDistance.at(link.groupA+otherGroup*groupCount);
+                                const unsigned int toB=groupDistance.at(link.groupB+otherGroup*groupCount);
+                                if(toA<link.distance && toB<link.distance)
+                                    throughAnother=true;
+                            }
+                            otherGroup++;
+                        }
+                    }
                     //ONLY A DIRECT NEIGHBOUR: the straight line between the two
-                    //maps must not walk over a third group, else the route sails
-                    //around it instead of joining what is really next to it
+                    //maps must cross NO MAP AT ALL — not a third group's, and not
+                    //one of their own either. Testing only for a third group let a
+                    //link run the whole length of its own coast: a ferry 24 maps
+                    //long down the east side of the world, drawn straight across
+                    //the continent on the minimap, between two groups a short hop
+                    //already joined through their neighbour.
                     bool aroundAnother=false;
                     {
                         int walkX=(int)(link.chunkA%mapXCount);
@@ -1924,8 +1968,7 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                             if(walkY!=endY)
                                 walkY+=(endY>walkY)?1:-1;
                             const unsigned int walkChunk=(unsigned int)walkX+(unsigned int)walkY*mapXCount;
-                            const unsigned int walkGroup=groupOfChunk.at(walkChunk);
-                            if(walkGroup!=0xFFFFFFFF && walkGroup!=link.groupA && walkGroup!=link.groupB)
+                            if(walkChunk!=link.chunkB && mapPathDirection[walkChunk]!=0)
                                 aroundAnother=true;
                         }
                     }
@@ -1942,14 +1985,18 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                             acceptedIndex++;
                         }
                     }
-                    //relaxed 0: a direct neighbour that crosses nothing.
-                    //relaxed 1: going around another group is allowed.
-                    //relaxed 2: crossing another route is allowed too.
+                    //relaxed 0: a DIRECT NEIGHBOUR whose line crosses no map and
+                    //            no other route — the mesh proper.
+                    //relaxed 1: a group the mesh could not reach may take a link
+                    //            that goes around another group.
+                    //relaxed 2: ...and one whose line runs over a map.
+                    //relaxed 3: ...and one that crosses another route.
                     //A relaxed link is only ever taken for a group that would
                     //otherwise stay isolated, which is what the loop below asks.
-                    const bool acceptable=(!aroundAnother && !crosses)
-                            || (relaxed>=1 && !crosses)
-                            || (relaxed>=2);
+                    const bool acceptable=(!throughAnother && !aroundAnother && !crosses)
+                            || (relaxed>=1 && !aroundAnother && !crosses)
+                            || (relaxed>=2 && !crosses)
+                            || (relaxed>=3);
                     const bool joinsTwoGroups=(groupJoined.at(link.groupA)!=groupJoined.at(link.groupB));
                     if(acceptable && (relaxed==0 || joinsTwoGroups))
                     {
@@ -1976,12 +2023,13 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                     groupIndex++;
                 }
             }
-            if(allJoined || relaxed>=2)
+            if(allJoined || relaxed>=3)
                 break;
             relaxed++;
             std::cerr << "sea: a group of maps is still on its own, "
                       << ((relaxed==1)?"allowing a route around another group"
-                                      :"allowing two routes to cross") << std::endl;
+                                      :((relaxed==2)?"allowing a route over a map"
+                                                    :"allowing two routes to cross")) << std::endl;
             unsigned int linkReset=0;
             while(linkReset<linkDone.size())
             {
@@ -2344,6 +2392,11 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                     routeIndex++;
                 }
             }
+            std::cout << "sea: link group " << link.groupA << " <-> " << link.groupB
+                      << " from " << link.chunkA%mapXCount << "," << link.chunkA/mapXCount
+                      << " to " << link.chunkB%mapXCount << "," << link.chunkB/mapXCount
+                      << " (" << link.distance << " map(s) apart, "
+                      << (byBoat?"boat":"lane") << ", " << route.size() << " sea chunk(s))" << std::endl;
             //the towns of both ends sell what it takes to swim
             unsigned int cityIndex=0;
             while(cityIndex<cities.size())
