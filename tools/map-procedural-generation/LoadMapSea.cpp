@@ -1147,23 +1147,75 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                         boatLandingCells[std::pair<uint16_t,uint16_t>((uint16_t)chunkX,(uint16_t)chunkY)]=
                                 std::pair<uint8_t,uint8_t>((uint8_t)((unsigned int)landX%mapWidth),
                                                            (uint8_t)((unsigned int)landY%mapHeight));
-                        Tiled::MapObject * const boat=new Tiled::MapObject("","teleport on push",
-                            QPointF(teleportX*worldMap.tileWidth(),teleportY*worldMap.tileHeight()),
-                            QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
+                        //ONE TELEPORT ON EVERY SHIP TILE THAT QUALIFIES. The player
+                        //boards where they stand: any tile of the boat with ground
+                        //beside it (a SIDE, no water, a Walkable tile, no
+                        //Collisions) carries the push-teleport, not just the one
+                        //the quay was picked from — walking up to the hull and
+                        //pushing at the wrong plank did nothing.
                         const QDir mapDir(QFileInfo(QString::fromStdString(getMapFile(chunkX,chunkY))).absoluteDir());
-                        boat->setProperty("map",mapDir.relativeFilePath(
-                                              QString::fromStdString(getMapFile(otherX,otherY))));
-                        //filled in once BOTH shores moored (see wireBoatCrossings)
-                        boat->setProperty("x","0");
-                        boat->setProperty("y","0");
-                        if(invisibleTileset!=NULL)
+                        const QString farMap=mapDir.relativeFilePath(
+                                    QString::fromStdString(getMapFile(otherX,otherY)));
+                        unsigned int shipColumn=0;
+                        while(shipColumn<shipWidth)
                         {
-                            Tiled::Cell boatMarker;
-                            boatMarker.setTile(invisibleTileset->tileAt(2));
-                            boat->setCell(boatMarker);
+                            unsigned int shipRow=0;
+                            while(shipRow<shipHeight)
+                            {
+                                const unsigned int tileX=shipX+shipColumn;
+                                const unsigned int tileY=shipY+shipRow;
+                                bool hasQuay=false;
+                                const int stepX[4]={0,0,-1,1};
+                                const int stepY[4]={-1,1,0,0};
+                                unsigned int direction=0;
+                                while(direction<4)
+                                {
+                                    const int quayX=(int)tileX+stepX[direction];
+                                    const int quayY=(int)tileY+stepY[direction];
+                                    if(quayX>=0 && quayY>=0 && quayX<(int)worldWidth && quayY<(int)worldHeight
+                                            && (unsigned int)quayX/mapWidth==chunkX
+                                            && (unsigned int)quayY/mapHeight==chunkY)
+                                    {
+                                        const unsigned int quay=(unsigned int)quayX+(unsigned int)quayY*worldWidth;
+                                        if(water.at(quay)==0 && blocked.at(quay)==0
+                                                && walkLayer->cellAt((unsigned int)quayX,
+                                                                     (unsigned int)quayY).tile()!=NULL)
+                                        {
+                                            hasQuay=true;
+                                            //NOTHING GROWS ON A QUAY. The vegetation
+                                            //is brushed after this pass: a tree on
+                                            //the cell beside the hull turns a tile
+                                            //of the boat back into a plank nobody
+                                            //can push.
+                                            maskVegetationAround(worldMap,(unsigned int)quayX,
+                                                                 (unsigned int)quayY,1);
+                                        }
+                                    }
+                                    direction++;
+                                }
+                                if(hasQuay)
+                                {
+                                    Tiled::MapObject * const boat=new Tiled::MapObject("","teleport on push",
+                                        QPointF(tileX*worldMap.tileWidth(),tileY*worldMap.tileHeight()),
+                                        QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
+                                    boat->setProperty("map",farMap);
+                                    //filled in once BOTH shores moored (wireBoatCrossings)
+                                    boat->setProperty("x","0");
+                                    boat->setProperty("y","0");
+                                    if(invisibleTileset!=NULL)
+                                    {
+                                        Tiled::Cell boatMarker;
+                                        boatMarker.setTile(invisibleTileset->tileAt(2));
+                                        boat->setCell(boatMarker);
+                                    }
+                                    movingGroup->addObject(boat);
+                                    boatTeleportObjects[std::pair<uint16_t,uint16_t>(
+                                                (uint16_t)chunkX,(uint16_t)chunkY)].push_back(boat);
+                                }
+                                shipRow++;
+                            }
+                            shipColumn++;
                         }
-                        movingGroup->addObject(boat);
-                        boatTeleportObjects[std::pair<uint16_t,uint16_t>((uint16_t)chunkX,(uint16_t)chunkY)]=boat;
                         maskVegetationAround(worldMap,(unsigned int)landX,(unsigned int)landY,1);
                         //THE WALK FROM THE QUAY TO THE TOWN is opened below, on
                         //the world (section 9): the vegetation is brushed after
