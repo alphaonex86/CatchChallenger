@@ -90,6 +90,10 @@ public:
         //distance wanders between the two values, else it reads as a drawn line.
         unsigned int waterBeachMin;
         unsigned int waterBeachMax;
+        //[water] the smallest POOL a beach is allowed to open on the sea: a bay
+        //of less than that is grown until it reaches it, so the rock always
+        //frames a real piece of water and not a puddle against the shore.
+        unsigned int waterPoolMinTiles;
         //[water] a BOAT chunk is closed by a rock line that many tiles inside the
         //map border, on the sides no map lies behind: the harbour basin stays open
         //for the ship, the open sea beyond is never reachable.
