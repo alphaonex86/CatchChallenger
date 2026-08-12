@@ -218,7 +218,7 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.waterSeaMinTiles=settings.value("seaMinTiles",4000).toUInt();
     config.waterLakeMinTiles=settings.value("lakeMinTiles",200).toUInt();
     config.waterBodyDebugStep=settings.value("bodyDebugStep",32).toUInt();
-    config.waterPathPercentOfLand=settings.value("pathPercentOfLand",0).toUInt();
+    config.waterPathPercentOfLand=settings.value("pathPercentOfLand",0).toUInt();//extra routes only
     config.waterChunkSeaPercent=settings.value("chunkSeaPercent",80).toUInt();
     if(config.waterChunkSeaPercent>100)
         config.waterChunkSeaPercent=100;
@@ -238,6 +238,7 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     if(config.waterMaxFighter<config.waterMinFighter)
         config.waterMaxFighter=config.waterMinFighter;
     config.waterShipDecoration=settings.value("shipDecoration","").toString();
+    config.waterShipDecorationPercent=settings.value("shipDecorationPercent",8).toUInt();
     config.waterShipUsable=settings.value("shipUsable","").toString();
     if(config.waterBodyDebugStep<1)
         config.waterBodyDebugStep=1;

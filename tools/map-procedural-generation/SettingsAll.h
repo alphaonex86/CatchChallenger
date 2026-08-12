@@ -76,6 +76,8 @@ public:
         //scenery; shipUsable is the boat of a closed crossing and carries the
         //push-teleport to the far shore.
         QString waterShipDecoration;
+        //how many sea chunks get the moored ship: it is scenery, it must stay rare
+        unsigned int waterShipDecorationPercent;
         QString waterShipUsable;
         std::vector<std::string> citiesNames;
         float scale_City;

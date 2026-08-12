@@ -4812,72 +4812,170 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
         return;
     }
 
-    //A SWIMMABLE CHANNEL, one band per travel AXIS the chunk is connected on.
-    //Both are classified BEFORE anything is painted: on a corner chunk the two
-    //cross, and painting them one after the other would let the second wall close
-    //the first. The band only says WHERE the player may swim; the water that is
-    //outside it is rocked off, and the land is left exactly as the terrain drew
-    //it — the coast is a border of its own.
+    //A SWIMMABLE CHANNEL that FOLLOWS THE WATER. A straight band across the axis
+    //was wrong twice over: it opened the sides the chunk is not connected on, so
+    //the player swam off into chunks that have no map, and where a cliff jutted
+    //into it the lane was blocked and had to be cut through the land. The lane is
+    //now the shortest route THROUGH THE WATER between the border openings the
+    //chunk really has, widened by channelHalfWidth — so it can only ever exist
+    //where there is water, and it always joins the sides it is supposed to join.
     std::vector<unsigned char> channelCell(mapWidth*mapHeight,0);
     {
-        unsigned int axisIndex=0;
-        while(axisIndex<2)
+        std::vector<unsigned char> isWater(mapWidth*mapHeight,0);
         {
-            const bool axisHorizontal=(axisIndex==0);
-            const bool axisUsed=axisHorizontal
-                    ? ((zoneOrientation&(Orientation_left|Orientation_right))!=0)
-                    : ((zoneOrientation&(Orientation_top|Orientation_bottom))!=0);
-            if(axisUsed)
+            unsigned int cell=0;
+            while(cell<mapWidth*mapHeight)
             {
-                const unsigned int alongCount=axisHorizontal?mapWidth:mapHeight;
-                const unsigned int acrossCount=axisHorizontal?mapHeight:mapWidth;
-                const int axisCentre=(int)acrossCount/2;
-                int halfWidth=(int)setting.waterChannelHalfWidth;
-                if(halfWidth<2)
-                    halfWidth=2;
-                if(halfWidth>(int)acrossCount/2-3)
-                    halfWidth=(int)acrossCount/2-3;
-                //the band WANDERS, one tile at a time, so the rock line that ends
-                //up drawn against it is never a ruler-straight corridor
-                int topOffset=halfWidth;
-                int bottomOffset=halfWidth;
-                unsigned int along=0;
-                while(along<alongCount)
+                if(waterLayer->cellAt(x0+cell%mapWidth,y0+cell/mapWidth).tile()!=NULL)
+                    isWater[cell]=1;
+                cell++;
+            }
+        }
+        //the water cell each connected side opens on: the border midpoint, or the
+        //nearest water cell of that border line when the midpoint is shore
+        std::vector<unsigned int> openings;
+        {
+            const Orientation bit[4]={Orientation_left,Orientation_right,Orientation_top,Orientation_bottom};
+            unsigned int side=0;
+            while(side<4)
+            {
+                if((zoneOrientation&bit[side])!=0)
                 {
-                    if((rand()%3)==0)
+                    int best=-1;
+                    int bestDistance=0;
+                    const unsigned int lineLength=(side<2)?mapHeight:mapWidth;
+                    const int middle=(int)lineLength/2;
+                    unsigned int step=0;
+                    while(step<lineLength)
                     {
-                        const int lowest=halfWidth-(int)setting.waterWanderAmplitude;
-                        const int highest=halfWidth+(int)setting.waterWanderAmplitude;
-                        topOffset+=(rand()%2==0)?1:-1;
-                        if(topOffset<lowest)
-                            topOffset=lowest;
-                        if(topOffset>highest)
-                            topOffset=highest;
-                        bottomOffset+=(rand()%2==0)?1:-1;
-                        if(bottomOffset<lowest)
-                            bottomOffset=lowest;
-                        if(bottomOffset>highest)
-                            bottomOffset=highest;
-                    }
-                    unsigned int across=0;
-                    while(across<acrossCount)
-                    {
-                        const int distance=(int)across-axisCentre;
-                        if(distance>=-bottomOffset && distance<=topOffset)
+                        const unsigned int localX=(side==0)?0:((side==1)?mapWidth-1:step);
+                        const unsigned int localY=(side==2)?0:((side==3)?mapHeight-1:step);
+                        const unsigned int cell=localX+localY*mapWidth;
+                        const int distance=abs((int)step-middle);
+                        if(isWater.at(cell)!=0 && (best<0 || distance<bestDistance))
                         {
-                            const unsigned int localX=axisHorizontal?along:across;
-                            const unsigned int localY=axisHorizontal?across:along;
-                            channelCell[localX+localY*mapWidth]=1;
+                            best=(int)cell;
+                            bestDistance=distance;
                         }
-                        across++;
+                        step++;
                     }
-                    along++;
+                    if(best>=0)
+                        openings.push_back((unsigned int)best);
+                }
+                side++;
+            }
+        }
+        //shortest water route from the first opening to each of the others
+        if(!openings.empty())
+        {
+            std::vector<unsigned char> onRoute(mapWidth*mapHeight,0);
+            onRoute[openings.front()]=1;
+            unsigned int openingIndex=1;
+            while(openingIndex<openings.size())
+            {
+                std::vector<int> parent(mapWidth*mapHeight,-2);
+                std::vector<unsigned int> queue;
+                parent[openings.front()]=-1;
+                queue.push_back(openings.front());
+                unsigned int queueIndex=0;
+                bool found=false;
+                while(queueIndex<queue.size() && !found)
+                {
+                    const unsigned int cell=queue.at(queueIndex);
+                    queueIndex++;
+                    if(cell==openings.at(openingIndex))
+                        found=true;
+                    else
+                    {
+                        const int cellX=(int)(cell%mapWidth);
+                        const int cellY=(int)(cell/mapWidth);
+                        const int stepX[4]={-1,1,0,0};
+                        const int stepY[4]={0,0,-1,1};
+                        unsigned int direction=0;
+                        while(direction<4)
+                        {
+                            const int nextX=cellX+stepX[direction];
+                            const int nextY=cellY+stepY[direction];
+                            if(nextX>=0 && nextY>=0 && nextX<(int)mapWidth && nextY<(int)mapHeight)
+                            {
+                                const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapWidth;
+                                if(parent.at(next)==-2 && isWater.at(next)!=0)
+                                {
+                                    parent[next]=(int)cell;
+                                    queue.push_back(next);
+                                }
+                            }
+                            direction++;
+                        }
+                    }
+                }
+                if(found)
+                {
+                    int walkCell=(int)openings.at(openingIndex);
+                    while(walkCell>=0)
+                    {
+                        onRoute[(unsigned int)walkCell]=1;
+                        walkCell=parent.at((unsigned int)walkCell);
+                    }
+                }
+                openingIndex++;
+            }
+            //widen the route to the channel, through WATER only
+            int halfWidth=(int)setting.waterChannelHalfWidth;
+            if(halfWidth<2)
+                halfWidth=2;
+            std::vector<unsigned int> ring;
+            std::vector<int> depth(mapWidth*mapHeight,-1);
+            {
+                unsigned int cell=0;
+                while(cell<mapWidth*mapHeight)
+                {
+                    if(onRoute.at(cell)!=0)
+                    {
+                        depth[cell]=0;
+                        channelCell[cell]=1;
+                        ring.push_back(cell);
+                    }
+                    cell++;
                 }
             }
-            axisIndex++;
+            unsigned int ringIndex=0;
+            while(ringIndex<ring.size())
+            {
+                const unsigned int cell=ring.at(ringIndex);
+                ringIndex++;
+                if(depth.at(cell)<halfWidth)
+                {
+                    const int cellX=(int)(cell%mapWidth);
+                    const int cellY=(int)(cell/mapWidth);
+                    const int stepX[4]={-1,1,0,0};
+                    const int stepY[4]={0,0,-1,1};
+                    unsigned int direction=0;
+                    while(direction<4)
+                    {
+                        const int nextX=cellX+stepX[direction];
+                        const int nextY=cellY+stepY[direction];
+                        if(nextX>=0 && nextY>=0 && nextX<(int)mapWidth && nextY<(int)mapHeight)
+                        {
+                            const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapWidth;
+                            if(depth.at(next)<0 && isWater.at(next)!=0)
+                            {
+                                depth[next]=depth.at(cell)+1;
+                                channelCell[next]=1;
+                                ring.push_back(next);
+                            }
+                        }
+                        direction++;
+                    }
+                }
+            }
         }
     }
-    //rock every WATER cell outside the band; touch nothing else
+    //A LINE of rock around the channel, not a sea filled with it: every WATER
+    //cell that TOUCHES the lane without being in it, one tile thick. It closes
+    //the open sea off the lane, and the sides the chunk is not connected on are
+    //never opened in the first place. Land is never touched — where the lane runs
+    //along the shore the coast is the wall, and the player can land there.
     {
         unsigned int localY=0;
         while(localY<mapHeight)
@@ -4885,11 +4983,26 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
             unsigned int localX=0;
             while(localX<mapWidth)
             {
-                const unsigned int tileX=x0+localX;
-                const unsigned int tileY=y0+localY;
-                if(channelCell.at(localX+localY*mapWidth)==0
-                        && waterLayer->cellAt(tileX,tileY).tile()!=NULL)
-                    colliLayer->setCell(tileX,tileY,Tiled::Cell(rockTile));
+                if(channelCell.at(localX+localY*mapWidth)==0)
+                {
+                    bool touchesChannel=false;
+                    const int stepX[4]={-1,1,0,0};
+                    const int stepY[4]={0,0,-1,1};
+                    unsigned int direction=0;
+                    while(direction<4)
+                    {
+                        const int nextX=(int)localX+stepX[direction];
+                        const int nextY=(int)localY+stepY[direction];
+                        if(nextX>=0 && nextY>=0 && nextX<(int)mapWidth && nextY<(int)mapHeight)
+                            if(channelCell.at((unsigned int)nextX+(unsigned int)nextY*mapWidth)!=0)
+                                touchesChannel=true;
+                        direction++;
+                    }
+                    const unsigned int tileX=x0+localX;
+                    const unsigned int tileY=y0+localY;
+                    if(touchesChannel && waterLayer->cellAt(tileX,tileY).tile()!=NULL)
+                        colliLayer->setCell(tileX,tileY,Tiled::Cell(rockTile));
+                }
                 localX++;
             }
             localY++;
@@ -4982,7 +5095,8 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
 
     //A SHIP moored in the channel, as decoration: it is an obstacle, so it only
     //goes where there is open water to spare.
-    if(!setting.waterShipDecoration.isEmpty() && (rand()%100)<50)
+    if(!setting.waterShipDecoration.isEmpty()
+            && (unsigned int)(rand()%100)<setting.waterShipDecorationPercent)
     {
         const unsigned int alongCount=horizontal?mapWidth:mapHeight;
         const unsigned int acrossCount=horizontal?mapHeight:mapWidth;
