@@ -29,6 +29,7 @@ add_executable(map-procedural-generation
     PartialMap.cpp
     MiniMapAll.cpp
     LoadMapRoad.cpp
+    LoadMapSea.cpp
 )
 
 target_compile_definitions(map-procedural-generation PRIVATE

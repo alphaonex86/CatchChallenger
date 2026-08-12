@@ -342,6 +342,15 @@ int main(int argc, char *argv[])
                 t.start();
                 LoadMapAll::addRoadContent(tiledMap, config);
                 qDebug("add road content took %lld ms", t.elapsed());
+                //THE SEA, on the whole world at once: the beach the player may
+                //swim in, the lanes of the routes, the harbours, the rock that
+                //closes the open sea, the boats and what lives on the water. It
+                //has to run once every map is painted (a coast does not stop at a
+                //chunk border) and before anything grows, so a tree never lands on
+                //a lane it just opened.
+                t.start();
+                LoadMapAll::addSeaContent(tiledMap,config);
+                qDebug("sea content took %lld ms", t.elapsed());
                 //TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
             if(config.displaycity)
@@ -430,6 +439,20 @@ int main(int argc, char *argv[])
                     }
                     if(walkErrors.size()>40)
                         std::cerr << "  ... and " << (walkErrors.size()-40) << " more" << std::endl;
+                    return 1;
+                }
+                //...and no way out into the OPEN SEA. LAST, after the walkability
+                //repairs: they open a corridor through whatever cuts a chunk in
+                //two, and the one thing they must never open is the sea wall.
+                if(!LoadMapAll::checkSeaClosed(tiledMap,config,walkErrors))
+                {
+                    std::cerr << walkErrors.size() << " open sea leak(s), nothing was generated:" << std::endl;
+                    unsigned int errorIndex=0;
+                    while(errorIndex<walkErrors.size() && errorIndex<20)
+                    {
+                        std::cerr << "  " << walkErrors.at(errorIndex) << std::endl;
+                        errorIndex++;
+                    }
                     return 1;
                 }
             }

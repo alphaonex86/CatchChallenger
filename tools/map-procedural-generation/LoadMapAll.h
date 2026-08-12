@@ -140,6 +140,16 @@ public:
         uint16_t toX,toY;
     };
     static std::vector<BoatCrossing> boatCrossings;
+    //ONE water link of the mesh, as it was PLANNED: the chunks it runs through,
+    //the land chunk of each group included at both ends, and whether it is a
+    //ferry. The sea pass draws the lane on the FINAL map from this, so a lane
+    //always starts and ends where the player can walk in.
+    struct WaterRoute
+    {
+        std::vector<unsigned int> chunks;//chunkX+chunkY*mapXCount, land ends included
+        bool isBoat;
+    };
+    static std::vector<WaterRoute> waterRoutes;
     //where each boat chunk moored its boat, and the teleport object waiting for
     //the far shore's cell: a crossing can only be wired once BOTH are painted
     static std::map<std::pair<uint16_t,uint16_t>,std::pair<uint8_t,uint8_t> > boatLandingCells;
@@ -395,7 +405,9 @@ public:
         ChunkPass_townsfolk=3,//addCityTownsfolk
         ChunkPass_caveInterior=4,//writeCaveInterior
         ChunkPass_chunkBots=5,//emitRoadBotsForChunk
-        ChunkPass_decoration=6//addTerrainDecorations
+        ChunkPass_decoration=6,//addTerrainDecorations
+        ChunkPass_sea=7,//addSeaContent: the islets of a lane
+        ChunkPass_seaContent=8//addSeaContent: sea decorations, their bot, swimmers
     };
     static void seedChunk(const unsigned int &seed, const unsigned int &chunkX, const unsigned int &chunkY,
                           const ChunkPass &pass);
@@ -465,22 +477,43 @@ public:
                               std::vector<std::pair<uint16_t,uint16_t> > &boatChunks);
     static void linkChunkToNeighbour(const unsigned int &from,const unsigned int &to,
                                      const unsigned int &mapXCount);
-    //Paint ONE sea chunk: a water channel from border to border along its travel
-    //axis, walled on both sides by a CONTINUOUS chain of borderTile rock whose
-    //position wanders, so the player can cross but never wander off into the open
-    //sea. What lies beyond the wall keeps its natural terrain and is simply never
-    //reachable. A closed BOAT chunk is walled all round instead, with the boat
-    //tile and its push-teleport. Called from addRoadContent, after the terrain
-    //transitions, so nothing repaints over it.
     //stamp a rectangle of tiles from "tsx/id,width,height" (a sprite stored as a
     //block of the sheet), only where the destination is free WATER
     static void stampTileRect(Tiled::Map &worldMap,Tiled::TileLayer *layer,const QString &description,
                               const unsigned int &tileX,const unsigned int &tileY,
                               Tiled::TileLayer *waterLayer);
-    static void paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX,const unsigned int &chunkY,
-                                const unsigned int &mapWidth,const unsigned int &mapHeight,
-                                const RoadIndex &roadIndex,const uint8_t &zoneOrientation,
-                                const SettingsAll::SettingsExtra &setting);
+
+    //THE SEA, drawn ON THE WHOLE WORLD AT ONCE — the coast does not stop at a
+    //chunk border, so neither may the rock that closes it. One pass, run after
+    //the roads and the towns are painted and before anything grows:
+    // 1) THE BEACH. The player can only enter the water where the shore is
+    //    walkable, and may then swim [water] beachMin..beachMax tiles from it.
+    //    That band is what they are allowed; the rock line is drawn on the water
+    //    cells just outside it, so it follows the coast, wanders, and ends
+    //    against the first cliff the beach dies on.
+    // 2) THE LANES of the swimmable routes: the cheapest way from the beach of
+    //    one end to the beach of the other, through the chunks the route was
+    //    planned on, widened to a channel. A cell the way has to cut through
+    //    (a cliff, a tree) is opened like a road corridor — whole plants only.
+    // 3) THE HARBOURS of the boat crossings: the basin stays open water so the
+    //    ship has room, and the sides no map lies behind are closed by a rock
+    //    line boatBorderMin..boatBorderMax tiles inside the map border.
+    // 4) the boat itself, moored along the shore with its push-teleport, the
+    //    template/sea decorations, the islets and the swimmers.
+    static void addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting);
+    //filled by addSeaContent: where the player may swim, and the rock that closes
+    //it. World sized, one byte per tile. carveChunkCorridor must never open a
+    //wall cell — a repair through it would let the player into the open sea.
+    static std::vector<unsigned char> seaAllowedCells;
+    static std::vector<unsigned char> seaWallCells;
+    //template/sea/<name>/: a decoration brushed on the water of a swimmable route
+    //(how-use.ini says how often), with a fight bot next to it
+    static std::vector<DecorationVariant> seaDecorations;
+    static void scanSeaTemplates(Tiled::Map &worldMap,const unsigned int mapWidth,const unsigned int mapHeight);
+    //GUARD: no way out into the open sea. Re-measured on the FINAL map, after the
+    //vegetation and the walkability repairs, because both run after the sea pass.
+    static bool checkSeaClosed(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting,
+                               std::vector<std::string> &errors);
 
     static void addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight);
     //[General] cityDebug: Object layer "City" with the hole polygon of every town

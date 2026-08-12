@@ -833,7 +833,10 @@ def main():
                                not f.startswith("floor-"))
             floors = sorted(f for f in os.listdir(folder)
                             if f.startswith("floor-") and f.endswith(".tmx"))
-            if not floors:
+            #a DECORATION is only brushed: template/on-<terrain>/ and template/sea/
+            #wire no door and have no interior, so neither is missing here
+            decoration = group.startswith("on-") or group == "sea"
+            if not floors and not decoration:
                 problems.append((folder, "no floor-N.tmx interior"))
             if len(exteriors) > 1:
                 problems.append((folder, "more than one exterior tmx: " +
@@ -845,7 +848,7 @@ def main():
                 patched = check_property_case(path, patched, fixes)
                 patched = check_group_visibility(path, patched, fixes)
                 patched = check_objects(path, patched, problems, warnings, fixes)
-                if not has_teleport(patched):
+                if not has_teleport(patched) and not decoration:
                     infos.append((path, "no door/exit object (the generator "
                                   "wires one in)"))
                 if patched != text and args.fix:

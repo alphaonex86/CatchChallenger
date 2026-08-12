@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="6" height="3" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" source="../../../tileset/ships.tsx"/>
+ <layer name="Collisions" width="6" height="3">
+  <data encoding="base64" compression="zlib">
+   eNoNw8kRgCAQALD1/CDHR0D7L5RkJltE7B6eXt4mH7PFavO1O5x+/i4YSAD0
+  </data>
+ </layer>
+</map>
