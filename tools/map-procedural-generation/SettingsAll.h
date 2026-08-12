@@ -60,6 +60,12 @@ public:
         unsigned int waterBoatPercent;
         //how many chunks from a town the coast may be for it to count as a PORT
         unsigned int waterHarbourChunkRadius;
+        //...and how many for it to count as COASTAL, which is a different and much
+        //tighter thing: a coastal town is one the player SEES the sea from, and it
+        //is the only place the water walk item is sold. The harbour radius covers
+        //more than half the towns of a world, which would put the item in every
+        //other shop.
+        unsigned int waterCoastalChunkRadius;
         //A SHORTCUT crossing: two towns already joined by land, but so far apart
         //on the road graph that the player has to tour the whole world to go from
         //one to the other. It is built when the road detour is at least
