@@ -1646,8 +1646,103 @@ void LoadMapAll::closeSeaAccess(Tiled::Map &worldMap,const SettingsAll::Settings
         }
         tileY++;
     }
+    //NO RULER STROKE. Sixteen rock in a row, across or down, reads as a wall
+    //somebody drew, not as a reef: where the coast or a lane runs straight the
+    //wall is SHIFTED ONE TILE at the middle of the run — the cell is given to the
+    //water and the rock closes around it — which breaks the line and leaves a
+    //nick in the reef. Bounded: every shift opens one cell, and what it opens is
+    //re-closed at once, so the wall is never left with a hole.
+    unsigned int shifted=0;
+    {
+        static const unsigned int rockRunMax=15;
+        unsigned int pass=0;
+        bool again=true;
+        while(again && pass<12)
+        {
+            again=false;
+            pass++;
+            unsigned int axis=0;
+            while(axis<2)
+            {
+                const unsigned int lineCount=(axis==0)?worldHeight:worldWidth;
+                const unsigned int lineLength=(axis==0)?worldWidth:worldHeight;
+                unsigned int lineIndex=0;
+                while(lineIndex<lineCount)
+                {
+                    unsigned int step=0;
+                    unsigned int runStart=0;
+                    unsigned int runLength=0;
+                    while(step<=lineLength)
+                    {
+                        const bool isRock=(step<lineLength)
+                                && (seaWallCells.at((axis==0)?(step+lineIndex*worldWidth)
+                                                             :(lineIndex+step*worldWidth))!=0);
+                        if(isRock)
+                        {
+                            if(runLength==0)
+                                runStart=step;
+                            runLength++;
+                        }
+                        if(!isRock || step==lineLength)
+                        {
+                            if(runLength>rockRunMax)
+                            {
+                                //break it in the middle, and again every rockRunMax
+                                //tiles for a run that is very long
+                                unsigned int breakIndex=runStart+runLength/2;
+                                while(breakIndex>runStart && breakIndex-runStart>rockRunMax)
+                                    breakIndex-=rockRunMax;
+                                while(breakIndex<runStart+runLength)
+                                {
+                                    const unsigned int cell=(axis==0)?(breakIndex+lineIndex*worldWidth)
+                                                                     :(lineIndex+breakIndex*worldWidth);
+                                    //give the cell to the water...
+                                    seaAllowedCells[cell]=1;
+                                    seaWallCells[cell]=0;
+                                    colliLayer->setCell(cell%worldWidth,cell/worldWidth,Tiled::Cell());
+                                    blocked[cell]=0;
+                                    //...and close what that opens
+                                    const int stepX[4]={-1,1,0,0};
+                                    const int stepY[4]={0,0,-1,1};
+                                    unsigned int direction=0;
+                                    while(direction<4)
+                                    {
+                                        const int nextX=(int)(cell%worldWidth)+stepX[direction];
+                                        const int nextY=(int)(cell/worldWidth)+stepY[direction];
+                                        if(nextX>=0 && nextY>=0 && nextX<(int)worldWidth
+                                                && nextY<(int)worldHeight)
+                                        {
+                                            const unsigned int next=(unsigned int)nextX
+                                                    +(unsigned int)nextY*worldWidth;
+                                            if(water.at(next)!=0 && blocked.at(next)==0
+                                                    && seaAllowedCells.at(next)==0)
+                                            {
+                                                colliLayer->setCell((unsigned int)nextX,(unsigned int)nextY,
+                                                                    Tiled::Cell(rockTile));
+                                                blocked[next]=1;
+                                                seaWallCells[next]=1;
+                                            }
+                                        }
+                                        direction++;
+                                    }
+                                    shifted++;
+                                    again=true;
+                                    breakIndex+=rockRunMax;
+                                }
+                            }
+                            runLength=0;
+                        }
+                        step++;
+                    }
+                    lineIndex++;
+                }
+                axis++;
+            }
+        }
+    }
     std::cout << "sea: " << frameCells << " rock cell(s) framing the swimmable water, "
-              << rimCells << " closing a shore the player can stand on" << std::endl;
+              << rimCells << " closing a shore the player can stand on, "
+              << shifted << " shifted so no rock line runs straight for 16" << std::endl;
 }
 
 bool LoadMapAll::checkSeaClosed(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting,
@@ -1717,6 +1812,60 @@ bool LoadMapAll::checkSeaClosed(Tiled::Map &worldMap,const SettingsAll::Settings
         }
         cell++;
     }
+    //...AND NO RULER STROKE: 16 rock in a row, across or down, is a wall somebody
+    //drew. closeSeaAccess shifts the wall where that would happen; this measures
+    //the map that was really written, the repairs included.
+    unsigned int straightRuns=0;
+    if(!seaWallCells.empty())
+    {
+        unsigned int axis=0;
+        while(axis<2)
+        {
+            const unsigned int lineCount=(axis==0)?worldHeight:worldWidth;
+            const unsigned int lineLength=(axis==0)?worldWidth:worldHeight;
+            unsigned int lineIndex=0;
+            while(lineIndex<lineCount)
+            {
+                unsigned int step=0;
+                unsigned int runStart=0;
+                unsigned int runLength=0;
+                while(step<=lineLength)
+                {
+                    const bool isRock=(step<lineLength)
+                            && (seaWallCells.at((axis==0)?(step+lineIndex*worldWidth)
+                                                         :(lineIndex+step*worldWidth))!=0);
+                    if(isRock)
+                    {
+                        if(runLength==0)
+                            runStart=step;
+                        runLength++;
+                    }
+                    if(!isRock || step==lineLength)
+                    {
+                        if(runLength>=16)
+                        {
+                            if(straightRuns<20)
+                            {
+                                const unsigned int startCell=(axis==0)?(runStart+lineIndex*worldWidth)
+                                                                      :(lineIndex+runStart*worldWidth);
+                                errors.push_back("a rock line of "+std::to_string(runLength)+
+                                                 ((axis==0)?" runs across from ":" runs down from ")+
+                                                 std::to_string(startCell%worldWidth)+","+
+                                                 std::to_string(startCell/worldWidth));
+                            }
+                            straightRuns++;
+                        }
+                        runLength=0;
+                    }
+                    step++;
+                }
+                lineIndex++;
+            }
+            axis++;
+        }
+    }
+    if(straightRuns>0)
+        std::cerr << "sea: " << straightRuns << " rock line(s) of 16 or more in a row" << std::endl;
     if(leaks>0)
     {
         std::cerr << "sea: " << leaks << " cell(s) of open sea the player can swim to" << std::endl;
