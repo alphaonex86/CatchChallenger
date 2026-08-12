@@ -931,64 +931,9 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
         }
     }
 
-    //=== 6) THE ROCK =========================================================
-    //A LINE, never a sea filled with it: the water cells the player may NOT use
-    //that touch one they may. The player walks on four directions, so that line is
-    //closed by construction, and because the allowed side is the beach band it
-    //follows the coast — it never runs along a chunk border and never cuts the
-    //land, so the shore keeps its shape and can always be landed on.
-    unsigned int wallCells=0;
-    {
-        unsigned int tileY=0;
-        while(tileY<worldHeight)
-        {
-            unsigned int tileX=0;
-            while(tileX<worldWidth)
-            {
-                const unsigned int cell=tileX+tileY*worldWidth;
-                if(water.at(cell)!=0 && allowed.at(cell)==0 && blocked.at(cell)==0)
-                {
-                    //(only the open sea is ever closed: allowed already covers
-                    //every lake and every pond, so none of them reaches here)
-                    const int stepX[4]={-1,1,0,0};
-                    const int stepY[4]={0,0,-1,1};
-                    bool touchesAllowed=false;
-                    bool touchesTheShore=false;
-                    unsigned int direction=0;
-                    while(direction<4)
-                    {
-                        const int nextX=(int)tileX+stepX[direction];
-                        const int nextY=(int)tileY+stepY[direction];
-                        if(nextX>=0 && nextY>=0 && nextX<(int)worldWidth && nextY<(int)worldHeight)
-                        {
-                            const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*worldWidth;
-                            if(allowed.at(next)!=0 && water.at(next)!=0)
-                                touchesAllowed=true;
-                            //THE RIM. A shore the player can step off is closed by
-                            //one tile of rock IN THE WATER, right at the water line:
-                            //that is the whole coast of the world except the pools,
-                            //and it is what replaced the ring of reefs drawn ten
-                            //tiles out at sea. Where the coast is a cliff or a wood
-                            //nothing is drawn — the player cannot get in there
-                            //anyway.
-                            if(water.at(next)==0 && blocked.at(next)==0)
-                                touchesTheShore=true;
-                        }
-                        direction++;
-                    }
-                    if(touchesAllowed || touchesTheShore)
-                    {
-                        colliLayer->setCell(tileX,tileY,Tiled::Cell(rockTile));
-                        blocked[cell]=1;
-                        seaWallCells[cell]=1;
-                        wallCells++;
-                    }
-                }
-                tileX++;
-            }
-            tileY++;
-        }
-    }
+    //the rock itself is NOT drawn here: it is drawn once the vegetation is down
+    //and the walkability repairs are over (closeSeaAccess), because a shore under
+    //a tree is no shore at all and needs no wall.
     seaAllowedCells=allowed;
 
     //=== 7) THE BOATS ========================================================
@@ -1523,25 +1468,97 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
     std::cout << "sea: " << laneCount << " lane(s) drawn (" << carvedLaneCells
               << " cell(s) opened on the way), " << poolCount << " beach pool(s), "
               << mooredBoats << " boat(s) moored, "
-              << wallCells << " rock cell(s), " << islandCount << " islet(s), "
+              << islandCount << " islet(s), "
               << seaDecorationCount << " decoration(s), " << swimmerCount << " swimmer(s)"
               << std::endl;
 }
 
-bool LoadMapAll::checkSeaClosed(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting,
-                                std::vector<std::string> &errors)
+//WHAT THE PLAYER CAN REACH, on the world, from the towns. Land and the water
+//`swimmable` says they may use; a chunk no map is written for is not part of it.
+//Crossing a map border is allowed wherever both sides carry a map — an over
+//estimate on purpose: a rim of rock too many is a rock, a rim too few is a hole
+//into the open sea.
+static void seaReachableCells(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting,
+                              const std::vector<unsigned char> &water,
+                              const std::vector<unsigned char> &blocked,
+                              const std::vector<unsigned char> *swimmable,
+                              std::vector<unsigned char> &reached)
 {
-    //THE OPEN SEA IS NEVER REACHABLE. The rock is drawn on every water cell that
-    //touches the swimmable region from outside, so the region is closed by
-    //construction — this re-measures it on the map as it was really WRITTEN (the
-    //vegetation and the repairs both run after the sea pass), which is the only
-    //thing worth trusting. Only the maps the player can be on count: a chunk no
-    //map is written for cannot be walked into in the first place.
+    const unsigned int worldWidth=(unsigned int)worldMap.width();
+    const unsigned int worldHeight=(unsigned int)worldMap.height();
+    reached.assign(worldWidth*worldHeight,0);
+    std::vector<unsigned int> queue;
+    //start where the player does: every town, so a world cut in two by a broken
+    //link still gets its rim on both halves
+    unsigned int cityIndex=0;
+    while(cityIndex<LoadMapAll::cities.size())
+    {
+        const unsigned int cell=(LoadMapAll::cities.at(cityIndex).x*setting.mapWidth+setting.mapWidth/2)
+                +(LoadMapAll::cities.at(cityIndex).y*setting.mapHeight+setting.mapHeight/2)*worldWidth;
+        if(cell<worldWidth*worldHeight && blocked.at(cell)==0 && reached.at(cell)==0)
+        {
+            reached[cell]=1;
+            queue.push_back(cell);
+        }
+        cityIndex++;
+    }
+    unsigned int queueIndex=0;
+    while(queueIndex<queue.size())
+    {
+        const unsigned int cell=queue.at(queueIndex);
+        queueIndex++;
+        const int cellX=(int)(cell%worldWidth);
+        const int cellY=(int)(cell/worldWidth);
+        const int stepX[4]={-1,1,0,0};
+        const int stepY[4]={0,0,-1,1};
+        unsigned int direction=0;
+        while(direction<4)
+        {
+            const int nextX=cellX+stepX[direction];
+            const int nextY=cellY+stepY[direction];
+            if(nextX>=0 && nextY>=0 && nextX<(int)worldWidth && nextY<(int)worldHeight)
+            {
+                const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*worldWidth;
+                const unsigned int nextChunk=((unsigned int)nextX/setting.mapWidth)
+                        +((unsigned int)nextY/setting.mapHeight)*setting.mapXCount;
+                if(reached.at(next)==0 && blocked.at(next)==0
+                        && LoadMapAll::mapPathDirection[nextChunk]!=0)
+                {
+                    //water only where the caller says the player may swim
+                    if(water.at(next)==0 || swimmable==NULL || swimmable->at(next)!=0)
+                    {
+                        reached[next]=1;
+                        queue.push_back(next);
+                    }
+                }
+            }
+            direction++;
+        }
+    }
+}
+
+void LoadMapAll::closeSeaAccess(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting)
+{
+    //THE ROCK, drawn LAST — once the vegetation is down and the walkability
+    //repairs are over. Two rules and nothing else:
+    // 1) THE RIM: one tile of rock in the water against a shore THE PLAYER CAN
+    //    REALLY STAND ON. A cell of the Walkable layer that also carries a
+    //    Collisions tile (a tree, a cliff) is not a shore — the player is never
+    //    there, so protecting the sea in front of it is a rock drawn for nobody.
+    //    Neither is a patch of ground no way leads to. That is why this runs at
+    //    the very end: the vegetation is brushed AFTER the sea is shaped, and it
+    //    turns whole stretches of open coast into a wall of trees.
+    // 2) THE FRAME: the water the player may NOT use that touches water they may.
     if(seaAllowedCells.empty())
-        return true;
+        return;
     Tiled::TileLayer * const waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
-    if(waterLayer==NULL)
-        return true;
+    Tiled::TileLayer * const colliLayer=LoadMap::searchTileLayerByName(worldMap,"Collisions");
+    Tiled::Tile * const rockTile=setting.waterBorderTile.isEmpty()
+            ?NULL:fetchTile(worldMap,setting.waterBorderTile);
+    if(waterLayer==NULL || colliLayer==NULL || rockTile==NULL)
+        return;
+    const unsigned int worldWidth=(unsigned int)worldMap.width();
+    const unsigned int worldHeight=(unsigned int)worldMap.height();
     std::vector<Tiled::TileLayer*> collisionLayers;
     {
         unsigned int layerIndex=0;
@@ -1553,10 +1570,8 @@ bool LoadMapAll::checkSeaClosed(Tiled::Map &worldMap,const SettingsAll::Settings
             layerIndex++;
         }
     }
-    const unsigned int worldWidth=(unsigned int)worldMap.width();
-    const unsigned int worldHeight=(unsigned int)worldMap.height();
-    //open water: the Water layer holds a tile and nothing blocks it
-    std::vector<unsigned char> openWater(worldWidth*worldHeight,0);
+    std::vector<unsigned char> water(worldWidth*worldHeight,0);
+    std::vector<unsigned char> blocked(worldWidth*worldHeight,0);
     {
         unsigned int tileY=0;
         while(tileY<worldHeight)
@@ -1564,25 +1579,27 @@ bool LoadMapAll::checkSeaClosed(Tiled::Map &worldMap,const SettingsAll::Settings
             unsigned int tileX=0;
             while(tileX<worldWidth)
             {
+                const unsigned int cell=tileX+tileY*worldWidth;
                 if(waterLayer->cellAt(tileX,tileY).tile()!=NULL)
+                    water[cell]=1;
+                unsigned int layerIndex=0;
+                while(layerIndex<collisionLayers.size())
                 {
-                    bool cellBlocked=false;
-                    unsigned int layerIndex=0;
-                    while(layerIndex<collisionLayers.size())
-                    {
-                        if(collisionLayers.at(layerIndex)->cellAt(tileX,tileY).tile()!=NULL)
-                            cellBlocked=true;
-                        layerIndex++;
-                    }
-                    if(!cellBlocked)
-                        openWater[tileX+tileY*worldWidth]=1;
+                    if(collisionLayers.at(layerIndex)->cellAt(tileX,tileY).tile()!=NULL)
+                        blocked[cell]=1;
+                    layerIndex++;
                 }
                 tileX++;
             }
             tileY++;
         }
     }
-    unsigned int leaks=0;
+    //the ground and the pools the player really gets to
+    std::vector<unsigned char> reached;
+    seaReachableCells(worldMap,setting,water,blocked,&seaAllowedCells,reached);
+    seaWallCells.assign(worldWidth*worldHeight,0);
+    unsigned int rimCells=0;
+    unsigned int frameCells=0;
     unsigned int tileY=0;
     while(tileY<worldHeight)
     {
@@ -1590,12 +1607,12 @@ bool LoadMapAll::checkSeaClosed(Tiled::Map &worldMap,const SettingsAll::Settings
         while(tileX<worldWidth)
         {
             const unsigned int cell=tileX+tileY*worldWidth;
-            if(seaAllowedCells.at(cell)!=0 && openWater.at(cell)!=0
-                    && mapPathDirection[(tileX/setting.mapWidth)
-                                        +(tileY/setting.mapHeight)*setting.mapXCount]!=0)
+            if(water.at(cell)!=0 && blocked.at(cell)==0 && seaAllowedCells.at(cell)==0)
             {
                 const int stepX[4]={-1,1,0,0};
                 const int stepY[4]={0,0,-1,1};
+                bool touchesTheShore=false;
+                bool touchesAllowed=false;
                 unsigned int direction=0;
                 while(direction<4)
                 {
@@ -1604,22 +1621,105 @@ bool LoadMapAll::checkSeaClosed(Tiled::Map &worldMap,const SettingsAll::Settings
                     if(nextX>=0 && nextY>=0 && nextX<(int)worldWidth && nextY<(int)worldHeight)
                     {
                         const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*worldWidth;
-                        if(seaAllowedCells.at(next)==0 && openWater.at(next)!=0)
-                        {
-                            if(leaks<20)
-                                errors.push_back("the open sea is reachable from "
-                                                 +std::to_string(tileX)+","+std::to_string(tileY));
-                            leaks++;
-                        }
+                        //a shore the player STANDS ON: no collision, and a way
+                        //really leads there
+                        if(water.at(next)==0 && blocked.at(next)==0 && reached.at(next)!=0)
+                            touchesTheShore=true;
+                        //the FRAME never asks whether the water beside it is
+                        //reached: what the generator opened on purpose is one
+                        //connected piece (a pool, its lane, the next pool), so as
+                        //soon as ONE of its beaches is walkable the whole of it is
+                        if(water.at(next)!=0 && seaAllowedCells.at(next)!=0)
+                            touchesAllowed=true;
                     }
                     direction++;
+                }
+                if(touchesTheShore || touchesAllowed)
+                {
+                    colliLayer->setCell(tileX,tileY,Tiled::Cell(rockTile));
+                    seaWallCells[cell]=1;
+                    if(touchesAllowed)
+                        frameCells++;
+                    else
+                        rimCells++;
                 }
             }
             tileX++;
         }
         tileY++;
     }
+    std::cout << "sea: " << frameCells << " rock cell(s) framing the swimmable water, "
+              << rimCells << " closing a shore the player can stand on" << std::endl;
+}
+
+bool LoadMapAll::checkSeaClosed(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting,
+                                std::vector<std::string> &errors)
+{
+    //THE OPEN SEA IS NEVER REACHABLE — measured the way the player moves, not by
+    //looking at the wall. Flood the world from the towns over everything that is
+    //not a collision, water included (the swim item makes it walkable), and only
+    //over the maps that were written: whatever water that reaches must be water
+    //the generator opened on purpose. This is the check that catches a rim the
+    //vegetation moved, a repair that opened a coast, or a pool that leaked.
+    if(seaAllowedCells.empty())
+        return true;
+    Tiled::TileLayer * const waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
+    if(waterLayer==NULL)
+        return true;
+    const unsigned int worldWidth=(unsigned int)worldMap.width();
+    const unsigned int worldHeight=(unsigned int)worldMap.height();
+    std::vector<Tiled::TileLayer*> collisionLayers;
+    {
+        unsigned int layerIndex=0;
+        while(layerIndex<(unsigned int)worldMap.layerCount())
+        {
+            Tiled::Layer * const layer=worldMap.layerAt(layerIndex);
+            if(layer->isTileLayer() && layer->name()=="Collisions")
+                collisionLayers.push_back(static_cast<Tiled::TileLayer *>(layer));
+            layerIndex++;
+        }
+    }
+    std::vector<unsigned char> water(worldWidth*worldHeight,0);
+    std::vector<unsigned char> blocked(worldWidth*worldHeight,0);
+    {
+        unsigned int tileY=0;
+        while(tileY<worldHeight)
+        {
+            unsigned int tileX=0;
+            while(tileX<worldWidth)
+            {
+                const unsigned int cell=tileX+tileY*worldWidth;
+                if(waterLayer->cellAt(tileX,tileY).tile()!=NULL)
+                    water[cell]=1;
+                unsigned int layerIndex=0;
+                while(layerIndex<collisionLayers.size())
+                {
+                    if(collisionLayers.at(layerIndex)->cellAt(tileX,tileY).tile()!=NULL)
+                        blocked[cell]=1;
+                    layerIndex++;
+                }
+                tileX++;
+            }
+            tileY++;
+        }
+    }
+    //NULL: every water cell is swimmable for this flood — that is the point
+    std::vector<unsigned char> reached;
+    seaReachableCells(worldMap,setting,water,blocked,NULL,reached);
+    unsigned int leaks=0;
+    unsigned int cell=0;
+    while(cell<worldWidth*worldHeight)
+    {
+        if(reached.at(cell)!=0 && water.at(cell)!=0 && seaAllowedCells.at(cell)==0)
+        {
+            if(leaks<20)
+                errors.push_back("the open sea is reachable at "
+                                 +std::to_string(cell%worldWidth)+","+std::to_string(cell/worldWidth));
+            leaks++;
+        }
+        cell++;
+    }
     if(leaks>0)
-        std::cerr << "sea: " << leaks << " way(s) out into the open sea" << std::endl;
+        std::cerr << "sea: " << leaks << " cell(s) of open sea the player can swim to" << std::endl;
     return leaks==0;
 }

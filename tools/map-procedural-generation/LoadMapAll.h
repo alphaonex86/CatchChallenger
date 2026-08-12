@@ -510,8 +510,13 @@ public:
     //(how-use.ini says how often), with a fight bot next to it
     static std::vector<DecorationVariant> seaDecorations;
     static void scanSeaTemplates(Tiled::Map &worldMap,const unsigned int mapWidth,const unsigned int mapHeight);
-    //GUARD: no way out into the open sea. Re-measured on the FINAL map, after the
-    //vegetation and the walkability repairs, because both run after the sea pass.
+    //THE ROCK, drawn LAST: once the vegetation is down and the walkability
+    //repairs are over. One tile in the water against a shore the player can
+    //really stand on (no collision, and a way leads there), plus the frame of
+    //the water they may use. A shore under a tree is no shore and gets nothing.
+    static void closeSeaAccess(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting);
+    //GUARD: no way out into the open sea. Flooded from the towns the way the
+    //player moves, on the FINAL map.
     static bool checkSeaClosed(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting,
                                std::vector<std::string> &errors);
 

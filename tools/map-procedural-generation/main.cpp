@@ -409,6 +409,9 @@ int main(int argc, char *argv[])
             //vegetation both do, and a tree dropped on the road would otherwise
             //cut a chunk in two behind the guard's back.
             {
+                //THE ROCK OF THE SEA, now that the vegetation is down: a shore
+                //under a tree is no shore, and needs no wall in front of it.
+                LoadMapAll::closeSeaAccess(tiledMap,config);
                 //NO ISOLATED MAP: the sea routes join the land masses the land
                 //router cannot, so every written map is reachable from the start
                 //town — walking or by boat. A world where it is not is broken and
@@ -441,9 +444,10 @@ int main(int argc, char *argv[])
                         std::cerr << "  ... and " << (walkErrors.size()-40) << " more" << std::endl;
                     return 1;
                 }
-                //...and no way out into the OPEN SEA. LAST, after the walkability
-                //repairs: they open a corridor through whatever cuts a chunk in
-                //two, and the one thing they must never open is the sea wall.
+                //...and no way out into the OPEN SEA. The rock was drawn just
+                //above, after the vegetation and before the repairs (which may
+                //never open a wall cell); this measures the result by flooding
+                //the world the way the player moves.
                 if(!LoadMapAll::checkSeaClosed(tiledMap,config,walkErrors))
                 {
                     std::cerr << walkErrors.size() << " open sea leak(s), nothing was generated:" << std::endl;
