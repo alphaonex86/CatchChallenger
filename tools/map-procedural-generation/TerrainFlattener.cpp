@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"
+#include "../map-procedural-generation-terrain/LoadMap.h"
 
 TerrainFlattener::TerrainFlattener() :
     worldWidth(0),
@@ -28,6 +29,7 @@ unsigned int TerrainFlattener::addPolygon(const QPolygonF &polygon,const float h
     flatZone.height=height;
     flatZone.moisure=moisure;
     flatZone.falloff=falloff;
+    flatZone.keepWater=false;
     flatZone.influence=polygon.boundingRect().adjusted(-falloff,-falloff,falloff,falloff);
     flatZones.push_back(flatZone);
     return flatZones.size()-1;
@@ -49,6 +51,19 @@ void TerrainFlattener::bindZone(const unsigned int voronoiZoneIndex,const unsign
 {
     if(flatZoneIndex<flatZones.size())
         zoneToFlatZone[voronoiZoneIndex]=flatZoneIndex;
+}
+
+void TerrainFlattener::setKeepWater(const unsigned int flatZoneIndex,const bool keepWater)
+{
+    if(flatZoneIndex<flatZones.size())
+        flatZones[flatZoneIndex].keepWater=keepWater;
+}
+
+//the WATER band of the terrain, the one place that answers it: LoadMap::floatToHigh
+//returns 0 under the sea level, and that is what the terrain painter reads too
+static bool sampleIsWater(const float height)
+{
+    return LoadMap::floatToHigh(height)==0;
 }
 
 void TerrainFlattener::setWorldSize(const unsigned int width,const unsigned int height)
@@ -93,9 +108,14 @@ void TerrainFlattener::shape(const float x,const float y,float &height,float &mo
         const FlatZone * const bound=boundFlatZone(x,y);
         if(bound!=NULL)
         {
-            //paints inside the flat area: fully flat, no blend at all
-            height=bound->height;
-            moisure=bound->moisure;
+            //paints inside the flat area: fully flat, no blend at all — except on
+            //a PORT, where the water the town stands beside is kept as it is, so
+            //the sea comes into the map instead of being flattened into a field
+            if(!(bound->keepWater && sampleIsWater(height)))
+            {
+                height=bound->height;
+                moisure=bound->moisure;
+            }
         }
         else
         {
@@ -133,7 +153,10 @@ void TerrainFlattener::shape(const float x,const float y,float &height,float &mo
                 }
                 index++;
             }
-            if(best!=NULL)
+            //the ramp of a PORT leaves the water alone too: pulling the coast
+            //just outside the town up to the town level cut the bay off from the
+            //sea it belongs to
+            if(best!=NULL && !(best->keepWater && sampleIsWater(height)))
             {
                 height=height*(1.0-bestWeight)+best->height*bestWeight;
                 moisure=moisure*(1.0-bestWeight)+best->moisure*bestWeight;

@@ -133,6 +133,11 @@ public:
         bool doGym;
         unsigned int gymTrainers;
         std::vector<unsigned int> shopItems;
+        //[building] waterWalkItems: what the datapack's map/layers.xml asks for to
+        //WALK ON the Water layer (<monstersCollision layer="Water" type="walkOn"
+        //item="N">). Every COASTAL town sells them, else the sea routes cannot be
+        //swum. --datapack reads the real list off layers.xml and replaces this.
+        std::vector<unsigned int> waterWalkItems;
         //Bot sprite skins are datapack-specific NAMES (a folder under skin/bot/
         //or skin/fighter/), NOT numeric indices. botSkins is the random pool for
         //road/house/trainer NPCs; the key-building skins pick a fixed look.

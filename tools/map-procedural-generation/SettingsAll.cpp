@@ -170,6 +170,8 @@ void SettingsAll::putDefaultSettings(QSettings &settings)
     //datapack's items table or the engine silently drops the product.
     if(!settings.contains("shopItems"))
         settings.setValue("shopItems","1,2,3,5,6");
+    if(!settings.contains("waterWalkItems"))
+        settings.setValue("waterWalkItems","");
     //skins are folder NAMES under the datapack's skin/bot (or skin/fighter);
     //these defaults are real CatchChallenger-datapack skin names.
     if(!settings.contains("botSkins"))
@@ -401,6 +403,19 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     settings.beginGroup("building");
     config.doGym=settings.value("doGym",true).toBool();
     config.gymTrainers=settings.value("gymTrainers",3).toUInt();
+    config.waterWalkItems.clear();
+    {
+        const QStringList waterItemList=settings.value("waterWalkItems","").toString().split(",");
+        unsigned int indexWaterItem=0;
+        while(indexWaterItem<(unsigned int)waterItemList.size())
+        {
+            bool ok=false;
+            const unsigned int itemId=waterItemList.at(indexWaterItem).trimmed().toUInt(&ok);
+            if(ok)
+                config.waterWalkItems.push_back(itemId);
+            indexWaterItem++;
+        }
+    }
     config.shopItems.clear();
     {
         const QStringList shopItemsList=settings.value("shopItems","1,2,3").toString().split(",");

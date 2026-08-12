@@ -36,6 +36,10 @@ public:
     //seam cutting a city in two. Such a zone is bound here and always takes the
     //flat value, whatever its distance says.
     void bindZone(const unsigned int voronoiZoneIndex,const unsigned int flatZoneIndex);
+    //A PORT keeps its bay: on such a zone a sample whose NATURAL height is the
+    //water band is left alone, so the sea reaches into the town instead of being
+    //flattened into a field. Off by default — an ordinary town wants one terrain.
+    void setKeepWater(const unsigned int flatZoneIndex,const bool keepWater);
     //world size in tiles, needed to look up the Voronoi zone of a sample
     void setWorldSize(const unsigned int width,const unsigned int height);
 
@@ -55,6 +59,7 @@ private:
         float height;
         float moisure;
         float falloff;
+        bool keepWater;
     };
     std::vector<FlatZone> flatZones;
     std::unordered_map<unsigned int,unsigned int> zoneToFlatZone;

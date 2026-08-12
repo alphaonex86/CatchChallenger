@@ -133,6 +133,9 @@ void LoadMapAll::addCityFlatZones(TerrainFlattener &flattener,const unsigned int
             const float flatHeight=heightSum[bestHeight]/(float)heightCount[bestHeight];
             const float flatMoisure=moisureSum[bestMoisure]/(float)moisureCount[bestMoisure];
             const unsigned int flatIndex=flattener.addPolygon(polygon,flatHeight,flatMoisure,config.cityFlattenFalloff);
+            //a PORT keeps its bay, every other town is flattened whole
+            if(indexCity<portCity.size())
+                flattener.setKeepWater(flatIndex,portCity.at(indexCity)!=0);
             std::unordered_set<unsigned int>::const_iterator zoneIterator=paintingZones.cbegin();
             while(zoneIterator!=paintingZones.cend())
             {

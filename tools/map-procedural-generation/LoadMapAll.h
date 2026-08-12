@@ -67,6 +67,11 @@ public:
         //visual style group of template/ the filler houses are drawn from
         //("sea-city", "desert-city"...), matched on the surrounding terrain
         std::string style;
+        //sea within [water] harbourChunkRadius chunks: its shop sells what the
+        //datapack asks for to WALK ON WATER (map/layers.xml monstersCollision
+        //layer="Water" type="walkOn" item="N"), else the sea routes that start
+        //next door cannot be swum
+        bool coastal;
     };
     struct CityInternal
     {
@@ -76,6 +81,10 @@ public:
         std::vector<CityInternal *> citiesNeighbor;
     };
     static std::vector<City> cities;
+    //which towns may put to sea ([water] portCityPercent): they are the only ones
+    //a shortcut or an extra route may use, and the only ones whose chunk KEEPS its
+    //water when the terrain is flattened — a port has to see the sea
+    static std::vector<unsigned char> portCity;
     static std::unordered_map<uint16_t,std::unordered_map<uint16_t,unsigned int> > citiesCoordToIndex;
     static uint8_t *mapPathDirection;
     static unsigned int **roadData;
@@ -578,11 +587,8 @@ public:
                                         const unsigned int &singleMapWidth, const unsigned int &singleMapHeight,
                                         const SettingsAll::SettingsExtra &setting);
     static Tiled::Tile* fetchTile(Tiled::Map &worldMap, QString data);
-    //Close the water of every border a chunk has NO link on, on EVERY map and not
-    //just the sea routes: the road generator does not look at the water, so a road
-    //chunk that happens to be all sea came out with no rock at all and the player
-    //swam off to a map edge with nothing behind it.
-    static void sealOpenWaterBorders(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting);
+    //the items a datapack's map/layers.xml declares as walkOn for the Water layer
+    static bool readWaterWalkItems(const QString &datapackPath,std::vector<unsigned int> &items);
 };
 
 #endif // LOADMAPALL_H
