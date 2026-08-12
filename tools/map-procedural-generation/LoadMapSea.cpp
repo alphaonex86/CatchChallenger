@@ -1200,8 +1200,16 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                                 }
                                 if(onTheBoat && hasQuay)
                                 {
+                                    //THE -1 ROW IS THE ENGINE'S RULE FOR EVERY
+                                    //OBJECT, not just for a bot: Map_loaderMain.cpp
+                                    //reads y/tileheight MINUS ONE for the whole
+                                    //Moving group, and the hand-drawn datapack
+                                    //writes its doors that way (test/city.tmx: the
+                                    //door object sits one row BELOW its door tile).
+                                    //Written without it, every boat teleport landed
+                                    //on the row above the hull — off the boat.
                                     Tiled::MapObject * const boat=new Tiled::MapObject("","teleport on push",
-                                        QPointF(tileX*worldMap.tileWidth(),tileY*worldMap.tileHeight()),
+                                        QPointF(tileX*worldMap.tileWidth(),(tileY+1)*worldMap.tileHeight()),
                                         QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
                                     boat->setProperty("map",farMap);
                                     //filled in once BOTH shores moored (wireBoatCrossings)
