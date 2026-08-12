@@ -396,7 +396,8 @@ bool LoadMapAll::checkWalkability(Tiled::Map &worldMap, const SettingsAll::Setti
 
     //the cells the player crosses a border on, and the doorsteps of the
     //buildings, both read from the Moving group the generator itself filled
-    std::map<std::pair<unsigned int,unsigned int>,std::vector<std::pair<unsigned int,unsigned int> > > borderCells;
+    //one entry per connected SIDE: every cell of that side of the chunk
+    std::map<std::pair<unsigned int,unsigned int>,std::vector<std::vector<std::pair<unsigned int,unsigned int> > > > borderLines;
     std::map<std::pair<unsigned int,unsigned int>,std::vector<std::pair<unsigned int,unsigned int> > > doorCells;
     {
         Tiled::ObjectGroup * const movingGroup=LoadMap::searchObjectGroupByName(worldMap,"Moving");
@@ -422,16 +423,39 @@ bool LoadMapAll::checkWalkability(Tiled::Map &worldMap, const SettingsAll::Setti
             {
                 if(type.startsWith("border-"))
                 {
-                    //border-bottom sits on the FIRST row of the next chunk: the cell
-                    //the player actually walks from is the last row of this one
+                    //The engine reads a border-* object as the WHOLE SIDE of the
+                    //map with an offset (Map_loaderMain.cpp), NOT as a teleport on
+                    //the cell the object sits on: the player crosses wherever that
+                    //side is walkable. So the whole line is recorded, and the rule
+                    //below only asks that SOME cell of it is reachable.
                     if(type=="border-bottom")
                         tileY--;
                     if(tileY>=0)
                     {
                         const std::pair<unsigned int,unsigned int> chunk((unsigned int)tileX/mapWidth,
                                                                         (unsigned int)tileY/mapHeight);
-                        borderCells[chunk].push_back(std::pair<unsigned int,unsigned int>(
-                                                         (unsigned int)tileX%mapWidth,(unsigned int)tileY%mapHeight));
+                        const unsigned int localX=(unsigned int)tileX%mapWidth;
+                        const unsigned int localY=(unsigned int)tileY%mapHeight;
+                        std::vector<std::pair<unsigned int,unsigned int> > line;
+                        if(type=="border-left" || type=="border-right")
+                        {
+                            unsigned int step=0;
+                            while(step<mapHeight)
+                            {
+                                line.push_back(std::pair<unsigned int,unsigned int>(localX,step));
+                                step++;
+                            }
+                        }
+                        else
+                        {
+                            unsigned int step=0;
+                            while(step<mapWidth)
+                            {
+                                line.push_back(std::pair<unsigned int,unsigned int>(step,localY));
+                                step++;
+                            }
+                        }
+                        borderLines[chunk].push_back(line);
                     }
                 }
                 else if(type=="door" || type=="teleport on it" || type=="teleport on push")
@@ -524,90 +548,157 @@ bool LoadMapAll::checkWalkability(Tiled::Map &worldMap, const SettingsAll::Setti
                 //instead of walking around it. There the rule is per side — each
                 //border opening must reach the cave mouth on its own side.
                 const bool chunkIsCave=isCaveChunk(chunkX,chunkY);
-                //1) the border openings
-                if(borderCells.find(chunk)!=borderCells.cend())
+                //1) the border SIDES. A side is crossable as soon as ONE of its
+                //cells is walkable (the engine crosses on the whole side with an
+                //offset), and the sides of a chunk must all reach one another.
+                if(borderLines.find(chunk)!=borderLines.cend())
                 {
-                    const std::vector<std::pair<unsigned int,unsigned int> > &cells=borderCells.at(chunk);
-                    uint16_t reference=walkNoComponent;
-                    unsigned int cellIndex=0;
-                    while(cellIndex<cells.size())
+                    const std::vector<std::vector<std::pair<unsigned int,unsigned int> > > &lines=borderLines.at(chunk);
+                    //the components each side opens on
+                    std::vector<std::set<uint16_t> > sideComponents;
+                    unsigned int lineIndex=0;
+                    while(lineIndex<lines.size())
                     {
-                        const unsigned int cell=cells.at(cellIndex).first+cells.at(cellIndex).second*mapWidth;
-                        const uint16_t cellComponent=component.at(cell);
-                        const std::string where=std::to_string(cells.at(cellIndex).first)+","+
-                                std::to_string(cells.at(cellIndex).second);
-                        if(cellComponent==walkNoComponent)
+                        std::set<uint16_t> reached;
+                        unsigned int cellIndex=0;
+                        while(cellIndex<lines.at(lineIndex).size())
                         {
-                            //the opening itself is walled: open it and everything
-                            //between it and the biggest component
+                            const unsigned int cell=lines.at(lineIndex).at(cellIndex).first
+                                    +lines.at(lineIndex).at(cellIndex).second*mapWidth;
+                            if(component.at(cell)!=walkNoComponent)
+                                reached.insert(component.at(cell));
+                            cellIndex++;
+                        }
+                        sideComponents.push_back(reached);
+                        lineIndex++;
+                    }
+                    //a side with nothing walkable at all cannot be crossed
+                    lineIndex=0;
+                    while(lineIndex<lines.size())
+                    {
+                        if(sideComponents.at(lineIndex).empty())
+                        {
+                            const std::pair<unsigned int,unsigned int> &middle=
+                                    lines.at(lineIndex).at(lines.at(lineIndex).size()/2);
+                            const unsigned int cell=middle.first+middle.second*mapWidth;
                             if(!reportPass && biggestComponent!=walkNoComponent)
                                 repaired|=carveChunkCorridor(worldMap,collisionLayers,component,
                                                              biggestComponent,cell,chunkX,chunkY,
                                                              mapWidth,mapHeight);
                             else if(reportPass)
                             {
-                                errors.push_back(chunkName+": the border opening "+where+" is a collision");
+                                errors.push_back(chunkName+": the border side through "+
+                                                 std::to_string(middle.first)+","+std::to_string(middle.second)+
+                                                 " is a wall from end to end");
                                 brokenBorders++;
                             }
                         }
-                        else if(chunkIsCave)
+                        lineIndex++;
+                    }
+                    if(chunkIsCave)
+                    {
+                        //a cave chunk is the one case where the sides are MEANT to
+                        //be separated: each must reach the cave mouth on its own
+                        //side, and nothing more
+                        lineIndex=0;
+                        while(lineIndex<lines.size())
                         {
-                            //this side must open on a cave mouth, else the player
-                            //walks in and is stuck in a dead-end pocket
-                            int nearestMouth=-1;
-                            bool reachesAMouth=false;
-                            if(doorCells.find(chunk)!=doorCells.cend())
+                            if(!sideComponents.at(lineIndex).empty())
                             {
-                                const std::vector<std::pair<unsigned int,unsigned int> > &doors=doorCells.at(chunk);
-                                unsigned int doorIndex=0;
-                                while(doorIndex<doors.size())
+                                //In a CAVE chunk the side is the cliff: it is enough
+                                //that ANY of the components it opens on reaches a
+                                //mouth, the player walks along the approach to it.
+                                const std::pair<unsigned int,unsigned int> &middleCell=
+                                        lines.at(lineIndex).at(lines.at(lineIndex).size()/2);
+                                bool reachesAMouth=false;
+                                if(doorCells.find(chunk)!=doorCells.cend())
                                 {
-                                    const unsigned int doorCell=doors.at(doorIndex).first+doors.at(doorIndex).second*mapWidth;
-                                    if(component.at(doorCell)==cellComponent)
-                                        reachesAMouth=true;
-                                    //nearest by chunk distance, the corridor cost does the rest
-                                    if(nearestMouth<0
-                                            || (abs((int)(doorCell%mapWidth)-(int)(cell%mapWidth))
-                                                +abs((int)(doorCell/mapWidth)-(int)(cell/mapWidth)))
-                                               <(abs((int)((unsigned int)nearestMouth%mapWidth)-(int)(cell%mapWidth))
-                                                 +abs((int)((unsigned int)nearestMouth/mapWidth)-(int)(cell/mapWidth))))
-                                        nearestMouth=(int)doorCell;
-                                    doorIndex++;
+                                    const std::vector<std::pair<unsigned int,unsigned int> > &doors=doorCells.at(chunk);
+                                    unsigned int doorIndex=0;
+                                    while(doorIndex<doors.size())
+                                    {
+                                        const unsigned int doorCell=doors.at(doorIndex).first+doors.at(doorIndex).second*mapWidth;
+                                        if(sideComponents.at(lineIndex).find(component.at(doorCell))
+                                                !=sideComponents.at(lineIndex).cend())
+                                            reachesAMouth=true;
+                                        doorIndex++;
+                                    }
+                                }
+                                if(!reachesAMouth)
+                                {
+                                    //join this side to its own mouth ONLY: joining
+                                    //the two sides would let the player walk around
+                                    //the cave, which is the point of the chunk
+                                    int nearestMouth=-1;
+                                    if(doorCells.find(chunk)!=doorCells.cend())
+                                    {
+                                        const std::vector<std::pair<unsigned int,unsigned int> > &doors=doorCells.at(chunk);
+                                        unsigned int doorIndex=0;
+                                        while(doorIndex<doors.size())
+                                        {
+                                            const unsigned int doorCell=doors.at(doorIndex).first
+                                                    +doors.at(doorIndex).second*mapWidth;
+                                            if(nearestMouth<0
+                                                    || (abs((int)(doorCell%mapWidth)-(int)middleCell.first)
+                                                        +abs((int)(doorCell/mapWidth)-(int)middleCell.second))
+                                                       <(abs((int)((unsigned int)nearestMouth%mapWidth)-(int)middleCell.first)
+                                                         +abs((int)((unsigned int)nearestMouth/mapWidth)-(int)middleCell.second)))
+                                                nearestMouth=(int)doorCell;
+                                            doorIndex++;
+                                        }
+                                    }
+                                    if(!reportPass && nearestMouth>=0 && !sideComponents.at(lineIndex).empty())
+                                        repaired|=carveChunkCorridor(worldMap,collisionLayers,component,
+                                                                     *sideComponents.at(lineIndex).cbegin(),
+                                                                     (unsigned int)nearestMouth,
+                                                                     chunkX,chunkY,mapWidth,mapHeight);
+                                    else if(reportPass)
+                                    {
+                                        const std::pair<unsigned int,unsigned int> &middle=
+                                                lines.at(lineIndex).at(lines.at(lineIndex).size()/2);
+                                        errors.push_back(chunkName+": the border side through "+
+                                                         std::to_string(middle.first)+","+std::to_string(middle.second)+
+                                                         " opens on a dead end, no cave mouth is reachable from it");
+                                        brokenBorders++;
+                                    }
                                 }
                             }
-                            if(!reachesAMouth)
+                            lineIndex++;
+                        }
+                    }
+                    else
+                    {
+                        //every side has to share a component with the first one
+                        lineIndex=1;
+                        while(lineIndex<lines.size())
+                        {
+                            bool shared=false;
+                            std::set<uint16_t>::const_iterator componentIterator=sideComponents.at(lineIndex).cbegin();
+                            while(componentIterator!=sideComponents.at(lineIndex).cend() && !shared)
                             {
-                                //join this border to its own mouth ONLY: joining the
-                                //two borders would let the player walk around the
-                                //cave, which is the whole point of the chunk
-                                if(!reportPass && nearestMouth>=0)
+                                if(sideComponents.at(0).find(*componentIterator)!=sideComponents.at(0).cend())
+                                    shared=true;
+                                ++componentIterator;
+                            }
+                            if(!shared && !sideComponents.at(lineIndex).empty() && !sideComponents.at(0).empty())
+                            {
+                                const std::pair<unsigned int,unsigned int> &middle=
+                                        lines.at(lineIndex).at(lines.at(lineIndex).size()/2);
+                                const unsigned int cell=middle.first+middle.second*mapWidth;
+                                if(!reportPass)
                                     repaired|=carveChunkCorridor(worldMap,collisionLayers,component,
-                                                                 cellComponent,(unsigned int)nearestMouth,
+                                                                 *sideComponents.at(0).cbegin(),cell,
                                                                  chunkX,chunkY,mapWidth,mapHeight);
-                                else if(reportPass)
+                                else
                                 {
-                                    errors.push_back(chunkName+": the border opening "+where+
-                                                     " opens on a dead end, no cave mouth is reachable from it");
+                                    errors.push_back(chunkName+": the border side through "+
+                                                     std::to_string(middle.first)+","+std::to_string(middle.second)+
+                                                     " cannot be walked to from the other sides of the chunk");
                                     brokenBorders++;
                                 }
                             }
+                            lineIndex++;
                         }
-                        else if(reference==walkNoComponent)
-                            reference=cellComponent;
-                        else if(cellComponent!=reference)
-                        {
-                            if(!reportPass)
-                                repaired|=carveChunkCorridor(worldMap,collisionLayers,component,
-                                                             reference,cell,chunkX,chunkY,
-                                                             mapWidth,mapHeight);
-                            else
-                            {
-                                errors.push_back(chunkName+": the border opening "+where+
-                                                 " cannot be walked to from the other borders of the chunk");
-                                brokenBorders++;
-                            }
-                        }
-                        cellIndex++;
                     }
                 }
                 //2) every door of this chunk in the BIGGEST component. A cave chunk
@@ -1063,15 +1154,14 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                 const int nextY=chunkY+stepY[direction];
                 if(nextX>=0 && nextY>=0 && nextX<(int)mapXCount && nextY<(int)mapYCount)
                 {
-                    //THE MIDPOINT of the shared border has to be sea on both sides:
-                    //the border teleport sits exactly there, so a route that
-                    //crosses somewhere else along the line ends on dry land. The
-                    //chunk search and the route validation now ask the same
-                    //question, which is why they used to disagree and every
-                    //swimmable route was thrown away.
+                    //ANY pair of sea cells facing each other across the shared
+                    //border will do. The engine reads a border-* object as the
+                    //WHOLE SIDE of the map with an offset (Map_loaderMain.cpp), not
+                    //as a teleport on one cell, so the crossing is not tied to the
+                    //midpoint — demanding sea there threw away every lane.
                     const unsigned int lineLength=(direction<2)?singleMapHeight:singleMapWidth;
-                    unsigned int step=lineLength/2;
-                    while(step<lineLength/2+1 && seaAtBorder.at(chunk*4+direction)==0)
+                    unsigned int step=0;
+                    while(step<lineLength && seaAtBorder.at(chunk*4+direction)==0)
                     {
                         unsigned int ownX=0,ownY=0,otherX=0,otherY=0;
                         if(direction==0){ownX=0;ownY=step;otherX=singleMapWidth-1;otherY=step;}
@@ -1253,11 +1343,13 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
         //single path, so going from the bottom-left group to the bottom-right one
         //meant sailing around the whole world. The pair is remembered by the
         //ORIGINAL land mass ids, so each pair is joined exactly once.
-        const unsigned int massA=componentOfCity.at(candidate.cityA);
-        const unsigned int massB=componentOfCity.at(candidate.cityB);
-        const bool joinsLandMasses=(massA!=massB && massA!=0xFFFFFFFF && massB!=0xFFFFFFFF
-                                    && joinedMasses.find(std::pair<unsigned int,unsigned int>(
-                                           (massA<massB)?massA:massB,(massA<massB)?massB:massA))==joinedMasses.cend());
+        //FORBIDDEN: a sea route or a boat between two towns already reachable from
+        //one another. componentOf is the LIVE state — it merges as crossings are
+        //built — so once two groups are joined, no second crossing is ever added
+        //between them, directly or through a third group.
+        const unsigned int massA=componentOf.at(candidate.cityA);
+        const unsigned int massB=componentOf.at(candidate.cityB);
+        const bool joinsLandMasses=(massA!=massB && massA!=0xFFFFFFFF && massB!=0xFFFFFFFF);
         if(pass==0)
         {
             //only what merges two land masses, whatever the quota
@@ -1487,20 +1579,27 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                         const unsigned int neighbour=(neighbourIndex==0)?previous:nextChunk;
                         const int deltaX=(int)(neighbour%mapXCount)-(int)chunkX;
                         const int deltaY=(int)(neighbour/mapXCount)-(int)chunkY;
-                        //THE MIDPOINT of the shared border, and it has to be sea.
-                        //The border teleport sits exactly there (addMapChange), so
-                        //accepting "the nearest sea cell of that border" let through
-                        //chunks whose teleport ended up on dry land, walled off from
-                        //the lane.
-                        const unsigned int lineLength=(deltaX!=0)?singleMapHeight:singleMapWidth;
-                        const unsigned int middleStep=lineLength/2;
-                        const unsigned int localX=(deltaX<0)?0:((deltaX>0)?singleMapWidth-1:middleStep);
-                        const unsigned int localY=(deltaY<0)?0:((deltaY>0)?singleMapHeight-1:middleStep);
-                        const unsigned int tile=(chunkX*singleMapWidth+localX)
-                                +(chunkY*singleMapHeight+localY)*worldWidth;
+                        //the sea cell of the shared border nearest its middle: the
+                        //engine crosses on the WHOLE side, so any of them serves
                         int best=-1;
-                        if(waterBodyOfTile.at(tile)!=waterNoBody)
-                            best=(int)(localX+localY*singleMapWidth);
+                        int bestDistance=0;
+                        const unsigned int lineLength=(deltaX!=0)?singleMapHeight:singleMapWidth;
+                        const int middle=(int)lineLength/2;
+                        unsigned int step=0;
+                        while(step<lineLength)
+                        {
+                            const unsigned int localX=(deltaX<0)?0:((deltaX>0)?singleMapWidth-1:step);
+                            const unsigned int localY=(deltaY<0)?0:((deltaY>0)?singleMapHeight-1:step);
+                            const unsigned int tile=(chunkX*singleMapWidth+localX)
+                                    +(chunkY*singleMapHeight+localY)*worldWidth;
+                            const int distance=abs((int)step-middle);
+                            if(waterBodyOfTile.at(tile)!=waterNoBody && (best<0 || distance<bestDistance))
+                            {
+                                best=(int)(localX+localY*singleMapWidth);
+                                bestDistance=distance;
+                            }
+                            step++;
+                        }
                         if(best<0)
                             sailableRoute=false;
                         else
