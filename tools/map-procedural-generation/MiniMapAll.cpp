@@ -1,4 +1,6 @@
 #include "MiniMapAll.h"
+
+#include <queue>
 #include "LoadMapAll.h"
 #include <QCoreApplication>
 #include <map>
@@ -198,14 +200,115 @@ QImage MiniMapAll::makeMapTiled(const unsigned int worldWidthMap, const unsigned
         crossingPen.setWidth(crossingWidth);
         crossingPen.setStyle(Qt::DashLine);
         p.setPen(crossingPen);
+        //...and it FOLLOWS THE SEA. A straight line between the two shores is
+        //drawn right across the land whenever the ferry goes round a cape, and
+        //the world map then reads as a water route cutting through the continent.
+        //The leg is walked over the chunks that hold water instead, and only when
+        //no such way exists is the straight line kept.
+        const unsigned int chunkXCount=worldWidthMap/mapWidth;
+        const unsigned int chunkYCount=worldHeightMap/mapHeight;
+        //cost of stepping on a chunk: the more water it holds the cheaper, so the
+        //leg BOWS OUT INTO THE SEA instead of hugging the coast over the land
+        std::vector<unsigned int> seaChunk(chunkXCount*chunkYCount,0);
+        if(!LoadMapAll::waterBodyOfTile.empty())
+        {
+            unsigned int chunk=0;
+            while(chunk<chunkXCount*chunkYCount)
+            {
+                unsigned int waterTiles=0;
+                unsigned int localY=0;
+                while(localY<mapHeight)
+                {
+                    unsigned int localX=0;
+                    while(localX<mapWidth)
+                    {
+                        const unsigned int tileX=(chunk%chunkXCount)*mapWidth+localX;
+                        const unsigned int tileY=(chunk/chunkXCount)*mapHeight+localY;
+                        if(LoadMapAll::waterBodyOfTile.at(tileX+tileY*worldWidthMap)!=LoadMapAll::waterNoBody)
+                            waterTiles++;
+                        localX++;
+                    }
+                    localY++;
+                }
+                const unsigned int waterPercent=waterTiles*100/(mapWidth*mapHeight);
+                if(waterPercent>=75)
+                    seaChunk[chunk]=1;
+                else if(waterPercent>=50)
+                    seaChunk[chunk]=3;
+                else if(waterPercent>=25)
+                    seaChunk[chunk]=10;
+                chunk++;
+            }
+        }
         unsigned int indexCrossing=0;
         while(indexCrossing<LoadMapAll::boatCrossings.size())
         {
             const LoadMapAll::BoatCrossing &crossing=LoadMapAll::boatCrossings.at(indexCrossing);
-            p.drawLine((int)(crossing.fromX*mapWidth+mapWidth/2),
-                       (int)(crossing.fromY*mapHeight+mapHeight/2),
-                       (int)(crossing.toX*mapWidth+mapWidth/2),
-                       (int)(crossing.toY*mapHeight+mapHeight/2));
+            const unsigned int fromChunk=(unsigned int)crossing.fromX+(unsigned int)crossing.fromY*chunkXCount;
+            const unsigned int toChunk=(unsigned int)crossing.toX+(unsigned int)crossing.toY*chunkXCount;
+            std::vector<int> parent(chunkXCount*chunkYCount,-2);
+            std::vector<unsigned int> cost(chunkXCount*chunkYCount,0xFFFFFFFF);
+            std::priority_queue<std::pair<unsigned int,unsigned int>,
+                    std::vector<std::pair<unsigned int,unsigned int> >,
+                    std::greater<std::pair<unsigned int,unsigned int> > > walk;
+            parent[fromChunk]=-1;
+            cost[fromChunk]=0;
+            walk.push(std::pair<unsigned int,unsigned int>(0,fromChunk));
+            bool found=false;
+            while(!walk.empty() && !found)
+            {
+                const std::pair<unsigned int,unsigned int> top=walk.top();
+                walk.pop();
+                const unsigned int chunk=top.second;
+                if(top.first<=cost.at(chunk))
+                {
+                    if(chunk==toChunk)
+                        found=true;
+                    else
+                    {
+                        const int chunkX=(int)(chunk%chunkXCount);
+                        const int chunkY=(int)(chunk/chunkXCount);
+                        const int stepX[4]={-1,1,0,0};
+                        const int stepY[4]={0,0,-1,1};
+                        unsigned int direction=0;
+                        while(direction<4)
+                        {
+                            const int nextX=chunkX+stepX[direction];
+                            const int nextY=chunkY+stepY[direction];
+                            if(nextX>=0 && nextY>=0 && nextX<(int)chunkXCount && nextY<(int)chunkYCount)
+                            {
+                                const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*chunkXCount;
+                                const unsigned int stepCost=(next==toChunk)?1:seaChunk.at(next);
+                                if(stepCost>0 && cost.at(chunk)+stepCost<cost.at(next))
+                                {
+                                    cost[next]=cost.at(chunk)+stepCost;
+                                    parent[next]=(int)chunk;
+                                    walk.push(std::pair<unsigned int,unsigned int>(cost.at(next),next));
+                                }
+                            }
+                            direction++;
+                        }
+                    }
+                }
+            }
+            if(!found)
+                p.drawLine((int)(crossing.fromX*mapWidth+mapWidth/2),
+                           (int)(crossing.fromY*mapHeight+mapHeight/2),
+                           (int)(crossing.toX*mapWidth+mapWidth/2),
+                           (int)(crossing.toY*mapHeight+mapHeight/2));
+            else
+            {
+                int walkChunk=(int)toChunk;
+                while(parent.at((unsigned int)walkChunk)>=0)
+                {
+                    const unsigned int previous=(unsigned int)parent.at((unsigned int)walkChunk);
+                    p.drawLine((int)((unsigned int)walkChunk%chunkXCount*mapWidth+mapWidth/2),
+                               (int)((unsigned int)walkChunk/chunkXCount*mapHeight+mapHeight/2),
+                               (int)(previous%chunkXCount*mapWidth+mapWidth/2),
+                               (int)(previous/chunkXCount*mapHeight+mapHeight/2));
+                    walkChunk=(int)previous;
+                }
+            }
             indexCrossing++;
         }
     }
