@@ -1042,12 +1042,14 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                         }
                     }
                     //THE CELL THE PLAYER PUSHES, and the QUAY they land on. The
-                    //teleport goes on the ship tile the LAND touches, the most
-                    //centred one; the quay is that land cell. Ranked: ground the
-                    //border of the map really reaches on foot, then any open
-                    //ground, then a coast that has to be opened — and only if the
-                    //ship touches no land at all does it fall back to the water,
-                    //which needs the swim item and is no ferry berth.
+                    //teleport goes ON A SHIP TILE, and the cell BESIDE it (a side,
+                    //never a corner) has to be GROUND THE PLAYER STANDS ON: no
+                    //Water tile, a Walkable tile, no Collisions. Water is never a
+                    //quay — it needs the swim item, and the ferry is what the
+                    //player takes when they have none. Ranked: ground the border
+                    //of the map really reaches on foot, then any such ground, then
+                    //a coast that has to be opened (a tree, a cliff edge, or bare
+                    //ground with nothing drawn on it).
                     int teleportX=-1,teleportY=-1,landX=-1,landY=-1;
                     int bestQuayRank=0;
                     {
@@ -1078,14 +1080,14 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                                         int rank=0;
                                         if(water.at(quay)==0)
                                         {
-                                            if(blocked.at(quay)==0)
+                                            const bool onGround=(walkLayer->cellAt((unsigned int)quayX,
+                                                                                   (unsigned int)quayY).tile()!=NULL);
+                                            if(blocked.at(quay)==0 && onGround)
                                                 rank=(arrivalComponent.find(footComponent.at(quayLocal))
                                                       !=arrivalComponent.cend())?4:3;
                                             else
-                                                rank=2;//a coast to open, like a road corridor
+                                                rank=2;//a coast to open / a ground to fill
                                         }
-                                        else if(allowed.at(quay)!=0 && blocked.at(quay)==0)
-                                            rank=1;//open water: the last resort
                                         const int distance=abs((int)tileX-middle);
                                         if(rank>0 && (rank>bestQuayRank
                                                       || (rank==bestQuayRank && distance<bestDistance)))
@@ -1105,8 +1107,10 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                             shipColumn++;
                         }
                     }
-                    //a quay under a tree or on the cliff edge is OPENED: whole
-                    //plants only, and whatever hung above the player with them
+                    //a quay under a tree, on a cliff edge, or with no ground drawn
+                    //on it at all is MADE one: whole plants only, whatever hung
+                    //above the player with them, and the ground of the chunk under
+                    //it — the far side lands there, it cannot be a hole
                     if(bestQuayRank==2 && landX>=0)
                     {
                         const unsigned int quay=(unsigned int)landX+(unsigned int)landY*worldWidth;

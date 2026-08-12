@@ -137,6 +137,17 @@ def water_at(layers, width, height, x, y):
     return False
 
 
+def ground_at(layers, width, height, x, y):
+    """the Walkable layer holds a tile there: the quay of a boat has to be real
+    ground, not a hole the far side lands in"""
+    if x < 0 or y < 0 or x >= width or y >= height:
+        return False
+    for grid in layers.get("Walkable", []):
+        if grid[x + y * width]:
+            return True
+    return False
+
+
 def foot_reachable_from_border(layers, objects, width, height, targets):
     """can the player WALK (no swimming) from a border of this map to one of
     `targets`? The quay of a moored boat has to be, else the ferry is a picture:
@@ -354,16 +365,21 @@ def main():
                 if obj["type"] == "teleport on push" \
                         and blocked(layers, width, height, obj["x"], obj["y"]) \
                         and water_at(layers, width, height, obj["x"], obj["y"]):
+                    #the cell beside it must be GROUND THE PLAYER STANDS ON:
+                    #no water, a Walkable tile, no collision — and a SIDE of the
+                    #tile, never a corner
                     quays = set()
                     for (stepX, stepY) in ((-1, 0), (1, 0), (0, -1), (0, 1)):
                         qx, qy = obj["x"] + stepX, obj["y"] + stepY
                         if 0 <= qx < width and 0 <= qy < height \
                                 and not blocked(layers, width, height, qx, qy) \
-                                and not water_at(layers, width, height, qx, qy):
+                                and not water_at(layers, width, height, qx, qy) \
+                                and ground_at(layers, width, height, qx, qy):
                             quays.add((qx, qy))
                     if not quays:
-                        problems.append((path, "the boat at %d,%d has no dry quay"
-                                         % (obj["x"], obj["y"])))
+                        problems.append((path, "the boat at %d,%d has no quay beside"
+                                         " it (walkable ground, no water, no"
+                                         " collision)" % (obj["x"], obj["y"])))
                     elif not foot_reachable_from_border(layers, objects, width,
                                                         height, quays):
                         problems.append((path, "the boat at %d,%d cannot be "
