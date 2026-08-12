@@ -39,6 +39,15 @@ public:
         //a body of at least lakeMinTiles (and under seaMinTiles) is a LAKE;
         //anything smaller is a puddle and is not named at all
         unsigned int waterLakeMinTiles;
+        //...and a SEA also has to be LONG: the longest side of its bounding box,
+        //in tiles. A big round lake in the middle of a continent holds plenty of
+        //water without ever being a shipping lane.
+        unsigned int waterSeaMinSpan;
+        //share of the towns that may put to sea at all. Not every coastal town is
+        //a PORT: without this every one of them grew a harbour and the world came
+        //out covered in ferries. The land mass joins ignore it — they are what the
+        //sea is for and must always be possible.
+        unsigned int waterPortCityPercent;
         //debug outlines are traced on a DOWNSAMPLED grid of this many tiles per
         //block: at tile resolution a noisy coastline gives over a million corners
         unsigned int waterBodyDebugStep;

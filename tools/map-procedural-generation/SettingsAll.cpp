@@ -217,6 +217,10 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     settings.beginGroup("water");
     config.waterSeaMinTiles=settings.value("seaMinTiles",4000).toUInt();
     config.waterLakeMinTiles=settings.value("lakeMinTiles",200).toUInt();
+    config.waterSeaMinSpan=settings.value("seaMinSpan",500).toUInt();
+    config.waterPortCityPercent=settings.value("portCityPercent",30).toUInt();
+    if(config.waterPortCityPercent>100)
+        config.waterPortCityPercent=100;
     config.waterBodyDebugStep=settings.value("bodyDebugStep",32).toUInt();
     config.waterPathPercentOfLand=settings.value("pathPercentOfLand",0).toUInt();//extra routes only
     config.waterChunkSeaPercent=settings.value("chunkSeaPercent",80).toUInt();

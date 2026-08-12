@@ -916,7 +916,16 @@ void LoadMapAll::detectWaterBodies(Tiled::Map &worldMap, const SettingsAll::Sett
                     direction++;
                 }
             }
-            body.isSea=(body.size>=setting.waterSeaMinTiles);
+            //A SEA is big AND LONG: the size alone made a round inland lake a
+            //shipping lane. The longest side of its bounding box has to reach
+            //seaMinSpan tiles, which is what tells a coast from a pond.
+            {
+                const unsigned int spanX=body.maxX-body.minX+1;
+                const unsigned int spanY=body.maxY-body.minY+1;
+                const unsigned int span=(spanX>spanY)?spanX:spanY;
+                body.isSea=(body.size>=setting.waterSeaMinTiles
+                            && span>=setting.waterSeaMinSpan);
+            }
             waterBodies.push_back(body);
         }
         startCell++;
@@ -933,7 +942,8 @@ void LoadMapAll::detectWaterBodies(Tiled::Map &worldMap, const SettingsAll::Sett
         bodyIndex++;
     }
     std::cout << "water: " << waterBodies.size() << " bod(y|ies), " << seaCount
-              << " sea(s) of at least " << setting.waterSeaMinTiles << " tiles, biggest "
+              << " sea(s) of at least " << setting.waterSeaMinTiles << " tiles and "
+              << setting.waterSeaMinSpan << " tiles long, biggest "
               << biggest << " tiles" << std::endl;
 }
 
@@ -1380,6 +1390,26 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
         }
         std::cout << "land masses before the sea routes: " << componentCount << std::endl;
     }
+    //WHICH TOWNS MAY PUT TO SEA AT ALL. Every coastal town having a harbour left
+    //the world covered in ferries, so only portCityPercent of them are PORTS. The
+    //land mass joins ignore the flag — they are what the sea is for and must stay
+    //possible — but a shortcut or an extra route needs a port on both ends.
+    std::vector<unsigned char> isPortCity(cities.size(),0);
+    {
+        unsigned int portCount=0;
+        unsigned int cityIndex=0;
+        while(cityIndex<cities.size())
+        {
+            if((unsigned int)(rand()%100)<setting.waterPortCityPercent)
+            {
+                isPortCity[cityIndex]=1;
+                portCount++;
+            }
+            cityIndex++;
+        }
+        std::cout << "sea: " << portCount << " port town(s) of " << cities.size()
+                  << " (" << setting.waterPortCityPercent << "%)" << std::endl;
+    }
     //every pair of towns that can reach each other on the SAME sea, nearest first
     std::vector<WaterCandidate> candidates;
     {
@@ -1533,6 +1563,9 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                 continue;
             if(joinsLandMasses)
                 continue;
+            //only a PORT may open a harbour for a shortcut
+            if(isPortCity.at(candidate.cityA)==0 || isPortCity.at(candidate.cityB)==0)
+                continue;
             if(landDetour==0xFFFFFFFF || landDetour<setting.waterShortcutMinDetour)
                 continue;
         }
@@ -1542,6 +1575,8 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
             //SAME continent is useless, the road already joins them (owner). The
             //quota only buys scenery, so pathPercentOfLand ships at 0.
             if(joinsLandMasses)
+                continue;
+            if(isPortCity.at(candidate.cityA)==0 || isPortCity.at(candidate.cityB)==0)
                 continue;
             if(cityUsed.at(candidate.cityA)!=0 || cityUsed.at(candidate.cityB)!=0)
                 continue;
