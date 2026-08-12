@@ -4562,6 +4562,52 @@ QString LoadMapAll::emitCityBotsForChunk(Tiled::Map &worldMap,
 //the sprite is stored as a block of the sheet, so it is copied row by row from
 //that origin. Only ever written where the destination cell is WATER — a ship
 //moored over the coast would sit on the drawn land.
+//Is every pixel of that ONE TILE transparent? A sheet stores a sprite in a
+//rectangle and the corners of that rectangle are usually empty. Careful:
+//Tile::image() hands back the WHOLE SHEET here (the renderer crops by id), so
+//the tile's own rectangle has to be computed and cropped — testing the pixmap
+//as it comes says "not blank" for every tile of the sheet.
+static bool tileIsBlank(const Tiled::Tile * const tile)
+{
+    const Tiled::Tileset * const tileset=tile->tileset();
+    if(tileset==NULL)
+        return false;
+    const QImage sheet=tile->image().toImage();
+    if(sheet.isNull())
+        return false;//no image loaded: nothing can be said, keep the tile
+    const int tileWidth=tileset->tileWidth();
+    const int tileHeight=tileset->tileHeight();
+    if(tileWidth<1 || tileHeight<1)
+        return false;
+    QImage image=sheet;
+    if(sheet.width()>tileWidth || sheet.height()>tileHeight)
+    {
+        int columns=tileset->columnCount();
+        if(columns<1)
+            columns=sheet.width()/tileWidth;
+        if(columns<1)
+            return false;
+        const int left=tileset->margin()+(tile->id()%columns)*(tileWidth+tileset->tileSpacing());
+        const int top=tileset->margin()+(tile->id()/columns)*(tileHeight+tileset->tileSpacing());
+        if(left<0 || top<0 || left+tileWidth>sheet.width() || top+tileHeight>sheet.height())
+            return false;
+        image=sheet.copy(left,top,tileWidth,tileHeight);
+    }
+    int pixelY=0;
+    while(pixelY<image.height())
+    {
+        int pixelX=0;
+        while(pixelX<image.width())
+        {
+            if(qAlpha(image.pixel(pixelX,pixelY))!=0)
+                return false;
+            pixelX++;
+        }
+        pixelY++;
+    }
+    return true;
+}
+
 void LoadMapAll::stampTileRect(Tiled::Map &worldMap,Tiled::TileLayer *layer,const QString &description,
                                const unsigned int &tileX,const unsigned int &tileY,
                                Tiled::TileLayer *waterLayer)
@@ -4620,7 +4666,12 @@ void LoadMapAll::stampTileRect(Tiled::Map &worldMap,Tiled::TileLayer *layer,cons
         while(column<width)
         {
             Tiled::Tile * const tile=tileset->tileAt(originId+row*columns+column);
-            if(tile!=NULL)
+            //A SPRITE IS NOT A RECTANGLE. The boat of ships.tsx is a 4x3 BLOCK of
+            //the sheet, and two of its twelve tiles are fully transparent: setting
+            //them puts an invisible collision in the water beside the hull, and
+            //anything hung on "a tile of the boat" then lands where there is no
+            //boat. An empty tile is not part of the sprite and is not stamped.
+            if(tile!=NULL && !tileIsBlank(tile))
                 layer->setCell(tileX+(unsigned int)column,tileY+(unsigned int)row,Tiled::Cell(tile));
             column++;
         }
