@@ -1537,6 +1537,30 @@ QString LoadMapAll::interiorBotXml(const BuildingVariant &variant,const std::str
                     out+="      <product item=\""+QString::number(setting.shopItems.at(itemIndex))+"\"/>\n";
                     itemIndex++;
                 }
+                //A COASTAL town also sells what the datapack asks for to WALK ON
+                //WATER (map/layers.xml, monstersCollision layer="Water"
+                //type="walkOn"): without it the engine refuses to step on the
+                //Water layer and the sea routes leaving that coast cannot be swum.
+                //Whatever the level of the town: it is a tool, not a luxury.
+                if(city.coastal)
+                {
+                    unsigned int waterIndex=0;
+                    while(waterIndex<setting.waterWalkItems.size())
+                    {
+                        const unsigned int waterItem=setting.waterWalkItems.at(waterIndex);
+                        bool alreadySold=false;
+                        size_t soldIndex=0;
+                        while(soldIndex<productCount)
+                        {
+                            if(setting.shopItems.at(soldIndex)==waterItem)
+                                alreadySold=true;
+                            soldIndex++;
+                        }
+                        if(!alreadySold)
+                            out+="      <product item=\""+QString::number(waterItem)+"\"/>\n";
+                        waterIndex++;
+                    }
+                }
                 out+="    </step>\n";
             }
             else if(step.type=="fight")

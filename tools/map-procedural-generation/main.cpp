@@ -200,6 +200,26 @@ int main(int argc, char *argv[])
 
     SettingsAll::putDefaultSettings(settings);
     SettingsAll::populateSettings(settings, config);
+    //THE DATAPACK IS THE AUTHORITY on what it takes to walk on water: its
+    //map/layers.xml declares the item, the settings value is only the fallback for
+    //a run with no --datapack. Coastal shops sell whatever comes out of here.
+    if(!datapackPath.isEmpty())
+    {
+        std::vector<unsigned int> waterWalkItems;
+        if(LoadMapAll::readWaterWalkItems(datapackPath,waterWalkItems))
+            config.waterWalkItems=waterWalkItems;
+    }
+    if(!config.waterWalkItems.empty())
+    {
+        std::cout << "coastal shops sell the water walk item(s):";
+        unsigned int itemIndex=0;
+        while(itemIndex<config.waterWalkItems.size())
+        {
+            std::cout << " " << config.waterWalkItems.at(itemIndex);
+            itemIndex++;
+        }
+        std::cout << std::endl;
+    }
 
     srand(config.seed);
 
@@ -370,9 +390,6 @@ int main(int argc, char *argv[])
             //was already placed and the character is drawn inside the trunk.
             LoadMapAll::addCityTownsfolk(tiledMap, config, config.mapWidth, config.mapHeight);
             qDebug("add city townsfolk took %lld ms", t.elapsed());
-            //BEFORE the guards, so a chunk they cut off by closing its open water
-            //is repaired like any other
-            LoadMapAll::sealOpenWaterBorders(tiledMap,config);
             //WALKABILITY GUARD, on the FINAL map: it has to run after the last
             //pass that can add a COLLISION — the terrain decorations and the
             //vegetation both do, and a tree dropped on the road would otherwise

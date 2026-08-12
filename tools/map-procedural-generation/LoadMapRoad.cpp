@@ -4602,73 +4602,6 @@ void LoadMapAll::stampTileRect(Tiled::Map &worldMap,Tiled::TileLayer *layer,cons
     }
 }
 
-//Every chunk that carries a map, water routes included: a side with no link has
-//no map behind it, so its water is closed with the same rock. paintWaterChunk
-//already does it for the chunks IT paints, but an ordinary road chunk can sit on
-//the sea too — the road generator does not look at the water — and those came out
-//as 44x44 of open sea with nothing to stop the player. Water only: the coast, the
-//lakes inside a chunk and every walkable ground keep their shape.
-void LoadMapAll::sealOpenWaterBorders(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting)
-{
-    Tiled::TileLayer * const waterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
-    Tiled::TileLayer * const colliLayer=LoadMap::searchTileLayerByName(worldMap,"Collisions");
-    if(waterLayer==NULL || colliLayer==NULL)
-        return;
-    Tiled::Tile * const rockTile=setting.waterBorderTile.isEmpty()?NULL:fetchTile(worldMap,setting.waterBorderTile);
-    if(rockTile==NULL)
-    {
-        std::cerr << "[water] borderTile resolves to nothing, the open water borders stay open" << std::endl;
-        return;
-    }
-    const unsigned int mapWidth=setting.mapWidth;
-    const unsigned int mapHeight=setting.mapHeight;
-    const unsigned int mapXCount=(unsigned int)worldMap.width()/mapWidth;
-    const unsigned int mapYCount=(unsigned int)worldMap.height()/mapHeight;
-    unsigned int sealed=0;
-    unsigned int chunkY=0;
-    while(chunkY<mapYCount)
-    {
-        unsigned int chunkX=0;
-        while(chunkX<mapXCount)
-        {
-            const uint8_t zoneOrientation=mapPathDirection[chunkX+chunkY*mapXCount];
-            if(zoneOrientation!=0)
-            {
-                const unsigned int x0=chunkX*mapWidth;
-                const unsigned int y0=chunkY*mapHeight;
-                const Orientation bit[4]={Orientation_left,Orientation_right,Orientation_top,Orientation_bottom};
-                unsigned int side=0;
-                while(side<4)
-                {
-                    if((zoneOrientation&bit[side])==0)
-                    {
-                        const unsigned int lineLength=(side<2)?mapHeight:mapWidth;
-                        unsigned int step=0;
-                        while(step<lineLength)
-                        {
-                            const unsigned int localX=(side==0)?0:((side==1)?mapWidth-1:step);
-                            const unsigned int localY=(side==2)?0:((side==3)?mapHeight-1:step);
-                            const unsigned int tileX=x0+localX;
-                            const unsigned int tileY=y0+localY;
-                            if(waterLayer->cellAt(tileX,tileY).tile()!=NULL
-                                    && colliLayer->cellAt(tileX,tileY).tile()==NULL)
-                            {
-                                colliLayer->setCell(tileX,tileY,Tiled::Cell(rockTile));
-                                sealed++;
-                            }
-                            step++;
-                        }
-                    }
-                    side++;
-                }
-            }
-            chunkX++;
-        }
-        chunkY++;
-    }
-    std::cout << "water: " << sealed << " open border cell(s) closed with rock" << std::endl;
-}
-
 void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX,const unsigned int &chunkY,
                                  const unsigned int &mapWidth,const unsigned int &mapHeight,
                                  const RoadIndex &roadIndex,const uint8_t &zoneOrientation,
@@ -5313,17 +5246,25 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                                 touchesChannel=true;
                         direction++;
                     }
-                    //AND THE BORDER LINE ITSELF. The engine crosses a border on
-                    //the WHOLE side of the map (Map_loaderMain.cpp), so the open
-                    //sea of one chunk joined the open sea of the next all along
-                    //their shared edge and the wall could simply be walked around:
-                    //31 of the 38 sea maps let the player out that way. On a side
-                    //the chunk IS linked on, every water cell that is not the lane
-                    //takes the rock, so the only way through is the lane. Land is
-                    //never touched, so the shore and the road side of a harbour
-                    //stay open.
-                    const bool onBorderLine=(localX==0 || localY==0
-                                             || localX==mapWidth-1 || localY==mapHeight-1);
+                    //AND THE BORDER LINE OF THE SIDES IT IS LINKED ON. The engine
+                    //crosses a border on the WHOLE side of the map
+                    //(Map_loaderMain.cpp), so the open sea of one chunk joined the
+                    //open sea of the next all along their shared edge and the wall
+                    //could simply be walked around. Only the LINKED sides: behind
+                    //an unlinked one there is no map to come from, and the wall
+                    //already keeps the lane away from it, so rock there is a line
+                    //drawn for nobody — it only showed up as a ruler-straight edge.
+                    //Land is never touched: the shore and the road side of a
+                    //harbour stay open.
+                    bool onBorderLine=false;
+                    if(localX==0 && (zoneOrientation&Orientation_left)!=0)
+                        onBorderLine=true;
+                    if(localX==mapWidth-1 && (zoneOrientation&Orientation_right)!=0)
+                        onBorderLine=true;
+                    if(localY==0 && (zoneOrientation&Orientation_top)!=0)
+                        onBorderLine=true;
+                    if(localY==mapHeight-1 && (zoneOrientation&Orientation_bottom)!=0)
+                        onBorderLine=true;
                     const unsigned int tileX=x0+localX;
                     const unsigned int tileY=y0+localY;
                     if((touchesChannel || onBorderLine) && waterLayer->cellAt(tileX,tileY).tile()!=NULL)

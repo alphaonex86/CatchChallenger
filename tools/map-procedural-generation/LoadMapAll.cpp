@@ -11,6 +11,8 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <iostream>
+#include <QFile>
+#include <QXmlStreamReader>
 
 std::vector<LoadMapAll::City> LoadMapAll::cities;
 std::unordered_map<uint16_t,std::unordered_map<uint16_t,unsigned int> > LoadMapAll::citiesCoordToIndex;
@@ -758,6 +760,7 @@ bool LoadMapAll::checkWalkability(Tiled::Map &worldMap, const SettingsAll::Setti
     return errors.empty();
 }
 
+std::vector<unsigned char> LoadMapAll::portCity;
 std::vector<LoadMapAll::BoatCrossing> LoadMapAll::boatCrossings;
 std::map<std::pair<uint16_t,uint16_t>,std::pair<uint8_t,uint8_t> > LoadMapAll::boatLandingCells;
 std::map<std::pair<uint16_t,uint16_t>,Tiled::MapObject*> LoadMapAll::boatTeleportObjects;
@@ -1103,6 +1106,61 @@ void LoadMapAll::addDebugWaterBodies(Tiled::Map &worldMap, const SettingsAll::Se
     std::cout << "terrainDebug: " << drawn << " water body outline(s)" << std::endl;
 }
 
+//THE ITEMS A DATAPACK ASKS FOR TO WALK ON WATER. map/layers.xml says it:
+//  <monstersCollision item="31" tile="swim" layer="Water" type="walkOn" .../>
+//Without that item the engine refuses to step on the Water layer, so a sea route
+//is unusable and the coastal shops have to sell it.
+bool LoadMapAll::readWaterWalkItems(const QString &datapackPath,std::vector<unsigned int> &items)
+{
+    const QString path=datapackPath+"/map/layers.xml";
+    QFile file(path);
+    if(!file.open(QIODevice::ReadOnly))
+    {
+        std::cerr << "No " << path.toStdString()
+                  << ", the water walk items stay the ones of the settings" << std::endl;
+        return false;
+    }
+    QXmlStreamReader reader(&file);
+    while(!reader.atEnd())
+    {
+        if(reader.readNext()==QXmlStreamReader::StartElement)
+        {
+            if(reader.name().toString()==QString("monstersCollision"))
+            {
+                const QXmlStreamAttributes attributes=reader.attributes();
+                if(attributes.value("layer").toString()==QString("Water")
+                        && attributes.value("type").toString()==QString("walkOn")
+                        && attributes.hasAttribute("item"))
+                {
+                    bool ok=false;
+                    const unsigned int item=attributes.value("item").toString().toUInt(&ok);
+                    if(ok)
+                    {
+                        bool already=false;
+                        unsigned int itemIndex=0;
+                        while(itemIndex<items.size())
+                        {
+                            if(items.at(itemIndex)==item)
+                                already=true;
+                            itemIndex++;
+                        }
+                        if(!already)
+                            items.push_back(item);
+                    }
+                }
+            }
+        }
+    }
+    file.close();
+    if(reader.hasError())
+    {
+        std::cerr << "Broken " << path.toStdString() << ": "
+                  << reader.errorString().toStdString() << std::endl;
+        return false;
+    }
+    return true;
+}
+
 //one candidate sea route between two coastal towns
 struct WaterCandidate
 {
@@ -1332,6 +1390,9 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                 }
                 neighborY++;
             }
+            //a town with sea in reach is COASTAL, port or not: its shop is where
+            //the player buys what it takes to swim
+            cities[cityIndex].coastal=!citySeas.at(cityIndex).empty();
             cityIndex++;
         }
     }
@@ -1394,7 +1455,8 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
     //the world covered in ferries, so only portCityPercent of them are PORTS. The
     //land mass joins ignore the flag — they are what the sea is for and must stay
     //possible — but a shortcut or an extra route needs a port on both ends.
-    std::vector<unsigned char> isPortCity(cities.size(),0);
+    portCity.assign(cities.size(),0);
+    std::vector<unsigned char> &isPortCity=portCity;
     {
         unsigned int portCount=0;
         unsigned int cityIndex=0;
@@ -2566,6 +2628,7 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
         {
             const CityInternal *cityInternal=citiesList.at(index);
             City city;
+            city.coastal=false;
             city.name=cityInternal->name;
             city.type=cityInternal->type;
             city.x=cityInternal->x;
