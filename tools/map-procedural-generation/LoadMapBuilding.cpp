@@ -868,8 +868,9 @@ void LoadMapAll::scanBuildingTemplates(Tiled::Map &worldMap,const unsigned int m
         const QString groupName=groups.at(groupIndex);
         //on-<terrain>/ folders are DECORATIONS, not buildings: they must not go
         //through the door wiring, which would invent a door and an interior for a
-        //flower bed. scanDecorationTemplates loads them.
-        if(groupName.startsWith("on-"))
+        //flower bed. scanDecorationTemplates loads them, and sea/ the same way
+        //for what is brushed on a sea route (scanSeaTemplates).
+        if(groupName.startsWith("on-") || groupName=="sea")
         {
             groupIndex++;
             continue;

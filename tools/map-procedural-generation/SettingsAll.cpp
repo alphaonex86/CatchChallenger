@@ -224,7 +224,6 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     if(config.waterPortCityPercent>100)
         config.waterPortCityPercent=100;
     config.waterBodyDebugStep=settings.value("bodyDebugStep",32).toUInt();
-    config.waterPathPercentOfLand=settings.value("pathPercentOfLand",0).toUInt();//extra routes only
     config.waterChunkSeaPercent=settings.value("chunkSeaPercent",80).toUInt();
     if(config.waterChunkSeaPercent>100)
         config.waterChunkSeaPercent=100;
@@ -234,8 +233,6 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.waterHarbourChunkRadius=settings.value("harbourChunkRadius",3).toUInt();
     config.waterCoastalChunkRadius=settings.value("coastalChunkRadius",1).toUInt();
     //0 = no shortcut at all: it is an OPT-IN, the shipped settings.ini asks for it
-    config.waterShortcutMinDetour=settings.value("shortcutMinDetour",0).toUInt();
-    config.waterShortcutMaxPercent=settings.value("shortcutMaxPercent",20).toUInt();
     config.waterBorderTile=settings.value("borderTile","").toString();
     config.waterChannelHalfWidth=settings.value("channelHalfWidth",6).toUInt();
     config.waterWanderAmplitude=settings.value("wanderAmplitude",3).toUInt();
@@ -247,9 +244,19 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.waterMaxFighter=settings.value("maxFighter",3).toUInt();
     if(config.waterMaxFighter<config.waterMinFighter)
         config.waterMaxFighter=config.waterMinFighter;
-    config.waterShipDecoration=settings.value("shipDecoration","").toString();
-    config.waterShipDecorationPercent=settings.value("shipDecorationPercent",8).toUInt();
     config.waterShipUsable=settings.value("shipUsable","").toString();
+    config.waterBeachMin=settings.value("beachMin",10).toUInt();
+    config.waterBeachMax=settings.value("beachMax",13).toUInt();
+    if(config.waterBeachMin<1)
+        config.waterBeachMin=1;
+    if(config.waterBeachMax<config.waterBeachMin)
+        config.waterBeachMax=config.waterBeachMin;
+    config.waterBoatBorderMin=settings.value("boatBorderMin",3).toUInt();
+    config.waterBoatBorderMax=settings.value("boatBorderMax",5).toUInt();
+    if(config.waterBoatBorderMin<1)
+        config.waterBoatBorderMin=1;
+    if(config.waterBoatBorderMax<config.waterBoatBorderMin)
+        config.waterBoatBorderMax=config.waterBoatBorderMin;
     if(config.waterBodyDebugStep<1)
         config.waterBodyDebugStep=1;
     settings.endGroup();

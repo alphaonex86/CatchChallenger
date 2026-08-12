@@ -51,11 +51,10 @@ public:
         //debug outlines are traced on a DOWNSAMPLED grid of this many tiles per
         //block: at tile resolution a noisy coastline gives over a million corners
         unsigned int waterBodyDebugStep;
-        //[water] how many sea routes to build, as a percent of the number of land
-        //roads ("a water path should be X fewer than land"); a chunk is sailable
-        //when at least chunkSeaPercent of it is sea; boatPercent of the routes are
-        //a closed boat crossing instead of a swimmable channel.
-        unsigned int waterPathPercentOfLand;
+        //[water] a chunk is sailable when at least chunkSeaPercent of it is sea;
+        //boatPercent of the mesh links are a closed boat crossing instead of a
+        //swimmable lane (a link no boat can be moored on stays a lane, and a link
+        //no lane can be sailed on is a boat whatever the quota says).
         unsigned int waterChunkSeaPercent;
         unsigned int waterBoatPercent;
         //how many chunks from a town the coast may be for it to count as a PORT
@@ -66,19 +65,11 @@ public:
         //more than half the towns of a world, which would put the item in every
         //other shop.
         unsigned int waterCoastalChunkRadius;
-        //A SHORTCUT crossing: two towns already joined by land, but so far apart
-        //on the road graph that the player has to tour the whole world to go from
-        //one to the other. It is built when the road detour is at least
-        //shortcutMinDetour chunks AND the sea route costs at most
-        //shortcutMaxPercent of it. Everything else stays forbidden: a sea link
-        //between two towns the road already joins closely buys nothing.
-        unsigned int waterShortcutMinDetour;
-        unsigned int waterShortcutMaxPercent;
-        //[water] the CHANNEL painted across a sea chunk: a corridor of water
-        //halfWidth tiles either side of the travel axis, walled by borderTile
-        //rock. The wall is a CONTINUOUS chain whose position wanders by up to
-        //wanderAmplitude tiles, so it does not read as a drawn corridor; what
-        //lies beyond it is never reachable.
+        //[water] the LANE of a swimmable route: a corridor of water halfWidth
+        //tiles either side of the way, walled by borderTile rock. The wall is a
+        //CONTINUOUS chain whose position wanders by up to wanderAmplitude tiles,
+        //so it does not read as a drawn corridor; what lies beyond it is never
+        //reachable.
         QString waterBorderTile;
         unsigned int waterChannelHalfWidth;
         unsigned int waterWanderAmplitude;
@@ -93,14 +84,20 @@ public:
         //swimmers met on the channel
         unsigned int waterMinFighter;
         unsigned int waterMaxFighter;
-        //the two ships of tileset/ships.tsx, as "tsx/id,width,height" (the sprite
-        //is a block of the sheet, stamped straight onto the Collisions layer —
-        //there is no tmx for them). shipDecoration is moored in the channel as
-        //scenery; shipUsable is the boat of a closed crossing and carries the
-        //push-teleport to the far shore.
-        QString waterShipDecoration;
-        //how many sea chunks get the moored ship: it is scenery, it must stay rare
-        unsigned int waterShipDecorationPercent;
+        //[water] THE BEACH: how far from the shore the player may swim. The rock
+        //wall is drawn at that distance from every cell of water they can step
+        //into, so it follows the coast instead of the chunk grid; the exact
+        //distance wanders between the two values, else it reads as a drawn line.
+        unsigned int waterBeachMin;
+        unsigned int waterBeachMax;
+        //[water] a BOAT chunk is closed by a rock line that many tiles inside the
+        //map border, on the sides no map lies behind: the harbour basin stays open
+        //for the ship, the open sea beyond is never reachable.
+        unsigned int waterBoatBorderMin;
+        unsigned int waterBoatBorderMax;
+        //the boat of a closed crossing, "tsx/id,width,height" (the sprite is a
+        //block of the sheet, stamped straight onto the Collisions layer — there is
+        //no tmx for it). It carries the push-teleport to the far shore.
         QString waterShipUsable;
         std::vector<std::string> citiesNames;
         float scale_City;
