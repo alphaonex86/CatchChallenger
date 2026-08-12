@@ -203,15 +203,20 @@ int main(int argc, char *argv[])
     //THE DATAPACK IS THE AUTHORITY on what it takes to walk on water: its
     //map/layers.xml declares the item, the settings value is only the fallback for
     //a run with no --datapack. Coastal shops sell whatever comes out of here.
+    bool waterWalkFromDatapack=false;
     if(!datapackPath.isEmpty())
     {
         std::vector<unsigned int> waterWalkItems;
         if(LoadMapAll::readWaterWalkItems(datapackPath,waterWalkItems))
+        {
             config.waterWalkItems=waterWalkItems;
+            waterWalkFromDatapack=true;
+        }
     }
     if(!config.waterWalkItems.empty())
     {
-        std::cout << "coastal shops sell the water walk item(s):";
+        std::cout << (waterWalkFromDatapack?"map/layers.xml of the datapack: coastal shops sell the water walk item(s):"
+                                           :"[building] waterWalkItems: coastal shops sell the water walk item(s):");
         unsigned int itemIndex=0;
         while(itemIndex<config.waterWalkItems.size())
         {

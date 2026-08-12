@@ -1390,11 +1390,43 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                 }
                 neighborY++;
             }
-            //a town with sea in reach is COASTAL, port or not: its shop is where
-            //the player buys what it takes to swim
-            cities[cityIndex].coastal=!citySeas.at(cityIndex).empty();
             cityIndex++;
         }
+    }
+    //COASTAL towns: the sea is within coastalChunkRadius chunks, which is a much
+    //tighter thing than the PORT radius — a coastal town is one the player sees
+    //the sea from, and it is the only place the water walk item is sold. With the
+    //harbour radius it was more than half the towns of the world.
+    {
+        unsigned int coastalCount=0;
+        unsigned int cityIndex=0;
+        while(cityIndex<cities.size())
+        {
+            const City &city=cities.at(cityIndex);
+            bool coastal=false;
+            const int coastalRadius=(int)setting.waterCoastalChunkRadius;
+            int neighborY=-coastalRadius;
+            while(neighborY<=coastalRadius)
+            {
+                int neighborX=-coastalRadius;
+                while(neighborX<=coastalRadius)
+                {
+                    const int chunkX=(int)city.x+neighborX;
+                    const int chunkY=(int)city.y+neighborY;
+                    if(chunkX>=0 && chunkY>=0 && chunkX<(int)mapXCount && chunkY<(int)mapYCount)
+                        if(!chunkSeas.at((unsigned int)chunkX+(unsigned int)chunkY*mapXCount).empty())
+                            coastal=true;
+                    neighborX++;
+                }
+                neighborY++;
+            }
+            cities[cityIndex].coastal=coastal;
+            if(coastal)
+                coastalCount++;
+            cityIndex++;
+        }
+        std::cout << "sea: " << coastalCount << " coastal town(s) of " << cities.size()
+                  << " (sea within " << setting.waterCoastalChunkRadius << " chunk(s))" << std::endl;
     }
     //which LAND MASS each town is on, before any sea route is added
     std::vector<unsigned int> componentOfCity(cities.size(),0xFFFFFFFF);
@@ -1861,6 +1893,11 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                 boatCrossings.push_back(crossing);
                 cityUsed[candidate.cityA]=1;
                 cityUsed[candidate.cityB]=1;
+                //A town a sea route LEAVES FROM is coastal whatever the radius
+                //says: without the water walk item on sale there, the route it
+                //opens cannot be swum at all.
+                cities[candidate.cityA].coastal=true;
+                cities[candidate.cityB].coastal=true;
                 built++;
                 if(pass==2)
                     quotaBuilt++;
@@ -2015,6 +2052,11 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
             {
                 cityUsed[candidate.cityA]=1;
                 cityUsed[candidate.cityB]=1;
+                //A town a sea route LEAVES FROM is coastal whatever the radius
+                //says: without the water walk item on sale there, the route it
+                //opens cannot be swum at all.
+                cities[candidate.cityA].coastal=true;
+                cities[candidate.cityB].coastal=true;
                 built++;
                 if(pass==2)
                     quotaBuilt++;
