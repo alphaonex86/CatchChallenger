@@ -278,16 +278,26 @@ QImage MiniMapAll::makeMapTiled(const unsigned int worldWidthMap, const unsigned
                 }
                 if(reached>=0)
                 {
+                    //THE WHOLE LINE RIDES HALF AN ICON LOWER, and it ENDS ON THE
+                    //TWO BOATS. The icon is drawn centred on its map, the water
+                    //path is drawn on the moorings: left as they are, the leg came
+                    //out above both boats and stopped short of them.
+                    const int legOffsetY=minimapboat.isNull()?0:(minimapboat.height()/2);
+                    leg.push_back(QPoint((int)(crossing.toX*mapWidth+mapWidth/2),
+                                         (int)(crossing.toY*mapHeight+mapHeight/2)));
                     int walkCell=reached;
                     while(walkCell>=0)
                     {
                         leg.push_back(QPoint((int)((unsigned int)walkCell%worldWidthMap),
-                                             (int)((unsigned int)walkCell/worldWidthMap)));
+                                             (int)((unsigned int)walkCell/worldWidthMap)+legOffsetY));
                         walkCell=parent.at((unsigned int)walkCell);
                     }
+                    leg.push_back(QPoint((int)(crossing.fromX*mapWidth+mapWidth/2),
+                                         (int)(crossing.fromY*mapHeight+mapHeight/2)));
                 }
             }
             if(leg.size()<2)
+                //the last resort: straight from one boat to the other
                 p.drawLine((int)(crossing.fromX*mapWidth+mapWidth/2),
                            (int)(crossing.fromY*mapHeight+mapHeight/2),
                            (int)(crossing.toX*mapWidth+mapWidth/2),
