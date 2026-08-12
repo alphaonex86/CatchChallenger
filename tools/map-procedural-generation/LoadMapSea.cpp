@@ -1147,6 +1147,26 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                     const unsigned int y0=chunkY*mapHeight;
                     //own stream for this chunk, second sea pass
                     seedChunk(setting.seed,chunkX,chunkY,ChunkPass_seaContent);
+                    //THE ENGINE KEEPS ONE BOT PER CELL: two characters on the same
+                    //tile and the second is dropped. Every bot already on this map
+                    //counts — the road trainers, and the sea bots placed just now.
+                    std::set<unsigned int> botCells;
+                    {
+                        const QList<Tiled::MapObject*> &objects=objectLayer->objects();
+                        unsigned int objectIndex=0;
+                        while(objectIndex<(unsigned int)objects.size())
+                        {
+                            const Tiled::MapObject * const object=objects.at(objectIndex);
+                            if(object->type()=="bot")
+                            {
+                                const unsigned int botX=(unsigned int)(object->x()/worldMap.tileWidth());
+                                const int botY=(int)(object->y()/worldMap.tileHeight())-1;
+                                if(botY>=0)
+                                    botCells.insert(botX+(unsigned int)botY*worldWidth);
+                            }
+                            objectIndex++;
+                        }
+                    }
                     //--- the decorations of template/sea -------------------------
                     unsigned int variantIndex=0;
                     while(variantIndex<seaDecorations.size())
@@ -1212,8 +1232,10 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                                         const unsigned int cell=botX+botY*worldWidth;
                                         if(botX<worldWidth && botY<worldHeight
                                                 && water.at(cell)!=0 && blocked.at(cell)==0
-                                                && allowed.at(cell)!=0)
+                                                && allowed.at(cell)!=0
+                                                && botCells.find(cell)==botCells.cend())
                                         {
+                                            botCells.insert(cell);
                                             Tiled::MapObject * const bot=new Tiled::MapObject("","bot",
                                                 QPointF(botX*worldMap.tileWidth(),(botY+1)*worldMap.tileHeight()),
                                                 QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
@@ -1244,7 +1266,6 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                         unsigned int wanted=setting.waterMinFighter;
                         if(setting.waterMaxFighter>setting.waterMinFighter)
                             wanted+=rand()%(setting.waterMaxFighter-setting.waterMinFighter+1);
-                        std::set<unsigned int> usedCells;
                         unsigned int tries=0;
                         while(wanted>0 && tries<200)
                         {
@@ -1261,9 +1282,9 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                                 aboveIndex++;
                             }
                             if(!covered && water.at(cell)!=0 && blocked.at(cell)==0 && allowed.at(cell)!=0
-                                    && usedCells.find(cell)==usedCells.cend())
+                                    && botCells.find(cell)==botCells.cend())
                             {
-                                usedCells.insert(cell);
+                                botCells.insert(cell);
                                 Tiled::MapObject * const bot=new Tiled::MapObject("","bot",
                                     QPointF(tileX*worldMap.tileWidth(),(tileY+1)*worldMap.tileHeight()),
                                     QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
@@ -1697,6 +1718,8 @@ bool LoadMapAll::checkSeaClosed(Tiled::Map &worldMap,const SettingsAll::Settings
         cell++;
     }
     if(leaks>0)
+    {
         std::cerr << "sea: " << leaks << " cell(s) of open sea the player can swim to" << std::endl;
+    }
     return leaks==0;
 }

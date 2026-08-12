@@ -444,10 +444,14 @@ int main(int argc, char *argv[])
                         std::cerr << "  ... and " << (walkErrors.size()-40) << " more" << std::endl;
                     return 1;
                 }
-                //...and no way out into the OPEN SEA. The rock was drawn just
-                //above, after the vegetation and before the repairs (which may
-                //never open a wall cell); this measures the result by flooding
-                //the world the way the player moves.
+                //THE ROCK AGAIN: the repairs above open corridors, and a corridor
+                //that comes out on a coast is a new way into the sea. The pass is
+                //idempotent — it only ever ADDS rock on water nobody opened — so
+                //running it a second time closes exactly what the repairs made
+                //reachable and nothing else.
+                LoadMapAll::closeSeaAccess(tiledMap,config);
+                //...and no way out into the OPEN SEA, measured by flooding the
+                //world from the towns the way the player moves.
                 if(!LoadMapAll::checkSeaClosed(tiledMap,config,walkErrors))
                 {
                     std::cerr << walkErrors.size() << " open sea leak(s), nothing was generated:" << std::endl;
