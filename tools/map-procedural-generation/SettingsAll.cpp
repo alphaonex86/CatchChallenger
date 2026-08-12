@@ -236,10 +236,6 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.waterBorderTile=settings.value("borderTile","").toString();
     config.waterChannelHalfWidth=settings.value("channelHalfWidth",6).toUInt();
     config.waterWanderAmplitude=settings.value("wanderAmplitude",3).toUInt();
-    config.waterIslandPercent=settings.value("islandPercent",35).toUInt();
-    config.waterIslandMinTiles=settings.value("islandMinTiles",20).toUInt();
-    config.waterIslandSandMax=settings.value("islandSandMax",2).toUInt();
-    config.waterIslandLandablePercent=settings.value("islandLandablePercent",50).toUInt();
     config.waterMinFighter=settings.value("minFighter",1).toUInt();
     config.waterMaxFighter=settings.value("maxFighter",3).toUInt();
     if(config.waterMaxFighter<config.waterMinFighter)

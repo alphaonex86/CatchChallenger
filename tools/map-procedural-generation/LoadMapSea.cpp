@@ -23,9 +23,6 @@ std::vector<unsigned char> LoadMapAll::seaAllowedCells;
 std::vector<unsigned char> LoadMapAll::seaWallCells;
 std::vector<LoadMapAll::DecorationVariant> LoadMapAll::seaDecorations;
 
-//the mountain cliff ring of the terrain, shared with the road painter (islands)
-unsigned int mountainBorderTileIndex(const uint8_t to_type_match);
-
 //Cheap integer hash, the same mix as seedChunk: two neighbouring tiles must not
 //come out correlated. Used instead of rand() because this pass runs on the WHOLE
 //world at once — a per chunk stream would make the coast of one map depend on how
@@ -359,7 +356,8 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
     //more, a cliff or a wood far more: the way follows the sea, walks the beach
     //when it must and only cuts through what really blocks it.
     unsigned int laneCount=0;
-    unsigned int carvedLaneCells=0;
+    //the ground beside every beach: where the walk to the town starts
+    std::vector<unsigned int> shoreLandings;
     //every water cell of a lane that touches walkable ground: the beaches of the
     //world, and the only places the open sea is ever opened
     std::vector<unsigned int> poolSeeds;
@@ -379,34 +377,80 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                 }
                 const unsigned int startChunk=route.chunks.front();
                 const unsigned int endChunk=route.chunks.back();
-                //Dijkstra, cheapest way first
-                static const unsigned int costWater=1;
-                static const unsigned int costLand=8;
-                static const unsigned int costBlocked=60;
-                static const unsigned int costUnreachable=0xFFFFFFFF;
-                std::vector<unsigned int> cost(worldWidth*worldHeight,costUnreachable);
+                //A WATER PATH NEVER CROSSES LAND — hard rule. The lane is a way
+                //through WATER ONLY, from the beach of one end to the beach of the
+                //other: a BEACH is a water cell of the first (or last) two chunks
+                //of the route that touches ground the player can stand on. What
+                //happens on land is the SHORE PATH's business, not the lane's.
+                std::vector<unsigned char> isTarget(worldWidth*worldHeight,0);
+                std::vector<unsigned int> cost(worldWidth*worldHeight,0xFFFFFFFF);
                 std::vector<int> parent(worldWidth*worldHeight,-1);
                 std::priority_queue<std::pair<unsigned int,unsigned int>,
                         std::vector<std::pair<unsigned int,unsigned int> >,
                         std::greater<std::pair<unsigned int,unsigned int> > > walk;
                 {
-                    const unsigned int x0=(startChunk%mapXCount)*mapWidth;
-                    const unsigned int y0=(startChunk/mapXCount)*mapHeight;
-                    unsigned int localY=0;
-                    while(localY<mapHeight)
+                    unsigned int endIndex=0;
+                    while(endIndex<2)
                     {
-                        unsigned int localX=0;
-                        while(localX<mapWidth)
+                        //the land end and the first sea chunk next to it
+                        const unsigned int landChunk=(endIndex==0)?startChunk:endChunk;
+                        const unsigned int seaChunk=(endIndex==0)?route.chunks.at(1)
+                                                                :route.chunks.at(route.chunks.size()-2);
+                        unsigned int side=0;
+                        while(side<2)
                         {
-                            const unsigned int cell=(x0+localX)+(y0+localY)*worldWidth;
-                            if(blocked.at(cell)==0)
+                            const unsigned int chunk=(side==0)?landChunk:seaChunk;
+                            const unsigned int x0=(chunk%mapXCount)*mapWidth;
+                            const unsigned int y0=(chunk/mapXCount)*mapHeight;
+                            unsigned int localY=0;
+                            while(localY<mapHeight)
                             {
-                                cost[cell]=0;
-                                walk.push(std::pair<unsigned int,unsigned int>(0,cell));
+                                unsigned int localX=0;
+                                while(localX<mapWidth)
+                                {
+                                    const unsigned int cell=(x0+localX)+(y0+localY)*worldWidth;
+                                    if(water.at(cell)!=0 && blocked.at(cell)==0)
+                                    {
+                                        //a BEACH: ground beside it the player stands on
+                                        const int stepX[4]={-1,1,0,0};
+                                        const int stepY[4]={0,0,-1,1};
+                                        bool beach=false;
+                                        unsigned int direction=0;
+                                        while(direction<4)
+                                        {
+                                            const int shoreX=(int)(x0+localX)+stepX[direction];
+                                            const int shoreY=(int)(y0+localY)+stepY[direction];
+                                            if(shoreX>=0 && shoreY>=0 && shoreX<(int)worldWidth
+                                                    && shoreY<(int)worldHeight)
+                                            {
+                                                const unsigned int shore=(unsigned int)shoreX
+                                                        +(unsigned int)shoreY*worldWidth;
+                                                if(water.at(shore)==0 && blocked.at(shore)==0)
+                                                    beach=true;
+                                            }
+                                            direction++;
+                                        }
+                                        if(beach)
+                                        {
+                                            if(endIndex==0)
+                                            {
+                                                if(cost.at(cell)!=0)
+                                                {
+                                                    cost[cell]=0;
+                                                    walk.push(std::pair<unsigned int,unsigned int>(0,cell));
+                                                }
+                                            }
+                                            else
+                                                isTarget[cell]=1;
+                                        }
+                                    }
+                                    localX++;
+                                }
+                                localY++;
                             }
-                            localX++;
+                            side++;
                         }
-                        localY++;
+                        endIndex++;
                     }
                 }
                 int reached=-1;
@@ -419,7 +463,7 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                     {
                         const unsigned int cellX=cell%worldWidth;
                         const unsigned int cellY=cell/worldWidth;
-                        if(cellX/mapWidth+(cellY/mapHeight)*mapXCount==endChunk && cost.at(cell)>0)
+                        if(isTarget.at(cell)!=0 && cost.at(cell)>0)
                             reached=(int)cell;
                         else
                         {
@@ -436,25 +480,18 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                                     const unsigned int fromChunk=(cellX/mapWidth)+(cellY/mapHeight)*mapXCount;
                                     const unsigned int toChunk=((unsigned int)nextX/mapWidth)
                                             +((unsigned int)nextY/mapHeight)*mapXCount;
-                                    //inside the route, and a border is only crossed
-                                    //between two chunks the route really links
-                                    bool legal=(routePosition.at(toChunk)>=0);
+                                    //WATER ONLY, inside the route, and a border is
+                                    //only crossed between two chunks the route links
+                                    bool legal=(routePosition.at(toChunk)>=0
+                                                && water.at(next)!=0 && blocked.at(next)==0);
                                     if(legal && toChunk!=fromChunk)
                                         if(abs(routePosition.at(toChunk)-routePosition.at(fromChunk))!=1)
                                             legal=false;
-                                    if(legal)
+                                    if(legal && cost.at(cell)+1<cost.at(next))
                                     {
-                                        unsigned int stepCost=costLand;
-                                        if(blocked.at(next)!=0)
-                                            stepCost=costBlocked;
-                                        else if(water.at(next)!=0)
-                                            stepCost=costWater;
-                                        if(cost.at(cell)+stepCost<cost.at(next))
-                                        {
-                                            cost[next]=cost.at(cell)+stepCost;
-                                            parent[next]=(int)cell;
-                                            walk.push(std::pair<unsigned int,unsigned int>(cost.at(next),next));
-                                        }
+                                        cost[next]=cost.at(cell)+1;
+                                        parent[next]=(int)cell;
+                                        walk.push(std::pair<unsigned int,unsigned int>(cost.at(next),next));
                                     }
                                 }
                                 direction++;
@@ -463,12 +500,34 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                     }
                 }
                 if(reached<0)
-                    std::cerr << "no lane can be drawn from the map "
-                              << startChunk%mapXCount << "," << startChunk/mapXCount << " to "
-                              << endChunk%mapXCount << "," << endChunk/mapXCount << std::endl;
+                {
+                    //NO WATER JOINS THE TWO BEACHES: the link becomes a FERRY
+                    //rather than a lane drawn over the land. The harbours are the
+                    //sea chunks of each end, and the pass below moors both boats.
+                    const unsigned int harbourA=route.chunks.at(1);
+                    const unsigned int harbourB=route.chunks.at(route.chunks.size()-2);
+                    std::cerr << "no water joins the beaches of the map "
+                              << startChunk%mapXCount << "," << startChunk/mapXCount << " and "
+                              << endChunk%mapXCount << "," << endChunk/mapXCount
+                              << ": the route becomes a boat crossing" << std::endl;
+                    if(harbourA!=harbourB)
+                    {
+                        BoatCrossing crossing;
+                        crossing.fromX=(uint16_t)(harbourA%mapXCount);
+                        crossing.fromY=(uint16_t)(harbourA/mapXCount);
+                        crossing.toX=(uint16_t)(harbourB%mapXCount);
+                        crossing.toY=(uint16_t)(harbourB/mapXCount);
+                        boatCrossings.push_back(crossing);
+                        roadCoordToIndex[(uint16_t)(harbourA%mapXCount)][(uint16_t)(harbourA/mapXCount)].isBoat=true;
+                        roadCoordToIndex[(uint16_t)(harbourB%mapXCount)][(uint16_t)(harbourB/mapXCount)].isBoat=true;
+                    }
+                }
                 else
                 {
-                    //the way itself: open what blocks it, and remember its water
+                    //the way itself: water from end to end. Its two extremities
+                    //ARE the beaches — the pool of open water the player enters
+                    //the sea by is grown from them, and the SHORE PATH to the town
+                    //starts from the ground beside them.
                     std::vector<unsigned int> lane;
                     int walkCell=reached;
                     while(walkCell>=0)
@@ -477,40 +536,10 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                         lane.push_back(cell);
                         const unsigned int tileX=cell%worldWidth;
                         const unsigned int tileY=cell/worldWidth;
-                        if(blocked.at(cell)!=0)
+                        allowed[cell]=1;
+                        //where the lane touches ground the player stands on, it is
+                        //a beach: the pool is grown from there and nowhere else
                         {
-                            //A TREE GOES WHOLE OR NOT AT ALL, like a road corridor
-                            MapPlants::removePlantAt(worldMap,tileX,tileY);
-                            unsigned int layerIndex=0;
-                            while(layerIndex<collisionLayers.size())
-                            {
-                                collisionLayers.at(layerIndex)->setCell(tileX,tileY,Tiled::Cell());
-                                layerIndex++;
-                            }
-                            unsigned int aboveIndex=0;
-                            while(aboveIndex<abovePlayerLayers.size())
-                            {
-                                abovePlayerLayers.at(aboveIndex)->setCell(tileX,tileY,Tiled::Cell());
-                                aboveIndex++;
-                            }
-                            blocked[cell]=0;
-                            carvedLaneCells++;
-                            //WATER NEEDS NO GROUND under it, the engine walks on it
-                            if(water.at(cell)==0 && walkLayer->cellAt(tileX,tileY).tile()==NULL)
-                            {
-                                Tiled::Tile * const groundTile=seaChunkGroundTile(
-                                            walkLayer,tileX/mapWidth,tileY/mapHeight,mapWidth,mapHeight);
-                                if(groundTile!=NULL)
-                                    walkLayer->setCell(tileX,tileY,Tiled::Cell(groundTile));
-                            }
-                        }
-                        if(water.at(cell)!=0)
-                        {
-                            allowed[cell]=1;
-                            //WHERE THE LANE MEETS THE BEACH: the pool of open water
-                            //the player enters the sea by is grown from there, and
-                            //nowhere else — that is what makes the rock a frame
-                            //around the way in instead of a ring round the continent
                             const int stepX[4]={-1,1,0,0};
                             const int stepY[4]={0,0,-1,1};
                             unsigned int direction=0;
@@ -522,7 +551,10 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                                 {
                                     const unsigned int shore=(unsigned int)shoreX+(unsigned int)shoreY*worldWidth;
                                     if(water.at(shore)==0 && blocked.at(shore)==0)
+                                    {
                                         poolSeeds.push_back(cell);
+                                        shoreLandings.push_back(shore);
+                                    }
                                 }
                                 direction++;
                             }
@@ -787,153 +819,10 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
         }
     }
 
-    //=== 5) AN ISLET NOW AND THEN, in the open part of a lane =================
-    //It is BUILT ON the water, so it adds land instead of destroying any: mountain
-    //texture inside, and the same cliff border tiles the terrain uses around it.
-    unsigned int islandCount=0;
-    if(setting.waterIslandPercent>0)
-    {
-        Tiled::Tile *mountainTile=NULL;
-        std::vector<Tiled::Tile *> mountainBorderTiles;
-        {
-            int height=0;
-            while(height<5 && mountainTile==NULL)
-            {
-                int moisure=0;
-                while(moisure<6 && mountainTile==NULL)
-                {
-                    const LoadMap::Terrain &terrain=LoadMap::terrainList[height][moisure];
-                    if(terrain.tile!=NULL && terrain.terrainName.compare(QString("mountain"),Qt::CaseInsensitive)==0)
-                        mountainTile=terrain.tile;
-                    moisure++;
-                }
-                height++;
-            }
-            const Tiled::Tileset * const mountainTsx=LoadMap::searchTilesetByName(worldMap,mountain.tsx);
-            if(mountainTsx!=NULL)
-            {
-                const QStringList mountainTileList=mountain.tile.split(",");
-                int mountainIndex=0;
-                while(mountainIndex<mountainTileList.size())
-                {
-                    mountainBorderTiles.push_back(mountainTsx->tileAt(mountainTileList.at(mountainIndex).toInt()));
-                    mountainIndex++;
-                }
-            }
-        }
-        unsigned int chunkY=0;
-        while(chunkY<mapYCount && mountainTile!=NULL)
-        {
-            unsigned int chunkX=0;
-            while(chunkX<mapXCount)
-            {
-                bool isLaneChunk=false;
-                if(roadCoordToIndex.find((uint16_t)chunkX)!=roadCoordToIndex.cend()
-                        && roadCoordToIndex.at((uint16_t)chunkX).find((uint16_t)chunkY)
-                           !=roadCoordToIndex.at((uint16_t)chunkX).cend())
-                {
-                    const RoadIndex &roadIndex=roadCoordToIndex.at((uint16_t)chunkX).at((uint16_t)chunkY);
-                    isLaneChunk=(roadIndex.isWater && !roadIndex.isBoat);
-                }
-                if(isLaneChunk)
-                {
-                    seedChunk(setting.seed,chunkX,chunkY,ChunkPass_sea);
-                    if((unsigned int)(rand()%100)<setting.waterIslandPercent)
-                    {
-                        int radius=1;
-                        while((unsigned int)(3*radius*radius)<setting.waterIslandMinTiles && radius<5)
-                            radius++;
-                        //somewhere in the open water of the lane, away from the border
-                        int tries=0;
-                        bool placed=false;
-                        while(tries<40 && !placed)
-                        {
-                            tries++;
-                            const int centerX=(int)(chunkX*mapWidth)+radius+2
-                                    +(int)(rand()%(mapWidth-2*(unsigned int)radius-4));
-                            const int centerY=(int)(chunkY*mapHeight)+radius+2
-                                    +(int)(rand()%(mapHeight-2*(unsigned int)radius-4));
-                            std::vector<unsigned int> islandCells;
-                            bool fits=true;
-                            int islandY=-radius;
-                            while(islandY<=radius && fits)
-                            {
-                                int islandX=-radius;
-                                while(islandX<=radius && fits)
-                                {
-                                    if(islandX*islandX+islandY*islandY<=radius*radius)
-                                    {
-                                        const unsigned int cell=(unsigned int)(centerX+islandX)
-                                                +(unsigned int)(centerY+islandY)*worldWidth;
-                                        if(water.at(cell)==0 || blocked.at(cell)!=0 || allowed.at(cell)==0)
-                                            fits=false;
-                                        else
-                                            islandCells.push_back(cell);
-                                    }
-                                    islandX++;
-                                }
-                                islandY++;
-                            }
-                            if(fits && islandCells.size()>=setting.waterIslandMinTiles)
-                            {
-                                const bool landable=((unsigned int)(rand()%100)<setting.waterIslandLandablePercent);
-                                std::set<unsigned int> islandSet(islandCells.cbegin(),islandCells.cend());
-                                unsigned int cellIndex=0;
-                                while(cellIndex<islandCells.size())
-                                {
-                                    const unsigned int cell=islandCells.at(cellIndex);
-                                    const unsigned int tileX=cell%worldWidth;
-                                    const unsigned int tileY=cell/worldWidth;
-                                    waterLayer->setCell(tileX,tileY,Tiled::Cell());
-                                    walkLayer->setCell(tileX,tileY,Tiled::Cell(mountainTile));
-                                    water[cell]=0;
-                                    allowed[cell]=0;
-                                    uint8_t toTypeMatch=0;
-                                    const int neighbourX[8]={-1,0,1,-1,1,-1,0,1};
-                                    const int neighbourY[8]={-1,-1,-1,0,0,1,1,1};
-                                    const uint8_t neighbourBit[8]={1,2,4,8,16,32,64,128};
-                                    unsigned int neighbourIndex=0;
-                                    while(neighbourIndex<8)
-                                    {
-                                        const unsigned int neighbour=(unsigned int)((int)tileX+neighbourX[neighbourIndex])
-                                                +(unsigned int)((int)tileY+neighbourY[neighbourIndex])*worldWidth;
-                                        if(islandSet.find(neighbour)==islandSet.cend())
-                                            toTypeMatch|=neighbourBit[neighbourIndex];
-                                        neighbourIndex++;
-                                    }
-                                    if(toTypeMatch!=0 && !mountainBorderTiles.empty())
-                                    {
-                                        const unsigned int borderIndex=mountainBorderTileIndex(toTypeMatch);
-                                        if(borderIndex<mountainBorderTiles.size()
-                                                && mountainBorderTiles.at(borderIndex)!=NULL)
-                                        {
-                                            colliLayer->setCell(tileX,tileY,
-                                                                Tiled::Cell(mountainBorderTiles.at(borderIndex)));
-                                            blocked[cell]=1;
-                                        }
-                                    }
-                                    else if(!landable)
-                                    {
-                                        colliLayer->setCell(tileX,tileY,Tiled::Cell(mountainTile));
-                                        blocked[cell]=1;
-                                    }
-                                    cellIndex++;
-                                }
-                                placed=true;
-                                islandCount++;
-                            }
-                        }
-                    }
-                }
-                chunkX++;
-            }
-            chunkY++;
-        }
-    }
-
-    //the rock itself is NOT drawn here: it is drawn once the vegetation is down
-    //and the walkability repairs are over (closeSeaAccess), because a shore under
-    //a tree is no shore at all and needs no wall.
+    //WHAT THE PLAYER MAY SWIM IN, for the rest of the run. The rock itself is
+    //NOT drawn here: it is drawn once the vegetation is down and the walkability
+    //repairs are over (closeSeaAccess), because a shore under a tree is no shore
+    //at all and needs no wall in front of it.
     seaAllowedCells=allowed;
 
     //=== 7) THE BOATS ========================================================
@@ -1214,62 +1103,11 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                         movingGroup->addObject(boat);
                         boatTeleportObjects[std::pair<uint16_t,uint16_t>((uint16_t)chunkX,(uint16_t)chunkY)]=boat;
                         maskVegetationAround(worldMap,(unsigned int)landX,(unsigned int)landY,1);
-                        //THE WALK FROM THE BORDER TO THE QUAY IS MASKED, like a road
-                        //masks its own way. The vegetation is brushed after this
-                        //pass: a wood grown across the shore left the boat visible
-                        //and unreachable, and the repair then had to cut a trench
-                        //through it — the way is kept clear instead of reopened.
-                        {
-                            std::vector<int> parent(mapWidth*mapHeight,-2);
-                            std::vector<unsigned int> queue;
-                            const unsigned int quayLocal=((unsigned int)landX%mapWidth)
-                                    +((unsigned int)landY%mapHeight)*mapWidth;
-                            parent[quayLocal]=-1;
-                            queue.push_back(quayLocal);
-                            int reached=-1;
-                            unsigned int queueIndex=0;
-                            while(queueIndex<queue.size() && reached<0)
-                            {
-                                const unsigned int cell=queue.at(queueIndex);
-                                queueIndex++;
-                                if(arrivalComponent.find(footComponent.at(cell))!=arrivalComponent.cend())
-                                    reached=(int)cell;
-                                else
-                                {
-                                    const int cellX=(int)(cell%mapWidth);
-                                    const int cellY=(int)(cell/mapWidth);
-                                    const int stepX[4]={-1,1,0,0};
-                                    const int stepY[4]={0,0,-1,1};
-                                    unsigned int direction=0;
-                                    while(direction<4)
-                                    {
-                                        const int nextX=cellX+stepX[direction];
-                                        const int nextY=cellY+stepY[direction];
-                                        if(nextX>=0 && nextY>=0 && nextX<(int)mapWidth && nextY<(int)mapHeight)
-                                        {
-                                            const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapWidth;
-                                            const unsigned int nextWorld=(x0+(unsigned int)nextX)
-                                                    +(y0+(unsigned int)nextY)*worldWidth;
-                                            //on foot: dry ground, nothing else
-                                            if(parent.at(next)==-2 && blocked.at(nextWorld)==0
-                                                    && water.at(nextWorld)==0)
-                                            {
-                                                parent[next]=(int)cell;
-                                                queue.push_back(next);
-                                            }
-                                        }
-                                        direction++;
-                                    }
-                                }
-                            }
-                            int walkCell=reached;
-                            while(walkCell>=0)
-                            {
-                                maskVegetationAround(worldMap,x0+(unsigned int)walkCell%mapWidth,
-                                                     y0+(unsigned int)walkCell/mapWidth,1);
-                                walkCell=parent.at((unsigned int)walkCell);
-                            }
-                        }
+                        //THE WALK FROM THE QUAY TO THE TOWN is opened below, on
+                        //the world (section 9): the vegetation is brushed after
+                        //this pass and grew a wood right across the shore, and a
+                        //way opened only inside this one chunk stops at its border.
+                        shoreLandings.push_back((unsigned int)landX+(unsigned int)landY*worldWidth);
                         mooredBoats++;
                     }
                 }
@@ -1465,10 +1303,149 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
         }
     }
 
-    std::cout << "sea: " << laneCount << " lane(s) drawn (" << carvedLaneCells
-              << " cell(s) opened on the way), " << poolCount << " beach pool(s), "
+    //=== 9) THE WALK FROM THE WATER TO THE TOWN ==============================
+    //A route that lands on a beach nobody can walk away from is no route. The way
+    //from every landing — a lane beach, a ferry quay — to the NEAREST TOWN is
+    //opened here, ON THE WORLD: it crosses as many maps as it needs to, because
+    //the walk no more stops at a chunk border than the coast does. Open ground
+    //costs 1 and a wood or a cliff 60, so it follows the road that is already
+    //there and only cuts where it must — whole plants, never half a tree — and
+    //the whole way is masked, so the vegetation brushed next does not close it.
+    unsigned int shorePathCells=0;
+    unsigned int shorePathOpened=0;
+    {
+        unsigned int landingIndex=0;
+        while(landingIndex<shoreLandings.size())
+        {
+            const unsigned int landing=shoreLandings.at(landingIndex);
+            //the nearest town
+            int targetCell=-1;
+            {
+                unsigned int bestDistance=0;
+                unsigned int cityIndex=0;
+                while(cityIndex<cities.size())
+                {
+                    const unsigned int cityCell=(cities.at(cityIndex).x*mapWidth+mapWidth/2)
+                            +(cities.at(cityIndex).y*mapHeight+mapHeight/2)*worldWidth;
+                    const unsigned int distance=(unsigned int)(
+                                abs((int)(cityCell%worldWidth)-(int)(landing%worldWidth))
+                                +abs((int)(cityCell/worldWidth)-(int)(landing/worldWidth)));
+                    if(targetCell<0 || distance<bestDistance)
+                    {
+                        bestDistance=distance;
+                        targetCell=(int)cityCell;
+                    }
+                    cityIndex++;
+                }
+            }
+            if(targetCell>=0 && blocked.at((unsigned int)targetCell)==0)
+            {
+                static const unsigned int costOpen=1;
+                static const unsigned int costBlocked=60;
+                static const unsigned int costUnreachable=0xFFFFFFFF;
+                std::vector<unsigned int> cost(worldWidth*worldHeight,costUnreachable);
+                std::vector<int> parent(worldWidth*worldHeight,-1);
+                std::priority_queue<std::pair<unsigned int,unsigned int>,
+                        std::vector<std::pair<unsigned int,unsigned int> >,
+                        std::greater<std::pair<unsigned int,unsigned int> > > walk;
+                cost[landing]=0;
+                walk.push(std::pair<unsigned int,unsigned int>(0,landing));
+                bool found=false;
+                while(!walk.empty() && !found)
+                {
+                    const std::pair<unsigned int,unsigned int> top=walk.top();
+                    walk.pop();
+                    const unsigned int cell=top.second;
+                    if(top.first<=cost.at(cell))
+                    {
+                        if(cell==(unsigned int)targetCell)
+                            found=true;
+                        else
+                        {
+                            const int cellX=(int)(cell%worldWidth);
+                            const int cellY=(int)(cell/worldWidth);
+                            const int stepX[4]={-1,1,0,0};
+                            const int stepY[4]={0,0,-1,1};
+                            unsigned int direction=0;
+                            while(direction<4)
+                            {
+                                const int nextX=cellX+stepX[direction];
+                                const int nextY=cellY+stepY[direction];
+                                if(nextX>=0 && nextY>=0 && nextX<(int)worldWidth && nextY<(int)worldHeight)
+                                {
+                                    const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*worldWidth;
+                                    const unsigned int nextChunk=((unsigned int)nextX/mapWidth)
+                                            +((unsigned int)nextY/mapHeight)*mapXCount;
+                                    //ON FOOT, and on the maps that were written: the
+                                    //water is not a way to the town, and a chunk with
+                                    //no map is not a place the player can ever be
+                                    if(water.at(next)==0 && mapPathDirection[nextChunk]!=0)
+                                    {
+                                        const unsigned int stepCost=(blocked.at(next)!=0)?costBlocked:costOpen;
+                                        if(cost.at(cell)+stepCost<cost.at(next))
+                                        {
+                                            cost[next]=cost.at(cell)+stepCost;
+                                            parent[next]=(int)cell;
+                                            walk.push(std::pair<unsigned int,unsigned int>(cost.at(next),next));
+                                        }
+                                    }
+                                }
+                                direction++;
+                            }
+                        }
+                    }
+                }
+                if(!found)
+                    std::cerr << "no way on foot from the shore at " << landing%worldWidth
+                              << "," << landing/worldWidth << " to a town" << std::endl;
+                else
+                {
+                    int walkCell=targetCell;
+                    while(walkCell>=0)
+                    {
+                        const unsigned int cell=(unsigned int)walkCell;
+                        const unsigned int tileX=cell%worldWidth;
+                        const unsigned int tileY=cell/worldWidth;
+                        if(blocked.at(cell)!=0)
+                        {
+                            MapPlants::removePlantAt(worldMap,tileX,tileY);
+                            unsigned int layerIndex=0;
+                            while(layerIndex<collisionLayers.size())
+                            {
+                                collisionLayers.at(layerIndex)->setCell(tileX,tileY,Tiled::Cell());
+                                layerIndex++;
+                            }
+                            unsigned int aboveIndex=0;
+                            while(aboveIndex<abovePlayerLayers.size())
+                            {
+                                abovePlayerLayers.at(aboveIndex)->setCell(tileX,tileY,Tiled::Cell());
+                                aboveIndex++;
+                            }
+                            blocked[cell]=0;
+                            if(walkLayer->cellAt(tileX,tileY).tile()==NULL)
+                            {
+                                Tiled::Tile * const groundTile=seaChunkGroundTile(
+                                            walkLayer,tileX/mapWidth,tileY/mapHeight,mapWidth,mapHeight);
+                                if(groundTile!=NULL)
+                                    walkLayer->setCell(tileX,tileY,Tiled::Cell(groundTile));
+                            }
+                            shorePathOpened++;
+                        }
+                        maskVegetationAround(worldMap,tileX,tileY,1);
+                        shorePathCells++;
+                        walkCell=parent.at(cell);
+                    }
+                }
+            }
+            landingIndex++;
+        }
+    }
+
+    std::cout << "sea: " << laneCount << " lane(s) drawn, "
+              << poolCount << " beach pool(s), "
+              << shorePathCells << " cell(s) of shore path to a town ("
+              << shorePathOpened << " opened), "
               << mooredBoats << " boat(s) moored, "
-              << islandCount << " islet(s), "
               << seaDecorationCount << " decoration(s), " << swimmerCount << " swimmer(s)"
               << std::endl;
 }
