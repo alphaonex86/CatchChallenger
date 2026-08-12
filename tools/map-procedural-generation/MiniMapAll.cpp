@@ -1,6 +1,7 @@
 #include "MiniMapAll.h"
 #include "LoadMapAll.h"
 #include <QCoreApplication>
+#include <map>
 
 QImage MiniMapAll::minimapcitybig;
 QImage MiniMapAll::minimapcitymedium;
@@ -150,6 +151,63 @@ QImage MiniMapAll::makeMapTiled(const unsigned int worldWidthMap, const unsigned
         p.drawImage(QPoint(x*mapWidth+mapWidth/2-minimapcity.width()/2,y*mapHeight+mapHeight/2-minimapcity.height()/2),minimapcity);
 
         indexCity++;
+    }
+
+    //THE BOAT LEG ITSELF, so the eye follows the WHOLE journey. A crossing is a
+    //teleport: nothing joined the two shores on the world map, so the route read
+    //as stopping dead at the coast. It is drawn BEFORE the road icons, in the
+    //colour of the sea route icons and dashed — a line the player does not walk.
+    if(!LoadMapAll::boatCrossings.empty())
+    {
+        //the colour of the sea route icons: their most frequent OPAQUE pixel. The
+        //middle of the icon is transparent, so sampling it drew a black line.
+        QColor crossingColor(0,0,0);
+        if(!minimap1wayWater.isNull())
+        {
+            const QImage sample=minimap1wayWater.convertToFormat(QImage::Format_ARGB32);
+            std::map<QRgb,unsigned int> count;
+            int pixelY=0;
+            while(pixelY<sample.height())
+            {
+                int pixelX=0;
+                while(pixelX<sample.width())
+                {
+                    const QRgb pixel=sample.pixel(pixelX,pixelY);
+                    if(qAlpha(pixel)==255)
+                        count[pixel]++;
+                    pixelX++;
+                }
+                pixelY++;
+            }
+            unsigned int best=0;
+            std::map<QRgb,unsigned int>::const_iterator colorIterator=count.cbegin();
+            while(colorIterator!=count.cend())
+            {
+                if(colorIterator->second>best)
+                {
+                    best=colorIterator->second;
+                    crossingColor=QColor(colorIterator->first);
+                }
+                ++colorIterator;
+            }
+        }
+        QPen crossingPen(crossingColor);
+        int crossingWidth=(int)(mapWidth/12);
+        if(crossingWidth<2)
+            crossingWidth=2;
+        crossingPen.setWidth(crossingWidth);
+        crossingPen.setStyle(Qt::DashLine);
+        p.setPen(crossingPen);
+        unsigned int indexCrossing=0;
+        while(indexCrossing<LoadMapAll::boatCrossings.size())
+        {
+            const LoadMapAll::BoatCrossing &crossing=LoadMapAll::boatCrossings.at(indexCrossing);
+            p.drawLine((int)(crossing.fromX*mapWidth+mapWidth/2),
+                       (int)(crossing.fromY*mapHeight+mapHeight/2),
+                       (int)(crossing.toX*mapWidth+mapWidth/2),
+                       (int)(crossing.toY*mapHeight+mapHeight/2));
+            indexCrossing++;
+        }
     }
 
     unsigned int indexIntRoad=0;

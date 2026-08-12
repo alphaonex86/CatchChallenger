@@ -370,6 +370,9 @@ int main(int argc, char *argv[])
             //was already placed and the character is drawn inside the trunk.
             LoadMapAll::addCityTownsfolk(tiledMap, config, config.mapWidth, config.mapHeight);
             qDebug("add city townsfolk took %lld ms", t.elapsed());
+            //BEFORE the guards, so a chunk they cut off by closing its open water
+            //is repaired like any other
+            LoadMapAll::sealOpenWaterBorders(tiledMap,config);
             //WALKABILITY GUARD, on the FINAL map: it has to run after the last
             //pass that can add a COLLISION — the terrain decorations and the
             //vegetation both do, and a tree dropped on the road would otherwise
