@@ -237,7 +237,8 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     config.waterMaxFighter=settings.value("maxFighter",3).toUInt();
     if(config.waterMaxFighter<config.waterMinFighter)
         config.waterMaxFighter=config.waterMinFighter;
-    config.waterBoatTile=settings.value("boatTile","").toString();
+    config.waterShipDecoration=settings.value("shipDecoration","").toString();
+    config.waterShipUsable=settings.value("shipUsable","").toString();
     if(config.waterBodyDebugStep<1)
         config.waterBodyDebugStep=1;
     settings.endGroup();

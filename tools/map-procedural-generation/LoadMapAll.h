@@ -457,6 +457,11 @@ public:
     //reachable. A closed BOAT chunk is walled all round instead, with the boat
     //tile and its push-teleport. Called from addRoadContent, after the terrain
     //transitions, so nothing repaints over it.
+    //stamp a rectangle of tiles from "tsx/id,width,height" (a sprite stored as a
+    //block of the sheet), only where the destination is free WATER
+    static void stampTileRect(Tiled::Map &worldMap,Tiled::TileLayer *layer,const QString &description,
+                              const unsigned int &tileX,const unsigned int &tileY,
+                              Tiled::TileLayer *waterLayer);
     static void paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX,const unsigned int &chunkY,
                                 const unsigned int &mapWidth,const unsigned int &mapHeight,
                                 const RoadIndex &roadIndex,const uint8_t &zoneOrientation,
