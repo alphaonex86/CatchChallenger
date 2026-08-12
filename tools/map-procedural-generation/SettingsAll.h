@@ -73,14 +73,6 @@ public:
         QString waterBorderTile;
         unsigned int waterChannelHalfWidth;
         unsigned int waterWanderAmplitude;
-        //ISLANDS inside the channel: islandPercent of the chunks get one, of at
-        //least islandMinTiles tiles, mountain core, ringed by at most
-        //islandSandMax tiles of sand. islandLandablePercent of them are walkable
-        //islets, the rest are bare rock scenery.
-        unsigned int waterIslandPercent;
-        unsigned int waterIslandMinTiles;
-        unsigned int waterIslandSandMax;
-        unsigned int waterIslandLandablePercent;
         //swimmers met on the channel
         unsigned int waterMinFighter;
         unsigned int waterMaxFighter;

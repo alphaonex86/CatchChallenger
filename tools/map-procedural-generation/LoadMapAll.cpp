@@ -1774,6 +1774,162 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
             startChunk++;
         }
     }
+    //TWO GROUPS THE LAND CAN JOIN ARE JOINED BY LAND, never by sea. A ferry
+    //between two maps side by side is absurd, and a water path may not cross the
+    //land to reach one: a group sitting by a LAKE and nothing else (44 maps of
+    //the reference world) has no sea to be reached by, and the only honest answer
+    //is a ROAD. The chunks the join walks through become ordinary road maps —
+    //generateRoadContent paints any chunk whose orientation bits are set — so
+    //what comes out is a road between the two, not a boat over a continent.
+    {
+        unsigned int landJoins=0;
+        unsigned int joinedChunks=0;
+        bool joined=true;
+        while(joined)
+        {
+            joined=false;
+            //the cheapest way from one group to another over EMPTY LAND: chunks
+            //no map is written for and the sea does not cover
+            int bestFrom=-1,bestTo=-1;
+            std::vector<int> bestParent;
+            unsigned int bestLength=0xFFFFFFFF;
+            unsigned int startGroup=0;
+            while(startGroup<groupCount)
+            {
+                std::vector<int> parent(mapXCount*mapYCount,-2);
+                std::vector<unsigned int> queue;
+                unsigned int chunk=0;
+                while(chunk<mapXCount*mapYCount)
+                {
+                    if(groupOfChunk.at(chunk)==startGroup)
+                    {
+                        parent[chunk]=-1;
+                        queue.push_back(chunk);
+                    }
+                    chunk++;
+                }
+                unsigned int queueIndex=0;
+                while(queueIndex<queue.size())
+                {
+                    const unsigned int current=queue.at(queueIndex);
+                    queueIndex++;
+                    //another group reached: how long is the way?
+                    if(groupOfChunk.at(current)!=0xFFFFFFFF && groupOfChunk.at(current)!=startGroup)
+                    {
+                        unsigned int length=0;
+                        int walk=(int)current;
+                        while(parent.at((unsigned int)walk)>=0)
+                        {
+                            length++;
+                            walk=parent.at((unsigned int)walk);
+                        }
+                        if(length<bestLength)
+                        {
+                            bestLength=length;
+                            bestFrom=walk;
+                            bestTo=(int)current;
+                            bestParent=parent;
+                        }
+                    }
+                    else
+                    {
+                        const int currentX=(int)(current%mapXCount);
+                        const int currentY=(int)(current/mapXCount);
+                        const int stepX[4]={-1,1,0,0};
+                        const int stepY[4]={0,0,-1,1};
+                        unsigned int direction=0;
+                        while(direction<4)
+                        {
+                            const int nextX=currentX+stepX[direction];
+                            const int nextY=currentY+stepY[direction];
+                            if(nextX>=0 && nextY>=0 && nextX<(int)mapXCount && nextY<(int)mapYCount)
+                            {
+                                const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapXCount;
+                                //empty land, or a map of another group (the arrival)
+                                const bool emptyLand=(mapPathDirection[next]==0
+                                                      && chunkSeaTiles.at(next)*4<chunkTiles);
+                                const bool otherGroup=(groupOfChunk.at(next)!=0xFFFFFFFF
+                                                       && groupOfChunk.at(next)!=startGroup);
+                                if(parent.at(next)==-2 && (emptyLand || otherGroup))
+                                {
+                                    parent[next]=(int)current;
+                                    queue.push_back(next);
+                                }
+                            }
+                            direction++;
+                        }
+                    }
+                }
+                startGroup++;
+            }
+            if(bestTo>=0 && bestFrom>=0)
+            {
+                //link the whole chain, both ways
+                int walk=bestTo;
+                while(bestParent.at((unsigned int)walk)>=0)
+                {
+                    const unsigned int previous=(unsigned int)bestParent.at((unsigned int)walk);
+                    linkChunkToNeighbour((unsigned int)walk,previous,mapXCount);
+                    linkChunkToNeighbour(previous,(unsigned int)walk,mapXCount);
+                    if(mapPathDirection[(unsigned int)walk]!=0 && groupOfChunk.at((unsigned int)walk)==0xFFFFFFFF)
+                        joinedChunks++;
+                    walk=(int)previous;
+                }
+                landJoins++;
+                joined=true;
+                //re-group: the flood is the truth, the labels are not
+                groupCount=0;
+                groupOfChunk.assign(mapXCount*mapYCount,0xFFFFFFFF);
+                unsigned int floodStart=0;
+                while(floodStart<mapXCount*mapYCount)
+                {
+                    if(mapPathDirection[floodStart]!=0 && groupOfChunk.at(floodStart)==0xFFFFFFFF)
+                    {
+                        std::vector<unsigned int> floodQueue;
+                        groupOfChunk[floodStart]=groupCount;
+                        floodQueue.push_back(floodStart);
+                        unsigned int floodIndex=0;
+                        while(floodIndex<floodQueue.size())
+                        {
+                            const unsigned int chunk=floodQueue.at(floodIndex);
+                            floodIndex++;
+                            const int chunkX=(int)(chunk%mapXCount);
+                            const int chunkY=(int)(chunk/mapXCount);
+                            const int stepX[4]={-1,1,0,0};
+                            const int stepY[4]={0,0,-1,1};
+                            const Orientation bit[4]={Orientation_left,Orientation_right,
+                                                      Orientation_top,Orientation_bottom};
+                            unsigned int direction=0;
+                            while(direction<4)
+                            {
+                                if((mapPathDirection[chunk]&bit[direction])!=0)
+                                {
+                                    const int nextX=chunkX+stepX[direction];
+                                    const int nextY=chunkY+stepY[direction];
+                                    if(nextX>=0 && nextY>=0 && nextX<(int)mapXCount && nextY<(int)mapYCount)
+                                    {
+                                        const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapXCount;
+                                        if(mapPathDirection[next]!=0 && groupOfChunk.at(next)==0xFFFFFFFF)
+                                        {
+                                            groupOfChunk[next]=groupCount;
+                                            floodQueue.push_back(next);
+                                        }
+                                    }
+                                }
+                                direction++;
+                            }
+                        }
+                        groupCount++;
+                    }
+                    floodStart++;
+                }
+            }
+        }
+        if(landJoins>0)
+            std::cout << "sea: " << landJoins << " group(s) of maps joined BY LAND ("
+                      << joinedChunks << " new road map(s)): the land can reach them, "
+                      << "so no boat has to" << std::endl;
+    }
     std::cout << "sea: " << groupCount << " group(s) of maps joined by road" << std::endl;
     std::vector<unsigned int> groupSize(groupCount,0);
     {
@@ -1792,6 +1948,7 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
     //2) EMBARKATION points: a map of a group that TOUCHES a sailable sea chunk. A
     //link between two groups always runs from one of those to another.
     std::vector<std::vector<unsigned int> > groupShore(groupCount);
+    std::map<unsigned int,std::set<uint16_t> > shoreWater;
     {
         unsigned int chunk=0;
         while(chunk<mapXCount*mapYCount)
@@ -1814,7 +1971,26 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                     direction++;
                 }
                 if(touchesSea)
+                {
                     groupShore[groupOfChunk.at(chunk)].push_back(chunk);
+                    //...and WHICH WATER it can put to sea on: a link between two
+                    //maps only exists when both sail the SAME body. A water path
+                    //never crosses land, so two shores on two different seas are
+                    //not a pair, however close they look on the grid.
+                    unsigned int bodyDirection=0;
+                    while(bodyDirection<4)
+                    {
+                        const int nextX=chunkX+stepX[bodyDirection];
+                        const int nextY=chunkY+stepY[bodyDirection];
+                        if(nextX>=0 && nextY>=0 && nextX<(int)mapXCount && nextY<(int)mapYCount)
+                        {
+                            const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*mapXCount;
+                            if(sailable.at(next)!=0)
+                                shoreWater[chunk].insert(chunkSeas.at(next).cbegin(),chunkSeas.at(next).cend());
+                        }
+                        bodyDirection++;
+                    }
+                }
             }
             chunk++;
         }
@@ -1823,9 +1999,28 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
         unsigned int groupIndex=0;
         while(groupIndex<groupCount)
         {
+            std::set<uint16_t> groupBodies;
+            {
+                unsigned int shoreIndex=0;
+                while(shoreIndex<groupShore.at(groupIndex).size())
+                {
+                    const std::set<uint16_t> &bodies=shoreWater[groupShore.at(groupIndex).at(shoreIndex)];
+                    groupBodies.insert(bodies.cbegin(),bodies.cend());
+                    shoreIndex++;
+                }
+            }
             std::cout << "sea: group " << groupIndex << " holds " << groupSize.at(groupIndex)
                       << " map(s) and touches the sea on " << groupShore.at(groupIndex).size()
-                      << " of them" << std::endl;
+                      << " of them, on water bod(y|ies)";
+            {
+                std::set<uint16_t>::const_iterator bodyIterator=groupBodies.cbegin();
+                while(bodyIterator!=groupBodies.cend())
+                {
+                    std::cout << " " << *bodyIterator;
+                    ++bodyIterator;
+                }
+            }
+            std::cout << std::endl;
             groupIndex++;
         }
     }
@@ -1852,10 +2047,21 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                     while(secondIndex<groupShore.at(secondGroup).size())
                     {
                         const unsigned int chunkB=groupShore.at(secondGroup).at(secondIndex);
+                        //THE SAME WATER, or it is no pair at all
+                        bool sameWater=false;
+                        {
+                            std::set<uint16_t>::const_iterator bodyIterator=shoreWater[chunkA].cbegin();
+                            while(bodyIterator!=shoreWater[chunkA].cend() && !sameWater)
+                            {
+                                if(shoreWater[chunkB].find(*bodyIterator)!=shoreWater[chunkB].cend())
+                                    sameWater=true;
+                                ++bodyIterator;
+                            }
+                        }
                         const unsigned int distance=(unsigned int)(
                                     abs((int)(chunkA%mapXCount)-(int)(chunkB%mapXCount))
                                     +abs((int)(chunkA/mapXCount)-(int)(chunkB/mapXCount)));
-                        if(distance<link.distance)
+                        if(sameWater && distance<link.distance)
                         {
                             link.distance=distance;
                             link.chunkA=chunkA;
@@ -2181,17 +2387,20 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                 }
             }
         }
-        //A BOAT NEEDS NO CONTINUOUS WATER — it is a teleport. When the two waters
-        //are not the same body (a group sitting by an inland lake, the sea on the
-        //other side) the link is still built: one water chunk against each end and
-        //the crossing between them.
+        //A BOAT SAILS, IT DOES NOT FLY OVER THE LAND. When no lane can be swum
+        //the link may still be a ferry, but only between two shores that sit on
+        //the SAME body of water: a crossing from a lake to the sea is a water
+        //path drawn straight over a continent, which is exactly what a water path
+        //never is. Every possible shore of each end is collected first — picking
+        //the first one and then looking for a partner threw away pairs that did
+        //share their water.
         std::vector<unsigned int> route;
         bool forcedBoat=false;
         if(!found)
         {
             const int stepX[4]={-1,1,0,0};
             const int stepY[4]={0,0,-1,1};
-            int shoreA=-1,shoreB=-1;
+            std::vector<unsigned int> shoreCandidate[2];
             unsigned int endIndex=0;
             while(endIndex<2)
             {
@@ -2214,16 +2423,42 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                                 && chunkCanMoorShip(next,mapXCount,singleMapWidth,singleMapHeight,
                                                     worldWidth,shipWidth,shipHeight,
                                                     setting.waterBoatBorderMin))
-                        {
-                            if(endIndex==0 && shoreA<0)
-                                shoreA=(int)next;
-                            if(endIndex==1 && shoreB<0 && (int)next!=shoreA)
-                                shoreB=(int)next;
-                        }
+                            shoreCandidate[endIndex].push_back(next);
                     }
                     direction++;
                 }
                 endIndex++;
+            }
+            int shoreA=-1,shoreB=-1;
+            {
+                unsigned int indexA=0;
+                while(indexA<shoreCandidate[0].size() && shoreB<0)
+                {
+                    unsigned int indexB=0;
+                    while(indexB<shoreCandidate[1].size() && shoreB<0)
+                    {
+                        const unsigned int candidateA=shoreCandidate[0].at(indexA);
+                        const unsigned int candidateB=shoreCandidate[1].at(indexB);
+                        if(candidateA!=candidateB)
+                        {
+                            bool sameWater=false;
+                            std::set<uint16_t>::const_iterator bodyIterator=chunkSeas.at(candidateA).cbegin();
+                            while(bodyIterator!=chunkSeas.at(candidateA).cend() && !sameWater)
+                            {
+                                if(chunkSeas.at(candidateB).find(*bodyIterator)!=chunkSeas.at(candidateB).cend())
+                                    sameWater=true;
+                                ++bodyIterator;
+                            }
+                            if(sameWater)
+                            {
+                                shoreA=(int)candidateA;
+                                shoreB=(int)candidateB;
+                            }
+                        }
+                        indexB++;
+                    }
+                    indexA++;
+                }
             }
             if(shoreA>=0 && shoreB>=0)
             {
@@ -2288,7 +2523,19 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
             if(linkResolved.at(index)!=0 && linkIsBoat.at(index)==0)
             {
                 const std::vector<unsigned int> &route=linkRoute.at(index);
-                if(route.empty() || route.front()==route.back()
+                bool sameWater=false;
+                if(!route.empty())
+                {
+                    std::set<uint16_t>::const_iterator bodyIterator=chunkSeas.at(route.front()).cbegin();
+                    while(bodyIterator!=chunkSeas.at(route.front()).cend() && !sameWater)
+                    {
+                        if(chunkSeas.at(route.back()).find(*bodyIterator)!=chunkSeas.at(route.back()).cend())
+                            sameWater=true;
+                        ++bodyIterator;
+                    }
+                }
+                //a ferry sails, it does not fly over the land: same water at both ends
+                if(route.empty() || route.front()==route.back() || !sameWater
                         || harbourTaken.find(route.front())!=harbourTaken.cend()
                         || harbourTaken.find(route.back())!=harbourTaken.cend()
                         || !chunkCanMoorShip(route.front(),mapXCount,singleMapWidth,singleMapHeight,
