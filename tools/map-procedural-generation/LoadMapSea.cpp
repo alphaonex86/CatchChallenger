@@ -819,6 +819,64 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
         }
     }
 
+    //=== 6b) THE EDGE IS RAGGED ==============================================
+    //A wall drawn along a straight edge reads as a wall, and one straight rock
+    //line with a single rock nudged out every N tiles reads as WORSE: a pattern.
+    //So the EDGE of the water the player may use is roughened here, before any
+    //rock is drawn: every cell just outside it is given to the water or not, on a
+    //hash of its own position, twice over. What comes out is a coast of one and
+    //two tile bites — the shape the rock then follows — and no run of it repeats.
+    {
+        unsigned int roughened=0;
+        unsigned int pass=0;
+        while(pass<2)
+        {
+            std::vector<unsigned int> edge;
+            unsigned int cell=0;
+            while(cell<worldWidth*worldHeight)
+            {
+                if(water.at(cell)!=0 && blocked.at(cell)==0 && allowed.at(cell)==0)
+                {
+                    const int cellX=(int)(cell%worldWidth);
+                    const int cellY=(int)(cell/worldWidth);
+                    const int stepX[4]={-1,1,0,0};
+                    const int stepY[4]={0,0,-1,1};
+                    unsigned int direction=0;
+                    while(direction<4)
+                    {
+                        const int nextX=cellX+stepX[direction];
+                        const int nextY=cellY+stepY[direction];
+                        if(nextX>=0 && nextY>=0 && nextX<(int)worldWidth && nextY<(int)worldHeight)
+                        {
+                            const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*worldWidth;
+                            if(allowed.at(next)!=0 && water.at(next)!=0)
+                            {
+                                edge.push_back(cell);
+                                direction=4;
+                            }
+                        }
+                        direction++;
+                    }
+                }
+                cell++;
+            }
+            unsigned int edgeIndex=0;
+            while(edgeIndex<edge.size())
+            {
+                const unsigned int edgeCell=edge.at(edgeIndex);
+                if(seaHash(edgeCell%worldWidth,edgeCell/worldWidth,setting.seed+4242+pass)%100<40)
+                {
+                    allowed[edgeCell]=1;
+                    roughened++;
+                }
+                edgeIndex++;
+            }
+            pass++;
+        }
+        std::cout << "sea: " << roughened << " cell(s) of edge given to the water, "
+                  << "so the rock never runs straight" << std::endl;
+    }
+
     //WHAT THE PLAYER MAY SWIM IN, for the rest of the run. The rock itself is
     //NOT drawn here: it is drawn once the vegetation is down and the walkability
     //repairs are over (closeSeaAccess), because a shore under a tree is no shore
@@ -1687,11 +1745,12 @@ void LoadMapAll::closeSeaAccess(Tiled::Map &worldMap,const SettingsAll::Settings
                         {
                             if(runLength>rockRunMax)
                             {
-                                //break it in the middle, and again every rockRunMax
-                                //tiles for a run that is very long
-                                unsigned int breakIndex=runStart+runLength/2;
-                                while(breakIndex>runStart && breakIndex-runStart>rockRunMax)
-                                    breakIndex-=rockRunMax;
+                                //break it where a HASH of the run says, never on a
+                                //fixed step: one rock moved out every N tiles is a
+                                //pattern, and a pattern is worse than a straight line
+                                unsigned int breakIndex=runStart
+                                        +seaHash(runStart,lineIndex,setting.seed+77+axis)
+                                         %(rockRunMax-3)+2;
                                 while(breakIndex<runStart+runLength)
                                 {
                                     const unsigned int cell=(axis==0)?(breakIndex+lineIndex*worldWidth)
@@ -1727,7 +1786,8 @@ void LoadMapAll::closeSeaAccess(Tiled::Map &worldMap,const SettingsAll::Settings
                                     }
                                     shifted++;
                                     again=true;
-                                    breakIndex+=rockRunMax;
+                                    breakIndex+=2+seaHash(breakIndex,lineIndex,setting.seed+91+axis)
+                                                 %(rockRunMax-3);
                                 }
                             }
                             runLength=0;
