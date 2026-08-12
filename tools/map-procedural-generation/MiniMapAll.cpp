@@ -163,7 +163,10 @@ QImage MiniMapAll::makeMapTiled(const unsigned int worldWidthMap, const unsigned
             const uint8_t &zoneOrientation=LoadMapAll::mapPathDirection[x+y*mapXCount];
             if(zoneOrientation!=0)
             {
-                //a SEA route reads as water on the world map, not as a road
+                //a SEA route reads as water on the world map, not as a road. A
+                //boat chunk shows the ONE-WAY water icon and that is right: its
+                //border path really does end there, the crossing carries on by
+                //teleport.
                 bool water=false;
                 if(LoadMapAll::roadCoordToIndex.find((uint16_t)x)!=LoadMapAll::roadCoordToIndex.cend()
                         && LoadMapAll::roadCoordToIndex.at((uint16_t)x).find((uint16_t)y)!=LoadMapAll::roadCoordToIndex.at((uint16_t)x).cend())
