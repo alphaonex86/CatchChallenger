@@ -1182,6 +1182,78 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                 direction++;
             }
         }
+        //A BOAT CROSSING needs NO continuous water at all — it is a teleport. So
+        //when two LAND MASSES cannot be joined by a swimmable route, they are
+        //joined by boat anyway: a chunk with sea next to each town, and the
+        //crossing between them. "Just connect city to city on the other side."
+        if(!found && pass==0)
+        {
+            int shoreA=-1,shoreB=-1;
+            unsigned int side=0;
+            while(side<2)
+            {
+                const City &city=cities.at(side==0?candidate.cityA:candidate.cityB);
+                //the harbour chunk has to TOUCH the town: the crossing is reached
+                //through the ordinary border teleport between the two, so only the
+                //four neighbours of the town chunk can carry it
+                int best=-1;
+                unsigned int bestSea=0;
+                const int stepX[4]={-1,1,0,0};
+                const int stepY[4]={0,0,-1,1};
+                unsigned int direction=0;
+                while(direction<4)
+                {
+                    const int chunkX=(int)city.x+stepX[direction];
+                    const int chunkY=(int)city.y+stepY[direction];
+                    if(chunkX>=0 && chunkY>=0 && chunkX<(int)mapXCount && chunkY<(int)mapYCount)
+                    {
+                        const unsigned int chunk=(unsigned int)chunkX+(unsigned int)chunkY*mapXCount;
+                        if(chunkSeaTiles.at(chunk)>0
+                                && mapPathDirection[chunk]==0
+                                && !haveCityEntry(citiesCoordToIndex,(unsigned int)chunkX,(unsigned int)chunkY)
+                                && chunkSeaTiles.at(chunk)>bestSea)
+                        {
+                            best=(int)chunk;
+                            bestSea=chunkSeaTiles.at(chunk);
+                        }
+                    }
+                    direction++;
+                }
+                if(side==0)
+                    shoreA=best;
+                else
+                    shoreB=best;
+                side++;
+            }
+            if(shoreA>=0 && shoreB>=0 && shoreA!=shoreB)
+            {
+                //each closed chunk is linked to ITS town, and the crossing joins them
+                linkChunkToNeighbour((unsigned int)shoreA,startChunk,mapXCount);
+                linkChunkToNeighbour((unsigned int)shoreB,endChunk,mapXCount);
+                boatChunks.push_back(std::pair<uint16_t,uint16_t>((uint16_t)((unsigned int)shoreA%mapXCount),(uint16_t)((unsigned int)shoreA/mapXCount)));
+                boatChunks.push_back(std::pair<uint16_t,uint16_t>((uint16_t)((unsigned int)shoreB%mapXCount),(uint16_t)((unsigned int)shoreB/mapXCount)));
+                waterChunks.push_back(boatChunks.at(boatChunks.size()-2));
+                waterChunks.push_back(boatChunks.back());
+                BoatCrossing crossing;
+                crossing.fromX=(uint16_t)((unsigned int)shoreA%mapXCount);
+                crossing.fromY=(uint16_t)((unsigned int)shoreA/mapXCount);
+                crossing.toX=(uint16_t)((unsigned int)shoreB%mapXCount);
+                crossing.toY=(uint16_t)((unsigned int)shoreB/mapXCount);
+                boatCrossings.push_back(crossing);
+                cityUsed[candidate.cityA]=1;
+                cityUsed[candidate.cityB]=1;
+                built++;
+                const unsigned int merged=componentOf.at(candidate.cityB);
+                const unsigned int into=componentOf.at(candidate.cityA);
+                unsigned int cityIndex=0;
+                while(cityIndex<componentOf.size())
+                {
+                    if(componentOf.at(cityIndex)==merged)
+                        componentOf[cityIndex]=into;
+                    cityIndex++;
+                }
+            }
+        }
         if(found)
         {
             //the chunks between the two towns, town chunks excluded

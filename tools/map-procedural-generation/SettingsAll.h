@@ -70,8 +70,13 @@ public:
         //swimmers met on the channel
         unsigned int waterMinFighter;
         unsigned int waterMaxFighter;
-        //the tile the boat sits on in a closed crossing chunk
-        QString waterBoatTile;
+        //the two ships of tileset/ships.tsx, as "tsx/id,width,height" (the sprite
+        //is a block of the sheet, stamped straight onto the Collisions layer —
+        //there is no tmx for them). shipDecoration is moored in the channel as
+        //scenery; shipUsable is the boat of a closed crossing and carries the
+        //push-teleport to the far shore.
+        QString waterShipDecoration;
+        QString waterShipUsable;
         std::vector<std::string> citiesNames;
         float scale_City;
         bool doallmap;
