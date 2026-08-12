@@ -4558,7 +4558,14 @@ void LoadMapAll::stampTileRect(Tiled::Map &worldMap,Tiled::TileLayer *layer,cons
     const int originId=originTile->id();
     const int width=parts.at(1).trimmed().toInt();
     const int height=parts.at(2).trimmed().toInt();
-    const int columns=tileset->columnCount();
+    //ships.tsx declares neither columns nor tilecount, so libtiled has nothing to
+    //compute the grid from until the image is loaded: fall back on the image
+    //width. A wrong column count stamps a block from the wrong place of the sheet
+    //and the boat came out as a flat rectangle.
+    int columns=tileset->columnCount();
+    if(columns<1 && tileset->tileWidth()>0)
+        columns=tileset->imageWidth()/tileset->tileWidth();
+
     if(width<1 || height<1 || columns<1)
         return;
     //every cell must be free WATER, else the sprite is not placed at all
@@ -4794,10 +4801,15 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                               << std::endl;
                 openingIndex++;
             }
-            //widen the route to the channel, through WATER only
+            //widen the route to the channel, through WATER only. A BOAT chunk is
+            //a HARBOUR, not a corridor: its whole basin is open, so the ship has
+            //room to moor and the player has somewhere to arrive. A lane the
+            //width of a channel left no 4x3 of free water anywhere.
             int halfWidth=(int)setting.waterChannelHalfWidth;
             if(halfWidth<2)
                 halfWidth=2;
+            if(roadIndex.isBoat)
+                halfWidth=(int)(mapWidth+mapHeight);
             std::vector<unsigned int> ring;
             std::vector<int> depth(mapWidth*mapHeight,-1);
             {
@@ -4845,6 +4857,17 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
             }
         }
     }
+    std::vector<Tiled::TileLayer*> abovePlayerLayers;
+    {
+        unsigned int layerIndex=0;
+        while(layerIndex<(unsigned int)worldMap.layerCount())
+        {
+            Tiled::Layer * const layer=worldMap.layerAt(layerIndex);
+            if(layer->isTileLayer() && layer->name()=="WalkBehind")
+                abovePlayerLayers.push_back(static_cast<Tiled::TileLayer *>(layer));
+            layerIndex++;
+        }
+    }
     //The BORDER TELEPORT sits at the MIDPOINT of each connected side (addMapChange
     //puts it there), so the lane has to reach that exact cell. The lane opens on
     //the nearest water of that border, which can be some tiles along it, so the
@@ -4871,6 +4894,36 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                             nearest=(int)step;
                     step++;
                 }
+                //No lane cell on this border at all: the route was planned on the
+                //terrain BEFORE the city flattening ramped back over it, so the
+                //water that was there is gone. Open a SHORT entrance inward from
+                //the midpoint until the lane is met — the chunk is mostly sea, so
+                //it is a few tiles of shore, and the tree goes whole, never half.
+                if(nearest<0)
+                {
+                    const int inwardX[4]={1,-1,0,0};
+                    const int inwardY[4]={0,0,1,-1};
+                    int localX=(side==0)?0:((side==1)?(int)mapWidth-1:(int)mapWidth/2);
+                    int localY=(side==2)?0:((side==3)?(int)mapHeight-1:(int)mapHeight/2);
+                    unsigned int step=0;
+                    while(step<8 && localX>=0 && localY>=0
+                          && localX<(int)mapWidth && localY<(int)mapHeight
+                          && channelCell.at((unsigned int)localX+(unsigned int)localY*mapWidth)==0)
+                    {
+                        channelCell[(unsigned int)localX+(unsigned int)localY*mapWidth]=1;
+                        colliLayer->setCell(x0+(unsigned int)localX,y0+(unsigned int)localY,Tiled::Cell());
+                        unsigned int aboveIndex=0;
+                        while(aboveIndex<abovePlayerLayers.size())
+                        {
+                            abovePlayerLayers.at(aboveIndex)->setCell(x0+(unsigned int)localX,
+                                                                      y0+(unsigned int)localY,Tiled::Cell());
+                            aboveIndex++;
+                        }
+                        localX+=inwardX[side];
+                        localY+=inwardY[side];
+                        step++;
+                    }
+                }
                 if(nearest>=0)
                 {
                     unsigned int walk=middle;
@@ -4880,6 +4933,16 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                         const unsigned int localY=(side==2)?0:((side==3)?mapHeight-1:walk);
                         channelCell[localX+localY*mapWidth]=1;
                         colliLayer->setCell(x0+localX,y0+localY,Tiled::Cell());
+                        //and whatever hangs ABOVE the player with it: clearing the
+                        //trunk alone left half a tree standing in the air
+                        {
+                            unsigned int aboveIndex=0;
+                            while(aboveIndex<abovePlayerLayers.size())
+                            {
+                                abovePlayerLayers.at(aboveIndex)->setCell(x0+localX,y0+localY,Tiled::Cell());
+                                aboveIndex++;
+                            }
+                        }
                         if(walk==(unsigned int)nearest)
                             break;
                         walk+=(((unsigned int)nearest>walk)?1:-1);
@@ -4934,6 +4997,20 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
     //rock around the harbour was never the point, the boat is.
     if(roadIndex.isBoat)
     {
+        //the size of the usable ship, from its own setting
+        unsigned int shipWidth=1,shipHeight=1;
+        {
+            const QStringList shipParts=setting.waterShipUsable.split(",");
+            if(shipParts.size()==3)
+            {
+                shipWidth=(unsigned int)shipParts.at(1).trimmed().toInt();
+                shipHeight=(unsigned int)shipParts.at(2).trimmed().toInt();
+            }
+            if(shipWidth<1)
+                shipWidth=1;
+            if(shipHeight<1)
+                shipHeight=1;
+        }
         int boatCell=-1;
         {
             //nearest to the border the town is on, so the walk is short
@@ -4948,9 +5025,30 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
                 {
                     const unsigned int tileX=x0+localX;
                     const unsigned int tileY=y0+localY;
-                    if(channelCell.at(localX+localY*mapWidth)!=0
-                            && waterLayer->cellAt(tileX,tileY).tile()!=NULL
-                            && colliLayer->cellAt(tileX,tileY).tile()==NULL)
+                    //the WHOLE ship has to fit on free lane water: picking one
+                    //cell and hoping the 4x3 block fitted meant the stamp was
+                    //silently refused and no boat was ever drawn
+                    bool shipFits=true;
+                    {
+                        unsigned int shipRow=0;
+                        while(shipRow<shipHeight && shipFits)
+                        {
+                            unsigned int shipColumn=0;
+                            while(shipColumn<shipWidth && shipFits)
+                            {
+                                const unsigned int cellX=localX+shipColumn;
+                                const unsigned int cellY=localY+shipRow;
+                                if(cellX>=mapWidth || cellY>=mapHeight
+                                        || channelCell.at(cellX+cellY*mapWidth)==0
+                                        || waterLayer->cellAt(x0+cellX,y0+cellY).tile()==NULL
+                                        || colliLayer->cellAt(x0+cellX,y0+cellY).tile()!=NULL)
+                                    shipFits=false;
+                                shipColumn++;
+                            }
+                            shipRow++;
+                        }
+                    }
+                    if(shipFits)
                     {
                         //touching the shore: a neighbour that is walkable ground
                         bool touchesLand=false;
@@ -5142,17 +5240,6 @@ void LoadMapAll::paintWaterChunk(Tiled::Map &worldMap,const unsigned int &chunkX
         stampTileRect(worldMap,colliLayer,setting.waterShipDecoration,shipX,shipY,waterLayer);
     }
 
-    std::vector<Tiled::TileLayer*> abovePlayerLayers;
-    {
-        unsigned int layerIndex=0;
-        while(layerIndex<(unsigned int)worldMap.layerCount())
-        {
-            Tiled::Layer * const layer=worldMap.layerAt(layerIndex);
-            if(layer->isTileLayer() && layer->name()=="WalkBehind")
-                abovePlayerLayers.push_back(static_cast<Tiled::TileLayer *>(layer));
-            layerIndex++;
-        }
-    }
     //SWIMMERS: [water] minFighter..maxFighter trainers on the open water of the
     //channel. Ordinary bot objects, so emitRoadBotsForChunk gives them their
     //inline <bot> fight definition at split time like a road trainer.
