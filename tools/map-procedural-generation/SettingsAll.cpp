@@ -230,7 +230,8 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
     if(config.waterBoatPercent>100)
         config.waterBoatPercent=100;
     config.waterHarbourChunkRadius=settings.value("harbourChunkRadius",3).toUInt();
-    config.waterShortcutMinDetour=settings.value("shortcutMinDetour",20).toUInt();
+    //0 = no shortcut at all: it is an OPT-IN, the shipped settings.ini asks for it
+    config.waterShortcutMinDetour=settings.value("shortcutMinDetour",0).toUInt();
     config.waterShortcutMaxPercent=settings.value("shortcutMaxPercent",20).toUInt();
     config.waterBorderTile=settings.value("borderTile","").toString();
     config.waterChannelHalfWidth=settings.value("channelHalfWidth",6).toUInt();

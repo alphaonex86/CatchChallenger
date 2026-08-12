@@ -578,6 +578,11 @@ public:
                                         const unsigned int &singleMapWidth, const unsigned int &singleMapHeight,
                                         const SettingsAll::SettingsExtra &setting);
     static Tiled::Tile* fetchTile(Tiled::Map &worldMap, QString data);
+    //Close the water of every border a chunk has NO link on, on EVERY map and not
+    //just the sea routes: the road generator does not look at the water, so a road
+    //chunk that happens to be all sea came out with no rock at all and the player
+    //swam off to a map edge with nothing behind it.
+    static void sealOpenWaterBorders(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting);
 };
 
 #endif // LOADMAPALL_H
