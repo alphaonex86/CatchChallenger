@@ -336,87 +336,19 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
         }
     }
 
-    //=== 2) THE BEACH ========================================================
-    //The player enters the sea where the shore is WALKABLE, and may then swim
-    //beachMin..beachMax tiles from it. Everything further out is the open sea and
-    //is closed. Nothing here knows about chunks: the coast does not stop at a map
-    //border, so neither does the band — and where the beach dies against a cliff
-    //the band simply stops there, which is what makes the wall end on the rock
-    //instead of hanging in the water.
+    //=== 2) WHAT IS SWIMMABLE AT ALL =========================================
+    //Anything that is NOT the open sea — a lake, a pond, a river mouth — is swum
+    //end to end. The open sea starts closed: it is opened only where a route
+    //needs it (the pools below and the lanes), because THE ROCK IS THERE TO GUIDE
+    //THE PLAYER, not to draw a ring around the continent.
     std::vector<unsigned char> allowed(worldWidth*worldHeight,0);
     {
-        std::vector<int> swimDistance(worldWidth*worldHeight,-1);
-        std::vector<unsigned int> queue;
-        unsigned int tileY=0;
-        while(tileY<worldHeight)
+        unsigned int cell=0;
+        while(cell<worldWidth*worldHeight)
         {
-            unsigned int tileX=0;
-            while(tileX<worldWidth)
-            {
-                const unsigned int cell=tileX+tileY*worldWidth;
-                //anything that is not the open sea is swimmable end to end
-                if(water.at(cell)!=0 && openSea.at(cell)==0)
-                    allowed[cell]=1;
-                if(water.at(cell)!=0 && openSea.at(cell)!=0 && blocked.at(cell)==0)
-                {
-                    const int stepX[4]={-1,1,0,0};
-                    const int stepY[4]={0,0,-1,1};
-                    bool fromTheShore=false;
-                    unsigned int direction=0;
-                    while(direction<4)
-                    {
-                        const int nextX=(int)tileX+stepX[direction];
-                        const int nextY=(int)tileY+stepY[direction];
-                        if(nextX>=0 && nextY>=0 && nextX<(int)worldWidth && nextY<(int)worldHeight)
-                        {
-                            const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*worldWidth;
-                            if(water.at(next)==0 && blocked.at(next)==0)
-                                fromTheShore=true;
-                        }
-                        direction++;
-                    }
-                    if(fromTheShore)
-                    {
-                        swimDistance[cell]=1;
-                        allowed[cell]=1;
-                        queue.push_back(cell);
-                    }
-                }
-                tileX++;
-            }
-            tileY++;
-        }
-        unsigned int queueIndex=0;
-        while(queueIndex<queue.size())
-        {
-            const unsigned int cell=queue.at(queueIndex);
-            queueIndex++;
-            const int cellX=(int)(cell%worldWidth);
-            const int cellY=(int)(cell/worldWidth);
-            const int stepX[4]={-1,1,0,0};
-            const int stepY[4]={0,0,-1,1};
-            unsigned int direction=0;
-            while(direction<4)
-            {
-                const int nextX=cellX+stepX[direction];
-                const int nextY=cellY+stepY[direction];
-                if(nextX>=0 && nextY>=0 && nextX<(int)worldWidth && nextY<(int)worldHeight)
-                {
-                    const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*worldWidth;
-                    if(water.at(next)!=0 && openSea.at(next)!=0
-                            && blocked.at(next)==0 && swimDistance.at(next)<0)
-                    {
-                        const unsigned int limit=seaBandLimit((unsigned int)nextX,(unsigned int)nextY,setting);
-                        if((unsigned int)(swimDistance.at(cell)+1)<=limit)
-                        {
-                            swimDistance[next]=swimDistance.at(cell)+1;
-                            allowed[next]=1;
-                            queue.push_back(next);
-                        }
-                    }
-                }
-                direction++;
-            }
+            if(water.at(cell)!=0 && openSea.at(cell)==0)
+                allowed[cell]=1;
+            cell++;
         }
     }
 
@@ -428,6 +360,9 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
     //when it must and only cuts through what really blocks it.
     unsigned int laneCount=0;
     unsigned int carvedLaneCells=0;
+    //every water cell of a lane that touches walkable ground: the beaches of the
+    //world, and the only places the open sea is ever opened
+    std::vector<unsigned int> poolSeeds;
     {
         std::vector<int> routePosition(mapXCount*mapYCount,-1);
         unsigned int routeIndex=0;
@@ -570,7 +505,28 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                             }
                         }
                         if(water.at(cell)!=0)
+                        {
                             allowed[cell]=1;
+                            //WHERE THE LANE MEETS THE BEACH: the pool of open water
+                            //the player enters the sea by is grown from there, and
+                            //nowhere else — that is what makes the rock a frame
+                            //around the way in instead of a ring round the continent
+                            const int stepX[4]={-1,1,0,0};
+                            const int stepY[4]={0,0,-1,1};
+                            unsigned int direction=0;
+                            while(direction<4)
+                            {
+                                const int shoreX=(int)tileX+stepX[direction];
+                                const int shoreY=(int)tileY+stepY[direction];
+                                if(shoreX>=0 && shoreY>=0 && shoreX<(int)worldWidth && shoreY<(int)worldHeight)
+                                {
+                                    const unsigned int shore=(unsigned int)shoreX+(unsigned int)shoreY*worldWidth;
+                                    if(water.at(shore)==0 && blocked.at(shore)==0)
+                                        poolSeeds.push_back(cell);
+                                }
+                                direction++;
+                            }
+                        }
                         //nothing grows back on a lane
                         maskVegetationAround(worldMap,tileX,tileY,1);
                         walkCell=parent.at(cell);
@@ -645,6 +601,132 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                 }
             }
             routeIndex++;
+        }
+    }
+
+    //=== 3b) THE POOLS: the framed water of every beach =======================
+    //A pool is grown from ONE beach — the cells where a lane meets walkable
+    //ground — until it holds at least [water] poolMinTiles cells. Its rock is
+    //therefore a FRAME: it runs out into the sea, comes back, and ENDS ON THE
+    //LAND at both ends of the beach, with the way in left open. Every other
+    //stretch of coast stays closed (see the rim, below), so the rock guides the
+    //player to the water instead of ringing the whole continent.
+    unsigned int poolCount=0;
+    {
+        std::vector<unsigned char> seedUsed(worldWidth*worldHeight,0);
+        std::vector<unsigned char> isSeed(worldWidth*worldHeight,0);
+        {
+            unsigned int seedIndex=0;
+            while(seedIndex<poolSeeds.size())
+            {
+                isSeed[poolSeeds.at(seedIndex)]=1;
+                seedIndex++;
+            }
+        }
+        unsigned int seedIndex=0;
+        while(seedIndex<poolSeeds.size())
+        {
+            if(seedUsed.at(poolSeeds.at(seedIndex))==0)
+            {
+                //ONE BEACH: the seeds that touch one another are the same way in
+                std::vector<unsigned int> beach;
+                {
+                    std::vector<unsigned int> queue;
+                    queue.push_back(poolSeeds.at(seedIndex));
+                    seedUsed[poolSeeds.at(seedIndex)]=1;
+                    unsigned int queueIndex=0;
+                    while(queueIndex<queue.size())
+                    {
+                        const unsigned int cell=queue.at(queueIndex);
+                        queueIndex++;
+                        beach.push_back(cell);
+                        const int cellX=(int)(cell%worldWidth);
+                        const int cellY=(int)(cell/worldWidth);
+                        int stepY=-1;
+                        while(stepY<=1)
+                        {
+                            int stepX=-1;
+                            while(stepX<=1)
+                            {
+                                const int nextX=cellX+stepX;
+                                const int nextY=cellY+stepY;
+                                if(nextX>=0 && nextY>=0 && nextX<(int)worldWidth && nextY<(int)worldHeight)
+                                {
+                                    const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*worldWidth;
+                                    if(isSeed.at(next)!=0 && seedUsed.at(next)==0)
+                                    {
+                                        seedUsed[next]=1;
+                                        queue.push_back(next);
+                                    }
+                                }
+                                stepX++;
+                            }
+                            stepY++;
+                        }
+                    }
+                }
+                //...and its POOL, grown until it is big enough to be a bay
+                unsigned int extra=0;
+                bool done=false;
+                while(!done)
+                {
+                    std::vector<int> distance(worldWidth*worldHeight,-1);
+                    std::vector<unsigned int> queue;
+                    unsigned int beachIndex=0;
+                    while(beachIndex<beach.size())
+                    {
+                        distance[beach.at(beachIndex)]=0;
+                        queue.push_back(beach.at(beachIndex));
+                        beachIndex++;
+                    }
+                    unsigned int queueIndex=0;
+                    while(queueIndex<queue.size())
+                    {
+                        const unsigned int cell=queue.at(queueIndex);
+                        queueIndex++;
+                        const int cellX=(int)(cell%worldWidth);
+                        const int cellY=(int)(cell/worldWidth);
+                        const int stepX[4]={-1,1,0,0};
+                        const int stepY[4]={0,0,-1,1};
+                        unsigned int direction=0;
+                        while(direction<4)
+                        {
+                            const int nextX=cellX+stepX[direction];
+                            const int nextY=cellY+stepY[direction];
+                            if(nextX>=0 && nextY>=0 && nextX<(int)worldWidth && nextY<(int)worldHeight)
+                            {
+                                const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*worldWidth;
+                                if(distance.at(next)<0 && water.at(next)!=0 && blocked.at(next)==0)
+                                {
+                                    const unsigned int limit=seaBandLimit((unsigned int)nextX,
+                                                                          (unsigned int)nextY,setting)+extra;
+                                    if((unsigned int)(distance.at(cell)+1)<=limit)
+                                    {
+                                        distance[next]=distance.at(cell)+1;
+                                        queue.push_back(next);
+                                    }
+                                }
+                            }
+                            direction++;
+                        }
+                    }
+                    //big enough, or as big as this bay will ever get
+                    if(queue.size()>=setting.waterPoolMinTiles || extra>=4*setting.waterBeachMax)
+                    {
+                        unsigned int poolIndex=0;
+                        while(poolIndex<queue.size())
+                        {
+                            allowed[queue.at(poolIndex)]=1;
+                            poolIndex++;
+                        }
+                        done=true;
+                        poolCount++;
+                    }
+                    else
+                        extra+=4;
+                }
+            }
+            seedIndex++;
         }
     }
 
@@ -871,6 +953,7 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                     const int stepX[4]={-1,1,0,0};
                     const int stepY[4]={0,0,-1,1};
                     bool touchesAllowed=false;
+                    bool touchesTheShore=false;
                     unsigned int direction=0;
                     while(direction<4)
                     {
@@ -881,10 +964,19 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                             const unsigned int next=(unsigned int)nextX+(unsigned int)nextY*worldWidth;
                             if(allowed.at(next)!=0 && water.at(next)!=0)
                                 touchesAllowed=true;
+                            //THE RIM. A shore the player can step off is closed by
+                            //one tile of rock IN THE WATER, right at the water line:
+                            //that is the whole coast of the world except the pools,
+                            //and it is what replaced the ring of reefs drawn ten
+                            //tiles out at sea. Where the coast is a cliff or a wood
+                            //nothing is drawn — the player cannot get in there
+                            //anyway.
+                            if(water.at(next)==0 && blocked.at(next)==0)
+                                touchesTheShore=true;
                         }
                         direction++;
                     }
-                    if(touchesAllowed)
+                    if(touchesAllowed || touchesTheShore)
                     {
                         colliLayer->setCell(tileX,tileY,Tiled::Cell(rockTile));
                         blocked[cell]=1;
@@ -1429,7 +1521,8 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
     }
 
     std::cout << "sea: " << laneCount << " lane(s) drawn (" << carvedLaneCells
-              << " cell(s) opened on the way), " << mooredBoats << " boat(s) moored, "
+              << " cell(s) opened on the way), " << poolCount << " beach pool(s), "
+              << mooredBoats << " boat(s) moored, "
               << wallCells << " rock cell(s), " << islandCount << " islet(s), "
               << seaDecorationCount << " decoration(s), " << swimmerCount << " swimmer(s)"
               << std::endl;

@@ -251,6 +251,7 @@ void SettingsAll::populateSettings(QSettings &settings, SettingsAll::SettingsExt
         config.waterBeachMin=1;
     if(config.waterBeachMax<config.waterBeachMin)
         config.waterBeachMax=config.waterBeachMin;
+    config.waterPoolMinTiles=settings.value("poolMinTiles",200).toUInt();
     config.waterBoatBorderMin=settings.value("boatBorderMin",3).toUInt();
     config.waterBoatBorderMax=settings.value("boatBorderMax",5).toUInt();
     if(config.waterBoatBorderMin<1)
