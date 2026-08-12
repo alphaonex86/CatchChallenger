@@ -369,13 +369,21 @@ static bool carveChunkCorridor(Tiled::Map &worldMap,const std::vector<Tiled::Til
             }
             layerIndex++;
         }
-        if(groundTile!=NULL)
+        //WATER IS ALREADY WALKABLE and needs no ground under it. Filling it put
+        //two tiles of land against the moored boat of a sea chunk — the corridor
+        //to the boat "door" ran over the water and paved it with the mountain of
+        //the islet, the only walkable tile that chunk had.
+        const bool onWater=(waterLayer!=NULL && waterLayer->cellAt(tileX,tileY).tile()!=NULL);
+        if(!onWater)
         {
-            if(walkLayer->cellAt(tileX,tileY).tile()==NULL)
-                walkLayer->setCell(tileX,tileY,Tiled::Cell(groundTile));
+            if(groundTile!=NULL)
+            {
+                if(walkLayer->cellAt(tileX,tileY).tile()==NULL)
+                    walkLayer->setCell(tileX,tileY,Tiled::Cell(groundTile));
+            }
+            else if(waterLayer!=NULL && waterTile!=NULL)
+                waterLayer->setCell(tileX,tileY,Tiled::Cell(waterTile));
         }
-        else if(waterLayer->cellAt(tileX,tileY).tile()==NULL)
-            waterLayer->setCell(tileX,tileY,Tiled::Cell(waterTile));
         walkCell=parent.at((unsigned int)walkCell);
     }
     return true;
@@ -1261,9 +1269,11 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
     //Joining the land masses is what the sea is for and always runs.
     if(cities.size()<2 || waterBodies.empty())
         return;
-    //how much SEA each chunk holds, and which seas it touches
+    //how much SEA each chunk holds, which seas it touches, and whether it has a
+    //SHORE at all — land against the sea, the only place a boat can be moored
     std::vector<unsigned int> chunkSeaTiles(mapXCount*mapYCount,0);
     std::vector<std::set<uint16_t> > chunkSeas(mapXCount*mapYCount);
+    std::vector<unsigned char> chunkShore(mapXCount*mapYCount,0);
     {
         unsigned int chunkY=0;
         while(chunkY<mapYCount)
@@ -1284,6 +1294,28 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                         {
                             chunkSeaTiles[chunkX+chunkY*mapXCount]++;
                             chunkSeas[chunkX+chunkY*mapXCount].insert(body);
+                        }
+                        else if(body==waterNoBody)
+                        {
+                            //land: is the sea right next to it? then this chunk has
+                            //a coast, and a ship can be tied to it
+                            const int stepX[4]={-1,1,0,0};
+                            const int stepY[4]={0,0,-1,1};
+                            unsigned int direction=0;
+                            while(direction<4)
+                            {
+                                const int nextX=(int)tileX+stepX[direction];
+                                const int nextY=(int)tileY+stepY[direction];
+                                if(nextX>=0 && nextY>=0 && nextX<(int)worldWidth
+                                        && (unsigned int)nextY<waterBodyOfTile.size()/worldWidth)
+                                {
+                                    const uint16_t nextBody=waterBodyOfTile.at((unsigned int)nextX
+                                                                               +(unsigned int)nextY*worldWidth);
+                                    if(nextBody!=waterNoBody && waterBodies.at(nextBody).isSea)
+                                        chunkShore[chunkX+chunkY*mapXCount]=1;
+                                }
+                                direction++;
+                            }
                         }
                         localX++;
                     }
@@ -1715,7 +1747,12 @@ void LoadMapAll::addWaterPaths(const unsigned int mapXCount,const unsigned int m
                             //chunk taken since by another route or by a branch down
                             //to a harbour is a ROAD map now — the road was painted
                             //over its water and no ship could fit in it any more.
-                            if(sailable.at(chunk)!=0 && mapPathDirection[chunk]==0)
+                            //...and a SHORE, land against the sea: a chunk that is
+                            //nothing but open water has nowhere to tie a boat, and
+                            //the ship ended up moored against the rock wall in the
+                            //middle of the sea
+                            if(sailable.at(chunk)!=0 && mapPathDirection[chunk]==0
+                                    && chunkShore.at(chunk)!=0)
                             {
                                 //every chunk between the town and it must be free
                                 bool wayClear=true;
