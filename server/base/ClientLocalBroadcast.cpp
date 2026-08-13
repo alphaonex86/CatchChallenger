@@ -37,13 +37,13 @@ void Client::sendLocalChatText(const std::string &text)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-        posOutput+=text.size();
+        posOutput+=(uint32_t)text.size();
 
         //sender pseudo
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.public_informations.pseudo.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.public_informations.pseudo.data(),public_and_private_informations.public_informations.pseudo.size());
-        posOutput+=public_and_private_informations.public_informations.pseudo.size();
+        posOutput+=(uint32_t)public_and_private_informations.public_informations.pseudo.size();
 
         //sender type
         if(GlobalServerData::serverSettings.dontSendPlayerType && public_and_private_informations.public_informations.type==Player_type_premium)

@@ -179,7 +179,7 @@ unsigned int MapServer::playerToFullInsert(const Client& client, char * const bu
         bufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(bufferForOutput+posOutput,text.data(),text.size());
-        posOutput+=text.size();
+        posOutput+=(unsigned int)text.size();
     }
     //skin
     bufferForOutput[posOutput]=client.public_and_private_informations.public_informations.skinId;

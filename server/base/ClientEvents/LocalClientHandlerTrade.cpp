@@ -36,7 +36,7 @@ void Client::registerTradeRequest(Client &otherPlayerTrade)
     ProtocolParsingBase::tempBigBufferForOutput[pos]=static_cast<uint8_t>(pseudo.size());
     pos+=1;
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,pseudo.data(),pseudo.size());
-    pos+=pseudo.size();
+    pos+=(uint32_t)pseudo.size();
     //skin
     ProtocolParsingBase::tempBigBufferForOutput[pos]=otherPlayerTrade.public_and_private_informations.public_informations.skinId;
     pos+=1;
@@ -442,7 +442,7 @@ void Client::internalTradeAccepted(const bool &send)
         ProtocolParsingBase::tempBigBufferForOutput[pos]=static_cast<uint8_t>(pseudo.size());
         pos+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,pseudo.data(),pseudo.size());
-        pos+=pseudo.size();
+        pos+=(unsigned int)pseudo.size();
         //skin
         ProtocolParsingBase::tempBigBufferForOutput[pos]=otherPlayerTrade.public_and_private_informations.public_informations.skinId;
         pos+=1;

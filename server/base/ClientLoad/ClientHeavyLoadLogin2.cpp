@@ -503,7 +503,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     (void)skinId;
     #elif CATCHCHALLENGER_DB_FILE
 
-    const std::string hexa=binarytoHexa(pseudo.c_str(),pseudo.size());
+    const std::string hexa=binarytoHexa(pseudo.c_str(),(uint32_t)pseudo.size());
     if(hexa.size()<1)
     {
         std::cerr << "hexa.size()<1 abort() " << __FILE__ << __LINE__ << std::endl;

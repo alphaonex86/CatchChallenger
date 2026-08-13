@@ -60,7 +60,11 @@ _CAPS_SECONDS = {
     "testingprotocolstate.py":        90 * 60,
     "testingqtserver.py":             15 * 60,
     "testingremote.py":               45 * 60,
-    "testingserver.py":               30 * 60,
+    # 64 local compile combos + remote builds (mips/geode/armv6-7-8/amd64 LXC)
+    # + functional = 291 results. Measured 2312s end-to-end with a warm ccache
+    # on 2026-08-13; the old 30m cap cut the matrix at 17/254. 2h leaves room
+    # for a cold cache without letting a genuinely hung run burn an afternoon.
+    "testingserver.py":              120 * 60,
     "testingstats.py":                10 * 60,
     "testingtools.py":                15 * 60,
     "testingwebsocket.py":            30 * 60,

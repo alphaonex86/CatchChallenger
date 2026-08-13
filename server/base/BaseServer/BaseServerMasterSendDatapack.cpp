@@ -139,7 +139,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                                 */
                                 #endif
                             }
-                            hashBase.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
+                            hashBase.update(reinterpret_cast<const unsigned char *>(data.data()),(unsigned int)data.size());
                         }
                         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                         else

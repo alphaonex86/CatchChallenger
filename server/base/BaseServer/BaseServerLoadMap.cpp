@@ -8,7 +8,7 @@
 #ifdef CATCHCHALLENGER_DUMP_DATATREE_CACHE_DATAPACK
 #include <sys/stat.h>
 #include <fstream>
-#include "../../general/hps/hps.h"
+#include "../../general/hps_quiet.hpp"
 #endif
 
 #include "../MapManagement/MapVisibilityAlgorithm.hpp"

@@ -13,7 +13,7 @@
 #include "../../../general/tinyXML2/tinyxml2.hpp"
 #endif
 #ifdef CATCHCHALLENGER_CACHE_HPS
-#include "../../../general/hps/hps.h"
+#include "../../../general/hps_quiet.hpp"
 #endif
 #ifdef CATCHCHALLENGER_DATAPACK_CPP
 #include "../DatapackCppBuffer.hpp"

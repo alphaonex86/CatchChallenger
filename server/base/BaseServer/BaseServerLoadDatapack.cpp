@@ -197,7 +197,7 @@ void BaseServer::preload_6_sync_the_datapack()
                         #endif
                         #endif
 
-                        hashBase.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
+                        hashBase.update(reinterpret_cast<const unsigned char *>(data.data()),(unsigned int)data.size());
 
                         /*useful to debug: hashBase.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
                         std::cout << str_tolower(binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_HASH_SIZE)) << "  " << fullPathFileToOpen.c_str() << std::endl;
@@ -345,7 +345,7 @@ void BaseServer::preload_6_sync_the_datapack()
                         }
                         #endif
 
-                        hashMain.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
+                        hashMain.update(reinterpret_cast<const unsigned char *>(data.data()),(unsigned int)data.size());
                     }
                 }
                 else
@@ -416,7 +416,7 @@ void BaseServer::preload_6_sync_the_datapack()
                     }
                     #endif
 
-                    hashSub.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
+                    hashSub.update(reinterpret_cast<const unsigned char *>(data.data()),(unsigned int)data.size());
                 }
                 else
                 {

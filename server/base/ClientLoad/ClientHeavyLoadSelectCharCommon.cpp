@@ -182,7 +182,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             const CharacterEntry &c=characterEntryList.at(index);
             if(c.character_id==characterId)
             {
-                hexa=binarytoHexa(c.pseudo.c_str(),c.pseudo.size());
+                hexa=binarytoHexa(c.pseudo.c_str(),(uint32_t)c.pseudo.size());
                 pseudo=c.pseudo;
                 break;
             }

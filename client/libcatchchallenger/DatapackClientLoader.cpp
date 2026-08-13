@@ -12,7 +12,7 @@
 #include "../../general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp"
 #include "../../general/base/customtinyxml2.hpp"
 #ifdef CATCHCHALLENGER_CACHE_HPS
-#include "../../general/hps/hps.h"
+#include "../../general/hps_quiet.hpp"
 #include <fstream>
 #endif
 #include <sys/stat.h>

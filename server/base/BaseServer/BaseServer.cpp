@@ -4,7 +4,7 @@
 #include "../Client.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
 #include "../../../general/base/FacilityLib.hpp"
-#include "../../../general/hps/hps.h"
+#include "../../../general/hps_quiet.hpp"
 #include <fstream>
 
 using namespace CatchChallenger;

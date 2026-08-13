@@ -151,7 +151,7 @@ void Client::characterIsRightSendData()
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-        posOutput+=text.size();
+        posOutput+=(uint32_t)text.size();
     }
     //skin
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.skinId;
