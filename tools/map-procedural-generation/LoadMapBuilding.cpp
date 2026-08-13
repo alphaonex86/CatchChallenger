@@ -534,20 +534,90 @@ bool LoadMapAll::precheckTemplates(std::vector<std::string> &errors)
     return errors.empty();
 }
 
-//comma list of an ini value, trimmed and lowercased, empty entries dropped
-static std::vector<std::string> iniStringList(const QString &value)
+//";" or "," list of an ini value, trimmed and lowercased, empty entries dropped.
+//QSettings hands back a QStringList as soon as the value holds a comma, and
+//QVariant::toString() of a list of more than one entry is EMPTY: read the value
+//as a variant, so "cityTypes=big,medium" is not silently thrown away.
+static std::vector<std::string> iniStringList(const QVariant &value)
 {
     std::vector<std::string> list;
-    const QStringList parts=value.split(",");
+    QString text;
+    if(value.typeId()==QMetaType::QStringList)
+        text=value.toStringList().join(",");
+    else
+        text=value.toString();
+    const QStringList parts=text.replace(';',',').split(",");
     int index=0;
     while(index<parts.size())
     {
-        const std::string entry=parts.at(index).trimmed().toLower().toStdString();
+        //no entry of these lists is ever more than one word, so drop every space:
+        //that also trims around the "->" of a terrain rule
+        QString part=parts.at(index);
+        const std::string entry=part.remove(' ').toLower().toStdString();
         if(!entry.empty())
             list.push_back(entry);
         index++;
     }
     return list;
+}
+
+//the same list, read as terrain rules: "sand->water" = on the sand, touching the
+//water; "grass" = on the grass, whatever is around
+static std::vector<LoadMapAll::TerrainRule> iniTerrainRuleList(const QVariant &value)
+{
+    std::vector<LoadMapAll::TerrainRule> rules;
+    const std::vector<std::string> entries=iniStringList(value);
+    unsigned int index=0;
+    while(index<entries.size())
+    {
+        const std::string &entry=entries.at(index);
+        LoadMapAll::TerrainRule rule;
+        const std::string::size_type arrow=entry.find("->");
+        if(arrow==std::string::npos)
+            rule.terrain=entry;
+        else
+        {
+            rule.terrain=entry.substr(0,arrow);
+            rule.neighbour=entry.substr(arrow+2);
+        }
+        if(rule.terrain.empty())
+            std::cerr << "terrains=" << entry << ": no terrain before the \"->\", entry ignored" << std::endl;
+        else
+            rules.push_back(rule);
+        index++;
+    }
+    return rules;
+}
+
+//QSettings reads a ";" as the start of a comment, so an unquoted "terrains=a;b"
+//silently keeps "a" alone. ";" is the separator the other ini files of the tool
+//use (settings.ini quotes those values), so say it instead of losing the list.
+static void warnUnquotedSemicolon(const QString &path)
+{
+    QFile file(path);
+    if(!file.open(QFile::ReadOnly))
+    {
+        std::cerr << "Unable to read " << path.toStdString() << std::endl;
+        return;
+    }
+    const QStringList lines=QString::fromUtf8(file.readAll()).split('\n');
+    file.close();
+    int index=0;
+    while(index<lines.size())
+    {
+        const QString line=lines.at(index).trimmed();
+        const int equal=line.indexOf('=');
+        if(equal>0 && !line.startsWith(';') && !line.startsWith('#'))
+        {
+            const QString value=line.mid(equal+1).trimmed();
+            if(!value.startsWith('"') && value.contains(';'))
+                std::cerr << path.toStdString() << ": " << line.left(equal).trimmed().toStdString()
+                          << " holds a \";\" outside quotes: everything after it is read as a "
+                          << "comment and LOST. Write it =\"" << value.toStdString()
+                          << "\" or separate with commas." << std::endl;
+        }
+        index++;
+    }
 }
 
 LoadMapAll::TemplateUse LoadMapAll::readTemplateUse(const QString &folderPath)
@@ -560,13 +630,15 @@ LoadMapAll::TemplateUse LoadMapAll::readTemplateUse(const QString &folderPath)
     const QString path=folderPath+"/how-use.ini";
     if(!QFile::exists(path))
         return use;
+    warnUnquotedSemicolon(path);
     QSettings file(path,QSettings::IniFormat);
     file.beginGroup("use");
     use.mapPercent=file.value("mapPercent",100).toUInt();
     use.minCount=file.value("min",1).toUInt();
     use.maxCount=file.value("max",use.minCount).toUInt();
-    use.terrains=iniStringList(file.value("terrains","").toString());
-    use.cityTypes=iniStringList(file.value("cityTypes","").toString());
+    //"terrain=" is accepted as the singular of "terrains="
+    use.terrains=iniTerrainRuleList(file.value("terrains",file.value("terrain","")));
+    use.cityTypes=iniStringList(file.value("cityTypes",""));
     file.endGroup();
     if(use.mapPercent>100)
     {
@@ -732,6 +804,48 @@ std::set<Tiled::Tile*> LoadMapAll::terrainTiles(const std::string &terrainName)
     return tiles;
 }
 
+std::map<const Tiled::Tile *,std::string> LoadMapAll::terrainNameByTile()
+{
+    std::map<const Tiled::Tile *,std::string> byTile;
+    int height=0;
+    while(height<5)
+    {
+        int moisure=0;
+        while(moisure<6)
+        {
+            const LoadMap::Terrain &terrain=LoadMap::terrainList[height][moisure];
+            const std::string name=terrain.terrainName.toLower().toStdString();
+            if(terrain.tile!=NULL && !name.empty())
+            {
+                byTile[terrain.tile]=name;
+                //the border band of a zone is drawn with the transition tiles of
+                //the terrain it belongs to, ON the cells of its neighbour: without
+                //them a sand cell would never be found "touching" the water, there
+                //is always that band in between
+                unsigned int index=0;
+                while(index<terrain.transition_tile.size())
+                {
+                    if(terrain.transition_tile.at(index)!=NULL)
+                        byTile.insert(std::pair<const Tiled::Tile *,std::string>(terrain.transition_tile.at(index),name));
+                    index++;
+                }
+            }
+            moisure++;
+        }
+        height++;
+    }
+    return byTile;
+}
+
+bool LoadMapAll::terrainKeywordMatch(const std::string &terrainName,const std::string &keyword)
+{
+    if(terrainName.empty() || keyword.empty())
+        return false;
+    //the [terrain] names only ever differ by a trailing variant number, so the
+    //prefix "sand" is the way to name sand and sand2 in one word
+    return terrainName.compare(0,keyword.size(),keyword)==0;
+}
+
 void LoadMapAll::scanDecorationTemplates(Tiled::Map &worldMap,const unsigned int mapWidth,const unsigned int mapHeight)
 {
     decorationGroups.clear();
@@ -748,6 +862,9 @@ void LoadMapAll::scanDecorationTemplates(Tiled::Map &worldMap,const unsigned int
         {
             DecorationGroup group;
             group.terrain=groupName.mid(3).toLower().toStdString();
+            //on-walkable is the GENERIC group: no terrain of its own, it only asks
+            //for ground the player can stand on. how-use.ini "terrains=" narrows it.
+            group.anyWalkable=(group.terrain=="walkable");
             const QDir groupDir(templateDir.absoluteFilePath(groupName));
             const QStringList variantNames=groupDir.entryList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
             int variantIndex=0;
@@ -786,7 +903,7 @@ void LoadMapAll::scanDecorationTemplates(Tiled::Map &worldMap,const unsigned int
         groupIndex++;
     }
     if(variantTotal>0)
-        std::cout << "Decoration templates: " << decorationGroups.size() << " terrain(s), "
+        std::cout << "Decoration templates: " << decorationGroups.size() << " group(s), "
                   << variantTotal << " variant(s)" << std::endl;
 }
 

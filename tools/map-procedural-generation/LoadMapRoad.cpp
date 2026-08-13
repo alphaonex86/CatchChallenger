@@ -4679,6 +4679,93 @@ void LoadMapAll::stampTileRect(Tiled::Map &worldMap,Tiled::TileLayer *layer,cons
     }
 }
 
+//the [terrain] name painted on a world cell: the ground is on the Walkable layer,
+//the water on its own. Empty when what is drawn there is not a terrain (a road, a
+//city path, a building...).
+static std::string cellTerrainName(const std::map<const Tiled::Tile *,std::string> &terrainByTile,
+                                   const Tiled::TileLayer * const walkLayer,
+                                   const Tiled::TileLayer * const waterLayer,
+                                   const unsigned int x,const unsigned int y)
+{
+    std::map<const Tiled::Tile *,std::string>::const_iterator found=
+            terrainByTile.find(walkLayer->cellAt((int)x,(int)y).tile());
+    if(found!=terrainByTile.cend())
+        return found->second;
+    if(waterLayer!=NULL)
+    {
+        found=terrainByTile.find(waterLayer->cellAt((int)x,(int)y).tile());
+        if(found!=terrainByTile.cend())
+            return found->second;
+    }
+    return std::string();
+}
+
+//how-use.ini "terrains=": the footprint must satisfy ONE of the rules (OR). A
+//rule asks that EVERY cell of the footprint is its terrain, and — when it is
+//written "sand->water" — that a cell around the footprint is the neighbour one.
+static bool footprintMatchTerrainRules(const std::vector<LoadMapAll::TerrainRule> &rules,
+                                       const std::map<const Tiled::Tile *,std::string> &terrainByTile,
+                                       const Tiled::TileLayer * const walkLayer,
+                                       const Tiled::TileLayer * const waterLayer,
+                                       const unsigned int worldWidth,const unsigned int worldHeight,
+                                       const unsigned int x,const unsigned int y,
+                                       const unsigned int width,const unsigned int height)
+{
+    if(rules.empty())
+        return true;
+    unsigned int ruleIndex=0;
+    while(ruleIndex<rules.size())
+    {
+        const LoadMapAll::TerrainRule &rule=rules.at(ruleIndex);
+        bool match=true;
+        unsigned int cellY=0;
+        while(cellY<height && match)
+        {
+            unsigned int cellX=0;
+            while(cellX<width && match)
+            {
+                if(!LoadMapAll::terrainKeywordMatch(cellTerrainName(terrainByTile,walkLayer,waterLayer,
+                                                                   x+cellX,y+cellY),rule.terrain))
+                    match=false;
+                cellX++;
+            }
+            cellY++;
+        }
+        if(match && !rule.neighbour.empty())
+        {
+            //TOUCH is measured two tiles out, not one: between two zones there is
+            //always the one tile band of transition tiles, and it belongs to one
+            //of the two, so at one tile "sand touching water" would be rare luck.
+            const unsigned int range=2;
+            const unsigned int startX=(x>range)?x-range:0;
+            const unsigned int startY=(y>range)?y-range:0;
+            const unsigned int stopX=(x+width+range<worldWidth)?x+width+range:worldWidth;
+            const unsigned int stopY=(y+height+range<worldHeight)?y+height+range:worldHeight;
+            match=false;
+            unsigned int ringY=startY;
+            while(ringY<stopY && !match)
+            {
+                unsigned int ringX=startX;
+                while(ringX<stopX && !match)
+                {
+                    if(ringX<x || ringX>=x+width || ringY<y || ringY>=y+height)
+                    {
+                        if(LoadMapAll::terrainKeywordMatch(cellTerrainName(terrainByTile,walkLayer,waterLayer,
+                                                                          ringX,ringY),rule.neighbour))
+                            match=true;
+                    }
+                    ringX++;
+                }
+                ringY++;
+            }
+        }
+        if(match)
+            return true;
+        ruleIndex++;
+    }
+    return false;
+}
+
 void LoadMapAll::addTerrainDecorations(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting)
 {
     if(decorationGroups.empty())
@@ -4731,19 +4818,27 @@ void LoadMapAll::addTerrainDecorations(Tiled::Map &worldMap,const SettingsAll::S
             groupIndex++;
         }
     }
-    //the tiles each named terrain paints with, resolved once
+    //the tiles each named terrain paints with, resolved once (an on-walkable group
+    //has no terrain of its own, its set stays empty)
     std::vector<std::set<Tiled::Tile*> > groupTiles;
     {
         unsigned int groupIndex=0;
         while(groupIndex<decorationGroups.size())
         {
-            groupTiles.push_back(terrainTiles(decorationGroups.at(groupIndex).terrain));
-            if(groupTiles.back().empty())
-                std::cerr << "template/on-" << decorationGroups.at(groupIndex).terrain
-                          << "/ names no [terrain], nothing will be placed on it" << std::endl;
+            if(decorationGroups.at(groupIndex).anyWalkable)
+                groupTiles.push_back(std::set<Tiled::Tile*>());
+            else
+            {
+                groupTiles.push_back(terrainTiles(decorationGroups.at(groupIndex).terrain));
+                if(groupTiles.back().empty())
+                    std::cerr << "template/on-" << decorationGroups.at(groupIndex).terrain
+                              << "/ names no [terrain], nothing will be placed on it" << std::endl;
+            }
             groupIndex++;
         }
     }
+    //the terrain of a cell, for the how-use.ini "terrains=" rules of every variant
+    const std::map<const Tiled::Tile *,std::string> terrainByTile=terrainNameByTile();
     const unsigned int mapWidth=setting.mapWidth;
     const unsigned int mapHeight=setting.mapHeight;
     unsigned int placedTotal=0;
@@ -4771,7 +4866,7 @@ void LoadMapAll::addTerrainDecorations(Tiled::Map &worldMap,const SettingsAll::S
                     while(variantIndex<group.variants.size())
                     {
                         const DecorationVariant &variant=group.variants.at(variantIndex);
-                        bool allowedHere=!wantedTiles.empty();
+                        bool allowedHere=group.anyWalkable || !wantedTiles.empty();
                         //optional cityTypes filter: "" also means "not in a town"
                         if(allowedHere && !variant.use.cityTypes.empty())
                             allowedHere=chunkIsCity && vectorcontainsAtLeastOne(variant.use.cityTypes,citySizeName);
@@ -4797,11 +4892,22 @@ void LoadMapAll::addTerrainDecorations(Tiled::Map &worldMap,const SettingsAll::S
                                         {
                                             const unsigned int tileX=chunkX*mapWidth+localX+cellX;
                                             const unsigned int tileY=chunkY*mapHeight+localY+cellY;
-                                            //the ground under EVERY cell must be the
-                                            //terrain this group is named after
-                                            if(wantedTiles.find(walkLayer->cellAt(tileX,tileY).tile())==wantedTiles.cend()
-                                                    && (waterLayer==NULL
-                                                        || wantedTiles.find(waterLayer->cellAt(tileX,tileY).tile())==wantedTiles.cend()))
+                                            //what EVERY cell of the footprint must be:
+                                            //on-walkable, ground the player stands on
+                                            //(the Walkable layer is empty on the water
+                                            //and on a ledge); on-<terrain>, that terrain.
+                                            //The decoration may well be a collision
+                                            //itself - a tree trunk - what has to be free
+                                            //of collision is the ground under it, and
+                                            //that is the blockingLayers test below.
+                                            bool groundIsRight;
+                                            if(group.anyWalkable)
+                                                groundIsRight=(walkLayer->cellAt(tileX,tileY).tile()!=NULL);
+                                            else
+                                                groundIsRight=(wantedTiles.find(walkLayer->cellAt(tileX,tileY).tile())!=wantedTiles.cend()
+                                                        || (waterLayer!=NULL
+                                                            && wantedTiles.find(waterLayer->cellAt(tileX,tileY).tile())!=wantedTiles.cend()));
+                                            if(!groundIsRight)
                                                 valid=false;
                                             else
                                             {
@@ -4829,6 +4935,15 @@ void LoadMapAll::addTerrainDecorations(Tiled::Map &worldMap,const SettingsAll::S
                                         }
                                         cellY++;
                                     }
+                                    //and the "terrains=" rules of its own how-use.ini
+                                    if(valid)
+                                        valid=footprintMatchTerrainRules(variant.use.terrains,terrainByTile,
+                                                                         walkLayer,waterLayer,
+                                                                         (unsigned int)worldMap.width(),
+                                                                         (unsigned int)worldMap.height(),
+                                                                         chunkX*mapWidth+(unsigned int)localX,
+                                                                         chunkY*mapHeight+(unsigned int)localY,
+                                                                         (unsigned int)width,(unsigned int)height);
                                     if(valid)
                                     {
                                         MapBrush::brushTheMap(worldMap,variant.mapTemplate,
