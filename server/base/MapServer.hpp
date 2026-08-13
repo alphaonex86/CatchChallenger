@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_MAP_VISIBILITY_SIMPLE_SERVERMAP_H
 
 #ifdef CATCHCHALLENGER_CACHE_HPS
-#include "../../general/hps/hps.h"
+#include "../../general/hps_quiet.hpp"
 #endif
 #include "../../general/base/CommonMap/CommonMap.hpp"
 #include "../../general/base/GeneralStructures.hpp"

@@ -259,7 +259,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                         }
                         #endif
                         CatchChallenger::Hash ctx;
-                        ctx.update(reinterpret_cast<const unsigned char *>(secretTokenBinary.data()),secretTokenBinary.size());
+                        ctx.update(reinterpret_cast<const unsigned char *>(secretTokenBinary.data()),(unsigned int)secretTokenBinary.size());
                         ctx.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
                         BaseServerLogin::tokenForAuthSize--;
                         //see to do with SIMD
@@ -372,7 +372,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                             data[posOutput]=static_cast<uint8_t>(text.size());
                             posOutput+=1;
                             memcpy(data+posOutput,text.data(),text.size());
-                            posOutput+=text.size();
+                            posOutput+=(uint32_t)text.size();
                         }
                     }
                     data[posOutput]=characterEntry.skinId;
@@ -769,7 +769,7 @@ uint32_t Client::send_characterEntryList(const std::vector<CharacterEntry> &char
                 data[posOutput]=static_cast<uint8_t>(text.size());
                 posOutput+=1;
                 memcpy(data+posOutput,text.data(),text.size());
-                posOutput+=text.size();
+                posOutput+=(uint32_t)text.size();
             }
         }
         data[posOutput]=characterEntry.skinId;

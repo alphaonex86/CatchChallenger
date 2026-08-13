@@ -88,7 +88,9 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
         error="the root node has not the attribute \"width\"";
         return false;
     }
-    map_to_send_temp.width=stringtouint32(root->Attribute("width"),&ok);
+    //keep the parsed value in its full width: assigning it straight into the uint8_t
+    //field truncated before the 1..127 test below, so width="257" became 1 and passed
+    const uint32_t widthRead=stringtouint32(root->Attribute("width"),&ok);
     if(!ok)
     {
         error="the root node has wrong attribute \"width\"";
@@ -101,24 +103,26 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
         error="the root node has not the attribute \"height\"";
         return false;
     }
-    map_to_send_temp.height=stringtouint32(root->Attribute("height"),&ok);
+    const uint32_t heightRead=stringtouint32(root->Attribute("height"),&ok);
     if(!ok)
     {
         error="the root node has wrong attribute \"height\"";
         return false;
     }
 
-    //check the size
-    if(map_to_send_temp.width<1 || map_to_send_temp.width>127)
+    //check the size on the full parsed value, before it is narrowed to the uint8_t field
+    if(widthRead<1 || widthRead>127)
     {
         error="the width should be greater or equal than 1, and lower or equal to 127";
         return false;
     }
-    if(map_to_send_temp.height<1 || map_to_send_temp.height>127)
+    if(heightRead<1 || heightRead>127)
     {
         error="the height should be greater or equal than 1, and lower or equal to 127";
         return false;
     }
+    map_to_send_temp.width=(uint8_t)widthRead;
+    map_to_send_temp.height=(uint8_t)heightRead;
 
     //properties
     const tinyxml2::XMLElement * child = root->FirstChildElement("properties");

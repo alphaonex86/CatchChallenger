@@ -15,7 +15,7 @@
 
 #ifdef CATCHCHALLENGER_DB_FILE
 #ifdef CATCHCHALLENGER_CACHE_HPS
-#include "../../general/hps/hps.h"
+#include "../../general/hps_quiet.hpp"
 #endif
 #endif
 

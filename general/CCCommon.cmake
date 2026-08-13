@@ -147,6 +147,7 @@ target_compile_options(catchchallenger_common_flags INTERFACE
     -fno-exceptions
     -Wall
     -Wextra
+    -Wconversion
     -Wno-missing-braces
 )
 # -fno-rtti is a C++-only flag; passing it to C sources (e.g. the vendored

@@ -47,7 +47,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const std::vector<MapMonster> 
             break;
         }
         else
-            randomMonsterInt-=luck;
+            randomMonsterInt=(uint8_t)(randomMonsterInt-luck);//this branch only runs when randomMonsterInt>luck
         index++;
     }
     if(!monsterFound)

@@ -125,7 +125,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                 posOutput+=1;
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                posOutput+=text.size();
+                posOutput+=(uint32_t)text.size();
             }
             {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -274,7 +274,7 @@ void Client::startTheCityCapture()
                         index++;
                     }
                     /// \todo take care about clan_count overflow
-                    clan_count+=tempCaptureCityValidated.clanSize.size();
+                    clan_count+=(int)tempCaptureCityValidated.clanSize.size();
                 }
                 //do the PvP
                 index=0;

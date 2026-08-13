@@ -38,7 +38,7 @@ void Client::registerBattleRequest(Client &otherPlayerBattle)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-        posOutput+=text.size();
+        posOutput+=(uint32_t)text.size();
     }
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=otherPlayerBattle.get_public_and_private_informations().public_informations.skinId;
     posOutput+=1;
@@ -206,7 +206,7 @@ void Client::internalBattleAccepted(const bool &send)
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-            posOutput+=text.size();
+            posOutput+=(uint32_t)text.size();
         }
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=c.get_public_and_private_informations().public_informations.skinId;
         posOutput+=1;

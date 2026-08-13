@@ -39,7 +39,7 @@ void Client::sendSystemMessage(const std::string &text, const bool &important, c
 
         posOutput+=2;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-        posOutput+=text.size();
+        posOutput+=(uint32_t)text.size();
     }
 
     {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
@@ -147,14 +147,14 @@ bool Client::receiveChatText(const Chat_type &chatType, const std::string &text,
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-        posOutput+=text.size();
+        posOutput+=(uint32_t)text.size();
     }
     {
         const std::string &text=sender_informations.public_and_private_informations.public_informations.pseudo;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-        posOutput+=text.size();
+        posOutput+=(uint32_t)text.size();
     }
     if(GlobalServerData::serverSettings.dontSendPlayerType)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Player_type_normal;
@@ -189,7 +189,7 @@ bool Client::receiveSystemText(const std::string &text,const bool &important)
 
         posOutput+=2;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-        posOutput+=text.size();
+        posOutput+=(uint32_t)text.size();
     }
 
     {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
@@ -232,14 +232,14 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                     posOutput+=1;
                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                    posOutput+=text.size();
+                    posOutput+=(uint32_t)text.size();
                 }
                 {
                     const std::string &text=public_and_private_informations.public_informations.pseudo;
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                     posOutput+=1;
                     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                    posOutput+=text.size();
+                    posOutput+=(uint32_t)text.size();
                 }
                 if(GlobalServerData::serverSettings.dontSendPlayerType)
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Player_type_normal;
@@ -281,14 +281,14 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-            posOutput+=text.size();
+            posOutput+=(uint32_t)text.size();
         }
         {
             const std::string &text=public_and_private_informations.public_informations.pseudo;
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-            posOutput+=text.size();
+            posOutput+=(uint32_t)text.size();
         }
         if(GlobalServerData::serverSettings.dontSendPlayerType)
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Player_type_normal;
@@ -412,7 +412,7 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
                 if(!ClientList::list->isNull(index))
                 {
                     const std::string &pseudo=ClientList::list->at(index).public_and_private_informations.public_informations.pseudo;
-                    textSize+=3/*text_startbold*/+pseudo.size()+4/*text_stopbold*/+2/*text_commaspace*/;
+                    textSize+=(uint16_t)3/*text_startbold*/+pseudo.size()+4/*text_stopbold*/+2/*text_commaspace*/;
                     if(textSize>5000)
                     {
                         receiveSystemText("Too long player list to be send!");

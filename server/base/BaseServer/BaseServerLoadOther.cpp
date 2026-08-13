@@ -62,7 +62,7 @@ void BaseServer::preload_30_sync_other()
 
                 posOutput+=2;
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                posOutput+=text.size();
+                posOutput+=(uint32_t)text.size();
             }
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;//logical group empty
             posOutput+=1;
@@ -168,7 +168,7 @@ void BaseServer::preload_30_sync_other()
             #endif
         }
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
-        posOutput+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
+        posOutput+=(uint32_t)CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
         {
             const std::string &text=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
             if(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.size()>255)
@@ -179,7 +179,7 @@ void BaseServer::preload_30_sync_other()
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-            posOutput+=text.size();
+            posOutput+=(uint32_t)text.size();
         }
 
         if(posOutput>65535)
@@ -269,7 +269,7 @@ void BaseServer::preload_30_sync_other()
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-            posOutput+=text.size();
+            posOutput+=(uint32_t)text.size();
         }
         //Sub type code
         {
@@ -282,7 +282,7 @@ void BaseServer::preload_30_sync_other()
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-            posOutput+=text.size();
+            posOutput+=(uint32_t)text.size();
         }
         if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=CATCHCHALLENGER_HASH_SIZE)
         {
@@ -335,7 +335,7 @@ void BaseServer::preload_30_sync_other()
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-            posOutput+=text.size();
+            posOutput+=(uint32_t)text.size();
         }
         //everyBodyIsRoot
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.everyBodyIsRoot;

@@ -23,7 +23,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include "../../general/hps/hps.h"
+#include "../../general/hps_quiet.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
@@ -1192,7 +1192,7 @@ void Client::saveCharacterFiles() const {
     }
     const std::string hexa=binarytoHexa(
         public_and_private_informations.public_informations.pseudo.c_str(),
-        public_and_private_informations.public_informations.pseudo.size());
+        (uint32_t)public_and_private_informations.public_informations.pseudo.size());
     {
         //Compose in memory (both DB modes), then persist: RAM store for
         //DB_INTERNAL_VARS, else whole-file write (routed through io_uring when
@@ -1240,7 +1240,7 @@ bool Client::loadCharacterServerFile() {
     }
     const std::string hexa=binarytoHexa(
         public_and_private_informations.public_informations.pseudo.c_str(),
-        public_and_private_informations.public_informations.pseudo.size());
+        (uint32_t)public_and_private_informations.public_informations.pseudo.size());
 #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
     if(CatchChallenger::dbInternalVarsStore.count(std::string("database/server/characters/")+hexa)==0)
         return false;

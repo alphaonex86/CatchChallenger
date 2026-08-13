@@ -658,12 +658,12 @@ void BaseServer::preload_industries_return()
         std::cout << "map pathSize size: " << pathSize << "B" << std::endl;
         std::cout << "map size: " << mapSize << "B" << std::endl;
 
-        CATCHCHALLENGER_TYPE_MAPID dbSize=0;
+        uint32_t dbSize=0;//a byte count, like idSize/pathSize/mapSize above — not a map id
         lastSize=out_file->tellp();
 
         hps::to_stream(DictionaryServer::dictionary_map_database_to_internal, *out_file);
 
-        dbSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
+        dbSize+=(uint32_t)((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
         std::cout << "DictionaryServer Size: " << dbSize << "B" << std::endl;
 
         out_file->flush();

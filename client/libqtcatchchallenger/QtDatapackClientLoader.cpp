@@ -11,7 +11,7 @@
 #include "Settings.hpp"
 #include "Language.hpp"
 #ifdef CATCHCHALLENGER_CACHE_HPS
-#include "../../general/hps/hps.h"
+#include "../../general/hps_quiet.hpp"
 #include <fstream>
 #include <QStandardPaths>
 #endif

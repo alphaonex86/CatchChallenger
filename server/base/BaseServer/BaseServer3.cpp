@@ -9,7 +9,7 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/Version.hpp"
-#include "../../general/hps/hps.h"
+#include "../../general/hps_quiet.hpp"
 #include <fstream>
 
 using namespace CatchChallenger;

@@ -39,10 +39,9 @@
 #include <cstdint>
 #include <string>
 #include <type_traits>
-#include "../../general/hps/serializer.h"
+#include "../../general/hps_quiet.hpp"
 // Needed so the Serializer<char,…> override below can delegate to the REAL
 // signed-char (zigzag) serializer, not the generic t.parse() primary template.
-#include "../../general/hps/basic_type/int_serializer.h"
 
 namespace CatchChallenger {
 

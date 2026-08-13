@@ -15,7 +15,7 @@
 #include <sstream>
 #include <dirent.h>
 #include <unistd.h>
-#include "../../../general/hps/hps.h"
+#include "../../../general/hps_quiet.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #endif
 
@@ -600,7 +600,7 @@ void Client::sendClanInfo()
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(clan.name.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,clan.name.data(),clan.name.size());
-        posOutput+=clan.name.size();
+        posOutput+=(uint32_t)clan.name.size();
     }
     {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -644,7 +644,7 @@ bool Client::inviteToClan(const uint32_t &clanId)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-        posOutput+=text.size();
+        posOutput+=(uint32_t)text.size();
     }
     {const uint32_t _tmp_le=(htole32(posOutput-1-4));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);

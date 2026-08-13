@@ -183,7 +183,7 @@ std::string StringWithReplacement::originalQuery() const
     {
         std::string arg("%"+std::to_string(index+1));
         memcpy(composeBuffer+posComposeBuffer,arg.data(),arg.size());
-        posComposeBuffer+=arg.size();
+        posComposeBuffer+=(uint16_t)arg.size();
 
         uint16_t tempSize=0;
         memcpy(&tempSize,preparedQuery+pos,sizeof(tempSize));
@@ -191,7 +191,7 @@ std::string StringWithReplacement::originalQuery() const
         //chunk size is 16bit: advance by the full tempSize, not just its low byte
         //(preparedQuery[pos]) which would desync the walk for chunks >255 bytes
         posComposeBuffer+=tempSize;
-        pos+=2+tempSize;
+        pos=(uint16_t)(pos+2+tempSize);
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
@@ -258,7 +258,7 @@ uint16_t StringWithReplacement::preparedQuerySize(const unsigned char * const pr
         //the computed size undercounts and the copy ctor/assignment truncate the buffer
         uint16_t tempSize=0;
         memcpy(&tempSize,preparedQuery+pos,sizeof(tempSize));
-        pos+=2+tempSize;
+        pos=(uint16_t)(pos+2+tempSize);
         ++index;
     }
     return pos;
@@ -326,12 +326,12 @@ std::string StringWithReplacement::compose(const std::vector<std::string> &value
     while(index<partCount)
     {
         memcpy(composeBuffer+posComposeBuffer,values.at(index).data(),values.at(index).size());
-        posComposeBuffer+=values.at(index).size();
+        posComposeBuffer+=(uint16_t)values.at(index).size();
         uint16_t tempSize=0;
         memcpy(&tempSize,preparedQuery+pos,sizeof(tempSize));
         memcpy(composeBuffer+posComposeBuffer,preparedQuery+pos+2,tempSize);
         posComposeBuffer+=tempSize;
-        pos+=2+tempSize;
+        pos=(uint16_t)(pos+2+tempSize);
         ++index;
     }
     return std::string(composeBuffer,posComposeBuffer);
