@@ -222,14 +222,27 @@ public:
     //  mapPercent=10   ; chance this template is used at all on an eligible map
     //  min=1           ; how many copies when it IS used
     //  max=3
-    //  terrains=grass,sand   ; optional, empty = any surrounding terrain
+    //  terrains="grass;sand" ; optional, empty = any terrain
     //  cityTypes=big,medium  ; optional, empty = any city size
+    //A list is separated by ";" or ",". A ";" MUST be inside quotes, like the
+    //lists of settings.ini: QSettings reads an unquoted one as the start of a
+    //comment and the rest of the line is lost (said aloud, never silently).
+    //One "terrains" entry is a terrain name, or "<terrain>-><neighbour>": the
+    //ground must be <terrain> AND touch <neighbour>. The list is an OR, so
+    //  terrains="sand->water;sand->grass;grass"
+    //means sand by the water, OR sand by the grass, OR grass anywhere. A name
+    //matches as a PREFIX of the [terrain] names, so "sand" also covers "sand2".
+    struct TerrainRule
+    {
+        std::string terrain;
+        std::string neighbour;//empty = no adjacency asked
+    };
     struct TemplateUse
     {
         bool valid;//false = no how-use.ini, the group is never spawned on its own
         unsigned int mapPercent;
         unsigned int minCount,maxCount;
-        std::vector<std::string> terrains;
+        std::vector<TerrainRule> terrains;
         std::vector<std::string> cityTypes;
     };
     struct BuildingGroup
@@ -272,30 +285,46 @@ public:
     static void loadCityStyleOverrides();
     //the forced style of a city, empty when the file has no line for it
     static std::string cityStyleOverride(const std::string &cityName);
-    //template/on-<terrain>/<name>/ : a DECORATION brushed on the terrain it is
-    //named after, as often as its OWN how-use.ini says (per variant, not per
-    //group). <terrain> is a [terrain] name — on-grass, on-water, on-mountain,
-    //on-sand, on-snow... — or "cave" for the floor of a cave interior. It is NOT
-    //a building: no door is wired, no interior is written, it is only brushed.
-    //Discovered on disk like everything else, nothing to declare.
+    //template/on-<what>/<name>/ : a DECORATION brushed as often as its OWN
+    //how-use.ini says (per variant, not per group). It is NOT a building: no door
+    //is wired, no interior is written, it is only brushed. Discovered on disk like
+    //everything else, nothing to declare.
+    //<what> is either:
+    //  walkable — the GENERIC one: any cell the player can stand on, whatever the
+    //             terrain (a Walkable tile, no Collisions, no WalkBehind). The
+    //             decoration may well BE a collision itself (a tree trunk): what
+    //             must be free of collision is the ground it is planted on.
+    //  a [terrain] name — on-grass, on-water, on-mountain, on-sand, on-snow...:
+    //             every cell of the footprint must be painted with that terrain
+    //             (that is how a decoration goes on the WATER, where nothing walks).
+    //In both cases the how-use.ini "terrains=" rules narrow it further.
     struct DecorationVariant
     {
-        std::string folder;//"on-grass/flower1"
+        std::string folder;//"on-walkable/big-tree"
         MapBrush::MapTemplate mapTemplate;
         TemplateUse use;
     };
     struct DecorationGroup
     {
-        std::string terrain;//"grass", "water", "cave"...
+        //"walkable" = anyWalkable, else a [terrain] name: "grass", "water"...
+        std::string terrain;
+        bool anyWalkable;
         std::vector<DecorationVariant> variants;
     };
     static std::vector<DecorationGroup> decorationGroups;
     static void scanDecorationTemplates(Tiled::Map &worldMap,const unsigned int mapWidth,const unsigned int mapHeight);
-    //brush the decorations of every chunk, on the cells whose terrain matches.
+    //brush the decorations of every chunk, on the cells that match.
     //Runs BEFORE the vegetation so a decoration can mask the trees off itself.
     static void addTerrainDecorations(Tiled::Map &worldMap,const SettingsAll::SettingsExtra &setting);
     //the tiles a [terrain] name paints with, for the terrain match above
     static std::set<Tiled::Tile*> terrainTiles(const std::string &terrainName);
+    //Tile -> [terrain] name, for "terrains=" of how-use.ini. The BORDER band of a
+    //zone is drawn with the transition tiles of the terrain it belongs to, so
+    //those count as that terrain too, else two zones would never look adjacent.
+    static std::map<const Tiled::Tile *,std::string> terrainNameByTile();
+    //a "terrains=" keyword against a [terrain] name: prefix match, so the single
+    //keyword "sand" covers both the "sand" and the "sand2" terrains
+    static bool terrainKeywordMatch(const std::string &terrainName,const std::string &keyword);
 
     static std::map<std::string,BuildingGroup> buildingGroups;
     //the discovered "*-city" style groups, in scan order
