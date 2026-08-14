@@ -2,6 +2,8 @@
 #define LOADMAPALL_H
 
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"
+//every pass of the generator draws with customRand("<what for>"), never rand()
+#include "../map-procedural-generation-terrain/CustomRand.h"
 #include <libtiled/map.h>
 #include <libtiled/mapobject.h>
 #include "../../general/base/cpp11addition.hpp"
@@ -244,6 +246,13 @@ public:
         unsigned int minCount,maxCount;
         std::vector<TerrainRule> terrains;
         std::vector<std::string> cityTypes;
+        //customRand() stream of THIS template: its own how-use.ini path relative
+        //to the binary ("template/sea/cargo-ship/how-use.ini"). Not a literal, but
+        //still a fixed IDENTITY — one asset on disk, one stream — which is the
+        //point: dropping a new template folder in must not shift what the ones
+        //already there roll. A shared stream made every optional template of the
+        //run move as soon as one more was scanned before it.
+        std::string reason;
     };
     struct BuildingGroup
     {
@@ -419,11 +428,12 @@ public:
     };
     static std::vector<BuildingRect> cityBuildingRects;
 
-    //Re-seed rand() for a CHUNK-LOCAL pass, from the world seed and the chunk
-    //coordinates. Every chunk then draws from its OWN stream: changing how many
-    //random numbers one chunk consumes (a new feature, a reordered block) can no
-    //longer shift the content of every other chunk of the world, so a diff stays
-    //readable and a regression stays local.
+    //Salt every customRand() stream for a CHUNK-LOCAL pass, from the world seed
+    //and the chunk coordinates, and reset their counters. Every chunk then draws
+    //from its OWN stream: changing how many random numbers one chunk consumes (a
+    //new feature, a reordered block) can no longer shift the content of every
+    //other chunk of the world, so a diff stays readable and a regression stays
+    //local.
     //ONLY for passes whose result depends on that chunk alone. The height /
     //moisure / voronoi noise is global by construction and keeps the single
     //global sequence — reseeding it per chunk would tile the world.

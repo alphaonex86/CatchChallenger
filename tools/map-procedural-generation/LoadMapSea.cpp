@@ -24,7 +24,7 @@ std::vector<unsigned char> LoadMapAll::seaWallCells;
 std::vector<LoadMapAll::DecorationVariant> LoadMapAll::seaDecorations;
 
 //Cheap integer hash, the same mix as seedChunk: two neighbouring tiles must not
-//come out correlated. Used instead of rand() because this pass runs on the WHOLE
+//come out correlated. Used instead of customRand() because this pass runs on the WHOLE
 //world at once — a per chunk stream would make the coast of one map depend on how
 //many numbers the map before it drew.
 static uint32_t seaHash(const unsigned int &x,const unsigned int &y,const unsigned int &seed)
@@ -1302,12 +1302,16 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                         unsigned int wanted=templateUseCount(variant.use);
                         const unsigned int width=variant.mapTemplate.width;
                         const unsigned int height=variant.mapTemplate.height;
+                        //the stream of THIS sea template, not a shared one: dropping
+                        //a new template/sea/ folder in must not move the ones already
+                        //drawn on the lane
+                        const char * const decorationReason=variant.use.reason.c_str();
                         unsigned int tries=0;
                         while(wanted>0 && tries<80 && width+4<mapWidth && height+4<mapHeight)
                         {
                             tries++;
-                            const unsigned int localX=2+(unsigned int)(rand()%(int)(mapWidth-4-width));
-                            const unsigned int localY=2+(unsigned int)(rand()%(int)(mapHeight-4-height));
+                            const unsigned int localX=2+(unsigned int)(customRand(decorationReason)%(int)(mapWidth-4-width));
+                            const unsigned int localY=2+(unsigned int)(customRand(decorationReason)%(int)(mapHeight-4-height));
                             //room INSIDE the rock: every cell open water of the lane,
                             //and the way past it must stay open, so a ring of lane
                             //water is asked for around the whole footprint
@@ -1367,10 +1371,10 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                                                 QPointF(botX*worldMap.tileWidth(),(botY+1)*worldMap.tileHeight()),
                                                 QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
                                             bot->setProperty("id",QString::number(1));
-                                            bot->setProperty("lookAt",QString::fromLatin1(lookDirs[rand()%4]));
+                                            bot->setProperty("lookAt",QString::fromLatin1(lookDirs[customRand(decorationReason)%4]));
                                             if(!setting.botSkins.empty())
                                                 bot->setProperty("skin",QString::fromStdString(
-                                                                     setting.botSkins.at(rand()%setting.botSkins.size())));
+                                                                     setting.botSkins.at(customRand(decorationReason)%setting.botSkins.size())));
                                             Tiled::Cell botCell;
                                             botCell.setTile(invisibleTileset->tileAt(0));
                                             bot->setCell(botCell);
@@ -1392,13 +1396,13 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                     {
                         unsigned int wanted=setting.waterMinFighter;
                         if(setting.waterMaxFighter>setting.waterMinFighter)
-                            wanted+=rand()%(setting.waterMaxFighter-setting.waterMinFighter+1);
+                            wanted+=customRand("sea-swimmer-count")%(setting.waterMaxFighter-setting.waterMinFighter+1);
                         unsigned int tries=0;
                         while(wanted>0 && tries<200)
                         {
                             tries++;
-                            const unsigned int tileX=x0+2+(unsigned int)(rand()%(int)(mapWidth-4));
-                            const unsigned int tileY=y0+2+(unsigned int)(rand()%(int)(mapHeight-4));
+                            const unsigned int tileX=x0+2+(unsigned int)(customRand("sea-swimmer-x")%(int)(mapWidth-4));
+                            const unsigned int tileY=y0+2+(unsigned int)(customRand("sea-swimmer-y")%(int)(mapHeight-4));
                             const unsigned int cell=tileX+tileY*worldWidth;
                             bool covered=false;
                             unsigned int aboveIndex=0;
@@ -1416,9 +1420,9 @@ void LoadMapAll::addSeaContent(Tiled::Map &worldMap,const SettingsAll::SettingsE
                                     QPointF(tileX*worldMap.tileWidth(),(tileY+1)*worldMap.tileHeight()),
                                     QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
                                 bot->setProperty("id",QString::number(wanted));
-                                bot->setProperty("lookAt",QString::fromLatin1(lookDirs[rand()%4]));
+                                bot->setProperty("lookAt",QString::fromLatin1(lookDirs[customRand("sea-swimmer-look")%4]));
                                 bot->setProperty("skin",QString::fromStdString(
-                                                     setting.botSkins.at(rand()%setting.botSkins.size())));
+                                                     setting.botSkins.at(customRand("sea-swimmer-skin")%setting.botSkins.size())));
                                 Tiled::Cell botCell;
                                 botCell.setTile(invisibleTileset->tileAt(0));
                                 bot->setCell(botCell);
