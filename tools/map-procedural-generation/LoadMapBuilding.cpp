@@ -628,6 +628,15 @@ LoadMapAll::TemplateUse LoadMapAll::readTemplateUse(const QString &folderPath)
     use.minCount=0;
     use.maxCount=0;
     const QString path=folderPath+"/how-use.ini";
+    //the customRand() stream of this template, named after the file that
+    //configures it. RELATIVE to the binary: an absolute path would make the world
+    //depend on where the build directory sits.
+    const QString relativePath=QDir(QCoreApplication::applicationDirPath()).relativeFilePath(path);
+    if(relativePath.startsWith(".."))
+        std::cerr << path.toStdString() << " is outside the binary directory: its random stream "
+                  << "is named " << relativePath.toStdString() << " and will not survive a move"
+                  << std::endl;
+    use.reason=relativePath.toStdString();
     if(!QFile::exists(path))
         return use;
     warnUnquotedSemicolon(path);
@@ -660,13 +669,16 @@ unsigned int LoadMapAll::templateUseCount(const TemplateUse &use)
 {
     if(!use.valid || use.mapPercent==0 || use.maxCount==0)
         return 0;
-    //the caller has already re-seeded rand() for this chunk (seedChunk), so this
-    //is deterministic and local to the map being built
-    if((unsigned int)(rand()%100)>=use.mapPercent)
+    //the caller has already salted the customRand() streams for this chunk
+    //(seedChunk), so this is deterministic and local to the map being built.
+    //The stream is the template's OWN how-use.ini: adding a template folder to
+    //the run must not move what every other optional template rolls.
+    const char * const reason=use.reason.c_str();
+    if((unsigned int)(customRand(reason)%100)>=use.mapPercent)
         return 0;
     if(use.maxCount==use.minCount)
         return use.minCount;
-    return use.minCount+(unsigned int)(rand()%(use.maxCount-use.minCount+1));
+    return use.minCount+(unsigned int)(customRand(reason)%(use.maxCount-use.minCount+1));
 }
 
 std::string LoadMapAll::cityStyleStem(const std::string &style)
@@ -1237,8 +1249,11 @@ QString LoadMapAll::fightStepXml(const unsigned int &stepId,const bool &leader,
                                  const QString &startText,const QString &winText)
 {
     (void)setting;
-    //team size 1..4 (same math as the road trainers), the leader fields one more
-    int monsterCount=rand()%2 + rand()%3 + 1;
+    //team size 1..4 (same math as the road trainers), the leader fields one more.
+    //Two reasons rather than one drawn twice: the order the two terms of a sum are
+    //evaluated in is up to the compiler, and the two moduli differ, so one stream
+    //would hand a different team to a different compiler.
+    int monsterCount=customRand("building-fight-team-size")%2 + customRand("building-fight-team-extra")%3 + 1;
     if(leader)
         monsterCount++;
     int reward=level*30+100;
@@ -1256,16 +1271,16 @@ QString LoadMapAll::fightStepXml(const unsigned int &stepId,const bool &leader,
             else if(leader && indexMonster==monsterCount-1)
                 useGymPool=true;
             else
-                useGymPool=(rand()%2==0);
+                useGymPool=(customRand("building-fight-gym-pool")%2==0);
         }
-        int monsterLevel=level*(95+rand()%10)/100;
+        int monsterLevel=level*(95+customRand("building-fight-level")%10)/100;
         if(monsterLevel<1)
             monsterLevel=1;
         QString monsterId;
         if(useGymPool)
-            monsterId=QString::fromStdString(gymTypeMonsters.at(rand()%gymTypeMonsters.size()));
+            monsterId=QString::fromStdString(gymTypeMonsters.at(customRand("building-fight-gym-monster")%gymTypeMonsters.size()));
         else
-            monsterId=monsterRef(monsterPool.at(rand()%monsterPool.size()).monsterId,setting);
+            monsterId=monsterRef(monsterPool.at(customRand("building-fight-city-monster")%monsterPool.size()).monsterId,setting);
         monsterXml+="      <monster id=\""+monsterId+"\" level=\""+QString::number(monsterLevel)+"\"/>\n";
         reward+=monsterLevel*monsterLevel;
         indexMonster++;

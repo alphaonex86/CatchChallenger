@@ -3,10 +3,10 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
-#include <random>
 #include <QList>
 #include <QPointF>
 
+#include "CustomRand.h"
 #include "PoissonGenerator.h"
 #include "znoise/headers/Simplex.hpp"
 
@@ -29,27 +29,41 @@ double VoronioForTiledMapTmx::area(const QPolygonF &p) {
     return 0.5 * a;
 }
 
-Grid VoronioForTiledMapTmx::generateGrid(const unsigned int w, const unsigned int h, const unsigned int seed, const int num,const int scale) {
-    std::mt19937 gen(seed);
-    /*std::uniform_real_distribution<double> disw(0,w);
-    std::uniform_real_distribution<double> dish(0,h);*/
-    std::uniform_real_distribution<double> dis(-0.75, 0.75);
+//The generator the Poisson sampler draws from, in place of the header's
+//DefaultPRNG: that one owns a std::mt19937 seeded apart from everything else
+//(and its no-argument constructor seeds from the clock). Written here rather
+//than patched into PoissonGenerator.h -- the sampler takes its PRNG as a
+//template parameter, so the vendored header stays untouched.
+class CustomRandPRNG
+{
+public:
+    float RandomFloat()
+    {
+        return (float)((double)customRand("voronoi-poisson-point")/(double)customRandMax);
+    }
+    int RandomInt(int max)
+    {
+        if(max<=0)
+            return 0;
+        return customRand("voronoi-poisson-index")%(max+1);
+    }
+};
 
+Grid VoronioForTiledMapTmx::generateGrid(const unsigned int w, const unsigned int h, const int num,const int scale) {
     Grid g;
     g.reserve(size_t(w) * size_t(h));
 
-    /*    for (int x = 0; x < num; ++x)
-        g.push_back(Point(disw(gen)*SCALE,dish(gen)*SCALE));*/
-    PoissonGenerator::DefaultPRNG PRNG(seed);
+    CustomRandPRNG PRNG;
     const auto points = PoissonGenerator::GeneratePoissonPoints(num, PRNG, 30, false);
 
+    //the jitter that used to come out of a uniform_real_distribution(-0.75,0.75)
     for(const auto &p : points) {
-        double x = double(p.x) * w + dis(gen);
+        double x = double(p.x) * w + ((double)customRand("voronoi-jitter")/(double)customRandMax*1.5-0.75);
         if (x > w)
             x = w;
         if (x < 0)
             x = 0;
-        double y = double(p.y) * h + dis(gen);
+        double y = double(p.y) * h + ((double)customRand("voronoi-jitter")/(double)customRandMax*1.5-0.75);
         if (y > h)
             y = h;
         if (y < 0)

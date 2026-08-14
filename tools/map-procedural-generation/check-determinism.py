@@ -2,10 +2,11 @@
 """Regression guard for the map generator: two runs of the same binary with the
 same settings must produce a BYTE IDENTICAL world.
 
-The generator seeds rand() once from [General] seed and, since the per-chunk
-reseed, once more per chunk from (seed, chunk x, chunk y, pass). Any accidental
-dependency on process state (an unordered_map iteration order, an uninitialised
-value, a filesystem listing order) shows up here as a differing file.
+The generator draws with customRand("<what for>"): one stream per reason, seeded
+from [General] seed plus, per chunk, a salt made of (seed, chunk x, chunk y,
+pass). Any accidental dependency on process state (an unordered_map iteration
+order, an uninitialised value, a filesystem listing order) shows up here as a
+differing file.
 
     ./check-determinism.py <build dir> [-- <extra generator args>]
 

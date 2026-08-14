@@ -11,6 +11,7 @@
 #include <libtiled/objectgroup.h>
 
 #include "znoise/headers/Simplex.hpp"
+#include "CustomRand.h"
 #include "VoronioForTiledMapTmx.h"
 #include "LoadMap.h"
 #include "TransitionTerrain.h"
@@ -83,13 +84,13 @@ int main(int argc, char *argv[])
     Settings::putDefaultSettings(settings);
     Settings::Setting config;
     Settings::populateSettings(settings, config);
-    srand(config.seed);
+    customRandSeed(config.seed);
 
     {
         const unsigned int totalWidth=config.mapWidth*config.mapXCount;
         const unsigned int totalHeight=config.mapHeight*config.mapYCount;
         t.start();
-        const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,config.seed,30*config.mapXCount*config.mapYCount*config.scale_Zone,VoronioForTiledMapTmx::SCALE);
+        const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,30*config.mapXCount*config.mapYCount*config.scale_Zone,VoronioForTiledMapTmx::SCALE);
         qDebug("generateGrid took %lld ms", t.elapsed());
 
         const float noiseMapScaleMoisure=0.005f/((config.mapXCount+config.mapYCount)/2)*config.scale_TerrainMoisure*((config.mapXCount+config.mapYCount)/2);

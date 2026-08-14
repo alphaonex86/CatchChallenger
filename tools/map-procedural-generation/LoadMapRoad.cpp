@@ -573,7 +573,7 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
         QString botXml;
         {
             unsigned int localBotId=1;
-            const int wanted=2+rand()%2;
+            const int wanted=2+customRand("cave-trainer-count")%2;
             int placed=0,tries=0;
             static const char* const lookDirs[4]={"bottom","top","left","right"};
             std::set<std::pair<int,int> > claimedFightCells;
@@ -584,8 +584,8 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
             while(placed<wanted && tries<200)
             {
                 tries++;
-                const int lx=4+rand()%((int)singleMapWidth-8);
-                const int ly=4+rand()%((int)singleMapHeight-8);
+                const int lx=4+customRand("cave-trainer-x")%((int)singleMapWidth-8);
+                const int ly=4+customRand("cave-trainer-y")%((int)singleMapHeight-8);
                 if(floorGrid[lx+ly*singleMapWidth]!=0
                         && colliLayer->cellAt(x0+lx,y0+ly).tile()==NULL
                         && usedBotCells.find(std::pair<int,int>(lx,ly))==usedBotCells.cend())
@@ -596,11 +596,11 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
                         QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
                     bot->setProperty("id",QString::number(localBotId));
                     //same one-fight-per-cell rule as on the roads, see claimBotFightLookAt
-                    const QString lookAt=claimBotFightLookAt(QString::fromLatin1(lookDirs[rand()%4]),
+                    const QString lookAt=claimBotFightLookAt(QString::fromLatin1(lookDirs[customRand("cave-trainer-look")%4]),
                                                              lx,ly,(int)singleMapWidth,(int)singleMapHeight,
                                                              claimedFightCells);
                     bot->setProperty("lookAt",lookAt);
-                    bot->setProperty("skin",QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size())));
+                    bot->setProperty("skin",QString::fromStdString(setting.botSkins.at(customRand("cave-trainer-skin")%setting.botSkins.size())));
                     Tiled::Cell botCell;
                     botCell.setTile(invisibleTileset->tileAt(0));
                     bot->setCell(botCell);
@@ -622,22 +622,22 @@ bool LoadMapAll::writeCaveInterior(Tiled::Map &worldMap,
         //ground items (the configured percent per floor): the engine picks up an
         //"object" typed object carrying an item property; the tile is the visual
         if(itemTile!=NULL && !setting.caveItems.empty()
-                && (unsigned int)(rand()%100)<setting.caveItemPercent)
+                && (unsigned int)(customRand("cave-item-chance")%100)<setting.caveItemPercent)
         {
             int tries=0;
             bool itemPlaced=false;
             while(tries<200 && !itemPlaced)
             {
                 tries++;
-                const int lx=4+rand()%((int)singleMapWidth-8);
-                const int ly=4+rand()%((int)singleMapHeight-8);
+                const int lx=4+customRand("cave-item-x")%((int)singleMapWidth-8);
+                const int ly=4+customRand("cave-item-y")%((int)singleMapHeight-8);
                 if(floorGrid[lx+ly*singleMapWidth]!=0
                         && colliLayer->cellAt(x0+lx,y0+ly).tile()==NULL)
                 {
                     Tiled::MapObject *item=new Tiled::MapObject("","object",
                         QPointF((x0+lx)*worldMap.tileWidth(),(y0+ly+1)*worldMap.tileHeight()),
                         QSizeF(worldMap.tileWidth(),worldMap.tileHeight()));
-                    item->setProperty("item",QString::number(setting.caveItems.at(rand()%setting.caveItems.size())));
+                    item->setProperty("item",QString::number(setting.caveItems.at(customRand("cave-item-kind")%setting.caveItems.size())));
                     Tiled::Cell itemCell;
                     itemCell.setTile(itemTile);
                     item->setCell(itemCell);
@@ -1345,35 +1345,35 @@ static bool growOneZone(std::vector<ZoneMarker*> &zones, const unsigned int *are
     static const unsigned int minsize=2;
     static const unsigned int maxsizevertical=6;
     static const unsigned int minsizevertical=3;
-    const unsigned int index=rand()%zones.size();
+    const unsigned int index=customRand("zone-grow-anchor")%zones.size();
     const ZoneMarker * const zone=zones[index];
     //a zone that was already dropped is no anchor to grow from
     if(zone->type==0)
         return false;
     unsigned int s1,s2;
-    if(rand()%2==1){
-        s1 = minsize+(rand()%(maxsize-minsize));
-        s2 = minsizevertical+(rand()%(maxsizevertical-minsizevertical));
+    if(customRand("zone-grow-orientation")%2==1){
+        s1 = minsize+(customRand("zone-grow-short-side")%(maxsize-minsize));
+        s2 = minsizevertical+(customRand("zone-grow-long-side")%(maxsizevertical-minsizevertical));
     }else{
-        s2 = minsize+(rand()%(maxsize-minsize));
-        s1 = minsizevertical+(rand()%(maxsizevertical-minsizevertical));
+        s2 = minsize+(customRand("zone-grow-short-side")%(maxsize-minsize));
+        s1 = minsizevertical+(customRand("zone-grow-long-side")%(maxsizevertical-minsizevertical));
     }
     ZoneMarker *tmp=NULL;
-    switch (rand()%4) {
+    switch (customRand("zone-grow-side")%4) {
     case 0:
-        tmp = new ZoneMarker(zone->x + zone->w, zone->y + (rand()%(zone->h*2-3)-zone->h+1), s1, s2, id, 0, 0xFE, index);
+        tmp = new ZoneMarker(zone->x + zone->w, zone->y + (customRand("zone-grow-offset")%(zone->h*2-3)-zone->h+1), s1, s2, id, 0, 0xFE, index);
         break;
     case 1:
-        tmp = new ZoneMarker(zone->x + (rand()%(zone->w*2-3)-zone->w+1), zone->y+zone->h, s1, s2, id, 0, 0xFE, index);
+        tmp = new ZoneMarker(zone->x + (customRand("zone-grow-offset")%(zone->w*2-3)-zone->w+1), zone->y+zone->h, s1, s2, id, 0, 0xFE, index);
         break;
     case 2:
-        tmp = new ZoneMarker(zone->x-s1, zone->y + (rand()%(zone->h*2-3)-zone->h+1), s1, s2, id, 0, 0xFE, index);
+        tmp = new ZoneMarker(zone->x-s1, zone->y + (customRand("zone-grow-offset")%(zone->h*2-3)-zone->h+1), s1, s2, id, 0, 0xFE, index);
         break;
     case 3:
-        tmp = new ZoneMarker(zone->x + (rand()%(zone->w*2-3)-zone->w+1), zone->y-s2, s1, s2, id, 0, 0xFE, index);
+        tmp = new ZoneMarker(zone->x + (customRand("zone-grow-offset")%(zone->w*2-3)-zone->w+1), zone->y-s2, s1, s2, id, 0, 0xFE, index);
         break;
     default:
-        std::cerr << "Invalid rand() ?! ";
+        std::cerr << "Invalid customRand() ?! ";
         abort();
         break;
     }
@@ -1426,7 +1426,7 @@ static unsigned int rollExtraSpacePercent(const SettingsAll::SettingsExtra &sett
     const int middle=(minimum+maximum)/2;
     const int half=(maximum-minimum)/2;
     //average of two uniforms in [-100,100] = triangular around 0
-    const int spread=((rand()%201-100)+(rand()%201-100))/2;
+    const int spread=((customRand("road-extra-space")%201-100)+(customRand("road-extra-space")%201-100))/2;
     int percent=middle+half*spread*(int)setting.roadExtraSpacePercentVariance/10000;
     if(percent<minimum)
         percent=minimum;
@@ -1599,26 +1599,26 @@ std::vector<ZoneMarker*> placeZones(unsigned int* map, unsigned int w, unsigned 
                 }
 
                 if(!candidate.empty()){
-                    const ZoneMarker *random = candidate.at(rand()%candidate.size());
+                    const ZoneMarker *random = candidate.at(customRand("walkway-zone")%candidate.size());
                     ZoneMarker* walkway = new ZoneMarker(0,0,0,0,0);
                     candidate.clear();
 
-                    switch (rand()%4) {
+                    switch (customRand("walkway-side")%4) {
                     case 0:
-                        walkway->x = random->x + (rand()/(double)RAND_MAX)*random->w;
+                        walkway->x = random->x + (customRand("walkway-offset")/(double)customRandMax)*random->w;
                         walkway->y = random->y + random->h;
                         break;
                     case 1:
-                        walkway->x = random->x + (rand()/(double)RAND_MAX)*random->w;
+                        walkway->x = random->x + (customRand("walkway-offset")/(double)customRandMax)*random->w;
                         walkway->y = random->y - 1;
                         break;
                     case 2:
                         walkway->x = random->x + random->w;
-                        walkway->y = random->y + (rand()/(double)RAND_MAX)*random->h;
+                        walkway->y = random->y + (customRand("walkway-offset")/(double)customRandMax)*random->h;
                         break;
                     case 3:
                         walkway->x = random->x - 1;
-                        walkway->y = random->y + (rand()/(double)RAND_MAX)*random->h;
+                        walkway->y = random->y + (customRand("walkway-offset")/(double)customRandMax)*random->h;
                         break;
                     default:
                         walkway->x = random->x;
@@ -1756,7 +1756,7 @@ std::vector<ZoneMarker*> placeZones(unsigned int* map, unsigned int w, unsigned 
         toCheck->clear();
         waitingList->clear();
 
-        ZoneMarker *exit = startingPoint.at(rand()%startingPoint.size());
+        ZoneMarker *exit = startingPoint.at(customRand("road-entry-zone")%startingPoint.size());
         exit->type = 0x1;
         toCheck->push_back(exit->id);
         validated[exit->id] = true;
@@ -1797,7 +1797,7 @@ std::vector<ZoneMarker*> placeZones(unsigned int* map, unsigned int w, unsigned 
                 toCheck->clear();
                 waitingList->clear();
 
-                int type = rand()/(double)RAND_MAX < setting.roadWaterChance? 2: 3;
+                int type = customRand("zone-water-or-grass")/(double)customRandMax < setting.roadWaterChance? 2: 3;
                 box1->type = type;
                 toCheck->push_back(box1->id);
 
@@ -2162,7 +2162,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                 }
             }
             if(bestStyle<0)
-                bestStyle=(int)(rand()%cityStyles.size());
+                bestStyle=(int)(customRand("city-style-fallback")%cityStyles.size());
             //cities-types.ini has the LAST word: the terrain match is only a
             //default, the operator names the towns they want to look a given way
             {
@@ -2253,7 +2253,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         && roadCoordToIndex.find(x)!=roadCoordToIndex.cend()
                         && roadCoordToIndex.at(x).find(y)!=roadCoordToIndex.at(x).cend())
                 {
-                    if((unsigned int)(rand()%100)<setting.cavePercent)
+                    if((unsigned int)(customRand("cave-chance")%100)<setting.cavePercent)
                     {
                         //OPEN SPACE test: flood the walkable ground from the chunk
                         //center; when more than 90% of the border is reachable
@@ -2657,7 +2657,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             std::cerr << "Missing template/heal-" << citySizeSuffix << "/" << std::endl;
                             abort();
                         }
-                        const BuildingVariant &variant=citySet.heal->variants.at(rand()%citySet.heal->variants.size());
+                        const BuildingVariant &variant=citySet.heal->variants.at(customRand("heal-variant")%citySet.heal->variants.size());
                         templates.push_back(variant.mapTemplate);
                         templateKind.push_back(BotKind_heal);
                         //combined: ONE building, and it is named after both roles so
@@ -2673,7 +2673,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                     std::vector<std::string> gymTypeMonsters;
                     const BuildingVariant *gymVariant=NULL;
                     if(setting.doGym && citySet.gym!=NULL && city!=NULL && city->type!=CityType_small){
-                        gymVariant=&citySet.gym->variants.at(rand()%citySet.gym->variants.size());
+                        gymVariant=&citySet.gym->variants.at(customRand("gym-variant")%citySet.gym->variants.size());
                         MapBrush::MapTemplate gymTemplate=gymVariant->mapTemplate;
                         if(!setting.gymTypeNames.empty())
                         {
@@ -2729,7 +2729,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             std::cerr << "Missing template/shop-" << citySizeSuffix << "/" << std::endl;
                             abort();
                         }
-                        const BuildingVariant &variant=citySet.market->variants.at(rand()%citySet.market->variants.size());
+                        const BuildingVariant &variant=citySet.market->variants.at(customRand("shop-variant")%citySet.market->variants.size());
                         templates.push_back(variant.mapTemplate);
                         templateKind.push_back(BotKind_shop);
                         templateBaseName.push_back("shop");
@@ -2750,7 +2750,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             while(specialCount>0)
                             {
                                 const BuildingVariant &variant=citySet.special->variants.at(
-                                            rand()%citySet.special->variants.size());
+                                            customRand("special-variant")%citySet.special->variants.size());
                                 templates.push_back(variant.mapTemplate);
                                 templateKind.push_back(BotKind_text);
                                 templateBaseName.push_back("special-"+std::to_string(specialNumber));
@@ -2764,7 +2764,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                     //[city] <size>\minBuilding houses to TRY for, plus a little
                     //variety above it; densityPercent and the free ground decide
                     //how many really land
-                    const int building=(int)citySizeSetting.minBuilding+rand()%3;
+                    const int building=(int)citySizeSetting.minBuilding+customRand("city-house-count")%3;
 
                     //the filler houses come from the style folder of the city,
                     //without repeating the same variant twice in a row
@@ -2772,7 +2772,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                     if(city!=NULL && !city->style.empty())
                         styleGroup=buildingGroup(city->style);
                     if(styleGroup==NULL && !cityStyles.empty())
-                        styleGroup=buildingGroup(cityStyles.at(rand()%cityStyles.size()));
+                        styleGroup=buildingGroup(cityStyles.at(customRand("city-style-any")%cityStyles.size()));
                     if(styleGroup==NULL)
                     {
                         std::cerr << "No template/<style>-city/ folder at all" << std::endl;
@@ -2782,7 +2782,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         int lastVariant=-1;
                         int houseNumber=1;
                         for(int i=0; i<building; i++){
-                            int variantIndex=rand()%styleGroup->variants.size();
+                            int variantIndex=customRand("house-variant")%styleGroup->variants.size();
                             if(variantIndex==lastVariant && styleGroup->variants.size()>1)
                                 variantIndex=(variantIndex+1)%styleGroup->variants.size();
                             lastVariant=variantIndex;
@@ -2904,13 +2904,13 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             //under its density limit ([city] <size>\densityPercent)
                             if(!placed && cityDensityAllows(lots,temp))
                             for(i=0; i<limit; i++){
-                                double index = rand() / (double) RAND_MAX;
+                                double index = customRand("building-zone-pick") / (double) customRandMax;
                                 ZoneMarker* zone = zones[(1-index*index)*zones.size()];
 
                                 if(zone->type == 1){
                                     bool valid= true;
-                                    std::pair<uint8_t,uint8_t> pos(zone->x*scale + rand()%(zone->w*scale ), zone->y*scale+ rand()%(zone->h*scale ));
-                                    //std::pair<uint8_t,uint8_t> pos(rand() % setting.mapWidth, rand() % setting.mapHeight);
+                                    std::pair<uint8_t,uint8_t> pos(zone->x*scale + customRand("building-zone-x")%(zone->w*scale ), zone->y*scale+ customRand("building-zone-y")%(zone->h*scale ));
+                                    //std::pair<uint8_t,uint8_t> pos(customRand("x") % setting.mapWidth, customRand("y") % setting.mapHeight);
                                     unsigned int bx = pos.first/scale;
                                     unsigned int by = pos.second/scale;
                                     //cover EVERY cell the footprint touches: at an odd
@@ -3019,12 +3019,12 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         //doorless facades so the avenue reads as a dense main street
                         if(isBigCity && haveHorizontalBand)
                         {
-                            int extraFacades=4+rand()%4;
+                            int extraFacades=4+customRand("facade-count")%4;
                             bool lotsLeft=true;
                             while(extraFacades>0 && lotsLeft)
                             {
                                 const BuildingVariant &facadeVariant=
-                                    styleGroup->variants.at(rand()%styleGroup->variants.size());
+                                    styleGroup->variants.at(customRand("facade-variant")%styleGroup->variants.size());
                                 MapBrush::MapTemplate facadeTemplate=facadeVariant.mapTemplate;
                                 lotsLeft=placeOnAvenueLot(lots,facadeTemplate,BotKind_text,std::string(),true,
                                                           *city,cityLowerCaseName,setting,
@@ -3041,15 +3041,15 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         {
                             const int templateW=mapTemplateCity[citySizeIndex].tiledMap->width();
                             const int templateH=mapTemplateCity[citySizeIndex].tiledMap->height();
-                            int patches=1+rand()%2;
+                            int patches=1+customRand("plaza-patch-count")%2;
                             while(patches>0)
                             {
                                 int tries=0;
                                 bool patchPlaced=false;
                                 while(tries<40 && !patchPlaced)
                                 {
-                                    const int patchX=(int)hole.x+rand()%((int)hole.width-templateW);
-                                    const int patchY=(int)hole.y+rand()%((int)hole.height-templateH);
+                                    const int patchX=(int)hole.x+customRand("plaza-patch-x")%((int)hole.width-templateW);
+                                    const int patchY=(int)hole.y+customRand("plaza-patch-y")%((int)hole.height-templateH);
                                     bool valid=true;
                                     const unsigned int bx=patchX/(int)scale;
                                     const unsigned int by=patchY/(int)scale;
@@ -3097,7 +3097,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                 signTiles=&citySizeSetting.signTiles;
                             if(signTiles!=NULL && (haveHorizontalBand || haveVerticalBand))
                             {
-                                Tiled::Tile * const signTile=fetchTile(worldMap,QString::fromStdString(signTiles->at(rand()%signTiles->size())));
+                                Tiled::Tile * const signTile=fetchTile(worldMap,QString::fromStdString(signTiles->at(customRand("city-sign-style")%signTiles->size())));
                                 Tiled::TileLayer * const signColliLayer=LoadMap::searchTileLayerByName(worldMap,"Collisions");
                                 Tiled::TileLayer * const signWaterLayer=LoadMap::searchTileLayerByName(worldMap,"Water");
                                 if(signTile!=NULL && signColliLayer!=NULL)
@@ -3266,7 +3266,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                     plan.depth=1;
                     if(setting.caveMaxDepth>1
                             && !setting.caveStairDownTile.isEmpty() && !setting.caveStairUpTile.isEmpty())
-                        plan.depth=1+rand()%setting.caveMaxDepth;
+                        plan.depth=1+customRand("cave-depth")%setting.caveMaxDepth;
                     //stair link cells (base-frame even floors; odd floors are the
                     //horizontal mirror): cell and the one under it must be corridor,
                     //away from the chunk border (the corridor edge line is sealed)
@@ -3278,8 +3278,8 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             while(tries<300 && foundX<0)
                             {
                                 tries++;
-                                int lx=6+rand()%((int)mapWidth-12);
-                                const int ly=6+rand()%((int)mapHeight-12);
+                                int lx=6+customRand("cave-stair-x")%((int)mapWidth-12);
+                                const int ly=6+customRand("cave-stair-y")%((int)mapHeight-12);
                                 if(level%2!=0)
                                     lx=(int)mapWidth-1-lx;
                                 const int baseX=(level%2!=0) ? (int)mapWidth-1-lx : lx;
@@ -3312,7 +3312,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         {
                             if(plan.sides[side].used!=0)
                             {
-                                plan.sides[side].floor=rand()%plan.depth;
+                                plan.sides[side].floor=customRand("cave-exit-floor")%plan.depth;
                                 const bool mirrored=(plan.sides[side].floor%2!=0);
                                 const bool topStyle=(side==2);//the TOP side exits upward
                                 int bestX=-1,bestY=-1,bestPrimary=0,bestSecondary=0;
@@ -4089,19 +4089,19 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                     }
 
                     while(!possibleLedge.empty()){
-                        int s = rand() % possibleLedge.size();
+                        int s = customRand("ledge-pick") % possibleLedge.size();
 
                         LedgeMarker m = possibleLedge[s];
 
                         possibleLedge[s] = possibleLedge[possibleLedge.size()-1];
                         possibleLedge.pop_back();
 
-                        if(rand() / (float)RAND_MAX < setting.ledgechance){
+                        if(customRand("ledge-chance") / (float)customRandMax < setting.ledgechance){
                             bool cancel = false;
 
                             for(unsigned int i=0; i<m.length; i++){
                                 if(m.horizontal){
-                                    bool inverted = rand()%2;
+                                    bool inverted = customRand("ledge-inverted")%2;
                                     if(inverted){
                                         map[m.x+(i+m.y)*mapWidth/2] |= 0x10;
                                         if((map[m.x+(i+m.y)*mapWidth/2-1] & 0x20) == 0x20){
@@ -4209,8 +4209,8 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                     std::unordered_set<unsigned int> usedBotCells;
 
                     for(int i = 0; i<15; i++){
-                        unsigned int ox = rand()%mapWidth;
-                        unsigned int oy = rand()%mapHeight;
+                        unsigned int ox = customRand("road-bot-x")%mapWidth;
+                        unsigned int oy = customRand("road-bot-y")%mapHeight;
                         unsigned int j = ox + oy*mapWidth;
 
                         if((real_map[j] & 0xF9) == 0x1 && usedBotCells.find(j)==usedBotCells.cend()){
@@ -4254,8 +4254,8 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 roadBot.x = ox + x * mapWidth;
                                 roadBot.y = oy + y * mapHeight;
                                 roadBot.id = botId++;
-                                roadBot.look_at = rand()%4;
-                                roadBot.skin = rand()%80; // read config for this value
+                                roadBot.look_at = customRand("road-bot-look")%4;
+                                roadBot.skin = customRand("road-bot-skin-index")%80; // read config for this value
                                 roadIndex.roadBot.push_back(roadBot);
 
                                 int tiles_x = roadBot.x;
@@ -4276,7 +4276,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 bot->setProperty("id", QString::number(roadBot.id));
                                 bot->setProperty("lookAt", directions[roadBot.look_at]);
                                 //skin is a datapack skin NAME, picked from the configured pool
-                                bot->setProperty("skin", QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size())));
+                                bot->setProperty("skin", QString::fromStdString(setting.botSkins.at(customRand("road-bot-skin")%setting.botSkins.size())));
                                 bot->setCell(newCell);
                                 objectLayer->addObject(bot);
                                 usedBotCells.insert(j);
@@ -4875,14 +4875,18 @@ void LoadMapAll::addTerrainDecorations(Tiled::Map &worldMap,const SettingsAll::S
                             unsigned int wanted=templateUseCount(variant.use);
                             const int width=(int)variant.mapTemplate.width;
                             const int height=(int)variant.mapTemplate.height;
+                            //the stream of THIS decoration, not a shared one: a new
+                            //template/on-*/ folder must not move where the ones
+                            //already there land
+                            const char * const decorationReason=variant.use.reason.c_str();
                             int tries=0;
                             while(wanted>0 && tries<120)
                             {
                                 tries++;
                                 if(width<(int)mapWidth-4 && height<(int)mapHeight-4)
                                 {
-                                    const int localX=2+rand()%((int)mapWidth-4-width);
-                                    const int localY=2+rand()%((int)mapHeight-4-height);
+                                    const int localX=2+customRand(decorationReason)%((int)mapWidth-4-width);
+                                    const int localY=2+customRand(decorationReason)%((int)mapHeight-4-height);
                                     bool valid=true;
                                     int cellY=0;
                                     while(cellY<height && valid)
@@ -5069,13 +5073,13 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
         unsigned int *chunkMap=NULL;
         if(mapPathDirection[city.x+city.y*setting.mapXCount]!=0)
             chunkMap=roadData[city.x+city.y*setting.mapXCount];
-        const int wanted=3+rand()%3; //3..5 townsfolk per town
+        const int wanted=3+customRand("townsfolk-count")%3; //3..5 townsfolk per town
         int placed=0, tries=0;
         while(placed<wanted && tries<300)
         {
             tries++;
-            const int tx=x0+2+rand()%((int)mapWidth-4);
-            const int ty=y0+2+rand()%((int)mapHeight-4);
+            const int tx=x0+2+customRand("townsfolk-x")%((int)mapWidth-4);
+            const int ty=y0+2+customRand("townsfolk-y")%((int)mapHeight-4);
             if(tx<0 || ty<0 || tx>=worldMap.width() || ty>=worldMap.height())
                 continue;
             //open ground only: walkable and not a wall/building/tree
@@ -5100,9 +5104,9 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
             objectCells.insert(cellKey);
             //object Y carries the engine's -1 tile correction, so add 1 row
             Tiled::MapObject* npc=new Tiled::MapObject("","bot",QPointF(tx*tw,(ty+1)*th),QSizeF(tw,th));
-            npc->setProperty("skin",QString::fromStdString(setting.botSkins.at(rand()%setting.botSkins.size())));
+            npc->setProperty("skin",QString::fromStdString(setting.botSkins.at(customRand("townsfolk-skin")%setting.botSkins.size())));
             static const char* const dirs[4]={"bottom","top","left","right"};
-            npc->setProperty("lookAt",dirs[rand()%4]);
+            npc->setProperty("lookAt",dirs[customRand("townsfolk-look")%4]);
             Tiled::Cell cell; cell.setTile(invis->tileAt(0));
             npc->setCell(cell);
             objGroup->addObject(npc);
@@ -5113,18 +5117,18 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
         {
             Tiled::Tile* mainFlower=flowerRed;
             Tiled::Tile* otherFlower=flowerBlue;
-            if(flowerBlue!=NULL && rand()%2==0)
+            if(flowerBlue!=NULL && customRand("flower-main-color")%2==0)
             {
                 mainFlower=flowerBlue;
                 otherFlower=flowerRed;
             }
-            const int fwant=10+rand()%14; //10..23 tufts
+            const int fwant=10+customRand("flower-count")%14; //10..23 tufts
             int fplaced=0, ftries=0;
             while(fplaced<fwant && ftries<400)
             {
                 ftries++;
-                const int tx=x0+2+rand()%((int)mapWidth-4);
-                const int ty=y0+2+rand()%((int)mapHeight-4);
+                const int tx=x0+2+customRand("flower-x")%((int)mapWidth-4);
+                const int ty=y0+2+customRand("flower-y")%((int)mapHeight-4);
                 if(tx<0 || ty<0 || tx>=worldMap.width() || ty>=worldMap.height())
                     continue;
                 if(walk->cellAt(tx,ty).tile()==NULL || coll->cellAt(tx,ty).tile()!=NULL
@@ -5135,7 +5139,7 @@ void LoadMapAll::addCityTownsfolk(Tiled::Map &worldMap, const SettingsAll::Setti
                 if(chunkMap!=NULL && chunkMap[((tx-x0)/2)+((ty-y0)/2)*((int)mapWidth/2)]==CITY_AVENUE_CODE)
                     continue;
                 Tiled::Tile* flower=mainFlower;
-                if(otherFlower!=NULL && rand()%4==0)
+                if(otherFlower!=NULL && customRand("flower-other-color")%4==0)
                     flower=otherFlower;
                 onGrass->setCell(tx,ty,Tiled::Cell(flower));
                 fplaced++;
@@ -5292,8 +5296,11 @@ QString LoadMapAll::botStepXml(const unsigned int &id, const BotKind &kind, cons
         case BotKind_leader:
         {
             const bool leader=(realKind==BotKind_leader);
-            //team size 1..4 (road math), the gym leader fields one extra
-            int monsterCount=rand()%2 + rand()%3 + 1;
+            //team size 1..4 (road math), the gym leader fields one extra. Two
+            //reasons rather than one drawn twice: the order the terms of a sum are
+            //evaluated in is up to the compiler and the two moduli differ, so a
+            //single stream would build a different team on a different compiler.
+            int monsterCount=customRand("bot-fight-team-size")%2 + customRand("bot-fight-team-extra")%3 + 1;
             if(leader)
                 monsterCount++;
             int reward=level*30+100;
@@ -5311,16 +5318,16 @@ QString LoadMapAll::botStepXml(const unsigned int &id, const BotKind &kind, cons
                     else if(leader && indexMonster==monsterCount-1)
                         useGymPool=true;
                     else
-                        useGymPool=(rand()%2==0);
+                        useGymPool=(customRand("bot-fight-gym-pool")%2==0);
                 }
-                int monsterLevel=level*(95+rand()%10)/100;
+                int monsterLevel=level*(95+customRand("bot-fight-level")%10)/100;
                 if(monsterLevel<1)
                     monsterLevel=1;
                 QString monsterId;
                 if(useGymPool)
-                    monsterId=QString::fromStdString(gymTypeMonsters.at(rand()%gymTypeMonsters.size()));
+                    monsterId=QString::fromStdString(gymTypeMonsters.at(customRand("bot-fight-gym-monster")%gymTypeMonsters.size()));
                 else
-                    monsterId=monsterRef(monsterPool.at(rand()%monsterPool.size()).monsterId,setting);
+                    monsterId=monsterRef(monsterPool.at(customRand("bot-fight-road-monster")%monsterPool.size()).monsterId,setting);
                 monsterXml+="      <monster id=\""+monsterId+"\" level=\""+QString::number(monsterLevel)+"\"/>\n";
                 reward+=monsterLevel*monsterLevel;
                 indexMonster++;
@@ -5351,7 +5358,7 @@ QString LoadMapAll::botStepXml(const unsigned int &id, const BotKind &kind, cons
         {
             QString message;
             if(!setting.npcMessage.empty())
-                message=QString::fromStdString(setting.npcMessage.at(rand()%setting.npcMessage.size()));
+                message=QString::fromStdString(setting.npcMessage.at(customRand("npc-message")%setting.npcMessage.size()));
             else
                 message="...";
             //a literal ]]> inside a message would close the CDATA section early

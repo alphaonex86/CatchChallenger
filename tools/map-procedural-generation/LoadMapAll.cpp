@@ -40,7 +40,9 @@ void LoadMapAll::seedChunk(const unsigned int &seed, const unsigned int &chunkX,
     h^=h>>15;
     h*=0x846CA68Bu;
     h^=h>>16;
-    srand((unsigned int)h);
+    //salt every customRand() stream with it, and reset their counters: the chunk
+    //then draws its own numbers whatever the rest of the world consumed
+    customRandSalt((uint64_t)h);
 }
 
 LoadMapAll::CityHole LoadMapAll::cityHole(const CityType &type,const unsigned int &mapWidth,const unsigned int &mapHeight,
@@ -3143,7 +3145,7 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             CityInternal *city=new CityInternal();
             //do the random value
             city->name=citiesNames.at(index);
-            switch(rand()%3) {
+            switch(customRand("city-size")%3) {
             case 0:
                 city->type=CityType_small;
                 break;
@@ -3872,15 +3874,15 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                 //fixed level
                 if(minMaxLevelIndex%2==0)
                 {
-                    uint8_t randomIndex=rand()%levelRange.size();
+                    uint8_t randomIndex=customRand("road-monster-level-fixed")%levelRange.size();
                     minMaxLevel.push_back(std::pair<uint8_t,uint8_t>(levelRange.at(randomIndex),levelRange.at(randomIndex)));
                 }
                 else
                 {
-                    uint8_t randomIndexL=rand()%levelRange.size();
+                    uint8_t randomIndexL=customRand("road-monster-level-low")%levelRange.size();
                     uint8_t randomIndexT=0;
                     do {
-                        randomIndexT=rand()%levelRange.size();
+                        randomIndexT=customRand("road-monster-level-high")%levelRange.size();
                     } while(randomIndexT==randomIndexL);
                     if(randomIndexL<randomIndexT)
                         minMaxLevel.push_back(std::pair<uint8_t,uint8_t>(levelRange.at(randomIndexL),levelRange.at(randomIndexT)));
@@ -3980,16 +3982,16 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                 while(numberOfMonsterIndex<numberOfMonster && !terrainMonsterMap.empty())
                 {
                     //take proportional  random index into terrainMonsters
-                    unsigned int indexGroupMonster=indexesProportional.at(rand()%indexesProportional.size());
+                    unsigned int indexGroupMonster=indexesProportional.at(customRand("road-monster-luck-group")%indexesProportional.size());
                     //take random monster
-                    const uint8_t randomLevelIndex=rand()%minMaxLevel.size();
+                    const uint8_t randomLevelIndex=customRand("road-monster-level-slot")%minMaxLevel.size();
                     if(terrainMonsterMap.find(indexGroupMonster)==terrainMonsterMap.cend())
                     {
                         std::cerr << "terrainMonsterMap.find(indexGroupMonster)==terrainMonsterMap.cend()" << std::endl;
                         abort();
                     }
                     std::vector<LoadMap::TerrainMonster> &localLuckMonster=terrainMonsterMap[indexGroupMonster];
-                    const uint8_t randomMonsterIndex=rand()%localLuckMonster.size();
+                    const uint8_t randomMonsterIndex=customRand("road-monster-species")%localLuckMonster.size();
                     const LoadMap::TerrainMonster &terrainMonster=localLuckMonster.at(randomMonsterIndex);
                     LoadMapAll::RoadMonster roadMonster;
                     roadMonster.luck=indexGroupMonster;
@@ -4036,13 +4038,13 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
                     }
                     while(newLuckSum<100)
                     {
-                        LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[rand()%roadIndex.roadMonsters.size()];
+                        LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[customRand("road-monster-luck-up")%roadIndex.roadMonsters.size()];
                         roadMonster.luck++;
                         newLuckSum++;
                     }
                     while(newLuckSum>100)
                     {
-                        LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[rand()%roadIndex.roadMonsters.size()];
+                        LoadMapAll::RoadMonster &roadMonster=roadIndex.roadMonsters[customRand("road-monster-luck-down")%roadIndex.roadMonsters.size()];
                         if(roadMonster.luck>1)
                         {
                             roadMonster.luck--;

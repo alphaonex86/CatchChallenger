@@ -13,6 +13,7 @@
 #include <libtiled/tileset.h>
 
 #include "../map-procedural-generation-terrain/znoise/headers/Simplex.hpp"
+#include "../map-procedural-generation-terrain/CustomRand.h"
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"
 #include "../map-procedural-generation-terrain/LoadMap.h"
 #include "../map-procedural-generation-terrain/TransitionTerrain.h"
@@ -226,14 +227,14 @@ int main(int argc, char *argv[])
         std::cout << std::endl;
     }
 
-    srand(config.seed);
+    customRandSeed(config.seed);
 
     {
         const unsigned int totalWidth=config.mapWidth*config.mapXCount;
         const unsigned int totalHeight=config.mapHeight*config.mapYCount;
         t.start();
-        const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,config.seed,30*config.mapXCount*config.mapYCount*config.scale_Zone,VoronioForTiledMapTmx::SCALE);
-        const Grid &gridCity = VoronioForTiledMapTmx::generateGrid(config.mapXCount-1,config.mapYCount-1,config.seed,0.1*config.mapXCount*config.mapYCount*config.scale_City,1);
+        const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,30*config.mapXCount*config.mapYCount*config.scale_Zone,VoronioForTiledMapTmx::SCALE);
+        const Grid &gridCity = VoronioForTiledMapTmx::generateGrid(config.mapXCount-1,config.mapYCount-1,0.1*config.mapXCount*config.mapYCount*config.scale_City,1);
         qDebug("generateGrid took %lld ms", t.elapsed());
 
         const float noiseMapScaleMoisure=0.005f/((config.mapXCount+config.mapYCount)/2)*config.scale_TerrainMoisure*((config.mapXCount+config.mapYCount)/2);
