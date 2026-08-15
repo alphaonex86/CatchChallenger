@@ -931,6 +931,10 @@ def rsync_datapack_to_exec(exec_node, local_datapack, remote_subdir="datapack",
     never needs them (see server/CLAUDE.md). `keep_skins` is forwarded to
     server_datapack_excludes() (clientlatency needs the skin sprites for
     character creation; see that helper)."""
+    # Fix the clock BEFORE the first rsync onto the box: a node without an
+    # RTC boots in 1970 and every staged file then lands with a far-future
+    # mtime (see sync_exec_node_time).
+    sync_exec_node_time(exec_node)
     eu  = exec_node["user"]
     eh  = exec_node["host"]
     ep  = exec_node.get("port", 22)
@@ -1364,6 +1368,31 @@ def exec_missing_32bit_runtime(exec_node, exec_bin=None):
     return None
 
 
+_EXEC_TSYNC = set()
+_EXEC_TSYNC_LOCK = threading.Lock()
+
+
+def sync_exec_node_time(exec_node):
+    """Correct the exec node's clock before anything is staged on it, once
+    per node per run.
+
+    The compile nodes were already synced (build_on_compile_node), but the
+    boards were not, and several have no RTC: the rtl9607c boots at
+    1970-01-01 and fitxlan came back ~2 h behind. rsync then writes files
+    whose mtime is far in the FUTURE for that box, which is what makes
+    incremental staging and any mtime-based caching behave erratically.
+    Harmless where the clock is fine (a <=5 s difference is left alone) and
+    where the login is unprivileged -- sync_remote_time tries sudo, then a
+    plain `date -s`, and reports False rather than failing the run."""
+    u, h, p = exec_node["user"], exec_node["host"], exec_node.get("port", 22)
+    key = (u, h, p)
+    with _EXEC_TSYNC_LOCK:
+        if key in _EXEC_TSYNC:
+            return
+        _EXEC_TSYNC.add(key)
+    sync_remote_time(u, h, p)
+
+
 def push_binary_to_exec(compile_node, exec_node, remote_build_dir, bin_name,
                         extras=None, verbose=False):
     """Pull binary from compile_node, push it to exec_node's work_dir.
@@ -1373,6 +1402,7 @@ def push_binary_to_exec(compile_node, exec_node, remote_build_dir, bin_name,
 
     Returns (rc, exec_bin_path, message).
     """
+    sync_exec_node_time(exec_node)
     # 1) pull binary to local /tmp staging
     staging = os.path.join("/tmp",
                            f"cc-bench-stage-{exec_node['label']}-{int(time.time())}")

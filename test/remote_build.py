@@ -89,6 +89,13 @@ _REQUIRED_EXEC_NODE_KEYS = (
     # next batch skips the matching cells without re-prompting.
     # Default []. See benchmark/CLAUDE.md "Runtime tool detection".
     "benchmark_disabled_tools",
+    # Per-exec-node opt-in for the CORRECTNESS harness (all.sh /
+    # testing*.py: run the server + clients on this box). The mirror of
+    # `benchmark`, and independent of it: a board can be quiet enough to
+    # produce stable numbers while still being too small to host a full
+    # server-client run (p1mmx has 52 MB of RAM), and conversely a noisy
+    # box can verify correctness every commit.
+    "correctness",
     # NOTE: "lxc_nfs" is intentionally NOT in this list — it is the one
     # OPTIONAL exec-node key. A missing lxc_nfs means an ordinary exec
     # node (same as the inert {"enabled": false, ...empties...} form);
@@ -242,6 +249,26 @@ def get_node(label):
     return None
 
 
+def exec_node_in_correctness(exec_node):
+    """True when this exec node opts into the correctness harness (all.sh /
+    testing*.py). `enabled` still gates everything; `correctness:false` keeps
+    a box in the benchmark fleet while leaving it out of the test runs."""
+    if not isinstance(exec_node, dict):
+        return False
+    return (bool(exec_node.get("enabled", True))
+            and bool(exec_node.get("correctness", True)))
+
+
+def correctness_exec_nodes(node):
+    """The `execution_nodes` of one compile node that opted into the
+    correctness harness. Every test-side iteration goes through this, so a
+    `correctness:false` board is skipped in exactly one place."""
+    if not isinstance(node, dict):
+        return []
+    return [e for e in (node.get("execution_nodes") or [])
+            if exec_node_in_correctness(e)]
+
+
 def vendored_lib_args(node):
     """`-DEXTERNALLIB<X>=OFF ` string for every optional system lib this
     compile node links but one of its execution nodes does not have.
@@ -304,6 +331,9 @@ def all_enabled_exec_nodes(diag=None):
     when probing 'is the server reachable from every machine that may
     later try to connect?'.
 
+    A node with `correctness:false` is dropped here: it stays in the
+    benchmark fleet but takes no part in the test runs.
+
     When `diag` is set (--sanitize / --valgrind), additionally drop any
     exec node that has not opted in to the matching diagnostic mode via
     its `sanitizer_clang` / `sanitizer_gcc` flag in remote_nodes.json.
@@ -323,7 +353,7 @@ def all_enabled_exec_nodes(diag=None):
         while ei < len(execs):
             ent = execs[ei]
             ei += 1
-            if not bool(ent.get("enabled", True)):
+            if not exec_node_in_correctness(ent):
                 continue
             if diag is not None and not _diag_mod.exec_node_supports(
                     ent, diag, parent_compile_node=node):
@@ -2061,23 +2091,18 @@ def run_remote_autosolo_phase(node, datapack_src, maincode=None, diag=None):
     # of inheriting a different box's real X display (pentium-m :0), which
     # failed with "could not connect to display :0".
     runtime_node = None
-    enodes = node.get("execution_nodes", []) or []
+    enodes = correctness_exec_nodes(node)
     compile_host = node.get("ssh", {}).get("host")
     eidx = 0
     while eidx < len(enodes):
         ent = enodes[eidx]
-        if (ent.get("enabled", True) and ent.get("host") == compile_host
+        if (ent.get("host") == compile_host
                 and ent.get("client_run_mode", "none") != "none"):
             runtime_node = ent
             break
         eidx += 1
-    if runtime_node is None:
-        eidx = 0
-        while eidx < len(enodes):
-            if enodes[eidx].get("enabled", True):
-                runtime_node = enodes[eidx]
-                break
-            eidx += 1
+    if runtime_node is None and enodes:
+        runtime_node = enodes[0]
     if runtime_node is None:
         run_has_gui = False
         client_run_mode = "none"

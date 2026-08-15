@@ -1030,7 +1030,9 @@ def main():
             log_info(f"skipping {label}: node has no {need} (diag mode)")
             idx += 1
             continue
-        exec_nodes = node.get("execution_nodes", []) if node else []
+        # correctness:false boards (benchmark-only fleet members) never
+        # receive a binary here.
+        exec_nodes = _rb.correctness_exec_nodes(node) if node else []
         has_gui = bool(node.get("has_gui", True)) if node else True
         work.append((label, host, port, use_mold, remote_dir, exec_nodes,
                      has_gui))
