@@ -97,6 +97,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(HERE)
 REMOTE_NODES_JSON = os.path.join(os.path.dirname(REPO_ROOT), "remote_nodes.json")
 
+# Clock correction shared with both harnesses (test/clock_sync.py): several
+# boards have no RTC and come up decades off.
+sys.path.insert(0, os.path.join(os.path.dirname(HERE), "test"))
+import clock_sync as _clock_sync
+
 # Reuse the profiler->tools map so this never drifts from the harness.
 try:
     sys.path.insert(0, HERE)
@@ -1039,6 +1044,24 @@ def _provision_inner(tgt, dry_run, conn_timeout, install_timeout):
 
     print("  distro=%s  pkg-manager=%s  root=%s"
           % (distro, family, "yes" if is_root else "no"))
+
+    # Put the box in time BEFORE anything else. Several boards here have no
+    # RTC (or a dead cell) and come up decades off -- measured on this fleet:
+    # ~29.6 years on p1mmx, ~18.5 on geode. A wrong clock breaks package
+    # managers (certificate "not yet valid"), ninja ("manifest still dirty"),
+    # and every mtime-based cache. Provisioning is the natural place to fix
+    # it once; the harnesses re-check on every contact. Skipped on --dry-run
+    # -- it changes the node.
+    if not dry_run:
+        def _tsync_run(cmd, timeout):
+            return tgt.run(cmd, timeout)
+        ok, detail = _clock_sync.sync_clock(_tsync_run, label=tgt.label)
+        if detail == "in sync":
+            pass
+        elif ok:
+            print("  %s[clock]%s %s" % (C_CYAN, C_RESET, detail))
+        else:
+            print("  %s[clock]%s %s" % (C_YELLOW, C_RESET, detail))
 
 
     # Config-driven tool disable: a node's benchmark_disabled_tools list

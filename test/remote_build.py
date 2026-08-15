@@ -26,6 +26,7 @@ import os, json, re, subprocess, threading, signal
 import diagnostic as _diag_mod
 import cmd_helpers as _ch
 import soname_compat as _soname
+import clock_sync as _clock_sync
 import build_paths
 import test_config
 
@@ -247,6 +248,33 @@ def get_node(label):
             return REMOTE_NODES[i]
         i += 1
     return None
+
+
+_CLOCK_SYNCED = set()
+
+
+def sync_node_clock(dest, port, work_dirs=None, cache_dirs=None):
+    """Correct a node's clock once per process, before anything is staged on
+    it, and repair whatever a previous run staged while it was wrong.
+
+    Several boards here have no RTC (or a dead cell) and boot decades off, so
+    files land dated years away in either direction -- which silently defeats
+    every mtime-based rebuild decision. `work_dirs` are trees the harness
+    re-creates (repaired in both directions); `cache_dirs` keep source mtimes
+    on purpose (future-dated files only). See test/clock_sync.py."""
+    key = (dest, int(port))
+    if key in _CLOCK_SYNCED:
+        return
+    _CLOCK_SYNCED.add(key)
+    def _run(cmd, timeout):
+        return _ssh_cmd(dest, port, cmd, timeout=timeout)
+    def _log(msg):
+        print(f"[tsync] {msg}", flush=True)
+    ok, detail = _clock_sync.sync_clock(
+        _run, label=f"{dest}:{port}", log=_log,
+        repair_paths=cache_dirs, rebuildable_paths=work_dirs)
+    if detail != "in sync":
+        print(f"[tsync] {dest}:{port} {detail}", flush=True)
 
 
 def exec_node_in_correctness(exec_node):
@@ -966,6 +994,10 @@ def _build_pro_remote(host, port, cmake, pro_rel, label, use_mold,
     # lacks (soname mismatch) are built from the vendored copy instead, so
     # the pushed binary can actually start there. "" for a matching fleet.
     lib_args = vendored_lib_args(node) if node else ""
+    # Clock + misdated-file repair before anything is written here: a staged
+    # tree dated in the future (or decades back) makes ninja refuse to build
+    # and make rebuild the wrong things.
+    sync_node_clock(host, port, work_dirs=[remote_dir])
     if use_ccache:
         # CCACHE_BASEDIR: ccache rewrites every absolute path that starts
         # with the basedir to a path relative to it before hashing, so the
@@ -1385,6 +1417,13 @@ def setup_remote_server_runtime(host, ssh_port, build_dir, datapack_src,
     build dir afterwards. The shared cache stays stripped; only this throwaway
     copy is briefly made whole."""
     import datapack_stage as _ds
+    # Clock first: this is where files start landing on the exec box, and a
+    # board with no RTC dates them decades away in either direction. The
+    # datapack cache deliberately keeps its SOURCE mtimes, so only
+    # future-dated files are repaired there.
+    sync_node_clock(host, ssh_port, work_dirs=[build_dir],
+                    cache_dirs=[_ds.DEFAULT_REMOTE_CACHE])
+
     # Find the matching node entry so we can resolve its datapack_cache
     # (configured via the per-exec-node `datapack_cache` field; defaults
     # to /home/catchchallenger/datapack-cache).
