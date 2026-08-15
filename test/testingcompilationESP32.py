@@ -33,12 +33,15 @@ emulator is absent, like testingcompilation{mac,android}.py):
           connect qtcpu800x600 --host 127.0.0.1 --port <p> --autologin. Mirrors
           the operator's real ESP32 hardware.
 
-  --realhardware (opt-in)  flash the connected board (idf.py flash), read its
+  real board (self-skip)  flash the connected board (idf.py flash), read its
           serial for the DHCP IP + 'correctly bind:', then connect qtcpu800x600
-          --host <board-ip> --port <p> --autologin. --serial <dev> pins the port;
-          without it the ESP32's USB serial is AUTODETECTED (ranks /dev/ttyUSB*
-          + /dev/ttyACM* by ESP32 USB-serial vendor id, confirmed with esptool
-          chip_id). Self-skips when the flag is absent or no board is present.
+          --host <board-ip> --port <p> --autologin. Runs whenever a board
+          answers, so all.sh exercises the hardware without a flag; self-skips
+          when none is present. --serial <dev> pins the port, otherwise the
+          ESP32 is AUTODETECTED with benchmark/benchmark_esp32.py's ROM-banner
+          probe (shared, and the only one that tells the board apart from the
+          other serial bridges on the same host). --realhardware forces the
+          phase so a detection failure is reported instead of skipped.
 
 stage1+stage2 are pure host builds (no ESP-IDF needed) and are the part that
 actually exercises the new datapack-cpp + settings-in-flash + LAN-announce code.
@@ -109,6 +112,10 @@ DATAPACKS = _config["paths"]["datapacks"] if "paths" in _config else []
 SERVER_PORT  = 42498
 BROADCAST_NAME = "CatchChallenger ESP32"
 MAIN_DATAPACK_CODE = "test"
+# The ESP32 firmware profile is ONLYBYMIRROR: it validates that a datapack
+# mirror URL is set, since the fileless server serves no files itself. The
+# canonical site; nothing is actually fetched during the test.
+DATAPACK_MIRROR = "https://catchchallenger.herman-brule.com/datapack/"
 
 NICE_PREFIX_COMPILE = ["nice", "-n", "19", "ionice", "-c", "3"]
 
@@ -132,7 +139,14 @@ def _argval(flag, default):
         if i + 1 < len(sys.argv):
             return sys.argv[i + 1]
     return default
-REALHARDWARE = "--realhardware" in sys.argv
+# The real-hardware phase is AUTOMATIC: when a board answers on a serial port
+# it is flashed and driven, otherwise the phase self-skips. That is the same
+# rule every optional capability follows here (ninja, ccache, mold: used when
+# present, fallback otherwise), and it is what puts the connected ESP32 in
+# all.sh without the operator having to remember a flag. --realhardware is
+# kept as a FORCE switch: it makes a detection failure a visible skip reason
+# rather than a silent "no board today".
+FORCE_REALHARDWARE = "--realhardware" in sys.argv
 # --serial <dev> pins the port; without it we autodetect which USB serial is the
 # ESP32 (see _detect_esp32_serial). None => autodetect.
 SERIAL_PORT  = _argval("--serial", None)
@@ -244,7 +258,16 @@ def write_server_properties(path):
     """Partial server-properties.xml. NormalServerGlobal::checkSettingsFile()
     fills every key we omit with sane defaults; we only pin the few the ESP32
     profile needs (10 clients, min-CPU visibility, the "test" maincode and the
-    LAN broadcast name). --save bakes the whole result into the flash cache."""
+    LAN broadcast name). --save bakes the whole result into the flash cache.
+
+    Two keys are not optional ON THE BOARD, only on the host: the ONLYBYMIRROR
+    firmware refuses to start with an empty httpDatapackMirror (a fileless
+    server cannot send the datapack, so clients must fetch it), and compression
+    must be off because the character-select path allocates a 16 MiB scratch
+    buffer whenever it is on -- instant bad_alloc on a ~320 KiB device. Without
+    them the image builds, flashes and then sits silent after heap_init, which
+    reads as "no board" instead of "these settings cannot run here".
+    See benchmark/benchmark_esp32.py for the measured detail."""
     with open(path, "w") as f:
         f.write('<?xml version="1.0"?>\n<configuration>\n'
                 f'    <server-port value="{SERVER_PORT}"/>\n'
@@ -252,6 +275,8 @@ def write_server_properties(path):
                 '    <automatic_account_creation value="true"/>\n'
                 f'    <max-players value="10"/>\n'
                 f'    <broadcastName value="{BROADCAST_NAME}"/>\n'
+                f'    <httpDatapackMirror value="{DATAPACK_MIRROR}"/>\n'
+                '    <compression value="none"/>\n'
                 '    <content>\n'
                 f'        <mainDatapackCode value="{MAIN_DATAPACK_CODE}"/>\n'
                 '    </content>\n'
@@ -457,6 +482,27 @@ def _poll_serial_for_marker(tty, marker, timeout):
     return False, "".join(buf)
 
 
+def _read_board_serial(tty, timeout):
+    """Reset the board and read its boot log; return (ip, bound, text).
+
+    Uses benchmark/benchmark_esp32.py's termios reader, which SETS THE BAUD
+    (B115200) and pulses RTS to reset first. `cat <tty>` cannot do either: it
+    reads at whatever rate the port is left at, so the board's output came back
+    as mojibake and neither 'DHCP got IP' nor 'correctly bind:' could ever
+    match -- the phase failed on a firmware that was in fact running fine.
+    Falls back to the raw poll when the module is unavailable."""
+    try:
+        sys.path.insert(0, os.path.join(ROOT, "benchmark"))
+        import benchmark_esp32 as _esp
+        return _esp.read_serial_ip(tty, timeout=clamp_local(timeout))
+    except Exception as e:
+        log_info(f"termios serial reader unavailable ({e}); raw poll")
+        import re
+        found, text = _poll_serial_for_marker(tty, "correctly bind", timeout)
+        m = re.search(r"DHCP got IP (\d+\.\d+\.\d+\.\d+)", text)
+        return (m.group(1) if m else None), found, text
+
+
 def _client_connect(host, port):
     """Run qtcpu800x600 --host/--port --autologin against host:port. Returns
     (ok, detail, out). ok when the client reaches the map OR (the no-FS server
@@ -591,6 +637,30 @@ def idf_env():
     return env
 
 
+def _esp32_write_wifi_overlay():
+    """Write the out-of-repo sdkconfig overlay (WiFi creds + static IP) before
+    the ESP-IDF build, reusing benchmark/benchmark_esp32.py so the credential
+    handling exists in ONE place. Returns the overlay path, or None."""
+    try:
+        sys.path.insert(0, os.path.join(ROOT, "benchmark"))
+        import benchmark_esp32 as _esp
+        conf = _esp.load_config()
+        if not conf:
+            log_info(f"no {_esp.CONF_PATH} — building without WiFi credentials "
+                     f"(the real-board phase will self-skip)")
+            return None
+        ok, detail = _esp.write_overlay(conf)
+        if not ok:
+            log_info(f"WiFi overlay not written — {detail}")
+            return None
+        log_info("WiFi overlay written from the out-of-repo config "
+                 "(credentials never logged)")
+        return detail          # = the overlay path
+    except Exception as e:
+        log_info(f"WiFi overlay unavailable ({e}); building without credentials")
+        return None
+
+
 def build_esp_idf():
     name = "esp-idf build catchchallenger-server (xtensa-esp32)"
     missing = esp_idf_available()
@@ -602,12 +672,34 @@ def build_esp_idf():
         log_info("esp-idf build skipped — stage1 datapack-cpp not generated")
         return False
     idf_build = build_paths.build_path("server/cli/build/testing-esp32-idf")
+    # WiFi credentials + static IP live OUT of the repo (cc-esp32.conf under the
+    # ESP32 prefix) and reach the firmware through an sdkconfig overlay. Without
+    # it the image builds and flashes but can never join the network, so the
+    # real-board phase could only ever report "no DHCP got IP" -- the overlay is
+    # what makes that phase able to pass at all. Written by the same helper the
+    # benchmark uses (secrets never touch git); absent config = plain build, and
+    # the board phase then self-skips on its own liveness/DHCP check.
+    overlay = _esp32_write_wifi_overlay()
     env = idf_env()
+    # Same configure contract as the benchmark's firmware build, and for the
+    # same two reasons:
+    #  * SDKCONFIG_DEFAULTS = repo defaults + out-of-repo overlay, so the image
+    #    carries the WiFi credentials (without them the board cannot join, and
+    #    the real-board phase can only ever report "no DHCP got IP").
+    #  * -DSDKCONFIG into the BUILD dir: idf.py otherwise writes the RESOLVED
+    #    sdkconfig -- which contains the WiFi password merged in -- into the
+    #    project dir, i.e. inside git. It also stops the build from silently
+    #    reusing a stale in-repo sdkconfig instead of the current defaults.
+    if overlay:
+        env["SDKCONFIG_DEFAULTS"] = (
+            os.path.join(ESP_PROJECT, "sdkconfig.defaults") + ";" + overlay)
     # idf.py is run through esp-idf/export so the toolchain is on PATH; the
     # project picks up the generated datapack-cpp via CATCHCHALLENGER_DATAPACK_CPP_DIR.
     cmd = ["bash", "-lc",
            f". '{IDF_PATH}/export.sh' >/dev/null 2>&1; "
            f"idf.py -C '{ESP_PROJECT}' -B '{idf_build}' "
+           f"-DIDF_TARGET=esp32 "
+           f"-DSDKCONFIG='{os.path.join(idf_build, 'sdkconfig')}' "
            f"-DCATCHCHALLENGER_DATAPACK_CPP_DIR='{DATAPACK_CPP_DIR}' build"]
     log_info("esp-idf idf.py build (xtensa-esp32, Release)")
     rc, out = run_cmd(cmd, ESP_PROJECT, timeout=IDF_TIMEOUT, env=env)
@@ -720,9 +812,25 @@ def _esptool_is_esp32(port, env):
 
 def _detect_esp32_serial(env):
     """Autodetect the ESP32's USB serial port (when --serial was not given).
-    Enumerate /dev/ttyUSB*+/dev/ttyACM*, rank by known ESP32 USB-serial vendor
-    IDs, then confirm with esptool chip_id (probes known-VID ports first to avoid
-    resetting unrelated devices). Returns (port, how) or (None, reason)."""
+    Returns (port, how) or (None, reason).
+
+    Preferred path is benchmark/benchmark_esp32.py's detector, shared rather
+    than reimplemented: it hardware-resets each candidate and matches the ROM
+    boot banner, so it tells the board apart from the OTHER serial bridges on
+    the same host. This host has five CP210x ttys and only one is the ESP32 --
+    the vendor-id ranking below cannot see the difference and its
+    "first known VID wins" fallback would pin the wrong port. It also caches
+    the by-path handle, skips ttys another process holds, and needs no esptool.
+
+    The esptool ranking stays as the fallback for a host where that module is
+    unavailable."""
+    try:
+        sys.path.insert(0, os.path.join(ROOT, "benchmark"))
+        import benchmark_esp32 as _esp
+        return _esp.detect_esp32_serial(verbose=True)
+    except Exception as e:
+        log_info(f"benchmark_esp32 detector unavailable ({e}); "
+                 f"falling back to the esptool probe")
     cands = sorted(glob.glob("/dev/ttyUSB*") + glob.glob("/dev/ttyACM*"))
     if not cands:
         return None, "no /dev/ttyUSB*|/dev/ttyACM* present — connect the ESP32"
@@ -755,44 +863,72 @@ def _detect_esp32_serial(env):
                   " is an ESP32 (unknown USB vendor id, esptool no response)")
 
 
+def _board_answers(port, secs=6):
+    """True when a hardware reset on `port` produces the ESP32 ROM boot banner.
+    Shares benchmark/benchmark_esp32.py's probe (pure termios modem-control
+    lines, no esptool). Unknown -> True, so a host that cannot run the probe
+    still attempts the flash rather than skipping a working board."""
+    try:
+        sys.path.insert(0, os.path.join(ROOT, "benchmark"))
+        import benchmark_esp32 as _esp
+        return _esp._score(_esp.read_with_reset(port, secs)) >= 0
+    except Exception as e:
+        log_info(f"board liveness probe unavailable ({e}); attempting the flash")
+        return True
+
+
 def flash_real_hardware():
-    """--realhardware: flash the connected board (idf.py flash over the serial
-    port), read its serial for the DHCP IP + 'correctly bind:', then connect the
-    native client to the board's IP. The port is --serial if given, else
-    autodetected (_detect_esp32_serial). Only runs when --realhardware was passed
-    AND a board is present; self-skips otherwise."""
+    """Flash the connected board (idf.py flash over the serial port), read its
+    serial for the DHCP IP + 'correctly bind:', then connect the native client
+    to the board's IP. The port is --serial if given, else autodetected
+    (_detect_esp32_serial). Runs whenever a board is present; self-skips
+    otherwise, unless --realhardware forced it, in which case not reaching the
+    board is a FAILURE."""
     name = "real ESP32: idf.py flash + qtcpu800x600 --autologin connect"
-    if not REALHARDWARE:
-        return False                       # operator opt-in only
+
+    def _unavailable(reason):
+        """No board / no toolchain: a skip by default, a FAILURE when the
+        operator forced the phase with --realhardware (they said a board is
+        connected, so not reaching it is the finding, not a non-event)."""
+        if FORCE_REALHARDWARE:
+            log_fail(name, reason)
+        else:
+            log_info("real-hardware phase skipped — " + reason)
+        return False
+
     missing = esp_idf_available()
     if missing:
-        log_info("--realhardware skipped — missing: " + ", ".join(missing))
-        return False
+        return _unavailable("missing: " + ", ".join(missing))
     if not os.path.isfile(IDF_BIN):
-        log_info("--realhardware skipped — no firmware image "
-                 "(esp-idf build was skipped or failed)")
-        return False
+        return _unavailable("no firmware image "
+                            "(esp-idf build was skipped or failed)")
     if not os.path.isfile(CLIENT_CPU_BIN):
-        log_info("--realhardware skipped — native qtcpu800x600 not built")
-        return False
+        return _unavailable("native qtcpu800x600 not built")
     env = idf_env()
     # Resolve the serial port: --serial pins it, otherwise autodetect the ESP32.
     if SERIAL_PORT is not None:
         port = SERIAL_PORT
         if not os.path.exists(port):
-            log_info(f"--realhardware skipped — no board on {port} "
-                     f"(connect one or pass --serial <dev>)")
-            return False
+            return _unavailable(f"no board on {port} "
+                                f"(connect one or pass --serial <dev>)")
     else:
         port, how = _detect_esp32_serial(env)
         if port is None:
-            log_info(f"--realhardware skipped — {how}")
-            return False
-        log_info(f"--realhardware: autodetected ESP32 serial {port} ({how})")
+            return _unavailable(how)
+        log_info(f"real hardware: autodetected ESP32 serial {port} ({how})")
+    # The port EXISTING is not the board ANSWERING: the by-path cache keeps
+    # resolving after the board is unplugged, hung or powered down, and then
+    # `idf.py flash` fails with "No serial data received" -- a red FAIL that
+    # says "no board" rather than "the port is fine". Reset it and require the
+    # ROM banner first, so an absent board is the skip it actually is.
+    if not _board_answers(port):
+        return _unavailable(f"no board answering on {port} "
+                            f"(hardware reset produced no ROM banner: "
+                            f"unplugged, powered down or hung)")
     cmd = ["bash", "-lc",
            f". '{IDF_PATH}/export.sh' >/dev/null 2>&1; "
            f"idf.py -C '{ESP_PROJECT}' -B '{IDF_BUILD}' -p '{port}' flash"]
-    log_info(f"--realhardware: idf.py flash -> {port}")
+    log_info(f"real hardware: idf.py flash -> {port}")
     rc, out = run_cmd(cmd, ESP_PROJECT, timeout=IDF_TIMEOUT, env=env)
     if rc != 0:
         _fc.set_extras(name, compile_output=out)
@@ -800,14 +936,11 @@ def flash_real_hardware():
         print(out[-3000:])
         return False
     log_info(f"flashed; reading {port} for DHCP IP + bind")
-    found, serial = _poll_serial_for_marker(port, "correctly bind", QEMU_BIND_TIMEOUT)
-    import re
-    m = re.search(r"DHCP got IP (\d+\.\d+\.\d+\.\d+)", serial)
-    if not found or m is None:
+    board_ip, bound, serial = _read_board_serial(port, QEMU_BIND_TIMEOUT)
+    if not bound or board_ip is None:
         log_fail(name, "board did not print 'DHCP got IP <addr>' + 'correctly bind:' on serial")
         print(serial[-2000:])
         return False
-    board_ip = m.group(1)
     log_info(f"board bound at {board_ip}:{SERVER_PORT}; connecting native client")
     ok, detail, cout = _client_connect(board_ip, SERVER_PORT)
     if ok:
@@ -860,15 +993,15 @@ def main():
                       failed_cases):
             run_stage2_client_connect()
 
-    # ESP-IDF build, then connect a client to the firmware under the emulator and
-    # (with --realhardware) on the real board. All self-skip cleanly when the
-    # toolchain / emulator / board is absent.
+    # ESP-IDF build, then connect a client to the firmware under the emulator
+    # and on the real board when one is connected. All self-skip cleanly when
+    # the toolchain / emulator / board is absent.
     if should_run("esp-idf build catchchallenger-server (xtensa-esp32)", failed_cases):
         build_esp_idf()
     if should_run("qtcpu800x600 --host/--port --autologin -> ESP32 server (qemu-xtensa)",
                   failed_cases):
         run_qemu_xtensa()
-    if REALHARDWARE and should_run(
+    if should_run(
             "real ESP32: idf.py flash + qtcpu800x600 --autologin connect", failed_cases):
         flash_real_hardware()
 
