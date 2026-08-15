@@ -27,7 +27,6 @@ import json
 import os
 import re
 import shlex
-import shutil
 import sys
 import subprocess
 import history_series
@@ -470,8 +469,16 @@ def collect_net(run):
     devpath = link.strip()
     # PCI: /sys/devices/pci.../0000:01:00.0
     pci = re.search(r"([0-9a-f]{4}:[0-9a-f]{2}:[0-9a-f]{2}\.[0-9a-f])", devpath)
-    if pci and shutil.which("lspci"):
-        rc, lspci = local_runner(["lspci", "-mm", "-s", pci.group(1)])
+    if pci:
+        # Resolve the slot on the NODE, never locally: the slot id was read
+        # from the node's sysfs, so running the host's lspci against it
+        # names whatever sits at that address HERE. That is how a Pentium
+        # MMX board came to record an AMD Raphael host bridge as its NIC,
+        # and an Intel i7 an AMD FCH LPC bridge. A node without lspci falls
+        # through to the sysfs product / interface-name path below.
+        rc, lspci = run(["sh", "-c",
+                         "command -v lspci >/dev/null 2>&1 && "
+                         f"lspci -mm -s {shlex.quote(pci.group(1))}"])
         if rc == 0 and lspci.strip():
             # lspci -mm: slot "class" "vendor" "device" ...
             parts = re.findall(r'"([^"]*)"', lspci)
