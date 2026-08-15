@@ -976,6 +976,21 @@ def rsync_datapack_to_exec(exec_node, local_datapack, remote_subdir="datapack",
         elif fstype in ("tmpfs", "ramfs"):
             tried.append(f"{cand} ({fstype})")
         else:
+            # Resolve a shell-expanded candidate ("$HOME/...") to a real path
+            # NOW: the probe above runs through the remote SHELL, which expands
+            # it, but the rsync destination below is used LITERALLY by the
+            # receiver -- it created "/home/<user>/$HOME/bench-datapack" and
+            # failed. Only ever hit on a node with no datapack_cache, which is
+            # why it stayed latent.
+            if "$" in cand:
+                rc2, rout, _rerr = ssh_run(eu, eh, ep,
+                                           f"cd {q} && pwd", timeout=20)
+                resolved = (rout or "").strip().splitlines()[-1].strip() \
+                    if rout else ""
+                if rc2 != 0 or not resolved.startswith("/"):
+                    tried.append(f"{cand} (could not resolve to a real path)")
+                    continue
+                cand = resolved
             disk_dir = cand
             break
     if transport:

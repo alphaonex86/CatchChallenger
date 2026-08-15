@@ -119,12 +119,20 @@ min..max separation is noise, and a single-core board cannot be measured this
 way at all, because the node-local client takes half the core.
 
 Every host/user/port/work_dir comes from remote_nodes.json via
-bh.benchmark_exec_nodes(); this file contains no infrastructure. There is no
-"local" row on purpose -- an amd64 workstation answers a bot fleet from its
-cache and the two backends both idle, so its numbers say nothing about either.
+bh.benchmark_exec_nodes(); this file contains no infrastructure.
+
+The HOST is measured too, as one more node. It is not a stand-in for the
+constrained boards -- it cannot be, it does not even saturate the same way --
+it is the HIGH-CONCURRENCY profile: 32 cores answering 250 bots is a different
+operating point from a single-core board, and the two event loops have no
+reason to behave the same in both. Read its row for what it is (many cores,
+client and server side by side, likely not server-bound) rather than as the
+fleet's verdict; the constrained rows remain the ones that speak for the
+targets this project exists for.
 """
 import argparse
 import concurrent.futures as cf
+import getpass
 import hashlib
 import os
 import re
@@ -968,6 +976,42 @@ def cleanup_node(exec_node):
              bh.C_YELLOW)
 
 
+def local_node():
+    """The host as one more node, for the high-concurrency profile.
+
+    Reached over ssh to 127.0.0.1 exactly like every other node -- the harness
+    already forces StrictHostKeyChecking=no / UserKnownHostsFile=/dev/null, and
+    key auth to self is what the fleet setup gives us -- so it needs no special
+    build, push or measure path: it IS a node whose compile parent happens to
+    be itself. Returns None when the host cannot ssh to itself (no sshd, no
+    key) or when a --node filter excludes it: a missing row is an unmeasured
+    profile, never a failure."""
+    arch = bh.host_arch()
+    if not bh.node_allowed("local", arch):
+        return None
+    user = getpass.getuser()
+    work = bh.tmpfs_scratch_dir("cc-bench-ab-local")
+    rc, _out, _err = br.ssh_run(user, "127.0.0.1", 22, "true", timeout=10)
+    if rc != 0:
+        print(_c(bh.C_YELLOW,
+                 "[fleet] host row skipped: ssh to 127.0.0.1 failed "
+                 "(no sshd, or no key auth to self) -- the fleet still runs"))
+        return None
+    compile_node = {"label": "local",
+                    "ssh": {"user": user, "host": "127.0.0.1", "port": 22},
+                    "work_dir": work,
+                    "arch": arch}
+    return {"label": "local", "ssh_host": "127.0.0.1", "ssh_user": user,
+            "ssh_port": 22, "work_dir": work, "arch": arch,
+            # Same convention as every remote node: the datapack is staged
+            # next to a PERSISTENT cache dir, never on the tmpfs work dir.
+            "datapack_cache": os.path.expanduser("~/datapack-cache"),
+            "compile_node": compile_node, "has_gui": False,
+            "client_run_mode": "none", "disabled_tools": [], "ninja": None,
+            "cflags": None, "cxxflags": None, "ldflags": None,
+            "lxc_nfs": None}
+
+
 def build_key(node):
     """Two exec nodes share one build only when they agree on BOTH the compile
     node AND the per-CPU compile flags -- otherwise one board's -march= would
@@ -1375,6 +1419,9 @@ def main():
         return 2
 
     nodes = [n for n in bh.benchmark_exec_nodes() if n.get("compile_node")]
+    local = local_node()
+    if local is not None:
+        nodes.insert(0, local)
     if not nodes:
         print(_c(bh.C_RED,
                  "[fatal] no benchmark execution node selected or available.\n"
@@ -1466,11 +1513,16 @@ def main():
             print(_c(bh.C_CYAN, f"  wrote {out_path}"))
             metrics = _history_metrics(per)
             if metrics:
+                # The host row describes THIS machine: read it directly.
+                # hr.make_ssh_runner does not relax host-key checking the way
+                # the harness's own ssh does, so ssh-to-self returns 255 and
+                # every platform field would come back unknown.
+                _runner = (hr.local_runner if label == "local"
+                           else hr.make_ssh_runner(node.get("ssh_host"),
+                                                   node.get("ssh_user"),
+                                                   node.get("ssh_port", 22)))
                 pr = hr.PlatformRecord(
-                    BENCH, batch_id, label,
-                    runner=hr.make_ssh_runner(node.get("ssh_host"),
-                                              node.get("ssh_user"),
-                                              node.get("ssh_port", 22)),
+                    BENCH, batch_id, label, runner=_runner,
                     arch_hint=node.get("arch")).collect(
                         cc_binary_path=node.get("work_dir"))
                 pr.add_result("ab", metrics, status="PASS")
