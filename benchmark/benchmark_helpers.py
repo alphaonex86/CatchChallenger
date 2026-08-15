@@ -1226,6 +1226,29 @@ def record_libs(node_label, configure_stdout, shell=None):
     return libs
 
 
+def regenerate_charts(bench_name):
+    """Rewrite `bench_name`'s SVGs from its history JSONs, at the end of a run.
+
+    benchmark/CLAUDE.md requires the charts to be regenerated after each
+    batch: they are a VIEW of the append-only history, and a run that adds a
+    node (or a whole benchmark's worth of numbers) leaves every chart stale
+    otherwise -- p1mmx measured for a full day while champion-by-execution-node
+    .svg still showed the fleet as of two weeks earlier. Never fatal: a chart
+    is derived data, so a failure here must not lose the run's measurements.
+    Returns the written paths."""
+    try:
+        import chart_generator
+        written = chart_generator.regenerate(bench_name)
+        print(f"{C_CYAN}[charts]{C_RESET} {bench_name}: {len(written)} SVG "
+              f"regenerated", flush=True)
+        return written
+    except Exception as e:
+        print(f"{C_YELLOW}[charts]{C_RESET} {bench_name}: regeneration failed "
+              f"({e}); run `python3 benchmark/chart_generator.py {bench_name}` "
+              f"to rebuild them", file=sys.stderr, flush=True)
+        return []
+
+
 def alias_libs(from_label, to_label):
     """Copy a recorded lib map from one node label to another (used to
     carry a compile node's verdict onto each exec node it built for).

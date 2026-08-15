@@ -680,15 +680,17 @@ def main():
             print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
         hr.attach_decision("benchmarkserversave", batch_id, decision)
-    # No chart written here: a chart is a VIEW of the history JSONs.
-    # `python3 svg.py [benchmark] [node]` renders the one you ask for,
-    # on demand, through chart_generator's own functions.
+    # Charts are a VIEW of the history JSONs, regenerated here so they never
+    # lag the numbers (benchmark/CLAUDE.md). `python3 svg.py [benchmark]
+    # [node]` still renders any single one on demand, and
+    # `python3 chart_generator.py [benchmark]` rebuilds them out of band.
     # Distil the compact tracked form NOW rather than in a separate step, so
     # series.json (one appended number per metric per run) + platform.json
     # (machine description, rewritten only when it changes) are always in
     # sync with the run that just finished.
     import history_series
     history_series.main()
+    bh.regenerate_charts("benchmarkserversave")
 
     return 0
 
