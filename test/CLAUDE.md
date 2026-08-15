@@ -176,6 +176,8 @@ Two opt-in layers:
 
 Both default `false` on new nodes. Operator must verify (`valgrind` or `lib*san` runtime). Harness won't auto-install. Layers AND together.
 
+`correctness: false` on an execution_node keeps it in the benchmark fleet but out of every test run (too little RAM to host a server-client run). Filter via `remote_build.correctness_exec_nodes()` / `all_enabled_exec_nodes()`, never by iterating `execution_nodes` directly.
+
 ## Network — test box ↔ remote / execution nodes
 
 Test box IPv6: `2803:1920::2:10/112`. Remote nodes in same `/112` (mips-lxc=`ff03`, x86-lxc=`ff04`, pentium-m=`ff01`, atom-n455=`ff02`).
