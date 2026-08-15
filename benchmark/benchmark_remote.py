@@ -37,6 +37,7 @@ import benchmark_helpers as bh
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                 "..", "test"))
 import soname_compat as _soname_compat
+import clock_sync as _clock_sync
 
 
 REPO_ROOT = bh.REPO_ROOT
@@ -490,39 +491,17 @@ def rsync_from(user, host, port, src, dst, timeout=RSYNC_TIMEOUT):
 # ---- time sync ------------------------------------------------------------
 
 def sync_remote_time(user, host, port, timeout=15):
-    """Check the remote node's clock; if it differs from local by >5 s,
-    set it via `sudo date -s`.  Silent on match, logs on set.
+    """Correct this node's clock when it drifts (test/clock_sync.py owns the
+    logic; several boards here have no RTC and boot decades off).
 
-    Returns True if time was acceptable (or was fixed), False if we
-    couldn't check/set."""
-    try:
-        local_ts = int(time.time())
-    except Exception:
-        return False
-    rc, sout, _serr = ssh_run(user, host, port, "date +%s", timeout=timeout)
-    if rc != 0:
-        return False
-    try:
-        remote_ts = int(sout.strip())
-    except (ValueError, TypeError):
-        return False
-    diff = abs(local_ts - remote_ts)
-    if diff <= 5:
-        return True
-    # time skew beyond threshold -- fix it
-    set_cmd = f"sudo -n date -s '@{local_ts}' >/dev/null 2>&1"
-    rc, _so, _se = ssh_run(user, host, port, set_cmd, timeout=timeout)
-    if rc != 0:
-        # try without sudo (e.g. already root or container with CAP_SYS_TIME)
-        set_cmd = f"date -s '@{local_ts}' >/dev/null 2>&1"
-        rc, _so, _se = ssh_run(user, host, port, set_cmd, timeout=timeout)
-    if rc == 0:
-        print(f"[tsync] {user}@{host}:{port} clock was {diff}s off, "
-              f"corrected to {local_ts}", file=sys.stderr)
-        return True
-    print(f"[tsync] {user}@{host}:{port} clock is {diff}s off but "
-          f"could not set time (rc={rc})", file=sys.stderr)
-    return False
+    Returns True when the clock is usable (already in sync, or set), False
+    when we could not check or set it."""
+    def _log(msg):
+        print(f"[tsync] {msg}", file=sys.stderr)
+    ok, _detail = _clock_sync.sync_clock(_ssh_runner(user, host, port),
+                                         label=f"{user}@{host}:{port}",
+                                         log=_log)
+    return ok
 
 
 # ---- compile-node build --------------------------------------------------
@@ -697,7 +676,14 @@ def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
     host = compile_node["ssh"]["host"]
     port = compile_node["ssh"].get("port", 22)
     work = compile_node["work_dir"]
-    sync_remote_time(user, host, port)
+    # Clock + future-mtime repair over the compile node's own work dir: a
+    # source tree staged with tomorrow's date makes ninja loop on "manifest
+    # still dirty" and make rebuild nothing at all.
+    def _tlog(msg):
+        print(f"[tsync] {msg}", file=sys.stderr, flush=True)
+    _clock_sync.sync_clock(_ssh_runner(user, host, port),
+                           label=f"{user}@{host}:{port}", log=_tlog,
+                           rebuildable_paths=[work])
     src  = f"{work}/sources/{cmake_src_subdir}"
     bld  = f"{work}/build-bench/{build_subdir}"
 
@@ -1390,7 +1376,15 @@ def sync_exec_node_time(exec_node):
         if key in _EXEC_TSYNC:
             return
         _EXEC_TSYNC.add(key)
-    sync_remote_time(u, h, p)
+    def _log(msg):
+        print(f"[tsync] {msg}", file=sys.stderr, flush=True)
+    # Correct the clock AND pull back anything a previous run staged while it
+    # was wrong: a file dated years ahead outlives the fix and keeps looking
+    # "newer than the source" to every rebuild rule that reads mtimes.
+    _clock_sync.sync_clock(
+        _ssh_runner(u, h, p), label=f"{u}@{h}:{p}", log=_log,
+        repair_paths=[exec_node.get("datapack_cache")],
+        rebuildable_paths=[exec_node.get("work_dir")])
 
 
 def push_binary_to_exec(compile_node, exec_node, remote_build_dir, bin_name,
