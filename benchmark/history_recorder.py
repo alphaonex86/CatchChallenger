@@ -62,7 +62,17 @@ def make_ssh_runner(host, user, port=22):
             remote = " ".join(shlex.quote(a) for a in cmd)
         else:
             remote = cmd
+        # Same ssh policy as the rest of the harness (benchmark_remote.
+        # ssh_run): without StrictHostKeyChecking=no + UserKnownHostsFile=
+        # /dev/null, a node whose key is not already in known_hosts fails
+        # with rc=255 and EVERY platform field of its record silently comes
+        # back unknown -- a recording gap that looks like a dead node.
+        # LogLevel=ERROR drops the "Permanently added ..." line that
+        # /dev/null otherwise prints on every connection.
         argv = ["ssh", "-o", "ConnectTimeout=4", "-o", "BatchMode=yes",
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                "-o", "LogLevel=ERROR",
                 "-p", str(port), f"{user}@{host}", remote]
         try:
             p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
