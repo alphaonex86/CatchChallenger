@@ -1499,6 +1499,19 @@ class PlatformRecord:
         `sensor_baseline` is a pre-workload snapshot from sensor_baseline()
         (or capture_sensor_baseline()); when present collect_sensors reports
         the throttle DELTA attributable to THIS run."""
+        # One cheap probe before the ~25 that follow. A node that is down at
+        # record time (powered off, or SKIPped for being unreachable during
+        # the run) otherwise pays the ssh connect timeout on EVERY field,
+        # serially -- one dead board is where a fleet batch spent ten extra
+        # minutes after its last cell had finished. A box that cannot answer
+        # `true` cannot answer the rest either, and every platform field is
+        # already documented as null when unknown.
+        rc, _out = self.runner("true")
+        if rc != 0:
+            print(f"[history] WARN {self.node_label}: unreachable at record "
+                  f"time; platform fields left unknown", file=sys.stderr,
+                  flush=True)
+            return self
         cpu = collect_cpu(self.runner)
         self.platform["cpu_model"] = cpu["cpu_model"]
         self.platform["cpu_cores"] = cpu["cpu_cores"]
