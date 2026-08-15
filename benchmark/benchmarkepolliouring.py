@@ -103,14 +103,20 @@ A backend is declared faster only when its min..max range over the repetitions
 does NOT overlap the other's. Overlapping ranges are reported as "no
 separation" -- which is a real answer, not a failure.
 
-WHY IT IS NOT IN all.sh
------------------------
-Deliberately NOT registered in benchmark/all.sh. It builds three binaries per
-compile node and runs 2 x --reps saturating runs on slow reference hardware,
-so a full A/B would dominate the suite's wall time while answering a question
-that only comes up when the event loop itself changes. Run it on demand:
+PART OF THE ROUTINE SWEEP
+-------------------------
+Run with no arguments like every other benchmark; it records the same
+per-platform history JSONs and regenerates the same charts, so both backends
+show up in the fleet's progression instead of living in a side directory.
 
     ./benchmarkepolliouring.py [--node <label|arch>] [--reps 3] [--seconds N]
+
+It IS the expensive one: three binaries per compile node and 2 x --reps
+saturating runs on slow reference hardware. Reach for --node / --reps when
+you want a quick look; the defaults are what the fleet sweep uses. Note the
+two caveats measured the hard way (see benchmark/CLAUDE.md): at --reps 3 a
+min..max separation is noise, and a single-core board cannot be measured this
+way at all, because the node-local client takes half the core.
 
 Every host/user/port/work_dir comes from remote_nodes.json via
 bh.benchmark_exec_nodes(); this file contains no infrastructure. There is no
@@ -132,6 +138,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 import benchmark_helpers as bh
 import benchmark_remote as br
+import history_recorder as hr
 
 REPO_ROOT = bh.REPO_ROOT
 BENCH = "benchmarkepolliouring"
@@ -297,10 +304,9 @@ BOTS_DEFAULT  = 250
 REPS_DEFAULT  = 3
 MEASURE_SECS  = 40   # length of the client's own measured window
 
-# One worker per distinct exec host, capped: 4 concurrent nodes is enough to
-# collapse the fleet's wall time to the slowest node while keeping the ssh
-# fan-out (and the local terminal) readable.
-MAX_PARALLEL_NODES = 4
+# Cap for the BUILD phase only: several builds on one compile node just fight
+# for its cores. The MEASURE phase is not capped -- see run_fleet.
+MAX_PARALLEL_BUILDS = 4
 
 # Sampling period of the node-local schedstat sampler, in seconds. One `cat`
 # per second on the node: identical for both backends and far below the load
@@ -1270,7 +1276,7 @@ def run_fleet(nodes, own, deadline):
     # Builds stay capped like br.run_profiler_fleet: several builds on ONE
     # compile node only fight for its cores, which costs build time and buys
     # no measurement. Phase 2 is the one that widens to the whole fleet.
-    with cf.ThreadPoolExecutor(max_workers=min(MAX_PARALLEL_NODES,
+    with cf.ThreadPoolExecutor(max_workers=min(MAX_PARALLEL_BUILDS,
                                                len(keys))) as ex:
         for key, res in ex.map(_build, keys):
             builds[key] = res
@@ -1309,13 +1315,48 @@ def run_fleet(nodes, own, deadline):
         with results_lock:
             results[label] = (rows, err, kind)
 
-    with cf.ThreadPoolExecutor(max_workers=min(MAX_PARALLEL_NODES,
-                                               len(nodes))) as ex:
+    # EVERY node at once, not a capped few. The measurement is node-local --
+    # server and client both run on the box, over its loopback -- so two
+    # distinct hosts share nothing: no link, no CPU, no port. Capping the fan
+    # out multiplied the fleet's wall time by ceil(nodes/cap) and bought
+    # nothing; the per-host lock above already keeps two exec entries that
+    # share one physical box from measuring at the same time.
+    with cf.ThreadPoolExecutor(max_workers=max(1, len(nodes))) as ex:
         list(ex.map(_measure, nodes))
     return results
 
 
 # ---- main -----------------------------------------------------------------
+
+def _history_metrics(per):
+    """Map one node's A/B summary onto the standard history metric block.
+
+    Both arms are recorded side by side (`epoll.*` / `iouring.*`) rather than
+    only their delta: the delta is what the A/B answers today, but the arms
+    are what a later run compares against, so a slowdown in BOTH backends
+    (a regression outside the event loop) stays visible instead of cancelling
+    out in the ratio."""
+    out = {}
+    for backend in BACKENDS:
+        s = per.get(backend)
+        if not s:
+            continue
+        out[f"{backend}.req_per_s"] = {
+            "value": s.get("median"), "median": s.get("median"),
+            "stddev": s.get("stddev"), "samples": s.get("samples"),
+            "unit": "req/s", "better": "higher"}
+        for key, unit, better, name in (
+                ("cpu_pct_median",   "%",     "lower",  "cpu_percent"),
+                ("cpu_s_median",     "s",     "lower",  "cpu_s"),
+                ("rss_mb_median",    "MB",    "lower",  "rss_mb"),
+                ("moves_median",     "moves", "higher", "moves"),
+                ("run_delay_ratio_median", "ratio", "lower", "run_delay_ratio")):
+            if s.get(key) is not None:
+                out[f"{backend}.{name}"] = {
+                    "value": s[key], "median": s[key], "stddev": None,
+                    "samples": None, "unit": unit, "better": better}
+    return out
+
 
 def main():
     own, args = parse_args()
@@ -1355,12 +1396,23 @@ def main():
     lock = bh.acquire_network_lock(BENCH)
     try:
         deadline = (time.monotonic() + args.maxtime) if args.maxtime else None
-        print(_c(bh.C_CYAN, f"[fleet] {len(nodes)} node(s), up to "
-                            f"{MAX_PARALLEL_NODES} in parallel"))
+        print(_c(bh.C_CYAN, f"[fleet] {len(nodes)} node(s) measured in "
+                            f"parallel (node-local: nothing shared between "
+                            f"hosts)"))
         results = run_fleet(nodes, own, deadline)
 
         progress = bh.Progress(len(nodes), BENCH)
         stamp = time.strftime("%Y-%m-%dT%H-%M-%S", time.gmtime())
+        # Same accounting as every other benchmark: one per-platform history
+        # JSON per node, then the charts. The ab-<stamp>.json below stays --
+        # it carries the A/B-specific detail (both arms' raw rows, the
+        # verdict) that the generic schema has no place for.
+        batch_id    = hr.new_batch_id()
+        started_utc = hr.iso_now()
+        # Fleet record for the champion compare, filled per node below.
+        rec = {"commit": bh.git_sha(), "comment": args.comment,
+               "date": stamp, "started_utc": started_utc,
+               "batch_id": batch_id, "benchmark": BENCH, "nodes": {}}
         failures = []
         measured = 0
         print()
@@ -1412,6 +1464,45 @@ def main():
                 "verdict": text, "winner": winner,
             })
             print(_c(bh.C_CYAN, f"  wrote {out_path}"))
+            metrics = _history_metrics(per)
+            if metrics:
+                pr = hr.PlatformRecord(
+                    BENCH, batch_id, label,
+                    runner=hr.make_ssh_runner(node.get("ssh_host"),
+                                              node.get("ssh_user"),
+                                              node.get("ssh_port", 22)),
+                    arch_hint=node.get("arch")).collect(
+                        cc_binary_path=node.get("work_dir"))
+                pr.add_result("ab", metrics, status="PASS")
+                # One slice per backend, each carrying cpu_percent: the
+                # per-CLAUDE.md mandatory field, and the only way to read a
+                # req/s win as "more work per cycle" vs "more cycles".
+                for backend in BACKENDS:
+                    sl = {k.split(".", 1)[1]: v
+                          for k, v in metrics.items()
+                          if k.startswith(backend + ".")}
+                    if "cpu_percent" in sl:
+                        pr.add_subbenchmark("ab", backend, sl)
+                out_h = pr.write(commit=bh.git_sha(),
+                                 started_utc=started_utc,
+                                 ended_utc=hr.iso_now(),
+                                 compile_flags=["-O3", "-DCMAKE_BUILD_TYPE=Release",
+                                                "-DCATCHCHALLENGER_BENCHMARK=ON"]
+                                     + list(br.exec_node_flag_defs(node).values()),
+                                 simd_tier="generic",
+                                 bitness=node.get("bitness"),
+                                 harness_version=hr.harness_version(),
+                                 comment=args.comment)
+                if out_h is not None:
+                    bh.chatter(_c(bh.C_CYAN, f"  history {out_h}"))
+                rec["nodes"][label] = {
+                    "arch": node.get("arch", "?"),
+                    "libs": bh.LIBS_BY_NODE.get(label, {}),
+                    "metrics": {k: {"median": v.get("median", v.get("value")),
+                                    "stddev": v.get("stddev") or 0.0,
+                                    "unit":   v.get("unit"),
+                                    "better": v.get("better", "higher")}
+                                for k, v in metrics.items()}}
 
         if failures:
             print()
@@ -1423,6 +1514,25 @@ def main():
             return 1
         # A SKIPped node is an unknown metric, not a regression: only a node
         # that ran and produced bad data makes the whole run non-zero.
+        if measured:
+            # Champion compare across the fleet -- skipped on a --node run,
+            # which by construction cannot see a regression on the nodes it
+            # did not measure. Both arms are tracked, so this catches an
+            # event-loop regression between commits; the A/B's own winner
+            # line above remains the answer to "which backend is faster".
+            if not bh.node_filter_active() and rec["nodes"]:
+                rec["ended_utc"] = hr.iso_now()
+                champ = bh.load_champion(BENCH)
+                decision, summary = bh.decide_multi_node(champ, rec)
+                bh.print_decision(BENCH, decision, summary)
+                if decision == "KEEP":
+                    ch_p = bh.champion_path(BENCH)
+                    bh.write_record(ch_p, rec)
+                    print(_c(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
+                hr.attach_decision(BENCH, batch_id, decision)
+            import history_series
+            history_series.main()
+            bh.regenerate_charts(BENCH)
         if any(kind == "FAIL" for _l, kind, _e in failures):
             return 1
         return 0
