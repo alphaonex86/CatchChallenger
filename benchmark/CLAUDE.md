@@ -875,6 +875,16 @@ Traps that cost a debugging cycle each — all fixed, don't reintroduce:
 
 ## epoll vs io_uring A/B — `benchmarkepolliouring.py` (learned the hard way)
 
+IN the routine sweep (`all.sh`). It records the same per-platform history +
+charts + champion as the others, tracking BOTH arms. Fixed-TIME like every
+other benchmark (a `--seconds` window per cell) and every node measures
+CONCURRENTLY -- the client is node-local, so two hosts share no link, CPU or
+port; only the builds are capped, per compile node.
+The sweep keeps `--reps 3`, which feeds the history trend but is NOT a
+publishable separation — quote a win only from a `--reps 8+` run. Single-core
+boards (geode, p1mmx) are measured but expect "no separation": the node-local
+client takes half the core, so they are scheduler-bound, not syscall-bound.
+
 * **`min..max` separation at n=3 is NOT evidence.** Ranges WIDEN with sample count. A clean non-overlapping geode result at n=3 dissolved at n=4. Use `--reps 8`+; never publish an n=3 separation.
 * **io_uring sub-options are NOT optional tuning for a fair A/B.** Without `COOP_TASKRUN`+`TASKRUN_FLAG`+`NO_SQARRAY` (`--tuned`) rpi-4 reported epoll +2.5%; with them io_uring +7.7% — a ~10pt sign flip. Untuned io_uring carries avoidable overhead epoll does not have.
 * **SQPOLL measured HARMFUL, do not enable by default** (`--sqpoll`): rpi-4 −8.1% (win destroyed), odroid-n2 −0.4%. It spins a kernel thread costing a core it cannot repay; this server is not submission-bound (broadcast sends are already batched to one `io_uring_enter` per tick). It is also not like-for-like vs single-threaded epoll.

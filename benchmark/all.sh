@@ -49,6 +49,12 @@ BENCHMARKS=(
     ./benchmarkserversave.py
     ./benchmarkbotactions.py
     ./benchmarkclientlatency.py
+    # The epoll-vs-io_uring A/B. Fixed-TIME like the rest: each cell is a
+    # --seconds saturating window, and every node measures at once (the
+    # client is node-local, so hosts share nothing), so the fleet costs
+    # ~2 x --reps windows of wall time, not one per node. Only its builds
+    # are capped, and only per compile node.
+    ./benchmarkepolliouring.py
 )
 
 COMMENT="${COMMENT:-}"
