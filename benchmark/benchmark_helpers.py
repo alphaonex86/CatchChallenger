@@ -2118,7 +2118,67 @@ def decide(champion, candidate, *, keep_threshold=0.30, discard_threshold=0.20,
     return decision, summary
 
 
+def _decision_movers(summary, limit=8):
+    """Split a decide_multi_node() summary into (better, worse, other), each
+    sorted by |delta| descending and capped at `limit`. Returns the three
+    lists plus how many rows were left out."""
+    better, worse, other = [], [], []
+    for row in summary or []:
+        text = row[3] if len(row) > 3 else ""
+        m = re.search(r"delta=([+-]?[\d.]+)%", text or "")
+        d = abs(float(m.group(1))) if m else 0.0
+        if "(better)" in text:
+            better.append((d, row))
+        elif "(worse)" in text:
+            worse.append((d, row))
+        else:
+            other.append((d, row))
+    for lst in (better, worse, other):
+        lst.sort(key=lambda t: t[0], reverse=True)
+    dropped = max(0, len(better) - limit) + max(0, len(worse) - limit)
+    return ([r for _d, r in better[:limit]],
+            [r for _d, r in worse[:limit]],
+            [r for _d, r in other[:limit]], dropped)
+
+
 def print_decision(bench_name, decision, summary, arch_hint=None):
     colour = {"KEEP": C_GREEN, "DISCARD": C_YELLOW, "ESCALATE": C_RED}.get(decision, "")
     tag = f"{bench_name}@{arch_hint}" if arch_hint else bench_name
     print(f"\n{colour}[{tag}] DECISION: {decision}{C_RESET}")
+    # The evidence, not just the verdict. benchmark/CLAUDE.md requires an
+    # ESCALATE to "surface a summary" -- the operator is the one who decides,
+    # and they cannot without seeing WHICH node and WHICH metric moved. The
+    # summary was being computed and then thrown away here, so every verdict
+    # arrived unexplained. Bounded to the biggest movers so a 20-node fleet
+    # stays readable.
+    better, worse, other, dropped = _decision_movers(summary)
+    def _rows(title, rows, col):
+        if not rows:
+            return
+        print(f"  {col}{title}{C_RESET}")
+        for row in rows:
+            key = row[0]
+            champ = row[1] if len(row) > 1 else None
+            cand  = row[2] if len(row) > 2 else None
+            text  = row[3] if len(row) > 3 else ""
+            def _fmt(v):
+                if v is None:
+                    return "-"
+                return f"{v:,.4g}" if isinstance(v, (int, float)) else str(v)
+            print(f"    {key:<52} {_fmt(champ):>12} -> {_fmt(cand):>12}  {text}")
+    if decision == "KEEP":
+        _rows("improved:", better, C_GREEN)
+        _rows("regressed:", worse, C_YELLOW)
+    elif decision == "DISCARD":
+        _rows("regressed:", worse, C_YELLOW)
+        if not worse:
+            _rows("all within the noise band:", other, C_CYAN)
+    else:
+        # ESCALATE == some up, some down: BOTH sides are what the human needs.
+        _rows("improved:", better, C_GREEN)
+        _rows("regressed:", worse, C_YELLOW)
+        if not better and not worse:
+            _rows("no metric crossed a threshold:", other, C_CYAN)
+    if dropped:
+        print(f"    ... and {dropped} more mover(s); full per-metric detail is "
+              f"in the per-node history JSONs under benchmark/history/")
