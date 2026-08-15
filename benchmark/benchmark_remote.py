@@ -32,6 +32,11 @@ import threading
 import time
 
 import benchmark_helpers as bh
+# Shared with the correctness harness (test/remote_build.py): one probe
+# implementation, not a second copy that would drift.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "..", "test"))
+import soname_compat as _soname_compat
 
 
 REPO_ROOT = bh.REPO_ROOT
@@ -613,14 +618,59 @@ def exec_node_flag_defs(exec_node):
     return out
 
 
-def _merge_flag_defs(cmake_defs, exec_node):
+def _ssh_runner(user, host, port):
+    """Adapter turning this module's ssh_run() into the (cmd, timeout) ->
+    (rc, stdout) callable soname_compat expects."""
+    def _run(cmd, timeout):
+        rc, out, _err = ssh_run(user, host, port, cmd, timeout=timeout)
+        return rc, out
+    return _run
+
+
+def vendored_lib_defs(compile_node, exec_node):
+    """CMake defs forcing the vendored copy of every optional system lib
+    whose compile-node soname is missing on the exec node -- e.g. the geode
+    container links libtinyxml2.so.10 but the p1mmx board only has .so.11,
+    so the pushed binary would die with "error while loading shared
+    libraries". See test/soname_compat.py for the full rationale.
+
+    {} in the normal case (paired container/board of the same vintage), so
+    every existing node builds exactly as before. Cached per (compile, exec)
+    pair -- two ssh probes per pair per run."""
+    if not isinstance(exec_node, dict) or not isinstance(compile_node, dict):
+        return {}
+    return _soname_compat.vendored_defs(
+        _ssh_runner(compile_node["ssh"]["user"], compile_node["ssh"]["host"],
+                    compile_node["ssh"].get("port", 22)),
+        compile_node.get("label"),
+        _ssh_runner(exec_node["user"], exec_node["host"],
+                    exec_node.get("port", 22)),
+        exec_node.get("label"),
+        log=_rlog)
+
+
+def exec_node_cmake_defs(exec_node, compile_node=None):
+    """Every CMake cache var this exec node's build needs: its per-CPU
+    compile flags, plus the vendored-lib overrides for the (compile, exec)
+    pair when the compile node is known. Used both to CONFIGURE the build
+    and to KEY it, so two exec nodes only share a binary when both agree."""
+    out = exec_node_flag_defs(exec_node)
+    if compile_node is not None:
+        out.update(vendored_lib_defs(compile_node, exec_node))
+    return out
+
+
+def _merge_flag_defs(cmake_defs, exec_node, compile_node=None):
     """Return a copy of `cmake_defs` with the exec node's compile flags
     merged in. A caller-supplied value for the same CMake var is kept and
-    the exec flags APPENDED (cmake honours later tokens), never clobbered."""
+    the exec flags APPENDED (cmake honours later tokens), never clobbered.
+    The vendored-lib overrides are booleans, not flag lists, so they are
+    SET rather than appended (`OFF OFF` is not a cmake bool)."""
     merged = dict(cmake_defs or {})
-    for k, v in exec_node_flag_defs(exec_node).items():
+    appendable = set(exec_node_flag_defs(exec_node).keys())
+    for k, v in exec_node_cmake_defs(exec_node, compile_node).items():
         existing = merged.get(k)
-        if isinstance(existing, str) and existing.strip():
+        if k in appendable and isinstance(existing, str) and existing.strip():
             merged[k] = f"{existing} {v}"
         else:
             merged[k] = v
@@ -651,10 +701,11 @@ def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
     src  = f"{work}/sources/{cmake_src_subdir}"
     bld  = f"{work}/build-bench/{build_subdir}"
 
-    # Fold this exec node's per-CPU flags (cflags/cxxflags/ldflags) into the
-    # configure -- the compile node produces a binary tuned for the node it
-    # will be pushed to. No exec_node / no flags => unchanged behaviour.
-    cmake_defs = _merge_flag_defs(cmake_defs, exec_node)
+    # Fold this exec node's per-CPU flags (cflags/cxxflags/ldflags) and its
+    # vendored-lib overrides into the configure -- the compile node produces
+    # a binary tuned for, and loadable on, the node it will be pushed to.
+    # No exec_node / no flags => unchanged behaviour.
+    cmake_defs = _merge_flag_defs(cmake_defs, exec_node, compile_node)
     defs = []
     if cmake_defs:
         for k, v in cmake_defs.items():
@@ -700,7 +751,14 @@ def build_on_compile_node(compile_node, cmake_src_subdir, build_subdir,
     def _compile_shell(cmd, timeout=15):
         _rc, _out, _err = ssh_run(user, host, port, cmd, timeout=timeout)
         return _out
-    bh.record_libs(compile_node["label"], sout, shell=_compile_shell)
+    libs = bh.record_libs(compile_node["label"], sout, shell=_compile_shell)
+    # Stamp the verdict on the EXEC node too, from this build's own log. One
+    # compile node can produce several binaries with different lib choices
+    # (a vendored fallback applied to one board only), so keying the record
+    # on the compile node alone let whichever build finished last overwrite
+    # the others -- and a node's history would claim libs it never ran.
+    if libs and exec_node is not None and exec_node.get("label"):
+        bh.LIBS_BY_NODE[exec_node["label"]] = libs
 
     build_cmd = f"cmake --build {shlex.quote(bld)} -j$(nproc)"
     if target:
@@ -2005,7 +2063,7 @@ def profile_fleet(bench_name, tools, local_cmd, local_cwd, local_timeouts,
         sub = f"{remote_spec['build_subdir_base']}-profile-{cn.get('label', 'cn')}"
         # Distinct flag set => distinct build dir, so a node's -march= profile
         # isn't taken against another node's binary on the same compile node.
-        _flag_sig = tuple(sorted(exec_node_flag_defs(en).items()))
+        _flag_sig = tuple(sorted(exec_node_cmake_defs(en, cn).items()))
         if _flag_sig:
             sub += "-" + hashlib.sha1(repr(_flag_sig).encode()).hexdigest()[:8]
         res = profile_on_exec(
@@ -2592,11 +2650,13 @@ def run_profiler_fleet(specs, verbose=False, max_workers=None):
     import concurrent.futures as cf
 
     # A build is shared only by exec nodes that agree on BOTH the compile
-    # node AND the per-CPU flags (cflags/cxxflags/ldflags). Key phase-1 on
-    # (compile_label, flag-signature); nodes with their own flags get their
-    # own build dir so one board's -march= never leaks into another's binary.
+    # node AND the per-CPU flags (cflags/cxxflags/ldflags) AND the
+    # vendored-lib overrides. Key phase-1 on (compile_label, flag-signature);
+    # nodes with their own flags get their own build dir so one board's
+    # -march= (or its vendored tinyxml2) never leaks into another's binary.
     def _flag_sig(s):
-        return tuple(sorted(exec_node_flag_defs(s["exec_node"]).items()))
+        return tuple(sorted(exec_node_cmake_defs(s["exec_node"],
+                                                 s["compile_node"]).items()))
 
     def _build_key(s):
         return (s["compile_node"]["label"], _flag_sig(s))

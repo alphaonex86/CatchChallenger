@@ -25,6 +25,7 @@ linger on the remote node.
 import os, json, re, subprocess, threading, signal
 import diagnostic as _diag_mod
 import cmd_helpers as _ch
+import soname_compat as _soname
 import build_paths
 import test_config
 
@@ -239,6 +240,59 @@ def get_node(label):
             return REMOTE_NODES[i]
         i += 1
     return None
+
+
+def vendored_lib_args(node):
+    """`-DEXTERNALLIB<X>=OFF ` string for every optional system lib this
+    compile node links but one of its execution nodes does not have.
+
+    The binary built here is pushed to those boxes and must LOAD there: the
+    geode container links libtinyxml2.so.10 while the p1mmx board only ships
+    .so.11, which turned every remote run on that board into "error while
+    loading shared libraries". Since one binary is shared by all of a node's
+    exec nodes, the UNION of their needs is applied.
+
+    Empty string when every exec node matches (the whole fleet before p1mmx
+    joined) -- the configure command is then byte-identical to before.
+    Fail-open on an unreachable / powered-off box: an empty probe reports
+    "has everything", so a sleeping board never forces a vendored rebuild.
+    NFS-LXC nodes are skipped: their binary runs inside the container, whose
+    libs are not the ones the pre-chroot management shell would report."""
+    if not isinstance(node, dict):
+        return ""
+    specs = []
+    for ent in (node.get("execution_nodes") or []):
+        if not bool(ent.get("enabled", True)):
+            continue
+        if _lxc_nfs_cfg(ent) is not None:
+            continue
+        dest = f"{ent['user']}@{ent['host']}"
+        port = int(ent.get("port", 22))
+        specs.append((ent.get("label"),
+                      _soname_ssh_runner(dest, port)))
+    if not specs:
+        return ""
+    ssh = node.get("ssh", {})
+    defs = _soname.vendored_defs_for_node(
+        _soname_ssh_runner(f"{ssh.get('user')}@{ssh.get('host')}",
+                           int(ssh.get("port", 22))),
+        node.get("label"), specs, log=_soname_log)
+    out = ""
+    for opt in sorted(defs):
+        out += f"-D{opt}={defs[opt]} "
+    return out
+
+
+def _soname_ssh_runner(dest, port):
+    """(cmd, timeout) -> (rc, stdout) adapter over _ssh_cmd for
+    soname_compat, which owns no ssh layer of its own."""
+    def _run(cmd, timeout):
+        return _ssh_cmd(dest, port, cmd, timeout=timeout)
+    return _run
+
+
+def _soname_log(msg):
+    print(f"[remote] {msg}", flush=True)
 
 
 def all_enabled_exec_nodes(diag=None):
@@ -878,6 +932,10 @@ def _build_pro_remote(host, port, cmake, pro_rel, label, use_mold,
     node = get_node(label) if label else None
     use_ccache = bool(node.get("has_ccache", True)) if node else True
     use_ninja = bool(node.get("has_ninja", True)) if node else True
+    # Optional system libs this node links but one of its execution nodes
+    # lacks (soname mismatch) are built from the vendored copy instead, so
+    # the pushed binary can actually start there. "" for a matching fleet.
+    lib_args = vendored_lib_args(node) if node else ""
     if use_ccache:
         # CCACHE_BASEDIR: ccache rewrites every absolute path that starts
         # with the basedir to a path relative to it before hashing, so the
@@ -940,7 +998,7 @@ def _build_pro_remote(host, port, cmake, pro_rel, label, use_mold,
     configure_cmd = (
         f"mkdir -p {build_dir} && {mkdir_ccache}{tmp_prefix}{nice_prefix}"
         f"{linker_path_prefix}{ccache_env}$NICE {cmake} {gen_args}-S {cmake_source} -B {build_dir} "
-        f"-DCMAKE_BUILD_TYPE=Debug {pic_args}{flag_args} {define_opts} {cxx_arg} {mold_arg} "
+        f"-DCMAKE_BUILD_TYPE=Debug {pic_args}{lib_args}{flag_args} {define_opts} {cxx_arg} {mold_arg} "
         f"2>&1"
     )
     rc, out = _ssh_cmd(host, port, configure_cmd,

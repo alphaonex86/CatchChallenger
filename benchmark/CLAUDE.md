@@ -824,7 +824,7 @@ the normal commit path, not via the benchmark champion mechanism.
 
 The load generator and the server share the hardware being measured. Only
 `tools/bot-bench` can do this fleet-wide: it is Qt-FREE, while `tools/bot-actions`
-links Qt6 Widgets and 11 of the 15 benchmark exec nodes are headless boards with
+links Qt6 Widgets and 12 of the 16 benchmark exec nodes are headless boards with
 no Qt6 runtime. `benchmarkbotactions.py` (`--spam` throughput) and
 `benchmarkclientlatency.py` (`--latency` tail) both build it on the exec node's
 compile parent, push it beside the server and run it there over 127.0.0.1.

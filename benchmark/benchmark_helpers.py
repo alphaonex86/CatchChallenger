@@ -1228,7 +1228,14 @@ def record_libs(node_label, configure_stdout, shell=None):
 
 def alias_libs(from_label, to_label):
     """Copy a recorded lib map from one node label to another (used to
-    carry a compile node's verdict onto each exec node it built for)."""
+    carry a compile node's verdict onto each exec node it built for).
+
+    A record already made FOR `to_label` wins: it came from that node's own
+    build, which is the specific truth when one compile node produces
+    several binaries with different lib choices (vendored fallback on one
+    board only). The compile-node entry is only the fallback."""
+    if to_label in LIBS_BY_NODE:
+        return
     if from_label in LIBS_BY_NODE:
         LIBS_BY_NODE[to_label] = LIBS_BY_NODE[from_label]
 
