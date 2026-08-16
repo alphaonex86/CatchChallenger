@@ -422,31 +422,45 @@ at `benchmark/results/<benchmark-name>/champion.json`. Schema:
 }
 ```
 
-`benchmark/history/` and `benchmark/results/` are LOCAL-only — NOT git-
-tracked (`.gitignore` excludes both: too noisy). champion.json is still
-overwritten in-place when a new champion is promoted; the append-only
-per-run JSONs remain the source of truth and charts are regenerated from
-them. Don't keep a parallel JSON list — it desync's. Don't re-add these
-trees to git.
+`benchmark/history/` and `benchmark/results/` are MOSTLY local. `.gitignore`
+is the authority; today it tracks exactly three distilled files per location —
+`results/**/champion.json`, `history/**/series.json` and
+`history/**/platform.json` — so the performance evolution and the hardware
+comparison live in git without the bulk, and untracks the per-run timeline and
+every chart (regenerable, and the SVGs alone would be hundreds of MB).
+champion.json is overwritten in-place when a new champion is promoted; the
+history JSONs are the source of truth and charts are regenerated from them.
+Don't keep a parallel JSON list — it desync's, and don't widen what is
+tracked.
 
 When proposing an optimisation, the agent reads the per-benchmark
 champion.json, compares the candidate's metrics from **every** node
 against the champion's records for those nodes, and writes the decision
 (KEEP / DISCARD / ESCALATE) + per-metric deltas back to
 `benchmark/results/<benchmark-name>/candidate-<stamp>.json`
-(`<stamp>` = the run's started_utc, `:`→`-`). All of `results/` is
-git-ignored (local-only); an ESCALATE the operator wants to keep is
-copied out of the tree by hand.
+(`<stamp>` = the run's started_utc, `:`→`-`). Only `champion.json` is tracked
+under `results/`; everything else there is local, so an ESCALATE the operator
+wants to keep is copied out of the tree by hand.
 
-## Per-run history — append-only, one JSON per run
+## Per-run history — one distilled pair per node
 
 In addition to `champion.json` (which only tracks the current winner),
-every `benchmark*.py` (or the shared helper they all call) MUST drop a
-full snapshot of each run under:
+every `benchmark*.py` (or the shared helper they all call) records each run
+under:
 
 ```
-benchmark/history/<benchmark-name>/<compile-node>/<exec-node>/<ISO-8601-timestamp>.json
+benchmark/history/<benchmark-name>/<compile-node>/<exec-node>/series.json
+benchmark/history/<benchmark-name>/<compile-node>/<exec-node>/platform.json
 ```
+
+`series.json` carries that node's WHOLE timeline as parallel arrays (a runs
+axis + one column per metric, ~2.3 bytes per datapoint); `platform.json` is
+its machine description, rewritten only when it changes. Written by
+`history_series.py`, which every benchmark calls at the end of its run. This
+REPLACED an earlier one-JSON-per-run-per-platform layout
+(`<ISO-8601-timestamp>.json`): the fields below are what the pair carries, but
+do not expect a file per run — there are none, and reading the evolution needs
+no `git log -p` archaeology.
 
 * `<compile-node>`/`<exec-node>` — the `nodes[].label` /
   `execution_nodes[].label` pair from remote_nodes.json (local host =
@@ -647,9 +661,12 @@ Rules:
   `history_recorder.py`), not duplicated per `benchmark*.py`.
 * No external chart service — render locally (matplotlib SVG backend
   or hand-rolled SVG). Don't add a new pip dep without asking.
-* `champion.svg` and `candidate-<stamp>.svg` are BOTH local-only
-  (all of `results/` is git-ignored): regenerable from the local
-  history JSONs, which remain the source of truth.
+* `champion.svg` and `candidate-<stamp>.svg` are BOTH untracked:
+  regenerable from the history JSONs, which remain the source of truth.
+  `champion.svg` is rewritten by every run but only when the bytes actually
+  change; the `candidate-<stamp>.svg` freeze is opt-in
+  (`CC_BENCH_WRITE_CHARTS=1`), and `python3 benchmark/svg.py` renders any
+  chart on demand without persisting it.
 * Skip charts that can't drive a cross-node decision (they only waste
   space); regenerate must delete a now-skipped stale SVG:
   * cross-node `champion.svg` + `champion-by-execution-node.svg`:
