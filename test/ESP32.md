@@ -105,8 +105,8 @@ server/cli/esp32/
 
 ```bash
 cd test
-python3 testingcompilationESP32.py                       # host stages + emulator
-python3 testingcompilationESP32.py --realhardware        # + flash the board (autodetect port)
+python3 testingcompilationESP32.py                       # everything, board included when one answers
+python3 testingcompilationESP32.py --realhardware        # force: no board reachable = FAIL, not skip
 python3 testingcompilationESP32.py --realhardware --serial /dev/ttyACM0   # pin the port
 ```
 
@@ -120,13 +120,22 @@ python3 testingcompilationESP32.py --realhardware --serial /dev/ttyACM0   # pin 
 * the **qemu** phase boots the firmware under `qemu-system-xtensa`, waits for
   `correctly bind:`, then connects `qtcpu800x600 --host 127.0.0.1 --port 42498
   --autologin`; self-skips when qemu / the firmware image is absent.
-* **`--realhardware`** flashes the board via `idf.py flash`, reads its serial
-  for the DHCP IP + `correctly bind:`, then connects `qtcpu800x600 --host
-  <board-ip> --port 42498 --autologin`; self-skips unless the flag is passed AND
-  a board is present. The port is **autodetected** (the ESP32's USB serial among
-  `/dev/ttyUSB*`+`/dev/ttyACM*`, ranked by ESP32 USB-serial vendor id —
-  CP210x `10c4`, CH34x `1a86`, FTDI `0403`, Espressif native-USB `303a` — and
-  confirmed with `esptool chip_id`); pin it with `--serial <dev>`.
+* the **real board** phase flashes it via `idf.py flash`, reads its serial for
+  the DHCP IP + `correctly bind:`, then connects `qtcpu800x600 --host
+  <board-ip> --port 42498 --autologin`. It runs **whenever a board answers** —
+  that is what puts the hardware in `all.sh`, which passes no flags — and
+  self-skips when none does. `--realhardware` only FORCES it, turning "no
+  board" into a failure instead of a skip.
+  The port is **autodetected** with `benchmark/benchmark_esp32.py`'s ROM-banner
+  probe (hardware-reset each candidate via RTS, match the boot banner): the
+  vendor-id ranking it replaced cannot tell one CP210x from another, and this
+  host has five — it pinned the wrong port. Pin it yourself with
+  `--serial <dev>`, or via `$CC_ESP32_SERIAL`.
+  The firmware it flashes gets the out-of-repo WiFi overlay
+  (`$CC_ESP32_PREFIX/cc-esp32.conf`) and bakes `httpDatapackMirror` +
+  `compression=none` into the flash settings — without those the image builds
+  and flashes but the board never joins the network or aborts on the first
+  character select.
 
 > The connect phases assert the client reaches **protocol-good / login**, not
 > the map: the fileless server serves no datapack files, so a fresh client
