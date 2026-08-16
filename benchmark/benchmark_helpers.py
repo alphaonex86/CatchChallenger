@@ -2018,7 +2018,27 @@ def decide_multi_node(champion, candidate, *, keep_threshold=0.30,
             cm  = ca.get("median")
             if chm is None or cm is None:
                 continue
-            better = ch.get("better", "lower")
+            # A metric is only comparable to itself. When the champion and the
+            # candidate disagree on the UNIT or on which direction is better,
+            # the NAME survived a change of meaning and the two numbers are
+            # different quantities -- botactions' champion held
+            # `iouring-cpu_requests_per_s` as 0.0666 SECONDS (better=lower)
+            # against today's 236k req/s (better=higher), which the matrix
+            # dutifully reported as "+354,822,753% worse" and escalated on
+            # forever. That is a schema change, not a regression: report it as
+            # such and leave it out of the verdict.
+            ch_unit, ca_unit = ch.get("unit"), ca.get("unit")
+            ch_better = ch.get("better", "lower")
+            ca_better = ca.get("better", ch_better)
+            if (ch_unit is not None and ca_unit is not None
+                    and ch_unit != ca_unit) or ch_better != ca_better:
+                summary.append((key, chm, cm,
+                                f"not comparable: champion is "
+                                f"[{ch_unit}/{ch_better}-is-better], candidate "
+                                f"is [{ca_unit}/{ca_better}-is-better] "
+                                f"-- re-baseline this benchmark"))
+                continue
+            better = ch_better
             if chm == 0:
                 delta = 0.0
             else:
@@ -2127,6 +2147,8 @@ def _decision_movers(summary, limit=8):
         text = row[3] if len(row) > 3 else ""
         m = re.search(r"delta=([+-]?[\d.]+)%", text or "")
         d = abs(float(m.group(1))) if m else 0.0
+        if text.startswith("not comparable"):
+            continue          # surfaced separately, whatever the verdict
         if "(better)" in text:
             better.append((d, row))
         elif "(worse)" in text:
@@ -2152,6 +2174,8 @@ def print_decision(bench_name, decision, summary, arch_hint=None):
     # arrived unexplained. Bounded to the biggest movers so a 20-node fleet
     # stays readable.
     better, worse, other, dropped = _decision_movers(summary)
+    incomparable = [r for r in (summary or [])
+                    if len(r) > 3 and str(r[3]).startswith("not comparable")]
     def _rows(title, rows, col):
         if not rows:
             return
@@ -2182,3 +2206,17 @@ def print_decision(bench_name, decision, summary, arch_hint=None):
     if dropped:
         print(f"    ... and {dropped} more mover(s); full per-metric detail is "
               f"in the per-node history JSONs under benchmark/history/")
+    # Always, whatever the verdict: a metric that changed unit or direction
+    # under the same name means the champion predates the change and cannot
+    # judge this run. Silence here is what let botactions escalate on a
+    # seconds-vs-req/s comparison for weeks.
+    if incomparable:
+        shown = incomparable[:5]
+        print(f"  {C_YELLOW}champion is stale for {len(incomparable)} metric(s) "
+              f"-- excluded from the verdict:{C_RESET}")
+        for row in shown:
+            print(f"    {row[0]:<52} {row[3]}")
+        if len(incomparable) > len(shown):
+            print(f"    ... and {len(incomparable) - len(shown)} more; "
+                  f"re-baseline with a KEEP run or delete "
+                  f"benchmark/results/<bench>/champion.json")
