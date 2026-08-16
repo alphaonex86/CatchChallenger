@@ -1110,6 +1110,17 @@ def deploy_node(node, exec_node, builds):
 
 # ---- per-node A/B ---------------------------------------------------------
 
+def _is_transport_error(err):
+    """True when an error text is ssh/rsync failing to carry the run, rather
+    than the benchmark producing bad data. ssh exits 255 for every transport
+    problem (refused, timed out, closed mid-session) and the harness's own
+    timeout path reports rc=-1."""
+    t = str(err or "")
+    return ("rc=255" in t or "rc=-1" in t or "ssh timeout" in t
+            or "Connection closed" in t or "Connection timed out" in t
+            or "No route to host" in t)
+
+
 def measure_node(node, builds, own, deadline):
     """Full A/B on one exec node. Returns (rows, error, kind) where kind is
     "PASS", "SKIP" (infra: nothing measured, metric unknown) or "FAIL" (the
@@ -1172,7 +1183,14 @@ def measure_node(node, builds, own, deadline):
                 row, err = run_once(exec_node, backend, own, caps,
                                     f"{backend}{rep}")
                 if err is not None:
-                    return rows, f"{backend} rep{rep}: {err}", "FAIL"
+                    # An ssh that never delivered the run measured NOTHING, so
+                    # the metric is unknown -- benchmark/CLAUDE.md reserves
+                    # FAIL for "ran and produced bad data" and calls transport
+                    # problems SKIP. rc=255 is ssh's own "I could not run it",
+                    # and reporting it as FAIL turned a fleet-wide ssh hiccup
+                    # into a DISCARD verdict against the champion.
+                    kind = "SKIP" if _is_transport_error(err) else "FAIL"
+                    return rows, f"{backend} rep{rep}: {err}", kind
                 row["rep"] = rep
                 rows.append(row)
                 pkts = row.get("packets_in")
@@ -1359,14 +1377,26 @@ def run_fleet(nodes, own, deadline):
         with results_lock:
             results[label] = (rows, err, kind)
 
-    # EVERY node at once, not a capped few. The measurement is node-local --
-    # server and client both run on the box, over its loopback -- so two
-    # distinct hosts share nothing: no link, no CPU, no port. Capping the fan
-    # out multiplied the fleet's wall time by ceil(nodes/cap) and bought
-    # nothing; the per-host lock above already keeps two exec entries that
-    # share one physical box from measuring at the same time.
-    with cf.ThreadPoolExecutor(max_workers=max(1, len(nodes))) as ex:
-        list(ex.map(_measure, nodes))
+    # EVERY remote node at once, not a capped few. The measurement is
+    # node-local -- server and client both run on the box, over its loopback --
+    # so two distinct hosts share nothing: no link, no CPU, no port. Capping
+    # the fan out multiplied the fleet's wall time by ceil(nodes/cap) and
+    # bought nothing; the per-host lock above already keeps two exec entries
+    # that share one physical box from measuring at the same time.
+    #
+    # The HOST row is the exception and runs ALONE, after them: its client
+    # saturates this machine (250 bots pinned across every core but one), and
+    # this machine is also the one ssh'ing into all the others. Measured
+    # together, ssh to the whole fleet failed to complete its handshake and 15
+    # of 16 nodes reported rc=255 while the host row -- the one starving them
+    # -- was the only one that produced numbers.
+    remote = [n for n in nodes if n["label"] != "local"]
+    host   = [n for n in nodes if n["label"] == "local"]
+    if remote:
+        with cf.ThreadPoolExecutor(max_workers=max(1, len(remote))) as ex:
+            list(ex.map(_measure, remote))
+    for n in host:
+        _measure(n)
     return results
 
 
