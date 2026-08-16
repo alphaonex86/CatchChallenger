@@ -675,6 +675,14 @@ Rules:
     covers <50% of the nodes (ceil(n/2)); skip the chart if no panel left.
   * cross-node `champion.svg`: drop any per-node series with <3 points
     (a lone dot is no trend); skip the chart if no series left.
+* **A/B benchmark = both arms in ONE panel, never one panel per arm.**
+  Auto-detected (`_ab_arms`): 2..4 sub-benchmark slices all reporting the
+  SAME metrics are arms (epoll/iouring), not workload points. Then
+  `champion-by-execution-node.svg` draws one metric panel with a bar GROUP
+  per node — one bar per arm, arm-coloured with a legend, both medians
+  printed above the group plus the arm-B-vs-arm-A delta — and the cross-node
+  `champion.svg` plots the arm slices it otherwise skips (for an A/B they
+  ARE the measurement, so skipping them left that chart empty).
 
 ### Generating charts manually
 

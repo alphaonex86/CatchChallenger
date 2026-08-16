@@ -55,7 +55,10 @@ def _slug(s):
 # repeating the same word in every record. Anything unknown counts as lower-is-
 # better, which is what every timing/size/cpu metric in this harness wants.
 _HIGHER_IS_BETTER = ("requests_per_s", "per_s", "throughput", "ops", "rate",
-                     "fps", "mbps", "bandwidth", "score")
+                     "fps", "mbps", "bandwidth", "score",
+                     # work done inside the fixed-time window (the benchmarks
+                     # are fixed-TIME, so a bigger count IS the better run)
+                     "moves")
 
 
 def better_for(metric_key, unit=None):
@@ -175,14 +178,14 @@ def _group_by_batch(records):
     return [(b[0], b[1], b[2]) for b in out]  # (started_utc, commit_short, docs)
 
 
-def _extract_session_series(batches, champion_commit_short):
+def _extract_session_series(batches, champion_commit_short, arms=None):
     """Cross-node session series: one data point per (batch, node, metric).
 
     Returns ({metric_label -> [(idx, value, commit_short, decision)]},
              [commit_short...], better_map).
 
     metric_label = "<node>.<tool>.<metric>" (or
-    "<node>.<tool>.<slice>.<metric>" for sub-benchmarks) so each node's
+    "<node>.<tool>.<arm>.<metric>" for an A/B benchmark) so each node's
     line is distinct. X-axis is batch index (chronological)."""
     series = {}
     commits = []
@@ -229,6 +232,34 @@ def _extract_session_series(batches, champion_commit_short):
                 # panels as the 23 nodes' aggregates - the comparison drowned and
                 # the SVG grew to 1.6 MB. The per-node chart still shows every
                 # slice (see _extract_series).
+                #
+                # The ONE exception is an A/B benchmark (`arms`): there the
+                # slices are not per-node detail, they ARE the measurement --
+                # every node reports the same 2 arms and nothing else, so
+                # skipping them leaves this chart with zero series. Both arms
+                # go in, side by side in the same metric panel.
+                if arms:
+                    for arm in arms:
+                        smetrics = (blk.get("subbenchmarks") or {}).get(arm)
+                        if not isinstance(smetrics, dict):
+                            continue
+                        for mname, m in smetrics.items():
+                            if not isinstance(m, dict):
+                                continue
+                            v = m.get("median")
+                            if v is None:
+                                v = m.get("value")
+                            if v is None:
+                                continue
+                            try:
+                                v = float(v)
+                            except (TypeError, ValueError):
+                                continue
+                            label = f"{node}.{tool}.{arm}.{mname}"
+                            series.setdefault(label, []).append(
+                                (idx, v, commit_short, batch_decision))
+                            if label not in better_map and m.get("better"):
+                                better_map[label] = m["better"]
     return series, commits, better_map
 
 
@@ -912,7 +943,9 @@ def _render_session_chart(benchmark, batches):
     if len(nodes) < 2:
         return None
     champ_short = _champion_commit(benchmark)
-    series, commits, better_map = _extract_session_series(batches, champ_short)
+    arms = _ab_arms(d for _ts, _cs, docs in batches for d in docs)
+    series, commits, better_map = _extract_session_series(batches, champ_short,
+                                                          arms)
     # A per-node line is only a trend worth charting if it has >=3 points;
     # a node with <3 values (e.g. only "local" reported b128_net_rx_bytes
     # once or twice) is a lone dot that can't drive a decision -- drop it.
@@ -1131,12 +1164,300 @@ def _plot_by_node_panel(x0, y0, w, h, node_vals, title, better):
     return "".join(parts)
 
 
+# ---- A/B (arm-per-slice) by-node comparison -------------------------------
+
+# An A/B benchmark reports the SAME metric list once per ARM: benchmarkepoll-
+# iouring records ab.epoll.req_per_s next to ab.iouring.req_per_s. Flattened
+# like any other sub-benchmark slice those become two unrelated panels
+# (epoll_req_per_s, iouring_req_per_s) -- i.e. the chart splits the comparison
+# it exists to show. When the slices are arms, they are paired instead: one
+# panel per metric, one bar GROUP per execution node, one bar per arm.
+AB_MAX_ARMS = 4
+# arm index -> colour, fixed for the whole chart so the panel legend
+# identifies every bar in every panel.
+_AB_ARM_COLOURS = ("#1f77b4", "#d62728", "#2ca02c", "#9467bd")
+
+
+def _ab_arms(docs):
+    """The arms of an A/B benchmark, or None when the slices are not arms.
+
+    Sub-benchmark slices carry two different things in this harness: workload
+    points (2-bots, 150-bots, join-move0-100players, ...) and the arms of one
+    A/B (epoll, iouring). Only arms can share a panel. The tell is that arms
+    are FEW and every one of them reports exactly the same metrics, while
+    workload points are many (51 for botactions, 154 for mapmanager) -- so a
+    benchmark qualifies only with <=AB_MAX_ARMS slices whose metric sets are
+    identical.
+
+    `docs` is an iterable of record dicts (not (record, path) pairs)."""
+    per_arm = {}
+    for doc in docs:
+        for _tool, blk in (doc.get("results") or {}).items():
+            if isinstance(blk, dict):
+                for arm, smetrics in (blk.get("subbenchmarks") or {}).items():
+                    if isinstance(smetrics, dict):
+                        per_arm.setdefault(arm, set()).update(
+                            k for k, v in smetrics.items()
+                            if isinstance(v, dict))
+    if len(per_arm) < 2 or len(per_arm) > AB_MAX_ARMS:
+        return None
+    arms = sorted(per_arm)
+    base = per_arm[arms[0]]
+    if not base:
+        return None
+    i = 1
+    while i < len(arms):
+        if per_arm[arms[i]] != base:
+            return None
+        i += 1
+    return arms
+
+
+def _ab_by_node_metrics(records, arms):
+    """({metric -> {node -> {arm -> [values]}}}, {metric -> better}) for an
+    A/B benchmark -- the whole history of each (node, arm) cell, so the bar
+    can carry a median plus the min..max the medians came from."""
+    out = {}
+    better = {}
+    armset = set(arms)
+    for doc, _p in records:
+        node = doc.get("node") or "unknown"
+        for _tool, blk in (doc.get("results") or {}).items():
+            if not isinstance(blk, dict):
+                continue
+            for arm, smetrics in (blk.get("subbenchmarks") or {}).items():
+                if arm not in armset or not isinstance(smetrics, dict):
+                    continue
+                for mname, m in smetrics.items():
+                    if not isinstance(m, dict):
+                        continue
+                    v = m.get("median")
+                    if v is None:
+                        v = m.get("value")
+                    if v is None:
+                        continue
+                    try:
+                        v = float(v)
+                    except (TypeError, ValueError):
+                        continue
+                    (out.setdefault(mname, {}).setdefault(node, {})
+                        .setdefault(arm, []).append(v))
+                    if mname not in better and m.get("better"):
+                        better[mname] = m["better"]
+    return out, better
+
+
+def _plot_ab_panel(x0, y0, w, h, node_arm_vals, title, better, arms):
+    """One metric panel of the A/B chart: per execution node a GROUP of bars,
+    one bar per arm, on a shared log y-scale (linear fallback when any value
+    is <= 0).
+
+    Every group carries, above the bars, one value line per arm in that arm's
+    colour plus -- for a two-arm A/B -- the arm-B-vs-arm-A delta coloured by
+    whether it is an improvement. So a bar's arm is readable from its colour
+    (legend, top right) AND from the value stack right above it; no reader has
+    to count bars to know what is what.
+
+    The bars grow from the panel floor, which on a log scale is the smallest
+    value in the panel: bar LENGTH is therefore "how far above the slowest
+    node", not an absolute magnitude -- the printed value is the datum, the
+    bar is the shape. Nodes are sorted by their group median."""
+    parts = [f'<g transform="translate({x0},{y0})">']
+    parts.append(f'<rect x="0" y="0" width="{w}" height="{h}" '
+                 f'fill="white" stroke="#888" stroke-width="0.5"/>')
+    items = []       # (node, {arm -> (median, min, max)}, group median)
+    for node, per_arm in node_arm_vals.items():
+        cell = {}
+        for arm, vals in per_arm.items():
+            sv = sorted(vals)
+            if sv:
+                cell[arm] = (_quantile(sv, 0.50), sv[0], sv[-1])
+        if cell:
+            meds = sorted(c[0] for c in cell.values())
+            items.append((node, cell, _quantile(meds, 0.50)))
+    items.sort(key=lambda t: t[2])
+    if not items:
+        parts.append("</g>")
+        return "".join(parts)
+    allv = [v for _n, cell, _m in items for c in cell.values() for v in c]
+    title_txt = title + (f" ({better}=better)" if better else "")
+    uselog = all(v > 0 for v in allv)
+    parts.append(f'<text x="4" y="-4" font-size="11" font-family="sans-serif">'
+                 f'{_esc(title_txt)}{"  [log]" if uselog else ""}</text>')
+    # legend: swatch + arm name, top right, same colours as the bars
+    lx = w - 8
+    i = len(arms) - 1
+    while i >= 0:
+        name = arms[i]
+        col = _AB_ARM_COLOURS[i % len(_AB_ARM_COLOURS)]
+        tw = 4.5 * len(name)      # ~advance width of sans-serif at font-size 8
+        parts.append(f'<text x="{lx:.1f}" y="14" font-size="8" fill="#333" '
+                     f'font-family="sans-serif" text-anchor="end">'
+                     f'{_esc(name)}</text>')
+        parts.append(f'<rect x="{lx - tw - 12:.1f}" y="7" width="8" '
+                     f'height="8" fill="{col}" fill-opacity="0.55" '
+                     f'stroke="{col}" stroke-width="0.8"/>')
+        lx -= tw + 18
+        i -= 1
+    vmin = min(allv); vmax = max(allv)
+    # Header band: one value row per arm + the delta row, at a FIXED y so the
+    # numbers line up across nodes and can never collide with a tall bar.
+    row_h = 8
+    hdr = 23      # clears the legend row above it
+    val_y = [hdr + k * row_h for k in range(len(arms))]
+    delta_y = hdr + len(arms) * row_h + 1
+    top = delta_y + 6
+    bot = h - 58          # bottom band for the rotated node labels
+    if uselog:
+        lmin = math.log10(vmin); lmax = math.log10(vmax)
+        if lmin == lmax:
+            lmin -= 0.5; lmax += 0.5
+        span = lmax - lmin
+        # 4% headroom so the tallest bar does not touch the header band, and
+        # 10% under the floor so the SMALLEST node still draws a visible bar
+        # instead of a zero-height sliver on the axis.
+        lmax += span * 0.04
+        lmin -= span * 0.10
+
+        def ypos(v):
+            return bot - ((math.log10(v) - lmin) / (lmax - lmin)) * (bot - top)
+    else:
+        if vmin == vmax:
+            vmin -= 1.0; vmax += 1.0
+        pad = (vmax - vmin) * 0.08
+        lo = vmin - pad; hi = vmax + pad
+
+        def ypos(v):
+            return bot - ((v - lo) / (hi - lo)) * (bot - top)
+    # y-axis ticks sit AT their value (the scale is padded past both ends, so
+    # top/bottom of the plot area are not vmax/vmin)
+    parts.append(f'<text x="2" y="{ypos(vmax)+3:.1f}" font-size="8" fill="#444" '
+                 f'font-family="sans-serif" stroke="#fff" stroke-width="2.5" '
+                 f'paint-order="stroke">{_esc(_humanize_name(vmax, title))}</text>')
+    parts.append(f'<text x="2" y="{ypos(vmin)+3:.1f}" font-size="8" fill="#444" '
+                 f'font-family="sans-serif" stroke="#fff" stroke-width="2.5" '
+                 f'paint-order="stroke">{_esc(_humanize_name(vmin, title))}</text>')
+    n = len(items)
+    # wider left/right pad than the boxplot panel: the first group's rotated
+    # node label runs LEFT of its slot and a long one ('cubieboard-2') would
+    # otherwise spill past the panel border
+    padx = 52
+    slot = (w - 2 * padx) / float(n)
+    group_w = min(slot * 0.72, 15.0 * len(arms))
+    bw = group_w / float(len(arms))
+    i = 0
+    while i < n:
+        node, cell, _med = items[i]
+        cx = padx + (i + 0.5) * slot
+        gx = cx - group_w / 2.0
+        k = 0
+        while k < len(arms):
+            arm = arms[k]
+            col = _AB_ARM_COLOURS[k % len(_AB_ARM_COLOURS)]
+            c = cell.get(arm)
+            if c is not None:
+                med, vmn, vmx = c
+                bx = gx + k * bw
+                ytop = ypos(med)
+                parts.append(f'<rect x="{bx:.1f}" y="{ytop:.2f}" '
+                             f'width="{max(bw-1.0,1.0):.1f}" '
+                             f'height="{max(bot-ytop,0.5):.2f}" fill="{col}" '
+                             f'fill-opacity="0.55" stroke="{col}" '
+                             f'stroke-width="0.7"/>')
+                # min..max of this cell's history, so a wide spread is not
+                # mistaken for a solid measurement
+                if vmx > vmn:
+                    bcx = bx + max(bw - 1.0, 1.0) / 2.0
+                    parts.append(f'<line x1="{bcx:.1f}" y1="{ypos(vmx):.2f}" '
+                                 f'x2="{bcx:.1f}" y2="{ypos(vmn):.2f}" '
+                                 f'stroke="#333" stroke-width="0.6" '
+                                 f'stroke-opacity="0.75"/>')
+            # value row for this arm, in the arm's colour
+            txt = _humanize_name(c[0], title) if c is not None else "-"
+            parts.append(f'<text x="{cx:.1f}" y="{val_y[k]}" font-size="6.5" '
+                         f'fill="{col}" font-family="sans-serif" '
+                         f'text-anchor="middle">{_esc(txt)}</text>')
+            k += 1
+        # two-arm delta: arm B against arm A, coloured by whether it helps
+        if len(arms) == 2 and cell.get(arms[0]) and cell.get(arms[1]):
+            a = cell[arms[0]][0]; b = cell[arms[1]][0]
+            if a:
+                d = (b - a) / abs(a) * 100.0
+                good = (d > 0) if better == "higher" else (d < 0)
+                dcol = "#2ca02c" if good else "#d62728"
+                if abs(d) < 0.05:
+                    dcol = "#777"
+                parts.append(f'<text x="{cx:.1f}" y="{delta_y}" '
+                             f'font-size="6.5" font-weight="bold" '
+                             f'fill="{dcol}" font-family="sans-serif" '
+                             f'text-anchor="middle">{d:+.1f}%</text>')
+        ly = h - 26
+        parts.append(f'<text x="{cx:.1f}" y="{ly:.1f}" font-size="7" '
+                     f'fill="#333" font-family="sans-serif" text-anchor="end" '
+                     f'transform="rotate(-35 {cx:.1f} {ly:.1f})">'
+                     f'{_esc(node)}</text>')
+        i += 1
+    parts.append("</g>")
+    return "".join(parts)
+
+
+def _render_ab_by_node_chart(benchmark, records, arms):
+    """champion-by-execution-node.svg for an A/B benchmark: one panel per
+    metric, every arm of every node side by side in it.
+
+    Unlike the plain by-node chart this is NOT skipped for a single node: one
+    node still shows the full comparison (that is the whole point of the
+    benchmark), it just shows it on one machine."""
+    metrics, better = _ab_by_node_metrics(records, arms)
+    if not metrics:
+        return None
+    nnodes = len({n for mv in metrics.values() for n in mv})
+    min_nodes = (nnodes + 1) // 2   # ceil(nnodes/2): >=50% of the nodes
+    mkeys = sorted(mk for mk in metrics if len(metrics[mk]) >= min_nodes)
+    if not mkeys:
+        return None
+    npanels = len(mkeys)
+    # base height + header band (one value row per arm + delta) + bottom band
+    # for the rotated node labels
+    panel_h = PANEL_H + 48 + 8 * len(arms) + 14
+    # +12 on the top margin: this chart carries a subtitle line under the
+    # title, which the first panel's own title would otherwise sit on.
+    top_margin = TOP_MARGIN + 12
+    height = top_margin + npanels * (panel_h + PANEL_GAP) + 10
+    width = LEFT_MARGIN + PANEL_W + 20
+    head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
+            f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
+    vs = " vs ".join(arms)
+    delta_of = (f"; delta = {arms[1]} vs {arms[0]}" if len(arms) == 2 else "")
+    body = [f'<text x="{LEFT_MARGIN}" y="18" font-size="13" '
+            f'font-family="sans-serif" font-weight="bold">'
+            f'{_esc(benchmark)} -- {_esc(vs)} by execution node '
+            f'({nnodes} node(s))</text>',
+            f'<text x="{LEFT_MARGIN}" y="31" font-size="9" fill="#555" '
+            f'font-family="sans-serif">bar = median of that node\'s history, '
+            f'thin line = min..max, log y{_esc(delta_of)}</text>']
+    y = top_margin
+    for mk in mkeys:
+        body.append(_plot_ab_panel(LEFT_MARGIN, y, PANEL_W, panel_h,
+                                   metrics[mk], mk, better.get(mk), arms))
+        y += panel_h + PANEL_GAP
+    return head + "".join(body) + "</svg>\n"
+
+
 def _render_by_node_chart(benchmark, records):
     """champion-by-execution-node.svg: one panel per metric CATEGORY (same
     data list as champion.svg, e.g. requests_per_s / cpu_percent /
     b128_invol_ctx), each holding one boxplot PER execution node, sorted by
     median on a log scale and labelled by node -- compare systems by
-    category."""
+    category.
+
+    An A/B benchmark (every slice an arm of one comparison, e.g. epoll vs
+    iouring) takes the paired path instead, so both arms land in the same
+    panel."""
+    arms = _ab_arms(doc for doc, _p in records)
+    if arms:
+        return _render_ab_by_node_chart(benchmark, records, arms)
     metrics, better = _by_node_metrics(records)
     if not metrics:
         return None
