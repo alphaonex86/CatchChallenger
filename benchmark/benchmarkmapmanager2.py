@@ -977,7 +977,8 @@ def main():
             runner = hr.make_ssh_runner(node.get("ssh_host"),
                                         node.get("ssh_user"),
                                         node.get("ssh_port", 22))
-        # No datapack: this is a self-contained map-manager microbenchmark.
+        # The datapack IS this benchmark's workload; on an exec node it was
+        # staged next to the binary by the spec's stage_fn.
         if node["label"] == "local":
             cc_path = BUILD_DIR
         else:

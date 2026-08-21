@@ -245,11 +245,27 @@ struct LoadedMap
     LoadedMap() : kind(Kind_outdoor), walkable_cells(0) {}
 };
 
-// Kind from the path inside the generated map set, which is how the generator
-// lays the world out:
+// What the DATAPACK says a map is: its sibling .xml carries
+// <map type="city|indoor|outdoor|cave">, which is the generator's own
+// statement and the only authority worth using. "cave" joins outdoor: it is a
+// wild area people cross, not a room they stand in.
+static uint8_t kind_of_type(const char *type)
+{
+    if(type == NULL)             return Kind_indoor;
+    if(strcmp(type, "city") == 0)    return Kind_city;
+    if(strcmp(type, "outdoor") == 0) return Kind_outdoor;
+    if(strcmp(type, "cave") == 0)    return Kind_outdoor;
+    return Kind_indoor;
+}
+
+// Fallback when a map has no sibling .xml (or no type attribute): guess from
+// the path, which is how the generator lays this world out.
 //   road-<n>/...        a route             -> outdoor
 //   <town>/<town>.tmx   the town itself     -> city
 //   <town>/<other>.tmx  a shop/gym/house    -> indoor
+// It is only a guess: on the current map set it disagrees with the declared
+// type on 85 of 647 maps (routes and caves filed under a town's folder), which
+// is exactly why the declared type wins when there is one.
 static uint8_t classify_map(const std::string &relative)
 {
     const size_t slash = relative.find('/');
@@ -329,7 +345,7 @@ static bool find_spawn(const CommonMap &m, Lcg &rng, uint8_t &x, uint8_t &y)
 // map failures are counted, not fatal.
 static bool load_world(const std::string &datapack, const std::string &map_subdir,
                        std::vector<LoadedMap*> &out, unsigned int &failed,
-                       std::string &error)
+                       unsigned int &typed, std::string &error)
 {
     // Map_loaderMain.cpp aborts unless the item and monster name tables are
     // populated (they resolve map items and the monster-collision zones that
@@ -362,7 +378,10 @@ static bool load_world(const std::string &datapack, const std::string &map_subdi
             CommonMap scratch;             // bots/teleporters/zones land here
             scratch.width = 0;
             scratch.height = 0;
-            if(loader.tryLoadMap(map_path + relative, scratch, true))
+            if(loader.tryLoadMap(map_path + relative, scratch, true)
+               && loader.map_to_send.width > 0 && loader.map_to_send.height > 0
+               && loader.map_to_send.flat_simplified_map.size()
+                  == (size_t)loader.map_to_send.width * loader.map_to_send.height)
             {
                 LoadedMap *lm = new LoadedMap();
                 // tryLoadMap() leaves the dimensions on map_to_send, not on
@@ -370,7 +389,16 @@ static bool load_world(const std::string &datapack, const std::string &map_subdi
                 lm->map.width  = (uint8_t)loader.map_to_send.width;
                 lm->map.height = (uint8_t)loader.map_to_send.height;
                 lm->map.flat_simplified_map.swap(loader.map_to_send.flat_simplified_map);
+                // The loader still holds the sibling .xml it just parsed, so
+                // the declared type is one attribute away -- read it BEFORE
+                // the document cache is dropped below.
                 lm->kind = classify_map(relative);
+                if(loader.map_to_send.xmlRoot != NULL
+                   && loader.map_to_send.xmlRoot->Attribute("type") != NULL)
+                {
+                    lm->kind = kind_of_type(loader.map_to_send.xmlRoot->Attribute("type"));
+                    typed++;
+                }
                 size_t c = 0;
                 while(c < lm->map.flat_simplified_map.size())
                 {
@@ -393,6 +421,11 @@ static bool load_world(const std::string &datapack, const std::string &map_subdi
         }
         i++;
     }
+    // The maps are in; the datapack tables were only needed to load them
+    // (item names, monster-collision zones). Give that memory back -- and note
+    // the order: unload() clears the very name tables tryLoadMap() aborts
+    // without, so nothing may be loaded after this point.
+    CommonDatapack::commonDatapack.unload();
     std::cout.clear();
     if(out.empty())
     {
@@ -1264,10 +1297,10 @@ int main(int argc, char **argv)
     // it with a different number of players, but the maps themselves -- the
     // fixed part of the workload -- are parsed a single time.
     std::vector<LoadedMap*> loaded;
-    unsigned int failed = 0;
+    unsigned int failed = 0, typed = 0;
     std::string error;
     const std::chrono::steady_clock::time_point load0 = std::chrono::steady_clock::now();
-    if(!load_world(datapack, WORLD_MAP_SUBDIR, loaded, failed, error))
+    if(!load_world(datapack, WORLD_MAP_SUBDIR, loaded, failed, typed, error))
     {
         std::cerr.clear();
         std::cerr << "cannot load the world: " << error << std::endl;
@@ -1289,6 +1322,9 @@ int main(int argc, char **argv)
     // shifting every number below.
     std::cout << "WORLD maps=" << loaded.size()
               << " failed=" << failed
+              // How many maps stated their own kind, rather than being guessed
+              // from the path: on this world it should be all of them.
+              << " typed=" << typed
               << " load_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(load1 - load0).count()
               << " cells=" << world_cells
               << " walkable_cells=" << world_walkable;
