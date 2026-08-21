@@ -898,6 +898,29 @@ Traps that cost a debugging cycle each — all fixed, don't reintroduce:
   workspace exists to *measure* prod code from outside; it doesn't
   ship.
 
+## `benchmarkmapmanager2.py` -- the multi-map sibling
+
+Same production `min_network()` as `benchmarkmapmanager.py`, different load
+model: the population is spread over outdoor/city/indoor maps (60/30/10 of the
+players, crowded to 35/200/20 per map, map count derived) and the players WALK
+against a collision grid -- no pathfinding, one array lookup per moving player.
+One tick = `min_network()` over EVERY map. It measures what the single-map
+benchmark cannot: the per-map constant, the crowded-map diff near the 254 wire
+ceiling, and map changes (a migration IS the insert+remove pair).
+
+* **The workload is FIXED, in the binary.** World shape, move/turn/migrate
+  rates and seed are constants in `main.cpp`, NOT flags -- a benchmark with
+  knobs is not comparable with its own history. `--players` only selects from
+  the fixed sweep (it refuses any other count) and `--ms`/`--ticks` only bound
+  the run. Changing a constant is a deliberate champion re-baseline.
+* **254 is the per-MAP ceiling, not the population's.** The sweep is 50 .. 5000
+  TOTAL players; the top is set by RAM on the smallest node (52 MB), not by the
+  protocol.
+* `median_prep_ns` is the harness's own cost per tick (~20% of
+  `median_tick_ns`, and outside the latency window). It and `maps` are recorded
+  but kept OUT of the champion metric set. `walk_violations` != 0 is a FAIL:
+  the collision oracle says the workload was not what it claims.
+
 ## epoll vs io_uring A/B — `benchmarkepolliouring.py` (learned the hard way)
 
 IN the routine sweep (`all.sh`). It records the same per-platform history +

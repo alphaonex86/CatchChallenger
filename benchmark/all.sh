@@ -46,6 +46,11 @@ set -e
 cd "$(dirname "$0")"
 BENCHMARKS=(
     ./benchmarkmapmanager.py
+    # Same production min_network(), multi-map load model: the population is
+    # spread over outdoor/city/indoor maps and the players walk against a
+    # collision grid, so it measures the per-map constant and the crowded-map
+    # diff that the single-map benchmark above cannot separate.
+    ./benchmarkmapmanager2.py
     ./benchmarkserversave.py
     ./benchmarkbotactions.py
     ./benchmarkclientlatency.py
