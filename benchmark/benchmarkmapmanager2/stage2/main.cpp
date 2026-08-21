@@ -307,6 +307,8 @@ struct World
     uint8_t algo;
     void broadcast()
     {
+        //the server timer does this once per tick, before the map walk
+        MapVisibilityAlgorithm::beginTick();
         size_t i = 0;
         if(algo == (uint8_t)Algo_network)
             while(i < mapCount())

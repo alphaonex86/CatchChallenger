@@ -23,6 +23,10 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
     if(GlobalServerData::serverSettings.mapVisibility.simple.max<2)
         return;
 
+    /* A new tick: min_network()'s per-map candidate snapshots are stale. Done
+     * HERE and not inside the algorithm because a map's snapshot is read by
+     * its border maps before its own turn in the loop below comes. */
+    MapVisibilityAlgorithm::beginTick();
     unsigned int index=0;
     switch(GlobalServerData::serverSettings.mapVisibility.minimize)
     {

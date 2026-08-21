@@ -1616,6 +1616,8 @@ public:
             owned.at(index)->sentBlocks.clear();
             index++;
         }
+        //what the server timer does before walking the map list
+        MapVisibilityAlgorithm::beginTick();
         unsigned int mapIndex=0;
         while(mapIndex<MapVisibilityAlgorithm::flat_map_list.size())
         {
