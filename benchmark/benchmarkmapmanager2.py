@@ -79,12 +79,17 @@ STAGE1_BIN = "benchmark_world_stage1"
 # nothing -- the history is keyed by SCRIPT name (benchmark/history/<script>/)
 # and by metric, never by the binary file name.
 BIN_NAME   = "benchmark_min_balanced_replay"
-# Also replay every rusage cell with the VIEW-RANGE strategy (--algo network,
-# mapVisibility/minimize "network") and record it as net_*. It is the strategy
-# a fresh server now runs and the only one whose cost is per RECIPIENT, so it
-# is the one worth watching on the slow nodes -- but it DOUBLES the wall time
-# of every rusage cell. Set to False to go back to balanced-only.
-MEASURE_NETWORK = True
+# Replay every rusage cell with the OTHER two mapVisibility/minimize
+# strategies as well, so the three are measured on the same machine, in the
+# same conditions, in the same run -- the only way their trade-off is a
+# measurement and not an argument. The plain metric names stay "balanced" (what
+# every series recorded before --algo measured, so the history is comparable),
+# the others are prefixed:
+#   net_<metric>     --algo network  min_network()  view range, border maps
+#   mincpu_<metric>  --algo cpu      min_CPU()      whole map, no state
+# It TRIPLES the wall time of a rusage cell; empty the tuple to go back to
+# balanced-only.
+EXTRA_ALGOS = (("net_", "network"), ("mincpu_", "cpu"))
 
 # Concurrency marker: pure in-process visibility loop, no port bind / no
 # network (the binary name is historical). Safe to run in parallel.
@@ -672,29 +677,29 @@ def cell_run(bin_path, profiler, label_node):
             for key, value in one.items():
                 if value is not None:
                     metrics.setdefault(key, []).append(value)
-        # Same ladder again with the view-range strategy, recorded as net_*:
-        # the balanced series keeps its own names, so every run recorded before
-        # --algo existed stays comparable, and the two strategies are measured
-        # on the same machine in the same conditions.
-        if MEASURE_NETWORK:
-            net_cmd = cmd + ["--algo", "network"]
+        # Same ladder again with each of the other strategies, under their own
+        # prefix: the balanced series keeps the plain names (so every run
+        # recorded before --algo stays comparable) and the three are measured
+        # back to back on the same machine.
+        for prefix, algo_name in EXTRA_ALGOS:
+            algo_cmd = cmd + ["--algo", algo_name]
             for i in range(RUN_REPEATS + 1):
-                rc, sout, serr, dt = bh.run_capture(net_cmd, timeout=timeout,
+                rc, sout, serr, dt = bh.run_capture(algo_cmd, timeout=timeout,
                                                     cwd=run_cwd,
                                                     preexec_fn=bh._drop_core_rlimit)
                 if rc != 0:
-                    return None, f"benchmark binary exited with code {rc} (--algo network)"
+                    return None, f"benchmark binary exited with code {rc} (--algo {algo_name})"
                 if i == 0:
                     continue
                 one = {}
                 bad = _bench_to_cell(parse_bench_lines(sout), one)
                 if bad is not None:
-                    return None, bad + " (--algo network)"
+                    return None, bad + f" (--algo {algo_name})"
                 if not one:
-                    return None, "no BENCH line parsed with --algo network"
+                    return None, f"no BENCH line parsed with --algo {algo_name}"
                 for key, value in one.items():
                     if value is not None:
-                        metrics.setdefault((key[0], "net_" + key[1]), []).append(value)
+                        metrics.setdefault((key[0], prefix + key[1]), []).append(value)
         # Peak RSS + wall come from one extra pass under /usr/bin/time -v
         # (it swallows the child's stdout, so it cannot double as a sample).
         t = bh.measure_time_v(cmd, timeout=timeout, cwd=run_cwd)
@@ -808,12 +813,14 @@ def print_sweep_table(cell_metrics, counts):
 
 
 def _metric_unit_better(metric_name):
-    # net_<x> is <x> measured with the view-range strategy: same unit, same
-    # direction, its own series. Classify on the name it mirrors, else
-    # net_ticks_per_s would be read as lower-is-better and net_bytes_per_tick
-    # would lose its unit.
-    if metric_name.startswith("net_"):
-        metric_name = metric_name[4:]
+    # net_<x> / mincpu_<x> is <x> measured with another visibility strategy:
+    # same unit, same direction, its own series. Classify on the name it
+    # mirrors, else net_ticks_per_s would be read as lower-is-better and
+    # net_bytes_per_tick would lose its unit.
+    for _prefix, _algo in EXTRA_ALGOS:
+        if metric_name.startswith(_prefix):
+            metric_name = metric_name[len(_prefix):]
+            break
     # Throughput is higher-is-better; everything else lower-is-better.
     better = "higher" if metric_name in ("ticks_per_s", "ticks",
                                          "player_ticks_per_s") else "lower"

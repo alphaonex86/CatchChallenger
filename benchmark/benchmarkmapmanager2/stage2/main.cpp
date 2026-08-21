@@ -115,7 +115,7 @@ struct World
         ClientList::list = &cl;
         GlobalServerData::serverSettings.mapVisibility.simple.max = 1024;
         GlobalServerData::serverSettings.mapVisibility.viewMargin = CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN_DEFAULT;
-        useNetwork = false;
+        algo = (uint8_t)Algo_balanced;
         GlobalServerData::serverSettings.dontSendPlayerType = false;
         CommonSettingsServer::commonSettingsServer.dontSendPseudo = false;
     }
@@ -295,18 +295,29 @@ struct World
         return changed;
     }
 
-    // One tick of the server timer: broadcast EVERY map, like the server's
-    // timer does over flat_map_list. Which strategy is the point of --algo:
-    // "balanced" is the whole-map diff, "network" only what each player SEES
-    // (border maps included) and costs per RECIPIENT instead of per map.
-    bool useNetwork;
+    /* One tick of the server timer: broadcast EVERY map, like the server's
+     * timer does over flat_map_list. WHICH strategy is what --algo picks --
+     * the three mapVisibility/minimize values, measured on the same replay so
+     * the trade between them is a measurement and not an argument:
+     *   Algo_cpu       min_CPU()      whole map, resent every tick, no state
+     *   Algo_balanced  min_balanced() whole map, only what changed
+     *   Algo_network   min_network()  only what each player SEES, border maps
+     *                                 included, cost per RECIPIENT */
+    enum Algo { Algo_balanced = 0, Algo_network = 1, Algo_cpu = 2 };
+    uint8_t algo;
     void broadcast()
     {
         size_t i = 0;
-        if(useNetwork)
+        if(algo == (uint8_t)Algo_network)
             while(i < mapCount())
             {
                 map_at(i).min_network((CATCHCHALLENGER_TYPE_MAPID)i);
+                i++;
+            }
+        else if(algo == (uint8_t)Algo_cpu)
+            while(i < mapCount())
+            {
+                map_at(i).min_CPU((CATCHCHALLENGER_TYPE_MAPID)i);
                 i++;
             }
         else
@@ -411,10 +422,10 @@ static double cpu_seconds()
 }
 
 static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms,
-                        bool useNetwork)
+                        uint8_t algo)
 {
     World w;
-    w.useNetwork = useNetwork;
+    w.algo = algo;
     w.build(players);
     const double cpu0 = cpu_seconds();
 
@@ -561,7 +572,7 @@ static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms
 
     std::cout.clear();
     std::cout << "BENCH"
-              << " algo_network=" << (useNetwork ? 1 : 0)
+              << " algo=" << (unsigned int)algo
               << " view_range=" << (unsigned int)MapVisibilityAlgorithm::view_x
               << " players=" << players
               << " maps=" << w.mapCount()
@@ -610,7 +621,7 @@ static const uint32_t LADDER[] = { REFERENCE_PLAYERS, 4095u, 16382u, 65530u };
 static void usage()
 {
     std::cerr << "usage: benchmark_min_balanced_replay [--players N]... "
-                 "[--ms BUDGET_MS | --ticks T] [--algo balanced|network]\n"
+                 "[--ms BUDGET_MS | --ticks T] [--algo cpu|balanced|network]\n"
                  "\n"
                  "Stage 2 of benchmarkmapmanager2: replays the workload stage 1\n"
                  "generated for THIS node and THIS datapack, which is compiled in --\n"
@@ -642,7 +653,7 @@ int main(int argc, char **argv)
     /* Which visibility strategy is replayed. Default "balanced": that is what
      * every recorded series measured before --algo existed, so a plain run
      * stays comparable with the history. */
-    bool         useNetwork = false;
+    uint8_t      algo = (uint8_t)World::Algo_balanced;
 
     int i = 1;
     while(i < argc)
@@ -663,11 +674,12 @@ int main(int argc, char **argv)
         else if(a == "--algo" && i + 1 < argc)
         {
             const std::string v = argv[++i];
-            if(v == "network")      useNetwork = true;
-            else if(v == "balanced") useNetwork = false;
+            if(v == "network")       algo = (uint8_t)World::Algo_network;
+            else if(v == "balanced") algo = (uint8_t)World::Algo_balanced;
+            else if(v == "cpu")      algo = (uint8_t)World::Algo_cpu;
             else
             {
-                std::cerr << "stage2: --algo takes balanced or network, got " << v << std::endl;
+                std::cerr << "stage2: --algo takes cpu, balanced or network, got " << v << std::endl;
                 return 2;
             }
         }
@@ -726,7 +738,7 @@ int main(int argc, char **argv)
     size_t pi = 0;
     while(pi < players_list.size())
     {
-        rc |= run_scenario(players_list[pi], ticks, budget_ms, useNetwork);
+        rc |= run_scenario(players_list[pi], ticks, budget_ms, algo);
         pi++;
     }
     return rc;
