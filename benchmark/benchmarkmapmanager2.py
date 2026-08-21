@@ -106,9 +106,14 @@ REMOTE_WORKLOAD_SUBDIR = "bench-workloads"
 # Pentium MMX and nothing about a 128 GB host either.
 # ---- How many players a node is given -------------------------------------
 # Stage 1 decides the population from the node's RAM, because that is what
-# actually limits it. Measured on this world: ~1.7 KB of resident memory per
-# player (the slope between the 1000- and 5000-player runs) on a ~6 MB base.
-PER_PLAYER_KB   = 1.7
+# actually limits it. MEASURED on stage 2 over this world: 1250 players ->
+# 6.1 MB, 5000 -> 10.0 MB, 20000 -> 43.4 MB, 65530 -> 202 MB. The slope is not
+# constant -- ~1.0 KB per player while the maps are thinly populated, ~3.0 KB
+# once the population overflows the target crowds and the maps pack toward 253,
+# because the packets each broadcast captures grow with the crowd. Size on the
+# WORST slope: over-estimating costs a node some players, under-estimating
+# OOM-kills it.
+PER_PLAYER_KB   = 3.0
 BASE_RSS_MB     = 10        # binary + world tables + allocator, with slack
 # Only ever take half of a node's RAM: it has a kernel, an NFS root and a shell
 # to keep alive, and a benchmark that OOM-kills its node measures nothing.
@@ -173,17 +178,6 @@ RUN_TIMEOUT    = int(_BUDGET_WALL_S * 3) + 120   # margin: warmup+startup+repeat
 RUN_TIMEOUT_CALLGRIND = RUN_TIMEOUT * 30
 
 def _color(c, s): return f"{c}{s}{bh.C_RESET}"
-
-
-def sweep_counts(total):
-    """The small / medium / large of ONE node, out of its own generated set:
-    a prefix of the players is a valid workload on its own, so the three cells
-    cost no extra generated data. Mirrors stage 2's own default."""
-    counts = []
-    for n in (max(1, total // 16), max(1, total // 4), total):
-        if n not in counts:
-            counts.append(n)
-    return counts
 
 
 def _meminfo_mb(text):
@@ -449,7 +443,18 @@ def _bench_to_cell(bench, cell):
         cell[(p, "ticks")]          = fields.get("ticks")
         cell[(p, "median_tick_ns")] = fields.get("median_tick_ns")
         cell[(p, "p95_tick_ns")]    = fields.get("p95_tick_ns")
+        # Bytes PER TICK, not the run's total: the total is proportional to the
+        # ticks completed, so a FASTER binary sends more of them and a real
+        # speed-up would read as a byte regression (and turn a KEEP into an
+        # ESCALATE). What min_network is judged on is how much it puts on the
+        # wire per broadcast.
+        ticks = fields.get("ticks")
+        if ticks and fields.get("bytes_sent") is not None:
+            cell[(p, "bytes_per_tick")] = round(float(fields["bytes_sent"]) / ticks, 2)
         cell[(p, "bytes_sent")]     = fields.get("bytes_sent")
+        # Resident state the algorithm keeps between ticks to know what it last
+        # broadcast -- the memory side of the same trade-off.
+        cell[(p, "visibility_state_bytes")] = fields.get("visibility_state_bytes")
         # How many maps this population spread over -- the world shape is
         # derived from the population, so record it with the numbers it
         # explains rather than leaving a reader to recompute it.
@@ -659,6 +664,7 @@ def _metric_unit_better(metric_name):
     # Throughput is higher-is-better; everything else lower-is-better.
     better = "higher" if metric_name in ("ticks_per_s", "ticks") else "lower"
     unit = "ticks/s" if metric_name == "ticks_per_s" else \
+           "bytes" if metric_name == "bytes_per_tick" else \
            "ns" if metric_name.endswith("_ns") else \
            "bytes" if metric_name.endswith("_bytes") or metric_name == "bytes_sent" or metric_name == "binary_size_bytes" else \
            "kb" if metric_name.endswith("_kb") else \
@@ -716,6 +722,7 @@ def _cell_to_metric_block(per_cell):
 # run to run for a given node (the generated workload is deterministic) and a
 # code-size regression still shows in it, so it stays in the decision set.
 DIAGNOSTIC_METRICS = ("maps", "resets", "median_prep_ns", "changed_pct",
+                      "bytes_sent",
                       "world_maps", "workload_players", "workload_cycle_ticks",
                       "workload_entries", "workload_replay_bytes")
 
@@ -995,6 +1002,26 @@ def main():
         bh.print_local_build_error("benchmarkmapmanager2", "stage1 generate",
                                    "", str(local_info))
         return 2
+    # Independent check of the generated file before anything is built on it.
+    # Stage 1 writes the vectors and stage 2 replays them, so the two agree by
+    # construction -- an encoding bug would be invisible to both. verify_workload
+    # is a third implementation, written from the header contract: it replays
+    # the file in Python and must reach the state stage 1 predicted, with no
+    # step leaving its map. Run on the local workload only (~5 s); the fleet's
+    # own copies are covered at runtime by replay_mismatch.
+    rc, sout, serr, _ = bh.run_capture(
+        [sys.executable, os.path.join(STAGE2_SRC, "..", "verify_workload.py"),
+         local_workload], timeout=600)
+    if rc != 0:
+        bh.print_local_build_error(
+            "benchmarkmapmanager2", "workload verification", sout,
+            "the generated workload does not replay to the state stage 1 "
+            "computed, or a step leaves its map -- the two stages disagree "
+            "about the workload, so nothing measured from it would mean "
+            "anything.\n" + (serr or ""))
+        return 2
+    print(_color(bh.C_GREEN, "[verify] local workload replays to the state "
+                             "stage 1 predicted, no step leaves its map"))
     bin_path = build_stage2(local_workload, os.path.join(BUILD_DIR, "stage2-local"))
     if bin_path is None:
         return 2

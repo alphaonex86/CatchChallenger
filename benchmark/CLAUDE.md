@@ -943,10 +943,28 @@ GENERATED PER EXECUTION NODE AND PER DATAPACK.
   47 MB -> 6.8 MB); `FacilityLibGeneral::listFolder()` order is not stable
   across machines, so sort it; the map kind comes from the sibling `.xml`
   (`<map type=...>`), not from the path (85 of 647 differ).
-* `maps`/`resets`/`median_prep_ns`/`changed_pct`/`workload_*` are recorded but
-  kept OUT of the champion metric set. ~26% of slots differ per tick, so the
-  "same as last broadcast -> send nothing" path stays the majority of the diff
-  and an optimisation of it is measurable.
+* **`verify_workload.py` is a THIRD implementation**, written from
+  `stage2/Workload.hpp` rather than from either stage: it replays a generated
+  `.cpp` in Python and must reach the state stage 1 predicted with no step
+  leaving its map. Stage 1 and stage 2 agree by construction, so an encoding
+  bug would be invisible to both -- this is what catches it. The harness runs
+  it on the local workload every run (~5 s); point it at any generated file by
+  hand.
+* **Per-player RAM is NOT a constant** -- measured 1250 -> 6.1 MB, 5000 ->
+  10.0 MB, 20000 -> 43.4 MB, 65530 -> 202 MB: ~1.0 KB per player while maps are
+  thinly populated, ~3.0 KB once the population overflows the target crowds and
+  they pack toward 253 (the captured packets grow with the crowd).
+  `PER_PLAYER_KB` sizes on the WORST slope: over-estimating costs a node some
+  players, under-estimating OOM-kills it.
+* **`bytes_sent` is a RUN TOTAL, so it grows with speed** -- a faster binary
+  completes more ticks and sends more bytes, which would read as a byte
+  regression and turn a KEEP into an ESCALATE. The champion metric is
+  `bytes_per_tick`; the total stays as a diagnostic. (benchmarkmapmanager still
+  has the raw total in its set.)
+* `maps`/`resets`/`median_prep_ns`/`changed_pct`/`workload_*`/`bytes_sent` are
+  recorded but kept OUT of the champion metric set. ~26% of slots differ per
+  tick, so the "same as last broadcast -> send nothing" path stays the majority
+  of the diff and an optimisation of it is measurable.
 
 ## epoll vs io_uring A/B — `benchmarkepolliouring.py` (learned the hard way)
 
