@@ -2068,7 +2068,12 @@ def profile_fleet(bench_name, tools, local_cmd, local_cwd, local_timeouts,
     remote_spec     None  => remote skipped (e.g. botactions: its server+bot
                             workload isn't remote-wired, local-only by design).
                     dict  => {cmake_src_subdir, build_subdir_base, bin_name,
-                            runtime_cmd, cmake_defs?, extras?, stage_fn?}.
+                            runtime_cmd, cmake_defs?, cmake_defs_fn?, extras?,
+                            stage_fn?}.
+                    cmake_defs_fn(exec_node, compile_node) -> defs|None gives
+                            a benchmark whose build INPUT is per node (a
+                            generated workload) its own defines; None skips
+                            that node.
                     stage_fn(runtime_node) -> (ok, msg) stages per-benchmark
                             runtime fixtures on the exec node before the run.
 
@@ -2105,10 +2110,25 @@ def profile_fleet(bench_name, tools, local_cmd, local_cwd, local_timeouts,
         _flag_sig = tuple(sorted(exec_node_cmake_defs(en, cn).items()))
         if _flag_sig:
             sub += "-" + hashlib.sha1(repr(_flag_sig).encode()).hexdigest()[:8]
+        # A benchmark whose build INPUT differs per node (a generated
+        # workload, a per-board tuning) supplies cmake_defs_fn instead of a
+        # fixed cmake_defs; it returns that node's defines, or None to skip it.
+        defs = remote_spec.get("cmake_defs")
+        defs_fn = remote_spec.get("cmake_defs_fn")
+        if defs_fn is not None:
+            defs = defs_fn(en, cn)
+            if defs is None:
+                print(f"{bh.C_YELLOW}[profile] {label}: no build input; "
+                      f"skip{bh.C_RESET}")
+                for t in tools:
+                    out.append((label, t, None, "no build input"))
+                continue
+            # Distinct build inputs must not share a build dir either.
+            sub += "-" + hashlib.sha1(repr(sorted(defs.items())).encode()).hexdigest()[:8]
         res = profile_on_exec(
             cn, en, remote_spec["cmake_src_subdir"], sub,
             remote_spec["bin_name"], remote_spec["runtime_cmd"], tools,
-            bench_name, cmake_defs=remote_spec.get("cmake_defs"),
+            bench_name, cmake_defs=defs,
             extras=remote_spec.get("extras"),
             stage_fn=remote_spec.get("stage_fn"), verbose=verbose,
             callgrind_toggle=remote_spec.get("callgrind_toggle"))
