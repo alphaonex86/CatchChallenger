@@ -154,6 +154,40 @@ public:
     //call once, after the map list AND the border offsets are resolved
     static void resolveNeighbours();
 
+    /* What min_network()'s candidate scan reads, packed contiguously: one
+     * entry per map slot, built ONCE per tick and then walked by every
+     * recipient of this map AND of every map that can see into it.
+     * Without it each recipient chases the same Client objects through the
+     * connected list -- recipients x candidates SCATTERED reads, a cache miss
+     * per candidate, and the connected list is the one thing guaranteed not to
+     * be laid out like the map. With it the inner loop is a linear walk of 8
+     * byte entries the prefetcher can follow, and a Client is only touched for
+     * a player actually entering the view (rare).
+     * The state is the same DensePlayerState the diff compares, so the range
+     * test, the "did it move" test and the "is it still the same character"
+     * test all read from here. */
+    struct CandidateState
+    {
+        PLAYER_INDEX_FOR_CONNECTED player;//PLAYER_INDEX_FOR_CONNECTED_MAX: free slot
+        DensePlayerState state;
+    };
+    /* Written by index into a vector that is already big enough, NOT by
+     * push_back: the capacity check of a push per entry measured 2-4% slower.
+     * The holes of map_clients_id are KEPT (an empty entry carries
+     * PLAYER_INDEX_FOR_CONNECTED_MAX): compacting them away, so the innermost
+     * loop drops its empty test, was MEASURED 3% SLOWER on the datapack world
+     * -- its maps have almost no holes, so the compaction only added
+     * bookkeeping. Do not re-try it without a workload that has them. */
+    std::vector<CandidateState> candidates;
+    uint16_t candidatesCount;
+    uint32_t candidatesTick;
+    /* Bumped once per server tick by the timer, so a map rebuilds its snapshot
+     * the first time it is READ in a tick -- whichever map reads it first,
+     * since a neighbour is scanned before its own turn comes. */
+    static uint32_t visibilityTick;
+    static void beginTick();
+    void refreshCandidates();
+
     /* Half extents of the view rectangle, see the comment on top of this
      * file. Resolved once at load by resolveViewRange() from the datapack
      * zoom; the values they start with are the ones of the fallback zoom, so

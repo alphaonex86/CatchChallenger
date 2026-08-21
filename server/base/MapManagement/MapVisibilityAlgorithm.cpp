@@ -86,13 +86,18 @@ DensePlayerState MapVisibilityAlgorithm::tempDenseBuffer[255];
 PLAYER_INDEX_FOR_CONNECTED MapVisibilityAlgorithm::tempInsertPlayers[255];
 uint8_t MapVisibilityAlgorithm::tempSeenSlot[255];
 std::vector<uint8_t> MapVisibilityAlgorithm::tempSlotOfPlayer;
+uint32_t MapVisibilityAlgorithm::visibilityTick=0;
 //half extents for the fallback zoom 2: 1920x1080 scaled by
 //ceil(1080*2/512)=5 -> 80px by tile -> 24x14 tiles -> 24/2+1=13.
 //resolveViewRange() replaces them at load with the real datapack zoom.
 uint8_t MapVisibilityAlgorithm::view_x=13;
 uint8_t MapVisibilityAlgorithm::view_y=13;
 
-MapVisibilityAlgorithm::MapVisibilityAlgorithm()
+MapVisibilityAlgorithm::MapVisibilityAlgorithm() :
+    candidatesCount(0),
+    //NOT 0: visibilityTick starts at 0 too, and a map that looks already
+    //snapshotted before anything was written would show nobody to anybody
+    candidatesTick(0xffffffff)
 {
     //Packet code bytes are constants: set once here so the hot path never
     //re-writes them. min_balanced() only fills the size+count that actually
@@ -1173,6 +1178,61 @@ bool MapVisibilityAlgorithm::inViewRange(const CATCHCHALLENGER_TYPE_MAPID &mapIn
     return dx<=static_cast<int16_t>(view_x) && dy<=static_cast<int16_t>(view_y);
 }
 
+/// One server tick starts: every map snapshot taken during the previous one
+/// is stale. Called by the timer that drives the broadcast, NOT by the
+/// algorithm, because a map's snapshot is read by its neighbours before its
+/// own turn comes.
+void MapVisibilityAlgorithm::beginTick()
+{
+    visibilityTick++;
+}
+
+/// Rebuild this map's candidate snapshot, once per tick whoever asks first.
+/// Nothing inserts or removes on a map during the broadcast, so a snapshot
+/// taken at the first read stays valid for the whole tick.
+void MapVisibilityAlgorithm::refreshCandidates()
+{
+    if(candidatesTick==visibilityTick)
+        return;
+    candidatesTick=visibilityTick;
+    const size_t slotCount=map_clients_id.size();
+    /* COMPACTED: only the live slots land here. map_clients_id is sparse
+     * (removeOnMap leaves a hole, insertOnMap refills it LIFO) and the wire
+     * slot a recipient uses comes from its OWN table, never from this one, so
+     * a hole carries nothing -- dropping it takes the "is this slot empty"
+     * test out of the innermost loop and shortens the walk by the hole count.
+     * capacity() keeps the map's high-water mark, so this allocates once. */
+    if(candidates.size()<slotCount)
+        candidates.resize(slotCount);
+    size_t slot=0;
+    while(slot<slotCount)
+    {
+        CandidateState &entry=candidates[slot];
+        const PLAYER_INDEX_FOR_CONNECTED playerIndex=map_clients_id[slot];
+        entry.player=playerIndex;
+        if(playerIndex!=PLAYER_INDEX_FOR_CONNECTED_MAX)
+        {
+            #ifdef CATCHCHALLENGER_HARDENED
+            if(!ClientList::list->isNull(playerIndex))
+            #endif
+            {
+                const Client &c=ClientList::list->at(playerIndex);
+                entry.state.set(c.getX(),c.getY(),static_cast<uint8_t>(c.getLastDirection()),c.getPlayerId());
+            }
+            #ifdef CATCHCHALLENGER_HARDENED
+            else
+            {
+                std::cerr << "MapVisibilityAlgorithm::refreshCandidates() ClientList::list.empty(): "
+                          << playerIndex << std::endl;
+                entry.player=PLAYER_INDEX_FOR_CONNECTED_MAX;
+            }
+            #endif
+        }
+        slot++;
+    }
+    candidatesCount=static_cast<uint16_t>(slotCount);
+}
+
 /// min_network (view range visibility): a recipient is told ONLY about the
 /// players inside its view rectangle, on its own map OR on a border map --
 /// see doc/algo/visibility/MapVisibilityAlgorithm-WithBorderAndRange.png.
@@ -1258,9 +1318,14 @@ void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER
     //same walk so no memset by recipient.
     uint8_t liveCount=0;
     unsigned int slotIndex=0;
-    while(slotIndex<slots.size())
+    /* Hoist every vector size out of the walks below. The candidate loop calls
+     * ClientList::at(), which is virtual, so the compiler must assume it can
+     * touch these vectors and reloads _M_finish-_M_start on EVERY iteration:
+     * callgrind put 19% of the whole algorithm on that single subtraction. */
+    const unsigned int slotCount=static_cast<unsigned int>(slots.size());
+    while(slotIndex<slotCount)
     {
-        const ClientWithMap::VisibleSlot &visibleSlot=slots.at(slotIndex);
+        const ClientWithMap::VisibleSlot &visibleSlot=slots[slotIndex];
         tempSeenSlot[slotIndex]=0x00;
         if(visibleSlot.player!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
@@ -1291,22 +1356,29 @@ void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER
     uint8_t changesCount=0;
     uint8_t removeCount=0;
     uint8_t insertCount=0;
+    //the sparse index is grown in phase 1 and only READ from here on
+    const size_t slotOfPlayerSize=tempSlotOfPlayer.size();
+    const uint8_t * const slotOfPlayer=tempSlotOfPlayer.empty()?NULL:tempSlotOfPlayer.data();
+    const unsigned int neighbourCount=static_cast<unsigned int>(neighbours.size());
     unsigned int sourceIndex=0;
-    while(sourceIndex<=neighbours.size())
+    while(sourceIndex<=neighbourCount)
     {
-        const MapVisibilityAlgorithm *sourceMap;
+        MapVisibilityAlgorithm *sourceMap;
+        CATCHCHALLENGER_TYPE_MAPID sourceMapIndex;
         int16_t offset_x;
         int16_t offset_y;
         if(sourceIndex==0)
         {
             sourceMap=this;
+            sourceMapIndex=mapIndex;
             offset_x=0;
             offset_y=0;
         }
         else
         {
-            const NeighbourMap &neighbour=neighbours.at(sourceIndex-1);
-            sourceMap=&flat_map_list.at(neighbour.mapIndex);
+            const NeighbourMap &neighbour=neighbours[sourceIndex-1];
+            sourceMap=&flat_map_list[neighbour.mapIndex];
+            sourceMapIndex=neighbour.mapIndex;
             offset_x=neighbour.offset_x;
             offset_y=neighbour.offset_y;
         }
@@ -1318,28 +1390,29 @@ void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER
            (offset_y+static_cast<int16_t>(sourceMap->height)-1)>=(recipientY-keepY) &&
            (recipientY+keepY)>=offset_y)
         {
+            //ONE snapshot per map per tick, then a linear walk of it: the
+            //Client objects are only touched for somebody entering the view
+            sourceMap->refreshCandidates();
             unsigned int sourceSlot=0;
-            while(sourceSlot<sourceMap->map_clients_id.size())
+            const unsigned int sourceSlotCount=sourceMap->candidatesCount;
+            const CandidateState * const sourceCandidates=sourceMap->candidates.data();
+            while(sourceSlot<sourceSlotCount)
             {
-                const PLAYER_INDEX_FOR_CONNECTED &candidateIndex=sourceMap->map_clients_id[sourceSlot];
+                const CandidateState &entry=sourceCandidates[sourceSlot];
+                const PLAYER_INDEX_FOR_CONNECTED candidateIndex=entry.player;
                 //a recipient is never told about itself
                 if(candidateIndex!=PLAYER_INDEX_FOR_CONNECTED_MAX && candidateIndex!=recipientIndex)
                 {
-                    #ifdef CATCHCHALLENGER_HARDENED
-                    if(!ClientList::list->isNull(candidateIndex))
-                    #endif
-                    {
-                        const Client &candidate=ClientList::list->at(candidateIndex);
                         //integer only: the candidate coordinates translated into
                         //this map frame, then |dx| and |dy| against the range
-                        int16_t dx=static_cast<int16_t>(static_cast<int16_t>(candidate.getX())+offset_x-recipientX);
+                        int16_t dx=static_cast<int16_t>(static_cast<int16_t>(entry.state.getX())+offset_x-recipientX);
                         if(dx<0)
                             dx=-dx;
-                        int16_t dy=static_cast<int16_t>(static_cast<int16_t>(candidate.getY())+offset_y-recipientY);
+                        int16_t dy=static_cast<int16_t>(static_cast<int16_t>(entry.state.getY())+offset_y-recipientY);
                         if(dy<0)
                             dy=-dy;
-                        const uint8_t known=(static_cast<size_t>(candidateIndex)<tempSlotOfPlayer.size())?
-                                    tempSlotOfPlayer[candidateIndex]:static_cast<uint8_t>(0x00);
+                        const uint8_t known=(static_cast<size_t>(candidateIndex)<slotOfPlayerSize)?
+                                    slotOfPlayer[candidateIndex]:static_cast<uint8_t>(0x00);
                         if(known!=0x00)
                         {
                             //already displayed: hysteresis, only dropped past the margin
@@ -1347,11 +1420,9 @@ void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER
                             {
                                 const uint8_t slot=static_cast<uint8_t>(known-1);
                                 tempSeenSlot[slot]=0x01;
-                                ClientWithMap::VisibleSlot &visibleSlot=slots[slot];
-                                DensePlayerState current;
-                                current.set(candidate.getX(),candidate.getY(),
-                                            static_cast<uint8_t>(candidate.getLastDirection()),candidate.getPlayerId());
-                                if(visibleSlot.map!=candidate.mapIndex || !current.isSameCharacter(visibleSlot.state))
+                                ClientWithMap::VisibleSlot &visibleSlot=slots[slot];//bounded by phase 1
+                                const DensePlayerState &current=entry.state;
+                                if(visibleSlot.map!=sourceMapIndex || !current.isSameCharacter(visibleSlot.state))
                                 {
                                     //changed map (0x66 carries no map id), or the connected
                                     //slot was recycled by another character: full insert
@@ -1360,7 +1431,7 @@ void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER
                                     tempInsertPlayers[insertCount]=candidateIndex;
                                     tempInsertSlots[insertCount]=slot;
                                     insertCount++;
-                                    visibleSlot.map=candidate.mapIndex;
+                                    visibleSlot.map=sourceMapIndex;
                                     visibleSlot.state=current;
                                 }
                                 else if(!current.isEqual(visibleSlot.state))
@@ -1386,11 +1457,6 @@ void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER
                                 liveCount++;
                             }
                         }
-                    }
-                    #ifdef CATCHCHALLENGER_HARDENED
-                    else
-                        std::cerr << "MapVisibilityAlgorithm::sendViewDelta() ClientList::list.empty(): " << candidateIndex << std::endl;
-                    #endif
                 }
                 sourceSlot++;
             }
@@ -1402,7 +1468,7 @@ void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER
     //one walk does both: the index MUST be clean when leaving, it is shared
     //by every recipient of every map.
     slotIndex=0;
-    while(slotIndex<slots.size())
+    while(slotIndex<slotCount)//phase 4 grows slots, this walk does not
     {
         ClientWithMap::VisibleSlot &visibleSlot=slots[slotIndex];
         if(visibleSlot.player!=PLAYER_INDEX_FOR_CONNECTED_MAX)
