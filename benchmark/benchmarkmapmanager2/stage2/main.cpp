@@ -58,6 +58,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <sys/resource.h>
 
 using namespace CatchChallenger;
 namespace W = CCBenchWorkload;
@@ -370,10 +371,25 @@ static void replay_tick(World &w, uint32_t tick_in_cycle, uint32_t &next_mig)
 // budget_ms > 0  -> FIXED-TIME: run until the budget elapses, report the ticks
 //                   completed (benchmark/CLAUDE.md).
 // budget_ms == 0 -> FIXED-ITERATION: exactly `ticks` ticks, for callgrind.
+// CPU seconds this process has burned so far. The benchmark is
+// single-threaded, so (delta cpu / delta wall) * 100 is bounded at 100 and
+// 100 means one core saturated -- the per-slice cpu_percent benchmark/
+// CLAUDE.md asks for, without re-running the binary once per slice just to
+// wrap it in /usr/bin/time.
+static double cpu_seconds()
+{
+    struct rusage ru;
+    if(getrusage(RUSAGE_SELF, &ru) != 0)
+        return 0.0;
+    return (double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec / 1000000.0
+         + (double)ru.ru_stime.tv_sec + (double)ru.ru_stime.tv_usec / 1000000.0;
+}
+
 static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms)
 {
     World w;
     w.build(players);
+    const double cpu0 = cpu_seconds();
 
     // Silence the CATCHCHALLENGER_TESTING slot-by-slot debug prints of
     // MapVisibilityAlgorithm.cpp: at this scale their volume would dominate
@@ -497,6 +513,12 @@ static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms
     const uint64_t ticks_done = t;
     const uint64_t elapsed_ms = (uint64_t)std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now() - loop_start).count();
+    // CPU over the MEASURED window only (the world build before it is not part
+    // of what the server does per tick).
+    const double cpu_used = cpu_seconds() - cpu0;
+    double cpu_percent = elapsed_ms > 0
+        ? cpu_used * 100000.0 / (double)elapsed_ms : 0.0;
+    if(cpu_percent > 100.0) cpu_percent = 100.0;   // single-threaded: bounded
     std::vector<uint64_t> sorted = samples;
     std::sort(sorted.begin(), sorted.end());
     const uint64_t median = sorted.empty() ? 0 : sorted[sorted.size() / 2];
@@ -517,6 +539,7 @@ static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms
               << " ticks=" << ticks_done
               << " duration_ms=" << elapsed_ms
               << " ticks_per_s=" << ticks_per_s
+              << " cpu_percent=" << cpu_percent
               << " cycle_ticks=" << W::CYCLE_TICKS
               << " entries_per_player=" << W::ENTRIES_PER_PLAYER
               << " resets=" << resets
