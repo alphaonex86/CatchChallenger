@@ -478,7 +478,7 @@ void Client::purgeDatapackListReply(const uint8_t &query_id)
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
         posOutput+=1+4;
-        {const uint32_t _tmp_le=(htole32((__uint32_t)tempDatapackListReplyArray.size()));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
+        {const uint32_t _tmp_le=(htole32((uint32_t)tempDatapackListReplyArray.size()));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
         if(tempDatapackListReplyArray.size()>64*1024)
         {

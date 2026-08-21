@@ -110,4 +110,13 @@ def compare_with_reference(label, new_path, ref_path, diff_path=None):
         return False, (f"reference image missing for {label}: {ref_path}. "
                        f"Bless the just-produced screenshot with: "
                        f"cp {new_path} {ref_path}")
-    return image_compare(new_path, ref_path, diff_image=diff_path)
+    ok, detail = image_compare(new_path, ref_path, diff_image=diff_path)
+    if not ok:
+        # A mismatch is a REGRESSION by default -- work the diff mask, never
+        # bless to silence it. But when the render change IS the intent (only
+        # the project owner decides that), the just-produced screenshot lives
+        # in a tmpfs build dir any other run's cleanup can wipe, so re-blessing
+        # after the fact means paying the whole run again. Name the copy here.
+        detail += (f". If this render change is intended, only the project "
+                   f"owner re-blesses it: cp {new_path} {ref_path}")
+    return ok, detail
