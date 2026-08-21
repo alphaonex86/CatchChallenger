@@ -898,53 +898,55 @@ Traps that cost a debugging cycle each — all fixed, don't reintroduce:
   workspace exists to *measure* prod code from outside; it doesn't
   ship.
 
-## `benchmarkmapmanager2.py` -- min_network over the datapack's real world
+## `benchmarkmapmanager2.py` -- two-stage, per-node generated replay
 
-Same production `min_network()` as `benchmarkmapmanager.py`, different world and
-load model. The world IS the datapack: every `.tmx` under
-`map/main/generated` (647 real maps) is loaded with the PRODUCTION
-`general/base/Map_loader.cpp` and ALL of them are broadcast every tick, like the
-server's timer does over `flat_map_list`. Players are spread 60/30/10 over
-route/town/interior maps, crowded to 35/200/20 per map, and WALK in runs whose
-movement vector is truncated at the first obstacle by the production predicate
-`MoveOnTheMap::isWalkableWithDirection` (collisions, one-way ledges, border).
+Same production `min_network()` as `benchmarkmapmanager.py`, over the datapack's
+REAL world (647 maps under `map/main/generated`), driven by a replay that is
+GENERATED PER EXECUTION NODE AND PER DATAPACK.
 
-* **The workload is FIXED**: map set, world shape, walk/migrate rates and seed
-  are constants, NOT flags. `--datapack` says WHERE the world is, `--players`
-  only selects from the fixed sweep (it refuses any other count), `--ms`/
-  `--ticks` only bound the run. Each run records `world_maps` / `world_cells`,
-  so a regenerated datapack re-baselines visibly instead of silently.
-* **Reuse the production loader, never a private .tmx reader.** Traps it already
-  costs to learn: `Map_loaderMain.cpp` ABORTS unless
-  `CommonDatapack::commonDatapack.parseDatapack()` ran first (item + monster
-  name tables); the dimensions come back on `loader.map_to_send`, not on the
-  destination map; and outside a `CATCHCHALLENGER_SERVER` build every parsed
-  XMLDocument is parked in `CommonDatapack::xmlLoadedFile` and NEVER freed, so
-  `clear_xmlLoadedFile()` + `Map_loader::teleportConditionsUnparsed.clear()`
-  must run per map or 647 maps pile up their whole DOM in RSS.
-  `FacilityLibGeneral::listFolder()` order is NOT stable across machines --
-  sort it, or each node measures a different world.
-* **254 is the per-MAP ceiling, not the population's.** The sweep is 50..5000
-  TOTAL players; the top is set by RAM on the smallest node (52 MB), not by the
-  protocol.
-* **Keep the change rate away from 100%.** ~23% of slots differ per tick, so the
-  "same as last broadcast -> send nothing" path is the majority of the diff and
-  an optimisation of it is measurable. A per-tick move coin-flip at 70% put it
-  at 91% and made that path unmeasurable -- the same trap the owner fixed in
-  `benchmarkmapmanager` by dropping its move rate to 40%. `changed_pct` is
-  recorded every run to keep that honest.
-* **The LCG's low bits are a rotation, not randomness** (`next() & 3` walks
-  0,3,2,1 with period 4 with these constants). Draw from the HIGH bits
-  (`pick4()` = `next() >> 30`, `below()` = multiply-shift) -- which also drops
-  a division per player per tick on the i486/MIPS targets.
-* `median_prep_ns` (harness cost per tick, ~17% of `median_tick_ns`, outside
-  the latency window), `maps`/`maps_populated` and `changed_pct`/`walk_pct` are
-  recorded but kept OUT of the champion metric set. `tick_<kind>_ns` IS in it:
-  it splits the tick into the crowded-town diff and the per-map constant of the
-  quiet interiors, which a single total hides. `walk_violations` != 0 is a FAIL.
-* The fleet needs the datapack on each exec node: the spec's `stage_fn` (added
-  to `push_and_run_profilers`, mirroring the `--profile` path) rsyncs it
-  `server_mode=True` (~3.8 MB, no media) before the binary is pushed.
+* **Stage 1** (`stage1/`, runs on the host): loads the world with the
+  PRODUCTION `general/base/Map_loader.cpp`, asks the node `/proc/meminfo` how
+  much RAM it has and sizes the population from it (~1.7 KB per player, half
+  the node's RAM, ceiling 65530 = the 16-bit connected index), spreads it
+  60/30/10 over route/town/interior crowded to 35/200/20 per map (**253** hard
+  guard per map), SIMULATES the walk with the production predicate
+  `MoveOnTheMap::isWalkableWithDirection`, and writes a `.cpp`: map dimensions,
+  spawns, movement vectors, migration schedule, and an end-of-cycle state hash.
+* **Stage 2** (`stage2/`, the MEASURED binary): compiles that in and replays
+  it. No datapack, no map data, no collision test at runtime -- per player per
+  tick a countdown plus a coordinate store (~12% of the tick). A vector of 3
+  cells is walked one cell per tick for 3 ticks and only then is the next one
+  fetched. That is what lets the ESP32 (no filesystem, static player count) run
+  the same benchmark.
+* **The fleet builds stage 2 per node**: the generated file is rsync'd to the
+  compile node OUT of the `--delete`-mirrored source tree, and passed as
+  `-DCC_WORKLOAD_CPP`. `run_profiler_fleet` keys its build dirs on the spec's
+  `cmake_defs` (added for this), so nodes sharing a compile parent cannot share
+  a binary and run someone else's workload.
+* **Replay sizing is the whole trade-off**: too short and the run is mostly
+  resets (a reset is one tick where the world jumps home -- it showed up as
+  +42% p95), too long and a small board carries a table it will never replay.
+  Stage 1 aims at a cycle and shortens it only if the bytes do not fit; the
+  budget is 2% of the node's RAM (ESP32: a flash constant). Measured: 0.3% of
+  ticks are resets.
+* **Oracles**: `replay_mismatch` != 0 is a FAIL (stage 2's state after a cycle
+  must equal what stage 1 computed, which also proves no vector walked into a
+  wall); the `CATCHCHALLENGER_TESTING` x/y guard still checks every broadcast
+  coordinate against the map dimensions the workload carries.
+* **Do not put the map KIND in stage 2.** It is a stage-1 notion -- it decides
+  how many players spawn per map -- and shipping it only grew the workload.
+* Traps already paid for in stage 1: `tryLoadMap()` ABORTS unless
+  `parseDatapack()` ran first (without it 24 992 real cells come back as
+  walls); dimensions arrive on `loader.map_to_send`, not on the destination
+  map; outside a `CATCHCHALLENGER_SERVER` build every parsed XMLDocument is
+  parked in `CommonDatapack::xmlLoadedFile` and never freed (clear it per map,
+  47 MB -> 6.8 MB); `FacilityLibGeneral::listFolder()` order is not stable
+  across machines, so sort it; the map kind comes from the sibling `.xml`
+  (`<map type=...>`), not from the path (85 of 647 differ).
+* `maps`/`resets`/`median_prep_ns`/`changed_pct`/`workload_*` are recorded but
+  kept OUT of the champion metric set. ~26% of slots differ per tick, so the
+  "same as last broadcast -> send nothing" path stays the majority of the diff
+  and an optimisation of it is measurable.
 
 ## epoll vs io_uring A/B — `benchmarkepolliouring.py` (learned the hard way)
 

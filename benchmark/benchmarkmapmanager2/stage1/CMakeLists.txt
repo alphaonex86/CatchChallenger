@@ -1,7 +1,9 @@
-# benchmark/benchmarkmapmanager2/CMakeLists.txt -- benchmark_min_network_world.
+# benchmark/benchmarkmapmanager2/stage1/CMakeLists.txt -- benchmark_world_stage1.
 #
-# Multi-map ("world") variant of benchmarkmapmanager: same production sources,
-# same stub world, different LOAD MODEL (see main.cpp header).
+# STAGE 1: reads the datapack's world with the PRODUCTION loader and WRITES the
+# workload (players, spawns, movement vectors) as a C++ source for stage 2.
+# It runs on the orchestrating host and is never measured, so it may link the
+# whole loader + datapack parser; stage 2 links none of it.
 #
 # Self-contained, one binary per CMakeLists.txt (root CLAUDE.md).
 # Re-uses test/testingmapmanagement/Stubs.{hpp,cpp} so the production
@@ -15,13 +17,13 @@
 # production .cpp without any cost in the production build.
 
 cmake_minimum_required(VERSION 3.20)
-project(benchmark_min_network_world LANGUAGES C CXX)
+project(benchmark_world_stage1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CC_REPO_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
+set(CC_REPO_ROOT ${CMAKE_CURRENT_LIST_DIR}/../../..)
 
 # Force vendored static zlib so the binary has no runtime dep on the
 # compile node's system libz.so — exec nodes may carry a different
@@ -33,40 +35,33 @@ include(${CC_REPO_ROOT}/general/general.cmake)
 
 find_package(Threads REQUIRED)
 
-add_executable(benchmark_min_network_world
+add_executable(benchmark_world_stage1
     main.cpp
-    ${CC_REPO_ROOT}/test/testingmapmanagement/Stubs.cpp
-    ${CC_REPO_ROOT}/server/base/MapManagement/MapVisibilityAlgorithm.cpp
-    ${CC_REPO_ROOT}/server/base/MapServer.cpp
 )
 
-target_include_directories(benchmark_min_network_world PRIVATE
+target_include_directories(benchmark_world_stage1 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CC_REPO_ROOT}
-    ${CC_REPO_ROOT}/test/testingmapmanagement
 )
 
-# CATCHCHALLENGER_TESTING enables the Stubs.hpp injection at the top of
-# the production server-side .cpp files (same mechanism testingmapmanagement
-# uses). Branch-trace prints are also gated on it -- harmless overhead
-# for a benchmark, but it makes timing figures comparable across runs.
-target_compile_definitions(benchmark_min_network_world PRIVATE
-    CATCHCHALLENGER_TESTING
+# A plain host tool: no stub world, no server-side sources, so none of the
+# testing/benchmark seams are needed. CATCHCHALLENGER_CLIENT keeps the datapack
+# parser on its non-server path (the one that can free its XML cache).
+target_compile_definitions(benchmark_world_stage1 PRIVATE
     CATCHCHALLENGER_HARDENED
-    CATCHCHALLENGER_BENCHMARK
     CATCHCHALLENGER_CLIENT
     CATCHCHALLENGER_DB_FILE
 )
 
-target_compile_options(benchmark_min_network_world PRIVATE
+target_compile_options(benchmark_world_stage1 PRIVATE
     -Wall -Wextra -Wno-unused-parameter
     -O2 -DNDEBUG
 )
-target_compile_options(benchmark_min_network_world PRIVATE
+target_compile_options(benchmark_world_stage1 PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-include cstring>
 )
 
-target_link_libraries(benchmark_min_network_world PRIVATE
+target_link_libraries(benchmark_world_stage1 PRIVATE
     catchchallenger_common_flags
     catchchallenger_general
     Threads::Threads
@@ -74,7 +69,7 @@ target_link_libraries(benchmark_min_network_world PRIVATE
 )
 
 if(EXTERNALLIBZSTD)
-    target_link_libraries(benchmark_min_network_world PRIVATE ${ZSTD_LIBRARY})
+    target_link_libraries(benchmark_world_stage1 PRIVATE ${ZSTD_LIBRARY})
 endif()
 
 # Linker driver: use the test-link-verified accelerator that
@@ -82,5 +77,5 @@ endif()
 # lld/bfd where mold has no backend, e.g. MIPS). Never hard-code
 # a specific linker here — CCCommon is the single source of truth.
 if(CC_LINKER)
-    target_link_options(benchmark_min_network_world PRIVATE -fuse-ld=${CC_LINKER})
+    target_link_options(benchmark_world_stage1 PRIVATE -fuse-ld=${CC_LINKER})
 endif()
