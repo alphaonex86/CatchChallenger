@@ -104,6 +104,22 @@ build/
 build-*/
 *-build/
 **/build/
+# ...except the build/ that vendored upstream libraries SHIP as source.
+# zstd's build/cmake/CMakeLists.txt is what general/CCCommon.cmake
+# add_subdirectory()s when EXTERNALLIBZSTD is off, and xxhash's build/cmake is
+# the same story. Ignoring them means a fresh clone -- or a git worktree, which
+# only materialises tracked files -- cannot build the vendored fallback at all:
+# every 32-bit node of the benchmark fleet died on
+# "general/libzstd/build/cmake which is not an existing directory".
+# (libopus's build output stays ignored: there it really is .o files from an
+# in-tree build, not upstream source.)
+!**/libzstd/build/
+!**/libzstd/build/**
+!**/libxxhash/build/
+!**/libxxhash/build/**
+# ...but never object files, even in there.
+**/libzstd/build/**/*.o
+**/libxxhash/build/**/*.o
 CMakeCache.txt
 CMakeFiles/
 **/CMakeFiles/
