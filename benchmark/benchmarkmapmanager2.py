@@ -1032,7 +1032,7 @@ def main():
         # per node: stage 1 generates it here, it is pushed to that node's
         # compile parent, and the path comes back as the define stage 2 needs.
         def _profile_defs(exec_node, compile_node):
-            workload, info = generate_workload(stage1_bin, exec_node)
+            workload, _why = generate_workload(stage1_bin, exec_node)
             if workload is None:
                 return None
             remote_workload, msg = _push_workload(compile_node, workload,
