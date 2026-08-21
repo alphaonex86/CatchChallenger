@@ -2550,7 +2550,7 @@ def run_benchmark_on_exec(compile_node, exec_node, cmake_src_subdir,
                           build_subdir, bin_name, runtime_cmd,
                           profilers, cmake_defs=None, extras=None,
                           run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False,
-                          callgrind_toggle=None):
+                          callgrind_toggle=None, stage_fn=None):
     """Diskless NFS-LXC wrapper: bring the exec node's container up
     before the benchmark and guarantee teardown after (try/finally),
     even on early-return failures. Both calls are no-ops for ordinary
@@ -2566,7 +2566,7 @@ def run_benchmark_on_exec(compile_node, exec_node, cmake_src_subdir,
             bin_name, runtime_cmd, profilers, cmake_defs=cmake_defs,
             extras=extras, run_timeout=run_timeout, verbose=verbose,
             use_ninja=use_ninja,
-            callgrind_toggle=callgrind_toggle)
+            callgrind_toggle=callgrind_toggle, stage_fn=stage_fn)
     finally:
         nfs_lxc_teardown(exec_node, verbose=verbose)
 
@@ -2594,22 +2594,35 @@ def build_for_fleet(compile_node, cmake_src_subdir, build_subdir,
 def push_and_run_profilers(compile_node, exec_node, remote_bld, bin_name,
                            runtime_cmd, profilers, extras=None,
                            run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False,
-                           callgrind_toggle=None):
+                           callgrind_toggle=None, stage_fn=None):
     """Phase-2 run on ONE exec node (already-built `remote_bld`):
-    nfs-lxc bring-up + push binary/extras + run each profiler + teardown.
-    Returns (out_dict, msg). Safe to call from a worker thread -- it only
-    touches its own exec node (ssh/rsync), no shared state.
+    nfs-lxc bring-up + optional fixture staging + push binary/extras + run
+    each profiler + teardown. Returns (out_dict, msg). Safe to call from a
+    worker thread -- it only touches its own exec node (ssh/rsync), no
+    shared state.
 
     `runtime_cmd` is either a single command STRING (same for every
     profiler) or a {profiler -> command-string} DICT -- the latter lets a
     benchmark use a different workload mode per profiler (e.g. fixed-time
-    --ms for rusage/perf-stat but fixed-iteration --ticks for callgrind)."""
+    --ms for rusage/perf-stat but fixed-iteration --ticks for callgrind).
+
+    `stage_fn(runtime_node) -> (ok, msg)` stages per-benchmark runtime
+    fixtures (e.g. rsync the datapack a workload reads) AFTER bring-up and
+    BEFORE the binary is pushed -- the same hook profile_on_exec() offers on
+    the --profile path, so a benchmark that needs data files on the node
+    stages them identically in both. A failing stage is infra: SKIP, never
+    FAIL."""
     runtime_node, msg = nfs_lxc_prepare(exec_node, verbose=verbose)
     if runtime_node is None:
         nfs_lxc_teardown(exec_node, verbose=verbose)
         # Bring-up / unreachable node: infra failure, not a perf regression.
         return {p: None for p in profilers}, f"SKIP:bringup-failed: {msg}"
     try:
+        if stage_fn is not None:
+            ok, smsg = stage_fn(runtime_node)
+            if not ok:
+                return ({p: None for p in profilers},
+                        f"SKIP:stage-failed: {smsg}")
         if verbose:
             _rlog(f"{exec_node['label']!r}: pushing binary")
         rc, exec_bin, msg = push_binary_to_exec(
@@ -2673,7 +2686,11 @@ def run_profiler_fleet(specs, verbose=False, max_workers=None):
     `specs` -- one dict per exec node, each with:
         exec_node, compile_node, cmake_src_subdir, build_subdir_base,
         bin_name, runtime_cmd, profilers   (+ optional cmake_defs, extras,
-        run_timeout)
+        run_timeout, stage_fn)
+
+    `stage_fn(runtime_node) -> (ok, msg)` runs after the node is up and
+    before its binary is pushed -- for benchmarks whose workload reads data
+    files (datapack, fixtures) that have to be on the node first.
 
     Phase 1: every UNIQUE compile node builds in parallel (one build dir
              `<build_subdir_base>-<compile_label>` shared by its exec
@@ -2772,7 +2789,8 @@ def run_profiler_fleet(specs, verbose=False, max_workers=None):
                 s["runtime_cmd"], s["profilers"], extras=s.get("extras"),
                 run_timeout=s.get("run_timeout", RUN_TIMEOUT_DEFAULT),
                 verbose=verbose,
-                callgrind_toggle=s.get("callgrind_toggle"))
+                callgrind_toggle=s.get("callgrind_toggle"),
+                stage_fn=s.get("stage_fn"))
         with lock:
             results[label] = (out, m)
 
@@ -2793,7 +2811,8 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
                           build_subdir, bin_name, runtime_cmd,
                           profilers, cmake_defs=None, extras=None,
                           run_timeout=RUN_TIMEOUT_DEFAULT, verbose=False,
-                          use_ninja=None, callgrind_toggle=None):
+                          use_ninja=None, callgrind_toggle=None,
+                          stage_fn=None):
     """Full flow for one benchmark, one exec node:
       1. stage source on compile node
       2. cmake configure+build on compile node
@@ -2835,6 +2854,10 @@ def _run_benchmark_on_exec_inner(compile_node, exec_node, cmake_src_subdir,
     # Carry the compile node's system-vs-vendored verdict onto this exec
     # node so its history record stamps the libs it actually ran.
     bh.alias_libs(compile_node["label"], exec_node["label"])
+    if stage_fn is not None:
+        ok, smsg = stage_fn(exec_node)
+        if not ok:
+            return {p: None for p in profilers}, f"SKIP:stage-failed: {smsg}"
     if verbose:
         _rlog(f"{exec_node['label']!r}: pushing binary")
     rc, exec_bin, msg = push_binary_to_exec(
