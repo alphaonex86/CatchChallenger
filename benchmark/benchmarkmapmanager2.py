@@ -191,6 +191,63 @@ def _meminfo_mb(text):
     return None
 
 
+def _recorded_field(label, field):
+    """A platform field the fleet recorded for this node in an earlier run."""
+    root = os.path.join(BENCH_DIR, "history")
+    if not os.path.isdir(root):
+        return None
+    for bench in sorted(os.listdir(root)):
+        bdir = os.path.join(root, bench)
+        if not os.path.isdir(bdir):
+            continue
+        for compile_node in sorted(os.listdir(bdir)):
+            pf = os.path.join(bdir, compile_node, label, "platform.json")
+            if not os.path.isfile(pf):
+                continue
+            try:
+                with open(pf, "r", encoding="utf-8") as f:
+                    d = json.load(f)
+            except (OSError, ValueError):
+                continue
+            got = (d.get("platform") or d).get(field)
+            if got:
+                return got
+    return None
+
+
+def node_identity_ok(exec_node):
+    """Is the machine answering this label's address still that machine?
+
+    An address outlives the box behind it: a board goes down, DHCP hands its
+    lease to another, and the fleet then measures the WRONG machine under the
+    old label -- silently, since every number looks plausible. It happened on
+    this very run: p1mmx (a 52 MB Pentium MMX) answered as a 1 GB Atom N270,
+    which would have written Atom results into the Pentium's timeline and
+    compared them against it forever after.
+
+    Compares the CPU model the node reports now with the one the fleet
+    recorded for that label. Unknown either side -> allowed (a node we have
+    never recorded has nothing to contradict). Returns (ok, message)."""
+    label = exec_node["label"]
+    was = _recorded_field(label, "cpu_model")
+    if not was:
+        return True, "no recorded identity to compare"
+    rc, out, _err = br.ssh_run(exec_node.get("user"), exec_node.get("host"),
+                               exec_node.get("port", 22),
+                               "grep -m1 -E '^(model name|Model|Processor)' /proc/cpuinfo",
+                               timeout=30)
+    if rc != 0 or not out.strip():
+        return True, "node did not answer the identity probe"
+    now = out.split(":", 1)[-1].strip() if ":" in out else out.strip()
+    # Compare loosely: the exact string varies with kernel version.
+    if now[:24].lower() == str(was)[:24].lower():
+        return True, "identity matches"
+    return False, (f"this address now answers as {now!r}, but {label!r} was "
+                   f"recorded as {was!r} -- the label points at a different "
+                   f"machine (an address outliving its board), so anything "
+                   f"measured here would be filed under the wrong node")
+
+
 def _recorded_ram_mb(label):
     """Last resort: the RAM the fleet recorded for this node in an earlier
     run. Only used when the node cannot be asked right now."""
@@ -319,6 +376,9 @@ def build_stage1():
     return path
 
 
+NODE_SMALL_CELL = {}     # label -> the small cell of that node's sweep
+
+
 def generate_workload(stage1_bin, node):
     """Run stage 1 for one node: read the world, size the population from that
     node's RAM, and write the .cpp stage 2 will compile in.
@@ -349,6 +409,8 @@ def generate_workload(stage1_bin, node):
     # A short cycle means the world jumps home often, and enough of that shows
     # up in the tail. It happens when the population is so large that the byte
     # budget only buys the minimum list; say so rather than let the p95 drift.
+    if info.get("players"):
+        NODE_SMALL_CELL[label] = max(1, int(info["players"]) // 16)
     cycle = info.get("cycle_ticks") or 0
     if cycle and cycle < SHORT_CYCLE_TICKS:
         print(_color(bh.C_YELLOW,
@@ -441,6 +503,9 @@ def _bench_to_cell(bench, cell):
         # work done (ticks completed). Latency stays per-tick.
         cell[(p, "ticks_per_s")]    = fields.get("ticks_per_s")
         cell[(p, "ticks")]          = fields.get("ticks")
+        # Measured by the binary itself (getrusage over the timed window), so
+        # no extra run per slice just to wrap it in /usr/bin/time.
+        cell[(p, "cpu_percent")]    = fields.get("cpu_percent")
         cell[(p, "median_tick_ns")] = fields.get("median_tick_ns")
         cell[(p, "p95_tick_ns")]    = fields.get("p95_tick_ns")
         # Bytes PER TICK, not the run's total: the total is proportional to the
@@ -489,6 +554,8 @@ def _mode_args(profiler):
 
 def run_one(bin_path, profiler="rusage", players_arg=None):
     cmd = [bin_path, *_mode_args(profiler)]
+    if profiler == "callgrind" and players_arg is None and NODE_SMALL_CELL.get("local"):
+        players_arg = [NODE_SMALL_CELL["local"]]
     if players_arg is not None:
         for p in players_arg:
             cmd += ["--players", str(p)]
@@ -574,31 +641,6 @@ def cell_run(bin_path, profiler, label_node):
         metrics[(0, "binary_size_bytes")] = [sz]
         return metrics, None
     return None, f"unknown profiler: {profiler}"
-
-
-def probe_cpu_percent_per_player(bin_path, counts):
-    """Run the binary once per player count (single value via --players N) and
-    derive cpu_percent = (user+sys)/wall*100 from /usr/bin/time -v.
-
-    The main sweep runs every count in one process so it cannot tease them
-    apart there. The probe is MAP_BENCH_MS per count (fixed-time), cheap next
-    to the sweep itself."""
-    out = {}
-    for p in counts:
-        cmd = run_one(bin_path, players_arg=[p])
-        t = bh.measure_time_v(cmd, timeout=RUN_TIMEOUT)
-        if t.get("rc") != 0:
-            continue
-        wall = t.get("wall_s") or 0.0
-        u    = t.get("user_s")
-        sv   = t.get("sys_s")
-        if wall <= 0 or u is None or sv is None:
-            continue
-        pct = (u + sv) / wall * 100.0
-        # Single-threaded binary -> bounded at 100. >100 implies scheduler
-        # jitter in the measurement; clamp.
-        out[p] = min(100.0, pct)
-    return out
 
 
 def _fit_exponent(points):
@@ -746,13 +788,19 @@ def aggregate_metrics(per_cell):
     return out
 
 
-def _runtime_cmd_string(profiler="rusage"):
+def _runtime_cmd_string(profiler="rusage", small_players=None):
     """Build the bench binary's argv as a single shell-quoted string for
     use on the exec node. The binary lives in the exec node's work_dir
     after push_binary_to_exec; we invoke it as ./BIN_NAME so cwd is the
     work_dir. Per-profiler workload mode: fixed-time (--ms) for throughput
     profilers, fixed-iteration (--ticks) for callgrind."""
     parts = [f"./{BIN_NAME}", *_mode_args(profiler)]
+    # Callgrind is ~30x, and a node's largest cell is now whatever its RAM
+    # allows -- tens of thousands of players. Give it the SMALL cell only: its
+    # metric is a deterministic instruction count, which does not need the
+    # biggest workload to be comparable, and the big one would run for hours.
+    if profiler == "callgrind" and small_players:
+        parts += ["--players", str(small_players)]
     return " ".join(parts)
 
 
@@ -821,6 +869,15 @@ def _remote_spec(node, avail_profilers, skips, all_profilers,
             per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
     if not runnable:
         return None
+    # Is this still the machine this label names? An address outlives its
+    # board, and measuring the wrong one is worse than not measuring at all.
+    ok, why = node_identity_ok(exec_node)
+    if not ok:
+        bh.print_node_error("benchmarkmapmanager2", label, "SKIP", why)
+        for prof in runnable:
+            progress.emit(prof, "no", label, status="SKIP", extra="wrong-machine")
+            per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+        return None
     # STAGE 1 for this node: its own RAM decides how many players it is given,
     # so the generator gets the exec-node dict -- that is what gets asked.
     workload, info = generate_workload(stage1_bin, exec_node)
@@ -847,7 +904,8 @@ def _remote_spec(node, avail_profilers, skips, all_profilers,
         "bin_name":          BIN_NAME,
         # Per-profiler workload mode: fixed-time (--ms) for rusage/perf-stat,
         # fixed-iteration (--ticks) for callgrind.
-        "runtime_cmd":       {p: _runtime_cmd_string(p) for p in runnable},
+        "runtime_cmd":       {p: _runtime_cmd_string(p, NODE_SMALL_CELL.get(label))
+                              for p in runnable},
         "profilers":         runnable,
         # The generated workload is a build INPUT: run_profiler_fleet keys its
         # build dirs on these defs, so each node compiles its own binary.
@@ -859,6 +917,52 @@ def _remote_spec(node, avail_profilers, skips, all_profilers,
         "callgrind_toggle":  MAP_CALLGRIND_TOGGLE,
         "run_timeout":       RUN_TIMEOUT,
     }
+
+
+def run_fleet_serially(remote_specs, progress, per_tool, all_metrics):
+    """Build and measure ONE NODE AT A TIME.
+
+    Not run_profiler_fleet(): that one drives the fleet from a thread pool, and
+    its workers spawn subprocesses with a preexec_fn. Forking a threaded
+    process runs Python code in the child between fork and exec, where any
+    lock another thread happened to hold is locked forever with no owner --
+    CPython documents preexec_fn as unsafe with threads for exactly this. It
+    deadlocked this benchmark's first fleet run: a child stuck in futex before
+    exec, the parent stuck in wait4, an hour with no output. A serial loop has
+    no threads, so the fork is safe, and there is little to lose here anyway --
+    every node carries its OWN generated workload, so no two nodes could have
+    shared a build.
+    """
+    for spec in remote_specs:
+        exec_node = spec["exec_node"]
+        label = exec_node["label"]
+        compile_node = spec["compile_node"]
+        # One build dir per exec node: each has its own workload compiled in.
+        build_subdir = f"{spec['build_subdir_base']}-{label}"
+        print(_color(bh.C_CYAN, f"[fleet] {label}: building on "
+                                f"{compile_node['label']}"))
+        rc, msg, bld = br.build_for_fleet(
+            compile_node, spec["cmake_src_subdir"], build_subdir,
+            cmake_defs=spec.get("cmake_defs"), use_ninja=exec_node.get("ninja"),
+            verbose=True, exec_node=exec_node)
+        if rc != 0:
+            # A compile-node build failure is NOT a regression: the exec node
+            # is never touched, so its metric is unknown -- SKIP, not FAIL.
+            _record_remote_result(label, spec["profilers"],
+                                  {p: None for p in spec["profilers"]},
+                                  f"SKIP:compile-failed: {msg}",
+                                  progress, per_tool, all_metrics)
+            continue
+        print(_color(bh.C_CYAN, f"[fleet] {label}: running"))
+        out, m = br.push_and_run_profilers(
+            compile_node, exec_node, bld, spec["bin_name"],
+            spec["runtime_cmd"], spec["profilers"],
+            extras=spec.get("extras"),
+            run_timeout=spec.get("run_timeout", 600),
+            verbose=True, callgrind_toggle=spec.get("callgrind_toggle"),
+            stage_fn=spec.get("stage_fn"))
+        _record_remote_result(label, spec["profilers"], out, m,
+                              progress, per_tool, all_metrics)
 
 
 def _record_remote_result(label, runnable, out, msg,
@@ -880,6 +984,14 @@ def _record_remote_result(label, runnable, out, msg,
         # Check for explicit failure with error message
         if isinstance(res, dict) and res.get("rc") not in (None, 0):
             err_msg = res.get("error", f"exit code {res.get('rc')}")
+            # The live counter truncates; the banner carries the whole cause
+            # and the command to reproduce just this benchmark.
+            detail = err_msg
+            for key in ("stdout", "stderr"):
+                tail = (res.get(key) or "").strip()
+                if tail:
+                    detail += f"\n--- {key} (tail) ---\n" + tail[-1200:]
+            bh.print_node_error("benchmarkmapmanager2", label, "FAIL", detail)
             progress.emit(prof, "no", label, status="FAIL", extra=err_msg)
             per_tool[label][prof] = {"status": "FAIL", "metrics": {}, "error": err_msg}
             continue
@@ -927,6 +1039,9 @@ def _record_remote_result(label, runnable, out, msg,
                 continue
             if not cell:
                 err_msg = res.get("error", "no-data")
+                detail = err_msg + "\n--- stdout (tail) ---\n" + \
+                         (res.get("stdout") or "")[-1200:]
+                bh.print_node_error("benchmarkmapmanager2", label, "FAIL", detail)
                 progress.emit(prof, "no", label, status="FAIL", extra=err_msg)
                 per_tool[label][prof] = {"status": "FAIL", "metrics": {}, "error": err_msg}
                 continue
@@ -951,10 +1066,14 @@ def _record_remote_result(label, runnable, out, msg,
                                          "metrics": _cell_to_metric_block(cell)}
             else:
                 err_msg = res.get("error", "callgrind failed") if isinstance(res, dict) else "callgrind failed"
+                bh.print_node_error("benchmarkmapmanager2", label, "FAIL", err_msg)
                 progress.emit(prof, "no", label, status="FAIL", extra=err_msg)
                 per_tool[label][prof] = {"status": "FAIL", "metrics": {}, "error": err_msg}
         elif prof == "binary-size":
             if res is None:
+                bh.print_node_error("benchmarkmapmanager2", label, "FAIL",
+                                    "the exec node reported no binary size "
+                                    "(the push may have landed nothing)")
                 progress.emit(prof, "no", label, status="FAIL", extra="no-data")
                 per_tool[label][prof] = {"status": "FAIL", "metrics": {}}
                 continue
@@ -1166,7 +1285,6 @@ def main():
             counts = sorted(int(k[1:].split("_", 1)[0])
                             for k in per_tool[label]["rusage"]["metrics"]
                             if k.startswith("p") and k.endswith("_median_tick_ns"))
-            cpu_per_p = probe_cpu_percent_per_player(bin_path, counts)
             slices = {}
             cell_metrics = per_tool[label]["rusage"]["metrics"]
             for p in counts:
@@ -1177,12 +1295,6 @@ def main():
                 for key, blk in cell_metrics.items():
                     if key.startswith(prefix):
                         slice_metrics[key[len(prefix):]] = blk
-                if p in cpu_per_p:
-                    slice_metrics["cpu_percent"] = {
-                        "value": cpu_per_p[p], "median": cpu_per_p[p],
-                        "stddev": 0.0, "unit": "%", "better": "lower",
-                        "samples": [cpu_per_p[p]],
-                    }
                 # Per-player and per-map cost: flat across the sweep means
                 # the algorithm scales linearly with the population; rising
                 # means a term that will not survive a full server.
@@ -1231,16 +1343,10 @@ def main():
     # recorded serially here afterwards so Progress stays single-threaded.
     if remote_specs:
         print(_color(bh.C_CYAN,
-              f"[bench] remote fleet: building "
-              f"{len({s['compile_node']['label'] for s in remote_specs})} "
-              f"compile node(s) in parallel, then running "
-              f"{len(remote_specs)} exec node(s)"))
-        fleet = br.run_profiler_fleet(remote_specs, verbose=True)
-        for spec in remote_specs:
-            label = spec["exec_node"]["label"]
-            out, msg = fleet.get(label, ({}, "no fleet result"))
-            _record_remote_result(label, spec["profilers"], out, msg,
-                                  progress, per_tool, all_metrics)
+              f"[bench] remote fleet: {len(remote_specs)} exec node(s), one at "
+              f"a time (each carries its own generated workload, so no two "
+              f"could share a build anyway)"))
+        run_fleet_serially(remote_specs, progress, per_tool, all_metrics)
 
     sha = bh.git_sha()
 
