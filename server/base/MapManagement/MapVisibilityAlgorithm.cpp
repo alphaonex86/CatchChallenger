@@ -1054,7 +1054,7 @@ static void addNeighbour(MapVisibilityAlgorithm &map,const CATCHCHALLENGER_TYPE_
 }
 
 /// Precompute, for every map, the border maps a player standing on it can
-/// see into (min_range() candidates). Done ONCE at load: the map list and the
+/// see into (min_network() candidates). Done ONCE at load: the map list and the
 /// border offsets never change afterwards, so the tick does no adjacency
 /// work at all -- and nothing is done when a player moves either.
 void MapVisibilityAlgorithm::resolveNeighbours()
@@ -1142,7 +1142,7 @@ static void closeInsertGroup(char * const buffer,const uint32_t &groupStart,cons
     buffer[groupStart+1+4+1+2]=static_cast<char>(count);
 }
 
-/// Same rectangle as min_range(), asked about ONE pair instead of broadcast:
+/// Same rectangle as min_network(), asked about ONE pair instead of broadcast:
 /// used by /trade and /battle (Client::otherPlayerIsInRange) so a player can
 /// only interact with somebody it actually sees, border maps included.
 bool MapVisibilityAlgorithm::inViewRange(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,
@@ -1173,7 +1173,7 @@ bool MapVisibilityAlgorithm::inViewRange(const CATCHCHALLENGER_TYPE_MAPID &mapIn
     return dx<=static_cast<int16_t>(view_x) && dy<=static_cast<int16_t>(view_y);
 }
 
-/// min_range (view range visibility): a recipient is told ONLY about the
+/// min_network (view range visibility): a recipient is told ONLY about the
 /// players inside its view rectangle, on its own map OR on a border map --
 /// see doc/algo/visibility/MapVisibilityAlgorithm-WithBorderAndRange.png.
 ///
@@ -1187,7 +1187,12 @@ bool MapVisibilityAlgorithm::inViewRange(const CATCHCHALLENGER_TYPE_MAPID &mapIn
 /// allocation and the diff baseline. Cost by recipient is
 /// O(candidates + visible slots), with the candidates limited to the maps
 /// whose rect intersects the view.
-void MapVisibilityAlgorithm::min_range(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
+///
+/// That per-recipient cost is the DEAL, not a defect: this strategy exists to
+/// minimise the INTERNET usage (and to keep the view nice across the map
+/// seams). A server that wants its cpu back runs "balanced" or "cpu", which
+/// share one snapshot for the whole map -- and send the whole map.
+void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     unsigned int index_client=0;
     while(index_client<map_clients_id.size())
@@ -1216,14 +1221,14 @@ void MapVisibilityAlgorithm::min_range(const CATCHCHALLENGER_TYPE_MAPID &mapInde
             }
             #ifdef CATCHCHALLENGER_HARDENED
             else
-                std::cerr << "MapVisibilityAlgorithm::min_range() ClientList::list.empty(): " << map_c_idP << std::endl;
+                std::cerr << "MapVisibilityAlgorithm::min_network() ClientList::list.empty(): " << map_c_idP << std::endl;
             #endif
         }
         index_client++;
     }
 }
 
-/// The min_range() work for ONE recipient: rebuild what it must see, diff it
+/// The min_network() work for ONE recipient: rebuild what it must see, diff it
 /// against what it already displays, emit the delta.
 /// Buffer layout: [0x65 drop all?][0x69 removes][0x6B inserts by map][0x66 changes][0xE3 ping]
 /// The removes come FIRST so a slot freed this tick can be reused by an

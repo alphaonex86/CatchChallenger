@@ -10,7 +10,7 @@
 #define CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER 128*1024
 #endif
 
-/* View range of min_range() (GameServerSettings Minimize_Network): the half
+/* View range of min_network() (GameServerSettings Minimize_Network): the half
  * extents of the RECTANGLE, in tiles, a player sees around itself. The view
  * is (2*view_x+1) x (2*view_y+1). Integer only, no distance, no sqrt/sin/cos:
  * 2 compares by candidate.
@@ -71,18 +71,27 @@ public:
     //void send_insert(unsigned int &clientsToSendDataSizeNewClients,unsigned int &clientsToSendDataSizeOldClients);
     unsigned int send_reinsertAll(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,char *output, const size_t &clients_size);
     unsigned int send_reinsertAllWithFilter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,char *output,const size_t &clients_size,const size_t &skipped_id);
+    /* The 3 mapVisibility/minimize strategies, cheapest CPU first. Each one
+     * spends more CPU than the previous to put less on the wire:
+     * "cpu"      rebroadcast the whole map every tick, no state at all;
+     * "balanced" whole map too, but only what changed since the last tick;
+     * "network"  only what the player can SEE, border maps included. */
     // broadcast all, no filter then resend same data
     void min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     // filter if already send, then consume CPU (GameServerSettings "balanced")
     void min_balanced(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
-    // only the players inside the view range, on this map OR on a border map
-    // (GameServerSettings "network")
-    void min_range(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
-    // one recipient view delta, see min_range()
+    /* Only the players inside the view range, on this map OR on a border map
+     * (GameServerSettings "network"). It costs MORE cpu than the other two, on
+     * purpose: whoever picks it is buying the smallest possible internet usage
+     * and a view that crosses the map seams (nice), NOT a small cpu -- the
+     * whole map is no longer sent, only the visible range is. Do not "optimise"
+     * it back towards the map-wide ones: those already exist above. */
+    void min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+    // one recipient view delta, see min_network()
     void sendViewDelta(ClientWithMap &recipient,const PLAYER_INDEX_FOR_CONNECTED &recipientIndex,
                        const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     /* true when (otherMapIndex,otherX,otherY) sits inside the view range of a
-     * player standing at (x,y) on mapIndex: the SAME rectangle min_range()
+     * player standing at (x,y) on mapIndex: the SAME rectangle min_network()
      * broadcasts, border maps included. false when the other map is not even
      * a border map of this one. Used by Client::otherPlayerIsInRange() so a
      * player interacts with exactly what it sees. */
@@ -113,9 +122,9 @@ public:
     // memcpy of this snapshot.
     static DensePlayerState tempDenseBuffer[255];
 
-    /* min_range() scratch, all reused by every recipient of every map:
+    /* min_network() scratch, all reused by every recipient of every map:
      * - tempInsertPlayers/tempInsertSlots: the pending full inserts, the slot
-     *   is 255 while it still has to be allocated (see min_range()).
+     *   is 255 while it still has to be allocated (see min_network()).
      * - tempSeenSlot: "this slot is still visible this tick", reset by the
      *   same walk that indexes the slots, so no memset by recipient.
      * - tempSlotOfPlayer: sparse index connected player -> slot+1 (0: not

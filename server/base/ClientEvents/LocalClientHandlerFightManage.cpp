@@ -114,7 +114,7 @@ void Client::requestFight()
 bool Client::otherPlayerIsInRange(Client &otherPlayer)
 {
     /* Interact with exactly what you SEE. With the view range algorithm that
-     * is the min_range() rectangle, border maps included: somebody one tile
+     * is the min_network() rectangle, border maps included: somebody one tile
      * away on the next map is in range, somebody at the other end of the same
      * map is not. The map wide algorithms show the WHOLE map, so there the
      * range stays the map. */

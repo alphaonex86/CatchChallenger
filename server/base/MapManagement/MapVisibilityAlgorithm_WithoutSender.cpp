@@ -46,12 +46,12 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
        }
        break;
     //"network": only what is into the view range of each player, border maps
-    //included. min_range() composes each 0x6B header itself (one by source
+    //included. min_network() composes each 0x6B header itself (one by source
     //map), so nothing is pre-seeded into the shared buffer here.
     case GameServerSettings::MapVisibility::Minimize_Network:
        while(index<MapVisibilityAlgorithm::flat_map_list.size())//put loop into condition to have best performance
        {
-           MapVisibilityAlgorithm::flat_map_list.at(index).min_range(static_cast<CATCHCHALLENGER_TYPE_MAPID>(index));
+           MapVisibilityAlgorithm::flat_map_list.at(index).min_network(static_cast<CATCHCHALLENGER_TYPE_MAPID>(index));
            index++;
        }
        break;

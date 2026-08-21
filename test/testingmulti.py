@@ -428,7 +428,7 @@ def main():
     log_info(f"datapack: {dp_name}, maincode: {MAINCODE}")
 
     # the three mapVisibility/minimize strategies, end to end: "network" is
-    # min_range() (view rectangle, border maps included), "balanced" is
+    # min_network() (view rectangle, border maps included), "balanced" is
     # min_balanced() (whole map, diffed), "cpu" is min_CPU().
     MINIMIZE_MODES = ("network", "balanced", "cpu")
     CLIENTS = (CLIENT_CPU_BUILD, CLIENT_GL_BUILD)
