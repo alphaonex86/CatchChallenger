@@ -948,12 +948,21 @@ Done so far: **p1mmx** (2026-08-21), clocked 233 -> 133 MHz to limit heat damage
 
 ## `benchmarkmapmanager2.py` -- two-stage, per-node generated replay
 
-Measures BOTH visibility strategies on the same machine in the same run: the
-plain metrics are `min_balanced()` (whole map, diffed) and the `net_*` ones are
-`min_network()` (`--algo network`: only what each player SEES, border maps
-included). Stage 1 emits the border topology + the datapack zoom so stage 2 can
-resolve the seams and the view rectangle exactly like the server; `MEASURE_NETWORK
-= False` drops the second pass, which doubles the wall time of a rusage cell.
+Measures the THREE `mapVisibility/minimize` strategies on the same machine, in
+the same run, on the same replay: plain metrics are `min_balanced()` (whole map,
+diffed), `net_*` is `min_network()` (`--algo network`: only what each player
+SEES, border maps included) and `mincpu_*` is `min_CPU()` (`--algo cpu`: whole
+map resent every tick, no state). Stage 1 emits the border topology + the
+datapack zoom so stage 2 resolves the seams and the view rectangle exactly like
+the server; `EXTRA_ALGOS = ()` drops the extra passes, which triple the wall
+time of a rusage cell.
+
+Two charts compare them on EVERY metric that has all three, since the trade only
+reads as a comparison (`min_CPU` = least cpu / most bytes, `min_network` = the
+opposite, and where each lands depends on the machine):
+`<compile>/<exec>/algo-compare.svg` per hardware, one bar group per ladder slice
+(the crowd size is what moves the trade), and `algo-compare.svg` across the
+fleet, one bar group per node at the slice the most nodes share.
 
 Same production `min_balanced()` as `benchmarkmapmanager.py`, over the datapack's
 REAL world (647 maps under `map/main/generated`), driven by a replay that is

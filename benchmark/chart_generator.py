@@ -1499,6 +1499,249 @@ def _render_by_node_chart(benchmark, records):
     return head + "".join(body) + "</svg>\n"
 
 
+# ---- three-strategy comparison -------------------------------------------
+#
+# benchmarkmapmanager2 replays the SAME workload through the three
+# mapVisibility/minimize strategies and records the other two under a prefix
+# (mincpu_ = min_CPU, net_ = min_network, plain = min_balanced). These two
+# charts put them side by side on EVERY metric measured -- per hardware and
+# across the fleet -- because the trade only reads as a comparison: min_CPU
+# spends the least cpu and the most bytes, min_network the opposite, and where
+# each one lands depends on the machine.
+ALGO_PREFIXES = (("mincpu_", "cpu"), ("net_", "network"))
+ALGO_ORDER    = ("cpu", "balanced", "network")
+ALGO_COLOR    = {"cpu": "#1f77b4", "balanced": "#7f7f7f", "network": "#d62728"}
+
+
+def _algo_split(mname):
+    """(strategy, base metric name) of a recorded metric name."""
+    for prefix, algo in ALGO_PREFIXES:
+        if mname.startswith(prefix):
+            return algo, mname[len(prefix):]
+    return "balanced", mname
+
+
+def _algo_cells(doc):
+    """{(tool, slice, base metric): {strategy: value}} of ONE record.
+
+    Only the entries measured for at least two strategies are kept: a metric
+    that exists for one of them (the harness recorded it before --algo, or a
+    strategy failed its pass) has nothing to compare."""
+    out = {}
+    better = {}
+    for tool, blk in (doc.get("results") or {}).items():
+        if not isinstance(blk, dict):
+            continue
+        groups = [((), blk.get("metrics") or {})]
+        for slice_label, smetrics in (blk.get("subbenchmarks") or {}).items():
+            if isinstance(smetrics, dict):
+                groups.append(((slice_label,), smetrics))
+        for slice_tuple, metrics in groups:
+            for mname, m in metrics.items():
+                if not isinstance(m, dict):
+                    continue
+                v = m.get("median")
+                if v is None:
+                    v = m.get("value")
+                if v is None:
+                    continue
+                try:
+                    v = float(v)
+                except (TypeError, ValueError):
+                    continue
+                algo, base = _algo_split(mname)
+                key = (tool,) + slice_tuple + (base,)
+                out.setdefault(key, {})[algo] = v
+                if m.get("better"):
+                    better.setdefault(key, m["better"])
+    return ({k: v for k, v in out.items() if len(v) >= 2}, better)
+
+
+def _slice_players(label):
+    """The player count a slice label starts with, for sorting the ladder."""
+    digits = ""
+    for ch in str(label):
+        if ch.isdigit():
+            digits += ch
+        else:
+            break
+    return int(digits) if digits else 0
+
+
+def _plot_algo_panel(x0, y0, w, h, categories, values, title, better):
+    """One metric panel: a group of bars per category (a ladder slice, or a
+    node), one bar per strategy in ALGO_ORDER. Log y-scale, linear fallback
+    when a value is <= 0 -- min_CPU keeps no state, so its
+    visibility_state_bytes is a real 0."""
+    parts = [f'<g transform="translate({x0},{y0})">']
+    parts.append(f'<rect x="0" y="0" width="{w}" height="{h}" '
+                 f'fill="white" stroke="#888" stroke-width="0.5"/>')
+    allv = [v for cat in categories for v in values.get(cat, {}).values()]
+    if not allv:
+        parts.append("</g>")
+        return "".join(parts)
+    title_txt = title + (f" ({better}=better)" if better else "")
+    uselog = all(v > 0 for v in allv)
+    parts.append(f'<text x="4" y="-4" font-size="11" font-family="sans-serif">'
+                 f'{_esc(title_txt)}{"  [log]" if uselog else ""}</text>')
+    vmin = min(allv); vmax = max(allv)
+    top = 14; bot = h - 46
+    if uselog:
+        lmin = math.log10(vmin); lmax = math.log10(vmax)
+        if lmin == lmax:
+            lmin -= 0.5; lmax += 0.5
+        # Floor the scale BELOW the smallest value: a bar drawn from the axis
+        # to its own value would be 0 px high, and that value is usually the
+        # interesting one (the strategy that sends the least).
+        lmin -= (lmax - lmin) * 0.12
+        def ypos(v):
+            return bot - ((math.log10(v) - lmin) / (lmax - lmin)) * (bot - top)
+    else:
+        lo = vmin; hi = vmax
+        if lo == hi:
+            lo -= 1.0; hi += 1.0
+        pad = (hi - lo) * 0.08
+        lo -= pad; hi += pad
+        def ypos(v):
+            return bot - ((v - lo) / (hi - lo)) * (bot - top)
+    parts.append(f'<text x="2" y="{top+4}" font-size="8" fill="#444" '
+                 f'font-family="sans-serif">{_esc(_humanize_name(vmax, title))}</text>')
+    parts.append(f'<text x="2" y="{bot}" font-size="8" fill="#444" '
+                 f'font-family="sans-serif">{_esc(_humanize_name(vmin, title))}</text>')
+    parts.append(f'<line x1="46" y1="{bot}" x2="{w-8}" y2="{bot}" '
+                 f'stroke="#888" stroke-width="0.5"/>')
+    n = len(categories)
+    span = (w - 56) / float(n if n else 1)
+    bar_w = max(3.0, min(14.0, (span - 6) / float(len(ALGO_ORDER))))
+    ci = 0
+    while ci < n:
+        cat = categories[ci]
+        cx = 50 + span * ci + (span - bar_w * len(ALGO_ORDER)) / 2.0
+        ai = 0
+        while ai < len(ALGO_ORDER):
+            algo = ALGO_ORDER[ai]
+            if algo in values.get(cat, {}):
+                v = values[cat][algo]
+                yv = ypos(v)
+                # a measured value always leaves a mark, even at the floor
+                bar_h = max(1.5, bot - yv)
+                parts.append(f'<rect x="{cx+bar_w*ai:.1f}" y="{bot-bar_h:.1f}" '
+                             f'width="{bar_w:.1f}" height="{bar_h:.1f}" '
+                             f'fill="{ALGO_COLOR[algo]}"><title>{_esc(algo)}: '
+                             f'{_esc(_humanize_name(v, title))}</title></rect>')
+            ai += 1
+        label = _esc(str(cat))
+        parts.append(f'<text x="{cx+bar_w*1.5:.1f}" y="{bot+10}" font-size="7" '
+                     f'fill="#333" font-family="sans-serif" text-anchor="end" '
+                     f'transform="rotate(-35,{cx+bar_w*1.5:.1f},{bot+10})">{label}</text>')
+        ci += 1
+    # legend
+    lx = 50
+    for algo in ALGO_ORDER:
+        parts.append(f'<rect x="{lx}" y="{h-14}" width="7" height="7" '
+                     f'fill="{ALGO_COLOR[algo]}"/>')
+        parts.append(f'<text x="{lx+10}" y="{h-8}" font-size="8" fill="#333" '
+                     f'font-family="sans-serif">{algo}</text>')
+        lx += 62
+    parts.append("</g>")
+    return "".join(parts)
+
+
+def _algo_chart(benchmark, title, categories, per_metric, better, subtitle):
+    """Wrap the panels of an algo-comparison chart into one SVG."""
+    mkeys = sorted(per_metric)
+    if not mkeys or not categories:
+        return None
+    panel_h = PANEL_H + 30
+    height = TOP_MARGIN + len(mkeys) * (panel_h + PANEL_GAP) + 10
+    width = LEFT_MARGIN + PANEL_W + 20
+    head = (f'<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<svg xmlns="http://www.w3.org/2000/svg" version="1.1" '
+            f'width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
+    body = [f'<text x="{LEFT_MARGIN}" y="18" font-size="13" '
+            f'font-family="sans-serif" font-weight="bold">{_esc(title)}</text>']
+    if subtitle:
+        body.append(f'<text x="{LEFT_MARGIN}" y="31" font-size="9" fill="#555" '
+                    f'font-family="sans-serif">{_esc(subtitle)}</text>')
+    y = TOP_MARGIN
+    for mk in mkeys:
+        body.append(_plot_algo_panel(LEFT_MARGIN, y, PANEL_W, panel_h,
+                                     categories, per_metric[mk], mk,
+                                     better.get(mk)))
+        y += panel_h + PANEL_GAP
+    return head + "".join(body) + "</svg>\n"
+
+
+def _render_algo_compare_node(benchmark, records):
+    """<compile>/<exec>/algo-compare.svg: the three strategies on THIS
+    hardware, one panel per metric, one bar group per ladder slice -- so the
+    trade is read against the crowd size, which is what moves it."""
+    if not records:
+        return None
+    cells, better = _algo_cells(records[-1])
+    if not cells:
+        return None
+    per_metric = {}
+    slices = set()
+    for key, vals in cells.items():
+        if len(key) == 3:
+            tool, slice_label, base = key
+            slices.add(slice_label)
+            per_metric.setdefault(f"{tool}.{base}", {})[slice_label] = vals
+        else:
+            tool, base = key
+            per_metric.setdefault(f"{tool}.{base}", {})["all"] = vals
+    cats = sorted(slices, key=_slice_players)
+    if "all" in {c for m in per_metric.values() for c in m}:
+        cats = cats + ["all"]
+    bmap = {}
+    for key, b in better.items():
+        bmap[f"{key[0]}.{key[-1]}"] = b
+    _comp, node = bh.node_path_parts(records[-1].get("node"))
+    return _algo_chart(benchmark,
+                       f"{benchmark} -- cpu vs balanced vs network on {node}",
+                       cats, per_metric, bmap,
+                       "same workload replayed through the 3 mapVisibility/minimize "
+                       "strategies, one bar group per ladder slice")
+
+
+def _render_algo_compare_fleet(benchmark, records):
+    """algo-compare.svg: the same three strategies across every hardware, at
+    the ladder slice the most nodes share -- comparing nodes only means
+    something at the same crowd size."""
+    latest = {}
+    for doc, _path in records:
+        _comp, node = bh.node_path_parts(doc.get("node"))
+        if node:
+            latest[node] = doc
+    if len(latest) < 2:
+        return None
+    per_node_cells = {n: _algo_cells(d) for n, d in latest.items()}
+    # the slice the most nodes have (ties -> the biggest crowd)
+    counts = {}
+    for node, (cells, _b) in per_node_cells.items():
+        for key in cells:
+            if len(key) == 3:
+                counts.setdefault(key[1], set()).add(node)
+    if not counts:
+        return None
+    chosen = sorted(counts, key=lambda s: (len(counts[s]), _slice_players(s)))[-1]
+    per_metric = {}
+    bmap = {}
+    for node, (cells, better) in per_node_cells.items():
+        for key, vals in cells.items():
+            if len(key) == 3 and key[1] == chosen:
+                label = f"{key[0]}.{key[2]}"
+                per_metric.setdefault(label, {})[node] = vals
+                if key in better:
+                    bmap.setdefault(label, better[key])
+    cats = sorted(per_node_cells)
+    return _algo_chart(benchmark,
+                       f"{benchmark} -- cpu vs balanced vs network, every hardware",
+                       cats, per_metric, bmap,
+                       f"slice {chosen}, the one {len(counts[chosen])} node(s) share; "
+                       f"latest record of each node")
+
 def regenerate(benchmark, stamp=None):
     """Regenerate every chart for `benchmark` from history JSONs.
 
@@ -1546,6 +1789,15 @@ def regenerate(benchmark, stamp=None):
             with open(cand_p, "w") as f:
                 f.write(svg)
             written.append(cand_p)
+        # 1b) the strategies of THIS hardware side by side, when the benchmark
+        # recorded more than one of them (benchmarkmapmanager2 does).
+        algo_svg = _render_algo_compare_node(benchmark, recs)
+        algo_p = os.path.join(outdir, "algo-compare.svg")
+        if algo_svg:
+            _write_if_changed(algo_p, algo_svg)
+            written.append(algo_p)
+        elif os.path.isfile(algo_p):
+            os.remove(algo_p)
 
     # 2) cross-node session chart (one chart, all platforms). Returns None
     # when fewer than 2 nodes have history -- a single-node chart carries no
@@ -1570,6 +1822,16 @@ def regenerate(benchmark, stamp=None):
     # current (no candidate freeze): it is a cross-node snapshot of the
     # latest value per node, regenerated from the same history JSONs.
     # Returns None for a single node (nothing to compare); drop stale file.
+    # 2b) the same three strategies across every hardware.
+    algo_svg = _render_algo_compare_fleet(benchmark, records)
+    algo_p = os.path.join(outdir, "algo-compare.svg")
+    if algo_svg:
+        os.makedirs(outdir, exist_ok=True)
+        _write_if_changed(algo_p, algo_svg)
+        written.append(algo_p)
+    elif os.path.isfile(algo_p):
+        os.remove(algo_p)
+
     svg = _render_by_node_chart(benchmark, records)
     bynode_p = os.path.join(outdir, "champion-by-execution-node.svg")
     if svg:
