@@ -890,6 +890,19 @@ Traps that cost a debugging cycle each — all fixed, don't reintroduce:
   answers "the datapack has no skin, no character can be created" and no bot
   reaches the map.
 
+## A node that stops being the machine that made its numbers
+
+`python3 benchmark/prune_node.py <label> [--apply] [--why "..."]` removes that
+node's history, its charts, and its entry inside every `champion.json` (other
+nodes are kept, so their comparisons keep working). Use it when the hardware
+changes under a label -- a CPU clocked down, RAM added, a board swapped: the
+timeline would otherwise plot two machines as one, and the champion entry is
+worse than useless because the next run gets compared against hardware that no
+longer exists and reports a regression that never happened. The node has no
+baseline until a future run promotes a new champion. Dry-run by default.
+
+Done so far: **p1mmx** (2026-08-21), clocked 233 -> 133 MHz to limit heat damage.
+
 ## What NOT to put here
 
 * New testing*.py scripts — those live in `test/`. Benchmarks are

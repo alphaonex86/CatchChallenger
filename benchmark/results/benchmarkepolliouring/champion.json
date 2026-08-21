@@ -756,105 +756,6 @@
         }
       }
     },
-    "p1mmx": {
-      "arch": "i686",
-      "libs": {
-        "blake3": {
-          "source": "vendored",
-          "version": null
-        },
-        "tinyxml2": {
-          "source": "vendored",
-          "version": null
-        },
-        "xxhash": {
-          "source": "system",
-          "version": "0.8.3"
-        },
-        "zlib": {
-          "source": "system",
-          "version": "1.3.1"
-        },
-        "zstd": {
-          "source": "system",
-          "version": "1.5.7"
-        }
-      },
-      "metrics": {
-        "epoll.cpu_percent": {
-          "better": "lower",
-          "median": 38.06133131151747,
-          "stddev": 0.0,
-          "unit": "%"
-        },
-        "epoll.cpu_s": {
-          "better": "lower",
-          "median": 15.235950924,
-          "stddev": 0.0,
-          "unit": "s"
-        },
-        "epoll.moves": {
-          "better": "higher",
-          "median": 192000,
-          "stddev": 0.0,
-          "unit": "moves"
-        },
-        "epoll.req_per_s": {
-          "better": "higher",
-          "median": 4729.933,
-          "stddev": 61.53260377140625,
-          "unit": "req/s"
-        },
-        "epoll.rss_mb": {
-          "better": "lower",
-          "median": 8.48046875,
-          "stddev": 0.0,
-          "unit": "MB"
-        },
-        "epoll.run_delay_ratio": {
-          "better": "lower",
-          "median": 1.016003347981288,
-          "stddev": 0.0,
-          "unit": "ratio"
-        },
-        "iouring.cpu_percent": {
-          "better": "lower",
-          "median": 38.204133355805936,
-          "stddev": 0.0,
-          "unit": "%"
-        },
-        "iouring.cpu_s": {
-          "better": "lower",
-          "median": 15.300755409,
-          "stddev": 0.0,
-          "unit": "s"
-        },
-        "iouring.moves": {
-          "better": "higher",
-          "median": 192000,
-          "stddev": 0.0,
-          "unit": "moves"
-        },
-        "iouring.req_per_s": {
-          "better": "higher",
-          "median": 4728.083,
-          "stddev": 107.54591047341368,
-          "unit": "req/s"
-        },
-        "iouring.rss_mb": {
-          "better": "lower",
-          "median": 10.02734375,
-          "stddev": 0.0,
-          "unit": "MB"
-        },
-        "iouring.run_delay_ratio": {
-          "better": "lower",
-          "median": 1.0124393988343898,
-          "stddev": 0.0,
-          "unit": "ratio"
-        }
-      }
-    },
     "pentium-3": {
       "arch": "i686",
       "libs": {
@@ -1329,6 +1230,9 @@
         }
       }
     }
+  },
+  "pruned_nodes": {
+    "p1mmx": "clocked down 233 -> 133 MHz to limit heat damage"
   },
   "started_utc": "2026-08-15T20:06:47Z"
 }
