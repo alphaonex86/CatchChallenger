@@ -1814,7 +1814,7 @@ def remote_callgrind(exec_node, bin_cmd, work_dir, timeout=None,
     in-band on the remote with callgrind_annotate to avoid pulling the
     profile back. On failure returns dict with rc and error fields.
 
-    bin_cmd is the bare binary invocation (e.g. './benchmark_min_network
+    bin_cmd is the bare binary invocation (e.g. './benchmark_min_balanced
     --ticks 200 ...') run DIRECTLY under valgrind -- NOT wrapped in
     `sh -c`. Wrapping in sh -c made valgrind profile the shell, which then
     fork-exec'd the real binary as an untraced child (default

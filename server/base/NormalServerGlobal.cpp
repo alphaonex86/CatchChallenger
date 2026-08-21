@@ -199,7 +199,7 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     if(!settings->contains("ViewMargin"))
         settings->setValue("ViewMargin",CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN_DEFAULT);//network only: hysteresis in tiles
     if(!settings->contains("minimize"))
-        settings->setValue("minimize","balanced");//cpu, balanced or network(view range)
+        settings->setValue("minimize","network");//cpu, balanced or network(view range)
     settings->endGroup();
 
     settings->beginGroup("db");

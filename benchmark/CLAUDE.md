@@ -808,10 +808,11 @@ must reflect that:
   startup-dominated micro-profile shows it "slower". `-Wl,-z,now`
   (CATCHCHALLENGER_PERF_LINK) is exactly this: front-loads relocation
   to load time to make every later call a direct GOT hit.
-* The `benchmark_min_network*` binaries measure `min_balanced()`, NOT
-  `min_network()`: that method was called `min_network()` until the view-range
-  algorithm took the name. Binary + result keys keep the old name so the
-  recorded history stays comparable.
+* `benchmark_min_balanced*` was `benchmark_min_network*` until 2026-08-21: it
+  measures `min_balanced()`, which was itself named `min_network()` until the
+  view-range algorithm took that name. Renaming the binary orphaned nothing —
+  history is keyed by SCRIPT name (`benchmark/history/<script>/`) and by
+  metric, never by the binary file name.
 * Steady-state hot paths (e.g. `MapVisibilityAlgorithm::min_balanced`,
   packet parse) are the optimisation target; boot-path symbols
   (tinyXML2 parse, `listFolderNotRecursive`, dl-* loader) are noise

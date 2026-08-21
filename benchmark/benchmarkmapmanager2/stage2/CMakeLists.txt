@@ -1,5 +1,5 @@
 # benchmark/benchmarkmapmanager2/stage2/CMakeLists.txt
-#   -> benchmark_min_network_replay
+#   -> benchmark_min_balanced_replay
 #
 # STAGE 2: the binary that is actually MEASURED. It carries its whole workload
 # compiled in -- the .cpp stage 1 generated for one execution node and one
@@ -18,7 +18,7 @@
 # no DB, no datapack parser).
 
 cmake_minimum_required(VERSION 3.20)
-project(benchmark_min_network_replay LANGUAGES C CXX)
+project(benchmark_min_balanced_replay LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -46,7 +46,7 @@ include(${CC_REPO_ROOT}/general/general.cmake)
 
 find_package(Threads REQUIRED)
 
-add_executable(benchmark_min_network_replay
+add_executable(benchmark_min_balanced_replay
     main.cpp
     ${CC_WORKLOAD_CPP}
     ${CC_REPO_ROOT}/test/testingmapmanagement/Stubs.cpp
@@ -54,7 +54,7 @@ add_executable(benchmark_min_network_replay
     ${CC_REPO_ROOT}/server/base/MapServer.cpp
 )
 
-target_include_directories(benchmark_min_network_replay PRIVATE
+target_include_directories(benchmark_min_balanced_replay PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CC_REPO_ROOT}
     ${CC_REPO_ROOT}/test/testingmapmanagement
@@ -64,7 +64,7 @@ target_include_directories(benchmark_min_network_replay PRIVATE
 # production server-side .cpp files (the mechanism testingmapmanagement uses),
 # and with it the x/y range guard that checks every broadcast coordinate
 # against the map dimensions the workload carries.
-target_compile_definitions(benchmark_min_network_replay PRIVATE
+target_compile_definitions(benchmark_min_balanced_replay PRIVATE
     CATCHCHALLENGER_TESTING
     CATCHCHALLENGER_HARDENED
     CATCHCHALLENGER_BENCHMARK
@@ -72,15 +72,15 @@ target_compile_definitions(benchmark_min_network_replay PRIVATE
     CATCHCHALLENGER_DB_FILE
 )
 
-target_compile_options(benchmark_min_network_replay PRIVATE
+target_compile_options(benchmark_min_balanced_replay PRIVATE
     -Wall -Wextra -Wno-unused-parameter
     -O2 -DNDEBUG
 )
-target_compile_options(benchmark_min_network_replay PRIVATE
+target_compile_options(benchmark_min_balanced_replay PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-include cstring>
 )
 
-target_link_libraries(benchmark_min_network_replay PRIVATE
+target_link_libraries(benchmark_min_balanced_replay PRIVATE
     catchchallenger_common_flags
     catchchallenger_general
     Threads::Threads
@@ -88,11 +88,11 @@ target_link_libraries(benchmark_min_network_replay PRIVATE
 )
 
 if(EXTERNALLIBZSTD)
-    target_link_libraries(benchmark_min_network_replay PRIVATE ${ZSTD_LIBRARY})
+    target_link_libraries(benchmark_min_balanced_replay PRIVATE ${ZSTD_LIBRARY})
 endif()
 
 # Linker driver: the test-link-verified accelerator CCCommon.cmake picked for
 # THIS target (mold on native ELF, lld/bfd where mold has no backend).
 if(CC_LINKER)
-    target_link_options(benchmark_min_network_replay PRIVATE -fuse-ld=${CC_LINKER})
+    target_link_options(benchmark_min_balanced_replay PRIVATE -fuse-ld=${CC_LINKER})
 endif()

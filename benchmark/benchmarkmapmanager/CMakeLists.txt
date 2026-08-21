@@ -1,4 +1,4 @@
-# benchmark/benchmarkmapmanager/CMakeLists.txt -- benchmark_min_network.
+# benchmark/benchmarkmapmanager/CMakeLists.txt -- benchmark_min_balanced.
 #
 # Self-contained, one binary per CMakeLists.txt (root CLAUDE.md).
 # Re-uses test/testingmapmanagement/Stubs.{hpp,cpp} so the production
@@ -12,7 +12,7 @@
 # production .cpp without any cost in the production build.
 
 cmake_minimum_required(VERSION 3.20)
-project(benchmark_min_network LANGUAGES C CXX)
+project(benchmark_min_balanced LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -30,14 +30,14 @@ include(${CC_REPO_ROOT}/general/general.cmake)
 
 find_package(Threads REQUIRED)
 
-add_executable(benchmark_min_network
+add_executable(benchmark_min_balanced
     main.cpp
     ${CC_REPO_ROOT}/test/testingmapmanagement/Stubs.cpp
     ${CC_REPO_ROOT}/server/base/MapManagement/MapVisibilityAlgorithm.cpp
     ${CC_REPO_ROOT}/server/base/MapServer.cpp
 )
 
-target_include_directories(benchmark_min_network PRIVATE
+target_include_directories(benchmark_min_balanced PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CC_REPO_ROOT}
     ${CC_REPO_ROOT}/test/testingmapmanagement
@@ -47,7 +47,7 @@ target_include_directories(benchmark_min_network PRIVATE
 # the production server-side .cpp files (same mechanism testingmapmanagement
 # uses). Branch-trace prints are also gated on it -- harmless overhead
 # for a benchmark, but it makes timing figures comparable across runs.
-target_compile_definitions(benchmark_min_network PRIVATE
+target_compile_definitions(benchmark_min_balanced PRIVATE
     CATCHCHALLENGER_TESTING
     CATCHCHALLENGER_HARDENED
     CATCHCHALLENGER_BENCHMARK
@@ -55,15 +55,15 @@ target_compile_definitions(benchmark_min_network PRIVATE
     CATCHCHALLENGER_DB_FILE
 )
 
-target_compile_options(benchmark_min_network PRIVATE
+target_compile_options(benchmark_min_balanced PRIVATE
     -Wall -Wextra -Wno-unused-parameter
     -O2 -DNDEBUG
 )
-target_compile_options(benchmark_min_network PRIVATE
+target_compile_options(benchmark_min_balanced PRIVATE
     $<$<COMPILE_LANGUAGE:CXX>:-include cstring>
 )
 
-target_link_libraries(benchmark_min_network PRIVATE
+target_link_libraries(benchmark_min_balanced PRIVATE
     catchchallenger_common_flags
     catchchallenger_general
     Threads::Threads
@@ -71,7 +71,7 @@ target_link_libraries(benchmark_min_network PRIVATE
 )
 
 if(EXTERNALLIBZSTD)
-    target_link_libraries(benchmark_min_network PRIVATE ${ZSTD_LIBRARY})
+    target_link_libraries(benchmark_min_balanced PRIVATE ${ZSTD_LIBRARY})
 endif()
 
 # Linker driver: use the test-link-verified accelerator that
@@ -79,5 +79,5 @@ endif()
 # lld/bfd where mold has no backend, e.g. MIPS). Never hard-code
 # a specific linker here — CCCommon is the single source of truth.
 if(CC_LINKER)
-    target_link_options(benchmark_min_network PRIVATE -fuse-ld=${CC_LINKER})
+    target_link_options(benchmark_min_balanced PRIVATE -fuse-ld=${CC_LINKER})
 endif()

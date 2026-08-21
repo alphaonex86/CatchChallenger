@@ -455,7 +455,7 @@ void send_settings(
     else
     {
         std::cerr << "minimize should be cpu, balanced or network" << std::endl;
-        formatedServerSettings.mapVisibility.minimize=GameServerSettings::MapVisibility::Minimize_Balanced;
+        formatedServerSettings.mapVisibility.minimize=GameServerSettings::MapVisibility::Minimize_Network;
     }
     settings->endGroup();
 
