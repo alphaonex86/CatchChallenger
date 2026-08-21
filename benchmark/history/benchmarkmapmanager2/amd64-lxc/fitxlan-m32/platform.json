@@ -1,0 +1,1 @@
+{"arch":"i686","bitness":"32","libs":{"blake3":{"source":"vendored","version":null},"tinyxml2":{"source":"vendored","version":null},"xxhash":{"source":"vendored","version":null},"zlib":{"source":"vendored","version":"1.3.2"},"zstd":{"source":"vendored","version":null}}}

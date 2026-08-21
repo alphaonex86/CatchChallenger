@@ -1,0 +1,1 @@
+{"arch":"x86_64","bitness":"64","libs":{"blake3":{"source":"vendored","version":null},"tinyxml2":{"source":"system","version":"11.0.0"},"xxhash":{"source":"system","version":"0.8.3"},"zlib":{"source":"vendored","version":"1.3.2"},"zstd":{"source":"system","version":"1.5.7"}}}
