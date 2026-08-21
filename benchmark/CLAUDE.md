@@ -1015,18 +1015,27 @@ Each node sizes its own population from its own RAM, so its metrics are named
 after a count nobody else ran (`p65530_` vs `p5461_`) and a per-metric chart
 panel ends up holding one machine. Two mechanisms fix it, and both are needed:
 
-* **Reference cell** — `REFERENCE_PLAYERS` in `benchmarkmapmanager2/stage2/
-  main.cpp` (the harness reads the number back out of that source; never
-  duplicate it). Every node that can afford it runs that cell, so one point of
-  the sweep is the same load fleet-wide. Same count, same 647 maps, same walk
-  rules — but the vectors come from that node's own generation, so it is
-  statistically the same load, not bit-identical; `changed_pct` is what keeps
-  that claim honest. A node too small for it (ESP32) falls back to the
-  small/medium/large of its own population and sits out the comparison.
-  callgrind runs this cell, so its instruction count is comparable too.
+* **Fleet ladder** — `LADDER` in `benchmarkmapmanager2/stage2/main.cpp`:
+  1000 / 4095 / 16382 / 65530. A node runs every rung it can hold, then its own
+  RAM-derived count, so any two nodes share every rung the smaller one reaches
+  (the 52 MB Pentium runs 1000, 4095, 5461 and appears beside the 65530-player
+  machines at two rungs). The upper three are the counts the fleet ALREADY
+  recorded — a sixteenth, a quarter and all of the 16-bit index — so today's
+  runs land in the same panels as older history; 1000 was added under them for
+  the four RAM-bound boards. Same count, same 647 maps, same walk rules, but
+  the vectors come from that node's own generation: statistically the same
+  load, not bit-identical, and `changed_pct` is what keeps that claim honest.
+  A node below the lowest rung (ESP32) falls back to its own small/medium/large
+  and sits out the comparison. callgrind runs the lowest rung, so instruction
+  counts compare too. The harness reads the rung out of that source file
+  (`_reference_players()`); never duplicate the number in Python.
 * **Normalised columns** — `history_series.derive_normalised()` adds
-  `own_load_{players,ns_per_player,player_ticks_per_s}` at READ time from each
-  node's largest cell. They are identities (`median/N`, `ticks_per_s*N`), not
+  `own_load_{players,ticks_per_s,median_tick_ns,ns_per_player,
+  player_ticks_per_s,kb_per_player}` at READ time from each node's largest
+  cell. `own_load_ticks_per_s` + `own_load_players` + `own_load_kb_per_player`
+  are the CAPABILITY triple — what the box sustains, at what population, for
+  what memory — always read together; ranking on the tick rate alone is the
+  trap below. They are identities (`median/N`, `ticks_per_s*N`), not
   estimates, so every run ALREADY on disk becomes comparable without rewriting
   a recorded number. The name carries no count, which is the point: all nodes
   land in ONE panel. They compare machines AS CONFIGURED — silicon plus the RAM

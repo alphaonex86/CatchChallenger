@@ -200,23 +200,30 @@ def print_own_load(nodes):
                 # while doing far less work. Ranking on it would put the
                 # 133 MHz Pentium above a Raspberry Pi 3.
                 rate, rate_name = None, None
+            rss = _get(values, "max_rss_kb")
             rows.append((rate if rate is not None else -1.0, label,
                          info["platform"], big, rate, rate_name,
-                         _get(values, "median_tick_ns", big),
+                         _get(values, "ticks_per_s", big),
                          _get(values, "ns_per_player", big),
-                         _get(values, "max_rss_kb")))
+                         rss,
+                         (float(rss) / big) if rss else None))
     if not rows:
         return
     rows.sort(reverse=True)
     name = next((r[5] for r in rows if r[5]), "rate")
     print(f"\n  OWN LOAD -- each node at its own largest cell "
           f"(ranked on {name}, which is per-player so the sizes still compare)")
-    print(f"  {'node':<16}{'players':>9}{'median_ns':>13}{'ns/plyr':>10}"
-          f"{name:>19}{'peak RSS MB':>13}")
-    for _sort, label, _plat, big, rate, _rn, median, per_player, rss in rows:
-        print(f"  {label:<16}{big:>9,}{_fmt(median, 13, 0)}"
+    # ticks/s and RAM are the CAPABILITY pair: what the box sustains, and what
+    # that population costs it. Ranking on ticks/s alone is the trap -- it
+    # counts batches, not work -- so it is a column, never the sort key.
+    print(f"  {'node':<16}{'players':>9}{'ticks/s at max':>15}{'ns/plyr':>10}"
+          f"{name:>19}{'RAM at max MB':>15}{'KB/player':>11}")
+    for (_sort, label, _plat, big, rate, _rn, ticks, per_player,
+         rss, kb_player) in rows:
+        print(f"  {label:<16}{big:>9,}{_fmt(ticks, 15, 1)}"
               f"{_fmt(per_player, 10, 0)}{_fmt(rate, 19, 0)}"
-              f"{_fmt(rss / 1024.0 if rss else None, 13, 1)}")
+              f"{_fmt(rss / 1024.0 if rss else None, 15, 1)}"
+              f"{_fmt(kb_player, 11, 2)}")
 
 
 def compare(benchmark, run_index):

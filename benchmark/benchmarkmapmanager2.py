@@ -125,9 +125,12 @@ MIN_PLAYERS     = 50
 
 
 def _reference_players():
-    """The player count every node runs, read from stage 2 rather than
+    """The lowest rung of stage 2's fleet ladder, read from stage 2 rather than
     duplicated here: it is the C++ that acts on it, and two copies of a number
-    that MUST match is how a fleet ends up comparing two different loads."""
+    that MUST match is how a fleet ends up comparing two different loads.
+
+    It is the smallest cell of any node's sweep, which makes it what callgrind
+    (~30x slower) runs -- so instruction counts compare across machines too."""
     src = os.path.join(STAGE2_SRC, "main.cpp")
     try:
         with open(src, "r") as handle:
@@ -765,8 +768,9 @@ def print_sweep_table(cell_metrics, counts):
               f"  {nspp if nspp is not None else float('nan'):>9.0f}"
               f"  {ptps if ptps is not None else float('nan'):>10.0f}")
     if REFERENCE_PLAYERS in counts:
-        print(f"  the {REFERENCE_PLAYERS}-player row is the fleet's reference cell: "
-              f"same load on every node, so it compares as-is")
+        print(f"  rows from {REFERENCE_PLAYERS} players up are the fleet ladder: "
+              f"fixed counts every node runs if it can hold them, so they "
+              f"compare as-is between machines")
 
 
 def _metric_unit_better(metric_name):
