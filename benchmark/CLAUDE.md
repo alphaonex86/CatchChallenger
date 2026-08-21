@@ -890,6 +890,36 @@ Traps that cost a debugging cycle each — all fixed, don't reintroduce:
   answers "the datapack has no skin, no character can be created" and no bot
   reaches the map.
 
+## Run the fleet from a clean `git worktree`
+
+```
+git worktree add --detach /home/user/Desktop/CatchChallenger/bench-worktree HEAD
+cd /home/user/Desktop/CatchChallenger/bench-worktree/benchmark && python3 -u benchmarkmapmanager2.py
+```
+
+The fleet rsyncs the tree to each compile node JUST BEFORE building it, one node
+at a time, so a working tree that someone is editing gives every node a
+different snapshot -- and the champion then mixes two versions of the code. It
+happened: a concurrent `visibleSlots` change landed mid-run and every node from
+the fifth on failed to compile, while the first four had already measured the
+older code.
+
+Two things the worktree needs:
+
+* **It must live NEXT TO the checkout** (`…/CatchChallenger/bench-worktree`, not
+  under /mnt/…/tmpfs). `remote_nodes.json` is resolved as
+  `dirname(REPO_ROOT)/remote_nodes.json`; from anywhere else the fleet sees ZERO
+  exec nodes and silently degrades to a local-only run -- which still promotes a
+  champion, so the degradation is easy to miss.
+* **Wipe the local CMake caches first** (`CMakeCache.txt` under
+  `<TMPFS_BUILD_ROOT>/benchmark/<bench>/`): they record the old source dir and
+  cmake refuses to configure against a different one.
+
+Copy `history/<bench>/**` and `results/<bench>/champion.json` back into the real
+checkout afterwards and commit from there. Run `python3 -u`: the harness's
+stdout is block-buffered into a file otherwise, and a run with no visible output
+cannot be told from a hung one.
+
 ## A node that stops being the machine that made its numbers
 
 `python3 benchmark/prune_node.py <label> [--apply] [--why "..."]` removes that
