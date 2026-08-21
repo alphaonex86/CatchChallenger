@@ -898,28 +898,53 @@ Traps that cost a debugging cycle each — all fixed, don't reintroduce:
   workspace exists to *measure* prod code from outside; it doesn't
   ship.
 
-## `benchmarkmapmanager2.py` -- the multi-map sibling
+## `benchmarkmapmanager2.py` -- min_network over the datapack's real world
 
-Same production `min_network()` as `benchmarkmapmanager.py`, different load
-model: the population is spread over outdoor/city/indoor maps (60/30/10 of the
-players, crowded to 35/200/20 per map, map count derived) and the players WALK
-against a collision grid -- no pathfinding, one array lookup per moving player.
-One tick = `min_network()` over EVERY map. It measures what the single-map
-benchmark cannot: the per-map constant, the crowded-map diff near the 254 wire
-ceiling, and map changes (a migration IS the insert+remove pair).
+Same production `min_network()` as `benchmarkmapmanager.py`, different world and
+load model. The world IS the datapack: every `.tmx` under
+`map/main/generated` (647 real maps) is loaded with the PRODUCTION
+`general/base/Map_loader.cpp` and ALL of them are broadcast every tick, like the
+server's timer does over `flat_map_list`. Players are spread 60/30/10 over
+route/town/interior maps, crowded to 35/200/20 per map, and WALK in runs whose
+movement vector is truncated at the first obstacle by the production predicate
+`MoveOnTheMap::isWalkableWithDirection` (collisions, one-way ledges, border).
 
-* **The workload is FIXED, in the binary.** World shape, move/turn/migrate
-  rates and seed are constants in `main.cpp`, NOT flags -- a benchmark with
-  knobs is not comparable with its own history. `--players` only selects from
-  the fixed sweep (it refuses any other count) and `--ms`/`--ticks` only bound
-  the run. Changing a constant is a deliberate champion re-baseline.
-* **254 is the per-MAP ceiling, not the population's.** The sweep is 50 .. 5000
+* **The workload is FIXED**: map set, world shape, walk/migrate rates and seed
+  are constants, NOT flags. `--datapack` says WHERE the world is, `--players`
+  only selects from the fixed sweep (it refuses any other count), `--ms`/
+  `--ticks` only bound the run. Each run records `world_maps` / `world_cells`,
+  so a regenerated datapack re-baselines visibly instead of silently.
+* **Reuse the production loader, never a private .tmx reader.** Traps it already
+  costs to learn: `Map_loaderMain.cpp` ABORTS unless
+  `CommonDatapack::commonDatapack.parseDatapack()` ran first (item + monster
+  name tables); the dimensions come back on `loader.map_to_send`, not on the
+  destination map; and outside a `CATCHCHALLENGER_SERVER` build every parsed
+  XMLDocument is parked in `CommonDatapack::xmlLoadedFile` and NEVER freed, so
+  `clear_xmlLoadedFile()` + `Map_loader::teleportConditionsUnparsed.clear()`
+  must run per map or 647 maps pile up their whole DOM in RSS.
+  `FacilityLibGeneral::listFolder()` order is NOT stable across machines --
+  sort it, or each node measures a different world.
+* **254 is the per-MAP ceiling, not the population's.** The sweep is 50..5000
   TOTAL players; the top is set by RAM on the smallest node (52 MB), not by the
   protocol.
-* `median_prep_ns` is the harness's own cost per tick (~20% of
-  `median_tick_ns`, and outside the latency window). It and `maps` are recorded
-  but kept OUT of the champion metric set. `walk_violations` != 0 is a FAIL:
-  the collision oracle says the workload was not what it claims.
+* **Keep the change rate away from 100%.** ~23% of slots differ per tick, so the
+  "same as last broadcast -> send nothing" path is the majority of the diff and
+  an optimisation of it is measurable. A per-tick move coin-flip at 70% put it
+  at 91% and made that path unmeasurable -- the same trap the owner fixed in
+  `benchmarkmapmanager` by dropping its move rate to 40%. `changed_pct` is
+  recorded every run to keep that honest.
+* **The LCG's low bits are a rotation, not randomness** (`next() & 3` walks
+  0,3,2,1 with period 4 with these constants). Draw from the HIGH bits
+  (`pick4()` = `next() >> 30`, `below()` = multiply-shift) -- which also drops
+  a division per player per tick on the i486/MIPS targets.
+* `median_prep_ns` (harness cost per tick, ~17% of `median_tick_ns`, outside
+  the latency window), `maps`/`maps_populated` and `changed_pct`/`walk_pct` are
+  recorded but kept OUT of the champion metric set. `tick_<kind>_ns` IS in it:
+  it splits the tick into the crowded-town diff and the per-map constant of the
+  quiet interiors, which a single total hides. `walk_violations` != 0 is a FAIL.
+* The fleet needs the datapack on each exec node: the spec's `stage_fn` (added
+  to `push_and_run_profilers`, mirroring the `--profile` path) rsyncs it
+  `server_mode=True` (~3.8 MB, no media) before the binary is pushed.
 
 ## epoll vs io_uring A/B — `benchmarkepolliouring.py` (learned the hard way)
 

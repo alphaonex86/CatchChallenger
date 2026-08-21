@@ -1,38 +1,57 @@
 #!/usr/bin/env python3
-"""benchmarkmapmanager2.py -- min_network() over a WORLD of maps.
+"""benchmarkmapmanager2.py -- min_network() over the datapack's real world.
 
 Multi-map sibling of benchmarkmapmanager.py. Same production code under
-test (MapVisibilityAlgorithm::min_network), different LOAD MODEL. Where
-benchmarkmapmanager parks every player on ONE map at a position it never
-changes and only rotates directions, this one spreads the population over
-many maps of three kinds -- outdoor / city / indoor -- and makes the
-players WALK: one cell per tick in their facing direction, refused by the
-collision grid (no pathfinding, one array lookup per moving player, so
-the run measures the server and not the movement model). One tick =
-min_network() over EVERY map, which is what the server's timer does.
+test (MapVisibilityAlgorithm::min_network), different WORLD and different
+load model.
 
-THE WORKLOAD IS FIXED. The world shape -- 60/30/10 of the population
-outdoor/city/indoor, crowded to 35/200/20 players per map of that kind --
-plus the move, turn and migrate rates and the seed are constants inside
-benchmarkmapmanager2/main.cpp, not flags. A benchmark whose load can be
-changed from the command line is not comparable with its own history;
-changing any of those constants is a deliberate re-baseline of
-champion.json, never a per-run decision.
+The world is the DATAPACK: every .tmx under map/main/generated (647 real
+maps today -- towns, routes, shop/gym/house interiors) is loaded with the
+PRODUCTION loader (general/base/Map_loader.cpp), keeping only what the
+server keeps hot -- width, height and flat_simplified_map, 673 KB for the
+whole world. Every map is broadcast every tick, which is what the server's
+timer does over flat_map_list, so the cost of ticking hundreds of quiet
+maps is measured rather than assumed away.
 
-Player counts swept: 50, 250, 1000, 2500, 5000. These are TOTAL connected
-players -- the strict 254 ceiling is the 8-bit wire slot inside ONE map
-(255 is reserved and min_network clamps to 254), so the population is
-bounded only by what the fleet can hold: 5000 players is ~120 maps and
-~14 MB resident, and the smallest node has 52 MB. Town maps carry the
-owner's target crowd of 200 from 1000 players up.
+The players are spread by kind (60% out on the routes, 30% in town, 10%
+indoors) and crowded to the owner's target of 35 per route, 200 per town
+map, 20 per interior -- that decides how many maps are POPULATED; the rest
+of the world is still ticked. They WALK in runs: pick a direction and a
+length, truncate the movement vector at the first obstacle, then walk it
+one cell per tick. The obstacle test is the production predicate itself
+(MoveOnTheMap::isWalkableWithDirection), and the collision scan happens
+once per RUN, not per tick, so a walking player costs a coordinate update
+and the run measures the server, not the movement model.
+
+That model is also what keeps the benchmark meaningful: ~18% of players
+step in a given tick and ~23% of slots differ from the previous broadcast,
+so three quarters of the diff is the "unchanged, send nothing" path
+min_network exists for. A per-tick coin flip at 70% put that at 91%
+changed, where the skip path is barely taken and optimising it would have
+been unmeasurable.
+
+THE WORKLOAD IS FIXED: the map set, the world shape, the walk and migrate
+rates and the seed are constants (in main.cpp and in the datapack), not
+flags. A benchmark whose load can be changed from the command line is not
+comparable with its own history; the only arguments are where the datapack
+is, which of the fixed player counts to run, and how the run is bounded.
+Each run records the world it loaded (world_maps / world_cells), so a
+regenerated map set shows up in the timeline instead of silently shifting
+every number.
+
+Player counts swept: 50, 250, 1000, 2500, 5000 TOTAL connected players --
+the strict 254 ceiling is the 8-bit wire slot inside ONE map (255 reserved,
+min_network clamps to 254), so the population is bounded only by what the
+fleet can hold: 5000 players is ~14 MB resident and the smallest node has
+52 MB. Town maps carry the owner's 200-per-map target from 1000 up.
 
 One-command target -- per benchmark/CLAUDE.md, run with no args, 1h
 timeout. Builds the C++ harness (benchmarkmapmanager2/), runs every
 available profiler (rusage via /usr/bin/time -v, perf stat, callgrind,
 binary-size) on the host and on every benchmark-enabled execution node
-(built on its compile parent), prints a one-line progress update per
-cell, records per-platform history + charts, and applies the
-KEEP/DISCARD/ESCALATE matrix against
+(built on its compile parent, datapack staged there first), prints a
+one-line progress update per cell, records per-platform history + charts,
+and applies the KEEP/DISCARD/ESCALATE matrix against
 benchmark/results/benchmarkmapmanager2/champion.json.
 """
 import os
@@ -67,7 +86,7 @@ except Exception:
 BUILD_DIR  = os.path.join(BUILD_ROOT, "benchmark", "benchmarkmapmanager2")
 
 # THE WORKLOAD IS FIXED and lives in the binary (benchmarkmapmanager2/
-# main.cpp): world shape, move/turn/migrate rates and seed are compile-time
+# main.cpp): world shape, walk/migrate rates and seed are compile-time
 # constants, not flags -- a benchmark with knobs is not comparable with its own
 # history. This harness only chooses WHICH of the fixed player counts to run
 # and how each run is bounded (fixed-time vs the fixed-iteration callgrind
@@ -80,6 +99,17 @@ BUILD_DIR  = os.path.join(BUILD_ROOT, "benchmark", "benchmarkmapmanager2")
 # ~120 maps and ~14 MB resident, and the smallest node has 52 MB. Town maps
 # reach the owner's target crowd of 200 from 1000 players up.
 PLAYER_COUNTS = [50, 250, 1000, 2500, 5000]
+
+# The world IS the workload: the datapack's generated map set (647 real maps --
+# towns, routes, interiors) loaded with the PRODUCTION Map_loader, so the
+# benchmark walks exactly the collision bytes the server would. Same constant
+# as the other benchmarks in this directory. WHERE it lives is mechanical; WHAT
+# it contains is the fixed workload, so a regenerated map set re-baselines the
+# champion (the run prints its shape in the WORLD line and the harness records
+# it, so such a change is visible instead of silent).
+DATAPACK_PATH = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
+# Where the datapack lands on an exec node (rsync_datapack_to_exec default).
+REMOTE_DATAPACK = "./datapack"
 RUN_REPEATS   = 3        # warmup + 3 measured wall passes per cell
 
 # Fixed-TIME model (benchmark/CLAUDE.md): the wall-time / throughput
@@ -160,6 +190,24 @@ def parse_bench_lines(stdout):
     return out
 
 
+def parse_world_line(stdout):
+    """Parse the binary's one-off `WORLD maps=... cells=...` line.
+
+    The world is the fixed part of the workload, so its shape is recorded with
+    every run: a regenerated or swapped datapack then shows up as a changed
+    `world_maps` / `world_cells` in the timeline instead of quietly shifting
+    every timing below it."""
+    for line in stdout.splitlines():
+        if line.startswith("WORLD "):
+            f = {}
+            for kv in line[len("WORLD "):].split():
+                k, _, v = kv.partition("=")
+                try: f[k] = int(v)
+                except ValueError: f[k] = v
+            return f
+    return {}
+
+
 def _bench_to_cell(bench, cell):
     """Map one parsed BENCH block into the {(player, metric): value} cell.
 
@@ -183,10 +231,29 @@ def _bench_to_cell(bench, cell):
         # derived from the population, so record it with the numbers it
         # explains rather than leaving a reader to recompute it.
         cell[(p, "maps")]           = fields.get("maps")
+        cell[(p, "maps_populated")]  = fields.get("maps_populated")
+        # Where the tick actually goes. Splitting it per map kind separates the
+        # crowded-town diff from the per-map constant every quiet interior
+        # costs, which the single total cannot: a regression in either one
+        # hides inside the other.
+        for kind in ("outdoor", "city", "indoor"):
+            cell[(p, f"tick_{kind}_ns")] = fields.get(f"tick_{kind}_ns")
         # Harness cost per tick. NOT server work and NOT inside the latency
         # window: recorded so a reviewer can check it stayed a fraction of
         # median_tick_ns instead of taking that on trust.
         cell[(p, "median_prep_ns")] = fields.get("median_prep_ns")
+        # Share of slots that differ from the previous broadcast. This is the
+        # workload's defining property: 100 - changed_pct is what min_network's
+        # stateful diff gets to SKIP, and an optimisation of that path is only
+        # measurable while this stays well under 100.
+        slots   = fields.get("sampled_slots")
+        changed = fields.get("sampled_changed")
+        if slots:
+            cell[(p, "changed_pct")] = round(100.0 * changed / slots, 2)
+        # Share of players taking a step in a tick (the walk model's own rate).
+        ticks = fields.get("ticks")
+        if ticks and fields.get("moves") is not None:
+            cell[(p, "walk_pct")] = round(100.0 * fields["moves"] / ticks / p, 2)
     return None
 
 
@@ -200,7 +267,7 @@ def _mode_args(profiler):
 
 
 def run_one(bin_path, profiler="rusage", players_arg=None):
-    cmd = [bin_path, *_mode_args(profiler)]
+    cmd = [bin_path, *_mode_args(profiler), "--datapack", DATAPACK_PATH]
     if players_arg is not None:
         for p in players_arg:
             cmd += ["--players", str(p)]
@@ -216,24 +283,40 @@ def cell_run(bin_path, profiler, label_node):
     timeout = RUN_TIMEOUT_CALLGRIND if profiler == "callgrind" else RUN_TIMEOUT
     metrics = {}
     if profiler == "rusage":
-        for _ in range(RUN_REPEATS):
-            t = bh.measure_time_v(cmd, timeout=timeout, cwd=run_cwd)
-            if t["rc"] != 0:
-                return None, t.get("error") or f"time -v exited with code {t['rc']}"
-        rc, sout, serr, dt = bh.run_capture(cmd, timeout=timeout,
-                                            cwd=run_cwd,
-                                            preexec_fn=bh._drop_core_rlimit)
-        if rc != 0:
-            return None, f"benchmark binary exited with code {rc}"
-        bench = parse_bench_lines(sout)
+        # One warmup pass (dropped: cold page cache / cold branch predictors)
+        # then RUN_REPEATS measured passes, and every measured pass is KEPT.
+        # The decision matrix calls a move real only when it clears the noise
+        # band, and a noise band needs more than one sample -- with a single
+        # pass stddev is 0 and every delta looks significant.
+        for i in range(RUN_REPEATS + 1):
+            rc, sout, serr, dt = bh.run_capture(cmd, timeout=timeout,
+                                                cwd=run_cwd,
+                                                preexec_fn=bh._drop_core_rlimit)
+            if rc != 0:
+                return None, f"benchmark binary exited with code {rc}"
+            if i == 0:
+                continue
+            one = {}
+            world = parse_world_line(sout)
+            if world.get("maps"):
+                one[(0, "world_maps")] = world["maps"]
+                one[(0, "world_cells")] = world.get("cells")
+                one[(0, "world_walkable_cells")] = world.get("walkable_cells")
+            bad = _bench_to_cell(parse_bench_lines(sout), one)
+            if bad is not None:
+                return None, bad
+            if not one:
+                return None, "no BENCH line parsed from the benchmark binary"
+            for key, value in one.items():
+                if value is not None:
+                    metrics.setdefault(key, []).append(value)
+        # Peak RSS + wall come from one extra pass under /usr/bin/time -v
+        # (it swallows the child's stdout, so it cannot double as a sample).
         t = bh.measure_time_v(cmd, timeout=timeout, cwd=run_cwd)
-        bad = _bench_to_cell(bench, metrics)
-        if bad is not None:
-            return None, bad
         if t["max_rss_kb"] is not None:
-            metrics[(0, "max_rss_kb")] = t["max_rss_kb"]
+            metrics[(0, "max_rss_kb")] = [t["max_rss_kb"]]
         if t["wall_s"] is not None:
-            metrics[(0, "wall_s")] = t["wall_s"]
+            metrics[(0, "wall_s")] = [t["wall_s"]]
         if not metrics:
             return None, "no metrics captured"
         return metrics, None
@@ -242,7 +325,7 @@ def cell_run(bin_path, profiler, label_node):
         if not out:
             return None, "SKIP:" + bh.perf_no_hw_skip("local")
         for evt, val in out.items():
-            metrics[(0, f"perf_{evt}")] = val
+            metrics[(0, f"perf_{evt}")] = [val]
         return metrics, None
     if profiler == "callgrind":
         # toggle_collect: count only min_network (+ callees) so the IR
@@ -259,13 +342,13 @@ def cell_run(bin_path, profiler, label_node):
                           "(see stderr for valgrind diagnostics; common "
                           "cause: host ld-linux uses AVX-512 EVEX "
                           "valgrind cannot decode)")
-        metrics[(0, "callgrind_ir")] = ic
+        metrics[(0, "callgrind_ir")] = [ic]
         return metrics, None
     if profiler == "binary-size":
         sz = bh.binary_size(bin_path)
         if sz is None:
             return None, "binary-size failed"
-        metrics[(0, "binary_size_bytes")] = sz
+        metrics[(0, "binary_size_bytes")] = [sz]
         return metrics, None
     return None, f"unknown profiler: {profiler}"
 
@@ -328,6 +411,35 @@ def _fit_exponent(points):
     return num / den
 
 
+def print_sweep_table(cell_metrics):
+    """Compact per-player-count summary on stdout. The recorded metrics go to
+    history; this is what an operator actually reads after a run."""
+    rows = []
+    for p in PLAYER_COUNTS:
+        def g(name):
+            blk = cell_metrics.get(f"p{p}_{name}")
+            return blk["value"] if blk else None
+        rows.append((p, g("maps_populated"), g("median_tick_ns"),
+                     g("p95_tick_ns"), g("median_prep_ns"), g("changed_pct"),
+                     g("tick_outdoor_ns"), g("tick_city_ns"),
+                     g("tick_indoor_ns")))
+    if not any(r[2] for r in rows):
+        return
+    print(_color(bh.C_CYAN, "[sweep] the datapack's world, per player count "
+                            "(every map is broadcast every tick)"))
+    print("  players  busy_maps   median_ns    p95_ns   prep%   changed%"
+          "    outdoor      city    indoor")
+    for (p, busy, med, p95, prep, chg, out, city, ind) in rows:
+        pct = (100.0 * prep / med) if (prep and med) else float("nan")
+        print(f"  {p:>7}  {busy if busy is not None else '-':>9}"
+              f"  {med if med is not None else '-':>10}"
+              f"  {p95 if p95 is not None else '-':>8}"
+              f"  {pct:>5.1f}%  {chg if chg is not None else float('nan'):>8.1f}%"
+              f"  {out if out is not None else '-':>9}"
+              f"  {city if city is not None else '-':>8}"
+              f"  {ind if ind is not None else '-':>8}")
+
+
 def _metric_unit_better(metric_name):
     # Throughput is higher-is-better; everything else lower-is-better.
     better = "higher" if metric_name in ("ticks_per_s", "ticks") else "lower"
@@ -336,44 +448,75 @@ def _metric_unit_better(metric_name):
            "bytes" if metric_name.endswith("_bytes") or metric_name == "bytes_sent" or metric_name == "binary_size_bytes" else \
            "kb" if metric_name.endswith("_kb") else \
            "s" if metric_name.endswith("_s") else \
-           "%" if metric_name == "cpu_percent" or metric_name.endswith("_cpu_percent") else \
+           "%" if metric_name == "cpu_percent" or metric_name.endswith("_cpu_percent") \
+                  or metric_name.endswith("_pct") else \
            "count"
     return unit, better
 
 
+def _samples_of(value):
+    """Accept either a bare value or a list of samples -- the local rusage
+    cell collects several passes, every other cell has exactly one."""
+    if isinstance(value, (list, tuple)):
+        return [v for v in value if v is not None]
+    return [] if value is None else [value]
+
+
+def _median_stddev(samples):
+    """Median + population stddev of a sample list (0.0 for a single one)."""
+    ordered = sorted(samples)
+    n = len(ordered)
+    median = ordered[n // 2] if n % 2 else (ordered[n // 2 - 1] + ordered[n // 2]) / 2.0
+    if n < 2:
+        return median, 0.0
+    mean = sum(ordered) / float(n)
+    var = sum((v - mean) ** 2 for v in ordered) / float(n)
+    return median, var ** 0.5
+
+
 def _cell_to_metric_block(per_cell):
-    """Convert the {(player, metric): value} cell dict into the per-tool
-    `metrics` block expected by history_recorder.PlatformRecord."""
+    """Convert the {(player, metric): value-or-samples} cell dict into the
+    per-tool `metrics` block expected by history_recorder.PlatformRecord."""
     out = {}
     for (player, metric_name), value in per_cell.items():
-        if value is None: continue
+        samples = _samples_of(value)
+        if not samples: continue
         key = metric_name if player == 0 else f"p{player}_{metric_name}"
         unit, better = _metric_unit_better(metric_name)
-        out[key] = {"value": value, "unit": unit, "better": better,
-                    "samples": [value], "median": value, "stddev": 0.0}
+        median, stddev = _median_stddev(samples)
+        out[key] = {"value": median, "unit": unit, "better": better,
+                    "samples": samples, "median": median, "stddev": stddev}
     return out
 
 
 # Recorded in history and charts, but kept OUT of the champion/candidate
-# metric set: they describe the RUN, not the server's performance. `maps` is
-# derived from the population (it cannot move unless the workload changes) and
-# median_prep_ns is the harness's own cost -- letting either into the decision
-# matrix would let harness noise veto a real server improvement.
-DIAGNOSTIC_METRICS = ("maps", "median_prep_ns")
+# metric set: they describe the RUN, not the server's performance. `maps`,
+# `changed_pct` and `walk_pct` are properties of the fixed workload (they
+# cannot move unless the workload changes -- if they DO move, the workload
+# drifted and that is what needs looking at), and median_prep_ns is the
+# harness's own cost. Letting any of them into the decision matrix would let
+# harness noise veto a real server improvement.
+DIAGNOSTIC_METRICS = ("maps", "maps_populated", "median_prep_ns",
+                      "changed_pct", "walk_pct",
+                      "world_maps", "world_cells", "world_walkable_cells")
 
 
 def aggregate_metrics(per_cell):
-    """Flatten nested {(player,metric): value} into a single
+    """Flatten nested {(player,metric): value-or-samples} into a single
     metric-name -> {median, stddev, unit, better} dict suitable for
-    champion/candidate JSON. We only have one sample per cell here
-    (perf/callgrind/binary-size are deterministic); stddev=0."""
+    champion/candidate JSON. The local rusage cell carries several passes
+    (real stddev -> a real noise band); perf/callgrind/binary-size are
+    deterministic single values and keep stddev 0."""
     out = {}
     for (player, metric_name), value in per_cell.items():
-        if value is None: continue
+        samples = _samples_of(value)
+        if not samples: continue
         if metric_name in DIAGNOSTIC_METRICS: continue
         key = metric_name if player == 0 else f"p{player}_{metric_name}"
         unit, better = _metric_unit_better(metric_name)
-        out[key] = {"median": value, "stddev": 0.0, "unit": unit, "better": better}
+        median, stddev = _median_stddev(samples)
+        out[key] = {"median": median, "stddev": stddev,
+                    "unit": unit, "better": better}
     return out
 
 
@@ -383,8 +526,25 @@ def _runtime_cmd_string(profiler="rusage"):
     after push_binary_to_exec; we invoke it as ./BIN_NAME so cwd is the
     work_dir. Per-profiler workload mode: fixed-time (--ms) for throughput
     profilers, fixed-iteration (--ticks) for callgrind."""
-    parts = [f"./{BIN_NAME}", *_mode_args(profiler)]
+    parts = [f"./{BIN_NAME}", *_mode_args(profiler),
+             "--datapack", REMOTE_DATAPACK]
     return " ".join(parts)
+
+
+def _stage_datapack_on_exec(exec_node):
+    """stage_fn for the fleet: put the datapack on the exec node before its
+    binary runs. The world this benchmark walks IS that datapack, so a node
+    without it has nothing to measure -- returning (False, msg) makes the
+    harness record SKIP (unknown), never FAIL.
+
+    server_mode strips audio/images (the loader reads .tmx/.xml/.tsx only), so
+    ~3.8 MB travels instead of 29 MB, and the helper parks it on persistent
+    disk rather than the node's tmpfs scratch."""
+    rc, msg = br.rsync_datapack_to_exec(exec_node, DATAPACK_PATH,
+                                        server_mode=True)
+    if rc != 0:
+        return False, f"datapack rsync failed: {msg}"
+    return True, "ok"
 
 
 def _remote_spec(node, avail_profilers, skips, all_profilers,
@@ -442,6 +602,8 @@ def _remote_spec(node, avail_profilers, skips, all_profilers,
         # build define / valgrind header needed on the cross compile node.
         "callgrind_toggle":  MAP_CALLGRIND_TOGGLE,
         "run_timeout":       RUN_TIMEOUT,
+        # The world has to be on the node before the binary runs.
+        "stage_fn":          _stage_datapack_on_exec,
     }
 
 
@@ -495,6 +657,11 @@ def _record_remote_result(label, runnable, out, msg,
                 cell[(0, "wall_s")] = res["wall_s"]
             # Per-player throughput/latency from the binary's BENCH stdout
             # (captured by remote_time_v as res["stdout"]).
+            world = parse_world_line(res.get("stdout") or "")
+            if world.get("maps"):
+                cell[(0, "world_maps")] = world["maps"]
+                cell[(0, "world_cells")] = world.get("cells")
+                cell[(0, "world_walkable_cells")] = world.get("walkable_cells")
             bad = _bench_to_cell(parse_bench_lines(res.get("stdout") or ""), cell)
             if bad is not None:
                 progress.emit(prof, "no", label, status="FAIL", extra=bad)
@@ -556,6 +723,18 @@ def main():
             return 3
     comment = args.comment
     maxtime = args.maxtime
+    # The world is not optional: without the datapack there is no workload, and
+    # inventing a synthetic one would silently measure something else.
+    world_dir = os.path.join(DATAPACK_PATH, "map", "main", "generated")
+    if not os.path.isdir(world_dir):
+        bh.print_local_build_error(
+            "benchmarkmapmanager2", "datapack check", "",
+            f"the generated map set is missing: {world_dir}\n"
+            f"This benchmark's workload IS that map set, loaded with the "
+            f"production Map_loader. Point DATAPACK_PATH at a datapack that "
+            f"has map/main/generated/, or generate it with "
+            f"tools/map-procedural-generation/.")
+        return 2
     bin_path = build()
     if bin_path is None:
         return 2
@@ -569,6 +748,7 @@ def main():
             "cmake_defs": {"CMAKE_BUILD_TYPE": "Release"},
             "callgrind_toggle": MAP_CALLGRIND_TOGGLE,
             "runtime_cmd": {t: _runtime_cmd_string(t) for t in tools},
+            "stage_fn": _stage_datapack_on_exec,
         }
         # local: profile each tool with its own workload-mode argv.
         for t in tools:
@@ -728,6 +908,7 @@ def main():
                 blk = per_tool[label]["rusage"]["metrics"].get(f"p{p}_median_tick_ns")
                 if blk is not None:
                     fit.append((p, blk["value"]))
+            print_sweep_table(cell_metrics)
             exp = _fit_exponent(fit)
             if exp is not None:
                 slices["scaling"] = {"scaling_exponent": {
@@ -735,7 +916,9 @@ def main():
                     "unit": "count", "better": "lower", "samples": [exp]}}
                 print(_color(bh.C_CYAN,
                              f"  scaling exponent = {exp:.2f}  "
-                             f"(1.0 = linear in players, 2.0 = quadratic)"))
+                             f"(2.0 = quadratic in players, 1.0 = linear, "
+                             f"<1.0 = the constant of ticking the whole world "
+                             f"still dominates at the small end)"))
             per_subbench[label]["rusage"] = slices
 
     # Remote fleet, in PARALLEL: phase 1 builds every unique compile node
