@@ -930,13 +930,15 @@ int main(int argc, char **argv)
 
     uint32_t cycle_ticks = 200;                 // probe
     uint32_t worst = 0;
-    // What the streams and the migration schedule below actually cover. The
-    // loop may leave `cycle_ticks` holding an aim it never got to simulate
-    // (it runs out of attempts), and emitting THAT would hand stage 2 a cycle
-    // length its vectors do not match.
+    // What the streams and the migration schedule below actually cover, and
+    // the longest window that was known to FIT. The loop may end on an
+    // attempt that overshot -- falling back to the last good window is always
+    // better than dropping the node, and emitting a window that was never
+    // simulated would hand stage 2 vectors its cycle length does not match.
     uint32_t simulated = 0;
+    uint32_t fitted = 0;
     unsigned int attempt = 0;
-    while(attempt < 5)
+    while(attempt < 8)
     {
         sim = spawn;
         size_t r = 0;
@@ -949,17 +951,44 @@ int main(int argc, char **argv)
         simulated = cycle_ticks;
         if(worst == 0)
             break;
-        // Ticks per entry, measured on what was just simulated.
-        const uint64_t aim = (uint64_t)cycle_ticks * affordable / worst;
-        uint32_t next = (uint32_t)(aim > 8 ? aim : 8);
-        if(next > 4000) next = 4000;            // long enough for any node
-        // Converged: it fits and asking for more would not change the aim.
-        if(worst <= affordable && (next <= cycle_ticks || attempt >= 3))
-            break;
-        if(next == cycle_ticks)
-            break;
-        cycle_ticks = next;
+        if(worst <= affordable)
+        {
+            fitted = cycle_ticks;
+            // Room to spare: aim for a longer window (fewer resets), but stop
+            // once the aim is within 10% of what we already have.
+            uint64_t aim = (uint64_t)cycle_ticks * affordable / worst;
+            if(aim > 4000) aim = 4000;             // long enough for any node
+            if(aim <= (uint64_t)cycle_ticks * 11 / 10)
+                break;
+            cycle_ticks = (uint32_t)aim;
+        }
+        else
+        {
+            // Overshot. Aim back with a 10% margin: the entry count per tick
+            // is set by the BUSIEST player, which is noisy at these
+            // populations, so landing exactly on the budget rarely holds.
+            uint64_t aim = (uint64_t)cycle_ticks * affordable * 9 / (10u * worst);
+            uint32_t next = (uint32_t)(aim > 8 ? aim : 8);
+            if(next == cycle_ticks)
+                next = cycle_ticks > 8 ? cycle_ticks - 1 : 8;
+            cycle_ticks = next;
+        }
         attempt++;
+    }
+    if(worst > affordable)
+    {
+        // Ended on an attempt that does not fit: replay the longest window
+        // that did (or the floor), so there is always a workload.
+        cycle_ticks = fitted ? fitted : 8;
+        sim = spawn;
+        size_t r = 0;
+        while(r < loaded.size()) { loaded[r]->players = 0; r++; }
+        r = 0;
+        while(r < sim.size()) { loaded[sim[r].map]->players++; r++; }
+        Lcg sim_rng(WORLD_SEED + 1u);
+        worst = simulate(cycle_ticks, sim, loaded, km, WORLD, migrate_thr,
+                         sim_rng, streams, migrations);
+        simulated = cycle_ticks;
     }
     // Emit the window that was simulated, never the one that was only aimed at.
     cycle_ticks = simulated;
