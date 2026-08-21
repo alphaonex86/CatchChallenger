@@ -177,16 +177,23 @@ public:
     class MapVisibility
     {
     public:
+        /* server-properties mapVisibility/minimize: cpu, balanced, network.
+         * Minimize_Balanced was named Minimize_Network before the range
+         * algorithm existed, its method kept the historical name
+         * MapVisibilityAlgorithm::min_network(). */
         enum Minimize : uint8_t
         {
-            Minimize_CPU,
-            Minimize_Network
+            Minimize_CPU,//"cpu": rebroadcast the whole map every tick, MapVisibilityAlgorithm::min_CPU()
+            Minimize_Balanced,//"balanced": whole map too but only what changed, MapVisibilityAlgorithm::min_network()
+            Minimize_Network//"network": only the players into the view range, border maps included, MapVisibilityAlgorithm::min_range()
         };
         class MapVisibility_Simple
         {
         public:
-            uint8_t max;//<254 if player count on map is >=255 then simplified id is 255
-            uint8_t reshow;//only apply to Minimize_Network
+            //<254 if player count on map is >=255 then simplified id is 255
+            //Minimize_Network: max VISIBLE player by recipient, not by map
+            uint8_t max;
+            uint8_t reshow;//only apply to Minimize_Balanced
             #ifdef CATCHCHALLENGER_CACHE_HPS
             template <class B>
             void serialize(B& buf) const {

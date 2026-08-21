@@ -186,6 +186,16 @@ public:
     std::vector<DensePlayerState> sendedStatus;
     CATCHCHALLENGER_TYPE_MAPID sendedMap;
 
+    //same layout as production ClientWithMap: the per-recipient wire slot
+    //table min_range() diffs against (see ClientWithMap.hpp)
+    struct VisibleSlot
+    {
+        PLAYER_INDEX_FOR_CONNECTED player;
+        CATCHCHALLENGER_TYPE_MAPID map;
+        DensePlayerState state;
+    };
+    std::vector<VisibleSlot> visibleSlots;
+
     ClientWithMap();
 };
 

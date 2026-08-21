@@ -181,6 +181,12 @@ void BaseServer::preload_1_the_data()
         #endif // CATCHCHALLENGER_CACHE_HPS
     }
 
+    /* Both load paths (binary cache and datapack parsing) converge here with
+     * the map list and its border offsets final: precompute the border maps
+     * each map can see into. Not serialised into the cache, it is 6 bytes by
+     * neighbour and rebuilding it is a walk of the map list. */
+    MapVisibilityAlgorithm::resolveNeighbours();
+
     preload_10_sync_the_gift();
     preload_11_sync_the_players();
     preload_12_async_dictionary_map();

@@ -20,6 +20,7 @@
 #include "TestApiProtocol.hpp"
 #include "../../server/base/MapManagement/MapVisibilityAlgorithm.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -1450,6 +1451,639 @@ static void scenario_delayed_messages_requeue_no_infinite_loop()
         pass_line(name);
 }
 
+// ---- min_range (view range visibility) ------------------------------
+//
+// Own fixture: min_range() walks the REAL
+// MapVisibilityAlgorithm::flat_map_list to reach the border maps, so the
+// world is built there, with the border offsets in the state Map_loader
+// leaves them (already resolved: border.right.y_offset is the delta to ADD
+// to y when crossing right, and the map on the right carries the opposite).
+//
+// The oracle is INDEPENDENT from the code under test: the test places every
+// map at an explicit WORLD position, DERIVES the border offsets from those
+// positions, and recomputes the expected visible set from the world
+// positions with a plain |dx|<=VIEW_X && |dy|<=VIEW_Y. Nothing of
+// resolveNeighbours()/sendViewDelta() is reused to state the expectation.
+//
+// The oracle ignores the hysteresis margin, so a scenario checking it (see
+// scenario_min_range_enter_leave_hysteresis) asserts on the packets instead
+// of calling checkView().
+
+struct RangeMapPlacement
+{
+    int worldX,worldY;
+};
+
+class RangeFixture
+{
+public:
+    ClientList cl;
+    MapControllerMpStub observer;
+    TestApiProtocol api;
+    std::vector<ClientWithMap *> owned;
+    std::vector<CATCHCHALLENGER_TYPE_MAPID> ownedMap;//test side copy, map of each client
+    std::vector<RangeMapPlacement> placement;
+    PLAYER_INDEX_FOR_CONNECTED focus;
+    bool ackEachTick;
+
+    RangeFixture() :
+        focus(0),
+        ackEachTick(true)
+    {
+        ClientList::list=&cl;
+        api.map_controller=&observer;
+        api.allowDynamicSizeForTest();
+        GlobalServerData::serverSettings.mapVisibility.simple.max=50;
+        GlobalServerData::serverSettings.dontSendPlayerType=false;
+        CommonSettingsServer::commonSettingsServer.dontSendPseudo=false;
+        MapVisibilityAlgorithm::flat_map_list.clear();
+    }
+    ~RangeFixture()
+    {
+        size_t index=0;
+        while(index<owned.size())
+        {
+            delete owned.at(index);
+            index++;
+        }
+        owned.clear();
+        cl.clear();
+        //static: never leave a world behind for the next scenario
+        MapVisibilityAlgorithm::flat_map_list.clear();
+        ClientList::list=nullptr;
+    }
+
+    //Build every map FIRST (resize invalidates the references), then link.
+    CATCHCHALLENGER_TYPE_MAPID addMap(const int &worldX,const int &worldY,const uint8_t &width,const uint8_t &height)
+    {
+        const CATCHCHALLENGER_TYPE_MAPID index=static_cast<CATCHCHALLENGER_TYPE_MAPID>(MapVisibilityAlgorithm::flat_map_list.size());
+        MapVisibilityAlgorithm::flat_map_list.resize(static_cast<size_t>(index)+1);
+        MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list[index];
+        map.width=width;
+        map.height=height;
+        RangeMapPlacement p;
+        p.worldX=worldX;
+        p.worldY=worldY;
+        placement.push_back(p);
+        return index;
+    }
+    // b is the RIGHT border map of a. The offset is derived from the world
+    // placement: crossing right from a(width-1,y) lands on b(0,y+offset),
+    // and both are the same physical row, so offset = worldY(a)-worldY(b).
+    void linkRight(const CATCHCHALLENGER_TYPE_MAPID &a,const CATCHCHALLENGER_TYPE_MAPID &b)
+    {
+        MapVisibilityAlgorithm &ma=MapVisibilityAlgorithm::flat_map_list[a];
+        MapVisibilityAlgorithm &mb=MapVisibilityAlgorithm::flat_map_list[b];
+        ma.border.right.mapIndex=b;
+        ma.border.right.y_offset=static_cast<int8_t>(placement.at(a).worldY-placement.at(b).worldY);
+        mb.border.left.mapIndex=a;
+        mb.border.left.y_offset=static_cast<int8_t>(placement.at(b).worldY-placement.at(a).worldY);
+    }
+    // b is the BOTTOM border map of a: crossing down from a(x,height-1)
+    // lands on b(x+offset,0), so offset = worldX(a)-worldX(b).
+    void linkBottom(const CATCHCHALLENGER_TYPE_MAPID &a,const CATCHCHALLENGER_TYPE_MAPID &b)
+    {
+        MapVisibilityAlgorithm &ma=MapVisibilityAlgorithm::flat_map_list[a];
+        MapVisibilityAlgorithm &mb=MapVisibilityAlgorithm::flat_map_list[b];
+        ma.border.bottom.mapIndex=b;
+        ma.border.bottom.x_offset=static_cast<int8_t>(placement.at(a).worldX-placement.at(b).worldX);
+        mb.border.top.mapIndex=a;
+        mb.border.top.x_offset=static_cast<int8_t>(placement.at(b).worldX-placement.at(a).worldX);
+    }
+
+    PLAYER_INDEX_FOR_CONNECTED addClient(const std::string &pseudo,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,
+                                         const COORD_TYPE &x,const COORD_TYPE &y,const uint32_t &playerId)
+    {
+        ClientWithMap *c=new ClientWithMap();
+        c->setX(x);
+        c->setY(y);
+        c->setDirection(Direction_look_at_bottom);
+        c->setPlayerId(playerId);
+        c->setMapIndex(mapIndex);
+        c->public_and_private_informations.public_informations.pseudo=pseudo;
+        c->public_and_private_informations.public_informations.type=Player_type_normal;
+        c->public_and_private_informations.public_informations.skinId=1;
+        owned.push_back(c);
+        const PLAYER_INDEX_FOR_CONNECTED gid=cl.add(c);
+        ownedMap.push_back(mapIndex);
+        MapVisibilityAlgorithm::flat_map_list[mapIndex].insertOnMap(gid);
+        return gid;
+    }
+    void moveTo(const PLAYER_INDEX_FOR_CONNECTED &gid,const COORD_TYPE &x,const COORD_TYPE &y)
+    {
+        owned.at(gid)->setX(x);
+        owned.at(gid)->setY(y);
+    }
+    //map change of a player, the way ClientLocalBroadcast does it
+    void mapChange(const PLAYER_INDEX_FOR_CONNECTED &gid,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,
+                   const COORD_TYPE &x,const COORD_TYPE &y)
+    {
+        MapVisibilityAlgorithm &oldMap=MapVisibilityAlgorithm::flat_map_list[ownedMap.at(gid)];
+        PLAYER_INDEX_FOR_CONNECTED slot=0;
+        while(slot<oldMap.map_clients_list_size())
+        {
+            if(oldMap.map_clients_list_isValid(slot) && oldMap.map_clients_list_at(slot)==gid)
+            {
+                oldMap.removeOnMap(slot);
+                slot=oldMap.map_clients_list_size();
+            }
+            else
+                slot++;
+        }
+        MapVisibilityAlgorithm::flat_map_list[mapIndex].insertOnMap(gid);
+        owned.at(gid)->setMapIndex(mapIndex);
+        ownedMap.at(gid)=mapIndex;
+        moveTo(gid,x,y);
+    }
+
+    void runTick()
+    {
+        size_t index=0;
+        while(index<owned.size())
+        {
+            if(ackEachTick)
+                owned.at(index)->ackPing();
+            owned.at(index)->sentBlocks.clear();
+            index++;
+        }
+        unsigned int mapIndex=0;
+        while(mapIndex<MapVisibilityAlgorithm::flat_map_list.size())
+        {
+            MapVisibilityAlgorithm::flat_map_list[mapIndex].min_range(static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapIndex));
+            mapIndex++;
+        }
+    }
+    //feed the focus captured bytes to the REAL production parser
+    std::string parseFocus()
+    {
+        api.map_controller=&observer;
+        const ClientWithMap * const fc=owned.at(focus);
+        size_t blockIndex=0;
+        while(blockIndex<fc->sentBlocks.size())
+        {
+            const Client::CapturedBlock &b=fc->sentBlocks.at(blockIndex);
+            uint32_t cursor=0;
+            while(cursor<b.bytes.size())
+            {
+                const int8_t rc=api.parseIncommingDataRaw(b.bytes.data(),static_cast<uint32_t>(b.bytes.size()),cursor);
+                if(rc!=1)
+                {
+                    std::ostringstream oss;
+                    oss << "parse:rc=" << static_cast<int>(rc) << " cursor=" << cursor << "/" << b.bytes.size();
+                    return oss.str();
+                }
+            }
+            blockIndex++;
+        }
+        return std::string();
+    }
+    void tickAndParse(std::string &status)
+    {
+        runTick();
+        status=parseFocus();
+    }
+
+    //---- oracle ----
+    static std::string viewKey(const std::string &pseudo,const CATCHCHALLENGER_TYPE_MAPID &map,
+                               const COORD_TYPE &x,const COORD_TYPE &y)
+    {
+        std::ostringstream oss;
+        oss << pseudo << "@" << map << ":" << static_cast<unsigned>(x) << "," << static_cast<unsigned>(y);
+        return oss.str();
+    }
+    std::vector<std::string> expectedView() const
+    {
+        std::vector<std::string> out;
+        const int focusX=placement.at(ownedMap.at(focus)).worldX+static_cast<int>(owned.at(focus)->getX());
+        const int focusY=placement.at(ownedMap.at(focus)).worldY+static_cast<int>(owned.at(focus)->getY());
+        size_t index=0;
+        while(index<owned.size())
+        {
+            if(index!=focus)
+            {
+                const int candidateX=placement.at(ownedMap.at(index)).worldX+static_cast<int>(owned.at(index)->getX());
+                const int candidateY=placement.at(ownedMap.at(index)).worldY+static_cast<int>(owned.at(index)->getY());
+                int dx=candidateX-focusX;
+                if(dx<0)
+                    dx=-dx;
+                int dy=candidateY-focusY;
+                if(dy<0)
+                    dy=-dy;
+                if(dx<=CATCHCHALLENGER_SERVER_MAP_VIEW_X && dy<=CATCHCHALLENGER_SERVER_MAP_VIEW_Y)
+                    out.push_back(viewKey(owned.at(index)->public_and_private_informations.public_informations.pseudo,
+                                          ownedMap.at(index),owned.at(index)->getX(),owned.at(index)->getY()));
+            }
+            index++;
+        }
+        std::sort(out.begin(),out.end());
+        return out;
+    }
+    std::vector<std::string> actualView() const
+    {
+        std::vector<std::string> out;
+        for(const std::pair<const uint8_t,OtherPlayerView> &n : observer.otherPlayerList)
+            out.push_back(viewKey(n.second.info.pseudo,n.second.current_map,n.second.x,n.second.y));
+        std::sort(out.begin(),out.end());
+        return out;
+    }
+    // "" when the client view is exactly what the world says it must be.
+    // HARD RULE checked here for every scenario: a recipient is NEVER told
+    // about itself, whatever the slot numbering is.
+    std::string checkView()
+    {
+        const std::string &self=owned.at(focus)->public_and_private_informations.public_informations.pseudo;
+        for(const std::pair<const uint8_t,OtherPlayerView> &n : observer.otherPlayerList)
+            if(n.second.info.pseudo==self)
+                return std::string("selfrule:focus_in_its_own_view");
+        const std::vector<std::string> expected=expectedView();
+        const std::vector<std::string> actual=actualView();
+        if(expected==actual)
+            return std::string();
+        std::ostringstream oss;
+        oss << "view_mismatch expected={";
+        size_t index=0;
+        while(index<expected.size())
+        {
+            oss << expected.at(index) << ";";
+            index++;
+        }
+        oss << "} got={";
+        index=0;
+        while(index<actual.size())
+        {
+            oss << actual.at(index) << ";";
+            index++;
+        }
+        oss << "}";
+        return oss.str();
+    }
+    //count of packets of one code inside the focus captured bytes
+    unsigned int focusPacketCount(const uint8_t &code) const
+    {
+        unsigned int count=0;
+        const ClientWithMap * const fc=owned.at(focus);
+        size_t blockIndex=0;
+        while(blockIndex<fc->sentBlocks.size())
+        {
+            const std::vector<char> &b=fc->sentBlocks.at(blockIndex).bytes;
+            size_t pos=0;
+            while(pos<b.size())
+            {
+                const uint8_t current=static_cast<uint8_t>(b.at(pos));
+                if(current==code)
+                    count++;
+                //same packet grammar as selfEntryViolation() above
+                if(current==0x65)
+                    pos+=1;
+                else if(current==0xE3)
+                    pos+=2;
+                else if(current==0x6C)
+                    pos+=2;
+                else if(current==0x69)
+                    pos+=6+static_cast<uint8_t>(b.at(pos+5));
+                else if(current==0x66)
+                    pos+=6+static_cast<size_t>(static_cast<uint8_t>(b.at(pos+5)))*4;
+                else if(current==0x6B)
+                {
+                    const uint8_t entries=static_cast<uint8_t>(b.at(pos+8));
+                    size_t entry=pos+9;
+                    unsigned int done=0;
+                    while(done<entries)
+                    {
+                        entry+=1+3;//slot + x + y + direction|type
+                        if(!dontSendPseudo())
+                            entry+=1+static_cast<uint8_t>(b.at(entry));
+                        entry+=1+2;//skin + followed monster
+                        done++;
+                    }
+                    pos=entry;
+                }
+                else
+                    return 0xffffffff;//unknown packet code, the caller will see the absurd count
+            }
+            blockIndex++;
+        }
+        return count;
+    }
+};
+
+// resolveNeighbours() must give the 4 borders AND the diagonals reached in 2
+// hops, with the right translation, and must NOT keep a map 2 maps away in
+// the same direction: the client only loads/displays what TOUCHES the
+// current map rect, an insert on any other map would never be applied.
+static void scenario_min_range_neighbours_resolved()
+{
+    const char *name = "min_range_neighbours_resolved";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m2=f.addMap(80,0,40,40);//2 maps away: must be dropped
+    const CATCHCHALLENGER_TYPE_MAPID m3=f.addMap(0,40,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m4=f.addMap(40,40,40,40);//diagonal, reached in 2 hops
+    f.linkRight(m0,m1);
+    f.linkRight(m1,m2);
+    f.linkBottom(m0,m3);
+    f.linkBottom(m1,m4);
+    f.linkRight(m3,m4);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    const MapVisibilityAlgorithm &map0=MapVisibilityAlgorithm::flat_map_list[m0];
+    if(map0.neighbours.size()!=3) { fail_line(name,"neighbour_count="+std::to_string(map0.neighbours.size())); return; }
+    unsigned int index=0;
+    bool seen1=false,seen3=false,seen4=false;
+    while(index<map0.neighbours.size())
+    {
+        const MapVisibilityAlgorithm::NeighbourMap &n=map0.neighbours.at(index);
+        if(n.mapIndex==m2) { fail_line(name,"m2_not_touching_but_kept"); return; }
+        if(n.mapIndex==m1) { seen1=true; if(n.offset_x!=40 || n.offset_y!=0) { fail_line(name,"m1_offset"); return; } }
+        if(n.mapIndex==m3) { seen3=true; if(n.offset_x!=0 || n.offset_y!=40) { fail_line(name,"m3_offset"); return; } }
+        if(n.mapIndex==m4) { seen4=true; if(n.offset_x!=40 || n.offset_y!=40) { fail_line(name,"m4_offset"); return; } }
+        index++;
+    }
+    if(!seen1 || !seen3 || !seen4) { fail_line(name,"missing_neighbour"); return; }
+    pass_line(name);
+}
+
+// Same map: only what is inside the view rectangle is announced.
+static void scenario_min_range_same_map_only_in_view()
+{
+    const char *name = "min_range_same_map_only_in_view";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    f.focus=f.addClient("focus",m0,5,5,100);
+    f.addClient("near",m0,15,5,101);//dx=10: inside
+    f.addClient("far",m0,38,5,102);//dx=33: outside
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    status=f.checkView();
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"expected_one_visible"); return; }
+    pass_line(name);
+}
+
+// A player standing on the BORDER map, inside the view: announced with ITS
+// OWN map id so the client places it on the map it already displays.
+static void scenario_min_range_border_map_in_view()
+{
+    const char *name = "min_range_border_map_in_view";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
+    f.linkRight(m0,m1);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    f.focus=f.addClient("focus",m0,39,10,100);//right edge of m0, world x=39
+    f.addClient("across",m1,0,10,101);//world x=40: 1 tile away, on the other map
+    f.addClient("deep",m1,35,10,102);//world x=75: 36 away, outside
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    status=f.checkView();
+    if(!status.empty()) { fail_line(name,status); return; }
+    bool foundMap=false;
+    for(const std::pair<const uint8_t,OtherPlayerView> &n : f.observer.otherPlayerList)
+        if(n.second.info.pseudo=="across")
+            foundMap=(n.second.current_map==m1);
+    if(!foundMap) { fail_line(name,"announced_on_wrong_map"); return; }
+    pass_line(name);
+}
+
+// Border with a non zero offset: the range test must use the TRANSLATED
+// coordinate, not the raw one.
+static void scenario_min_range_border_offset()
+{
+    const char *name = "min_range_border_offset";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,30,40,40);//shifted 30 tiles down
+    f.linkRight(m0,m1);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    f.focus=f.addClient("focus",m0,39,35,100);//world (39,35)
+    f.addClient("aligned",m1,0,5,101);//world (40,35): 1 tile away
+    f.addClient("shifted",m1,0,0,102);//world (40,30): 5 tiles away, still inside
+    f.addClient("below",m1,0,39,103);//world (40,69): 34 tiles below, outside
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    status=f.checkView();
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=2) { fail_line(name,"expected_two_visible"); return; }
+    pass_line(name);
+}
+
+// The DIAGONAL map is only reachable by composing two borders, and a player
+// standing in its corner is inside the view.
+static void scenario_min_range_diagonal_map()
+{
+    const char *name = "min_range_diagonal_map";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m3=f.addMap(0,40,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m4=f.addMap(40,40,40,40);
+    f.linkRight(m0,m1);
+    f.linkBottom(m0,m3);
+    f.linkBottom(m1,m4);
+    f.linkRight(m3,m4);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    f.focus=f.addClient("focus",m0,39,39,100);//world (39,39)
+    f.addClient("corner",m4,0,0,101);//world (40,40): diagonal, 1 tile away
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    status=f.checkView();
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"diagonal_not_visible"); return; }
+    pass_line(name);
+}
+
+// Hysteresis: inserted at the view limit, kept up to view+margin, removed
+// past it, and NOT re-inserted before it is back inside the view. Without it
+// somebody walking on the edge costs an insert+remove every tick.
+static void scenario_min_range_enter_leave_hysteresis()
+{
+    const char *name = "min_range_enter_leave_hysteresis";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,120,40);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    f.focus=f.addClient("focus",m0,0,5,100);
+    const PLAYER_INDEX_FOR_CONNECTED walker=f.addClient("walker",m0,CATCHCHALLENGER_SERVER_MAP_VIEW_X,5,101);
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"not_inserted_at_view_limit"); return; }
+    //inside the margin: kept, and it costs a 4 bytes 0x66, not an insert
+    f.moveTo(walker,CATCHCHALLENGER_SERVER_MAP_VIEW_X+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN,5);
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"dropped_inside_margin"); return; }
+    if(f.focusPacketCount(0x66)!=1 || f.focusPacketCount(0x69)!=0 || f.focusPacketCount(0x6B)!=0)
+        { fail_line(name,"margin_move_is_not_a_change"); return; }
+    //past the margin: removed
+    f.moveTo(walker,CATCHCHALLENGER_SERVER_MAP_VIEW_X+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN+1,5);
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(!f.observer.otherPlayerList.empty()) { fail_line(name,"not_removed_past_margin"); return; }
+    //back inside the margin but NOT inside the view: stays out
+    f.moveTo(walker,CATCHCHALLENGER_SERVER_MAP_VIEW_X+1,5);
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(!f.observer.otherPlayerList.empty()) { fail_line(name,"reinserted_inside_margin"); return; }
+    //back inside the view: inserted again
+    f.moveTo(walker,CATCHCHALLENGER_SERVER_MAP_VIEW_X,5);
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    status=f.checkView();
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"not_reinserted_inside_view"); return; }
+    pass_line(name);
+}
+
+// A visible player that moves inside the view costs ONE 0x66 change and
+// nothing else. A quiet tick costs no block at all.
+static void scenario_min_range_move_then_quiet()
+{
+    const char *name = "min_range_move_then_quiet";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    f.focus=f.addClient("focus",m0,5,5,100);
+    const PLAYER_INDEX_FOR_CONNECTED mover=f.addClient("mover",m0,10,5,101);
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    f.moveTo(mover,11,5);
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    status=f.checkView();
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.focusPacketCount(0x66)!=1 || f.focusPacketCount(0x6B)!=0 || f.focusPacketCount(0x69)!=0)
+        { fail_line(name,"move_is_not_a_single_change"); return; }
+    //nothing moved: nothing sent
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(!f.owned.at(f.focus)->sentBlocks.empty()) { fail_line(name,"sent_on_quiet_tick"); return; }
+    pass_line(name);
+}
+
+// A visible player crossing to the border map must be RE-INSERTED: 0x66
+// carries no map id, so a plain change would leave the client drawing it on
+// the map it came from.
+static void scenario_min_range_visible_player_changes_map()
+{
+    const char *name = "min_range_visible_player_changes_map";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
+    f.linkRight(m0,m1);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    f.focus=f.addClient("focus",m0,30,10,100);
+    const PLAYER_INDEX_FOR_CONNECTED walker=f.addClient("walker",m0,39,10,101);
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"not_visible_before"); return; }
+    //one step to the right: same physical tile+1, other map
+    f.mapChange(walker,m1,0,10);
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    status=f.checkView();
+    if(!status.empty()) { fail_line(name,status); return; }
+    bool onNewMap=false;
+    for(const std::pair<const uint8_t,OtherPlayerView> &n : f.observer.otherPlayerList)
+        if(n.second.info.pseudo=="walker")
+            onNewMap=(n.second.current_map==m1 && n.second.x==0);
+    if(!onNewMap) { fail_line(name,"still_on_the_old_map"); return; }
+    pass_line(name);
+}
+
+// mapVisibility Max caps what ONE RECIPIENT sees, not what the map holds:
+// the map keeps every player, the recipient view stops at the cap.
+static void scenario_min_range_visible_cap()
+{
+    const char *name = "min_range_visible_cap";
+    RangeFixture f;
+    GlobalServerData::serverSettings.mapVisibility.simple.max=3;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    f.focus=f.addClient("focus",m0,5,5,100);
+    unsigned int index=0;
+    while(index<6)
+    {
+        f.addClient(std::string("p")+std::to_string(index),m0,static_cast<COORD_TYPE>(6+index),5,200+index);
+        index++;
+    }
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=3) { fail_line(name,"cap_not_applied count="+std::to_string(f.observer.otherPlayerList.size())); return; }
+    if(MapVisibilityAlgorithm::flat_map_list[m0].map_clients_list_size()!=7) { fail_line(name,"map_lost_players"); return; }
+    GlobalServerData::serverSettings.mapVisibility.simple.max=50;
+    pass_line(name);
+}
+
+// ACK flow control: a recipient that has not answered the previous ping is
+// handed NOTHING, and gets ONE delta covering every tick it missed as soon
+// as it answers. visibleSlots IS the baseline, so nothing else is needed.
+static void scenario_min_range_held_back_then_one_delta()
+{
+    const char *name = "min_range_held_back_then_one_delta";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    f.focus=f.addClient("focus",m0,5,5,100);
+    const PLAYER_INDEX_FOR_CONNECTED mover=f.addClient("mover",m0,10,5,101);
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    //link slower than the tick: 3 ticks without any answer
+    f.ackEachTick=false;
+    f.owned.at(f.focus)->setPing(1);
+    unsigned int tick=0;
+    while(tick<3)
+    {
+        f.moveTo(mover,static_cast<COORD_TYPE>(11+tick),5);
+        f.runTick();
+        if(!f.owned.at(f.focus)->sentBlocks.empty()) { fail_line(name,"sent_while_unacked"); return; }
+        tick++;
+    }
+    //it answers: ONE delta with the final position
+    f.ackEachTick=true;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.owned.at(f.focus)->sentBlocks.size()!=1) { fail_line(name,"expected_one_block"); return; }
+    status=f.checkView();
+    if(!status.empty()) { fail_line(name,status); return; }
+    pass_line(name);
+}
+
+// The recipient changing map itself: PATH 1, the client is told to drop its
+// whole view (0x65) then gets the new one, because it reloads the maps
+// around it and its old entries would point at destroyed maps.
+static void scenario_min_range_recipient_changes_map()
+{
+    const char *name = "min_range_recipient_changes_map";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
+    f.linkRight(m0,m1);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    f.focus=f.addClient("focus",m0,39,10,100);
+    f.addClient("stayer",m1,0,10,101);
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"stayer_not_visible"); return; }
+    f.mapChange(f.focus,m1,0,10);
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.focusPacketCount(0x65)!=1) { fail_line(name,"no_drop_all_on_map_change"); return; }
+    status=f.checkView();
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"view_lost_after_map_change"); return; }
+    pass_line(name);
+}
+
 // ---- Driver ---------------------------------------------------------
 
 int main()
@@ -1485,6 +2119,17 @@ int main()
     scenario_min_network_path2_insert_ge254();
     scenario_character_block_bad_compressed_block_no_crash();
     scenario_delayed_messages_requeue_no_infinite_loop();
+    scenario_min_range_neighbours_resolved();
+    scenario_min_range_same_map_only_in_view();
+    scenario_min_range_border_map_in_view();
+    scenario_min_range_border_offset();
+    scenario_min_range_diagonal_map();
+    scenario_min_range_enter_leave_hysteresis();
+    scenario_min_range_move_then_quiet();
+    scenario_min_range_visible_player_changes_map();
+    scenario_min_range_visible_cap();
+    scenario_min_range_held_back_then_one_delta();
+    scenario_min_range_recipient_changes_map();
     std::cout << "[INFO] pass=" << g_pass << " fail=" << g_fail << std::endl;
     return g_fail == 0 ? 0 : 1;
 }

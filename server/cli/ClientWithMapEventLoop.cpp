@@ -21,6 +21,9 @@ void ClientWithMapEventLoop::reset(int infd)
     //reset visibility state so PATH1 (full insert) runs on first map tick
     sendedMap=65535;
     sendedStatus.clear();
+    //min_range(): without this the new tenant of the slot inherits the view
+    //of the previous one and is never sent the players it already "displays"
+    visibleSlots.clear();
     stat=ClientStat::None;
 }
 

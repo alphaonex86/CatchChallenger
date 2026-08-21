@@ -83,6 +83,9 @@ char MapVisibilityAlgorithm::tempBigBufferForRemove[];
 uint8_t MapVisibilityAlgorithm::tempInsertSlots[255];
 std::vector<MapVisibilityAlgorithm> MapVisibilityAlgorithm::flat_map_list;
 DensePlayerState MapVisibilityAlgorithm::tempDenseBuffer[255];
+PLAYER_INDEX_FOR_CONNECTED MapVisibilityAlgorithm::tempInsertPlayers[255];
+uint8_t MapVisibilityAlgorithm::tempSeenSlot[255];
+std::vector<uint8_t> MapVisibilityAlgorithm::tempSlotOfPlayer;
 
 MapVisibilityAlgorithm::MapVisibilityAlgorithm()
 {
@@ -953,4 +956,477 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
     {
         memcpy(previousDenseBuffer.data(),tempDenseBuffer,dense_size*sizeof(DensePlayerState));
     }
+}
+
+/// Offset to ADD to a coordinate of the map on `side` of `map` to express it
+/// in `map` OWN frame. Mirrors the crossing formulas of MoveOnTheMap.hpp,
+/// with the offsets already resolved by Map_loader (border.left.y_offset is
+/// the delta to ADD when crossing to the left map, and the left map carries
+/// the opposite one):
+///   top:    (x,0)            -> other(x+map.border.top.x_offset,other.height-1)
+///   bottom: (x,map.height-1) -> other(x+map.border.bottom.x_offset,0)
+///   left:   (0,y)            -> other(other.width-1,y+map.border.left.y_offset)
+///   right:  (map.width-1,y)  -> other(0,y+map.border.right.y_offset)
+/// so going back is minus that offset on the crossed axis, plus/minus a map
+/// size on the other one.
+/// side: 0 top, 1 bottom, 2 left, 3 right. false when there is no map there.
+static bool mapSideOffset(const MapVisibilityAlgorithm &map,const uint8_t &side,
+                          CATCHCHALLENGER_TYPE_MAPID &otherIndex,int16_t &offset_x,int16_t &offset_y)
+{
+    switch(side)
+    {
+        case 0x00:
+            otherIndex=map.border.top.mapIndex;
+        break;
+        case 0x01:
+            otherIndex=map.border.bottom.mapIndex;
+        break;
+        case 0x02:
+            otherIndex=map.border.left.mapIndex;
+        break;
+        default:
+            otherIndex=map.border.right.mapIndex;
+        break;
+    }
+    if(otherIndex==65535)
+        return false;
+    if(otherIndex>=MapVisibilityAlgorithm::flat_map_list.size())
+    {
+        std::cerr << "mapSideOffset(): border map index out of the map list: " << otherIndex << std::endl;
+        return false;
+    }
+    const MapVisibilityAlgorithm &other=MapVisibilityAlgorithm::flat_map_list.at(otherIndex);
+    switch(side)
+    {
+        case 0x00:
+            offset_x=-static_cast<int16_t>(map.border.top.x_offset);
+            offset_y=-static_cast<int16_t>(other.height);
+        break;
+        case 0x01:
+            offset_x=-static_cast<int16_t>(map.border.bottom.x_offset);
+            offset_y=static_cast<int16_t>(map.height);
+        break;
+        case 0x02:
+            offset_x=-static_cast<int16_t>(other.width);
+            offset_y=-static_cast<int16_t>(map.border.left.y_offset);
+        break;
+        default:
+            offset_x=static_cast<int16_t>(map.width);
+            offset_y=-static_cast<int16_t>(map.border.right.y_offset);
+        break;
+    }
+    return true;
+}
+
+/// Add otherIndex to the neighbour list of map, when not already there and
+/// when its rect TOUCHES the map rect -- the same rule as the client
+/// MapVisualiser::rectTouch(), which decides the maps it loads and displays
+/// around the current one. A map that does not touch would never be loaded
+/// client side and its inserts would pile up in the client delayedActions.
+static void addNeighbour(MapVisibilityAlgorithm &map,const CATCHCHALLENGER_TYPE_MAPID &selfIndex,
+                         const CATCHCHALLENGER_TYPE_MAPID &otherIndex,const int16_t &offset_x,const int16_t &offset_y)
+{
+    if(otherIndex==selfIndex)
+        return;
+    unsigned int index=0;
+    while(index<map.neighbours.size())
+    {
+        if(map.neighbours.at(index).mapIndex==otherIndex)
+            return;//already reached by a shorter path, keep the first one
+        index++;
+    }
+    const MapVisibilityAlgorithm &other=MapVisibilityAlgorithm::flat_map_list.at(otherIndex);
+    //touch, edges included: [offset,offset+size] against [0,size]
+    if((offset_x+static_cast<int16_t>(other.width))<0 || static_cast<int16_t>(map.width)<offset_x)
+        return;
+    if((offset_y+static_cast<int16_t>(other.height))<0 || static_cast<int16_t>(map.height)<offset_y)
+        return;
+    MapVisibilityAlgorithm::NeighbourMap neighbour;
+    neighbour.mapIndex=otherIndex;
+    neighbour.offset_x=offset_x;
+    neighbour.offset_y=offset_y;
+    map.neighbours.push_back(neighbour);
+}
+
+/// Precompute, for every map, the border maps a player standing on it can
+/// see into (min_range() candidates). Done ONCE at load: the map list and the
+/// border offsets never change afterwards, so the tick does no adjacency
+/// work at all -- and nothing is done when a player moves either.
+void MapVisibilityAlgorithm::resolveNeighbours()
+{
+    unsigned int mapIndex=0;
+    while(mapIndex<flat_map_list.size())
+    {
+        MapVisibilityAlgorithm &map=flat_map_list[mapIndex];
+        map.neighbours.clear();
+        uint8_t side=0;
+        while(side<4)
+        {
+            CATCHCHALLENGER_TYPE_MAPID directIndex=65535;
+            int16_t offset_x=0,offset_y=0;
+            if(mapSideOffset(map,side,directIndex,offset_x,offset_y))
+            {
+                addNeighbour(map,static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapIndex),directIndex,offset_x,offset_y);
+                /* Second hop: this is how the DIAGONAL maps are reached, a
+                 * border only links the 4 sides. Two maps away in the SAME
+                 * direction no more touches this rect, addNeighbour() drops
+                 * it, so the list stays the client displayed set. */
+                uint8_t farSide=0;
+                while(farSide<4)
+                {
+                    CATCHCHALLENGER_TYPE_MAPID farIndex=65535;
+                    int16_t farOffsetX=0,farOffsetY=0;
+                    if(mapSideOffset(flat_map_list.at(directIndex),farSide,farIndex,farOffsetX,farOffsetY))
+                        addNeighbour(map,static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapIndex),farIndex,
+                                     static_cast<int16_t>(offset_x+farOffsetX),
+                                     static_cast<int16_t>(offset_y+farOffsetY));
+                    farSide++;
+                }
+            }
+            side++;
+        }
+        mapIndex++;
+    }
+}
+
+/// Fill the 0x6B header of a group started at groupStart, once its player
+/// entries are written. One group by SOURCE map: the packet carries a single
+/// map id for its whole player list.
+/// Layout: [0x6B][size:4][map count:1][map id:2][player count:1][entries...]
+static void closeInsertGroup(char * const buffer,const uint32_t &groupStart,const uint32_t &posOutput,
+                             const CATCHCHALLENGER_TYPE_MAPID &mapId,const uint8_t &count)
+{
+    buffer[groupStart]=0x6B;//full Insert player on map
+    {const uint32_t _tmp_le=(htole32(posOutput-groupStart-1-4));memcpy(buffer+groupStart+1,&_tmp_le,sizeof(_tmp_le));}
+    buffer[groupStart+1+4]=0x01;//map list count
+    {const uint16_t _tmp_le=(htole16(mapId));memcpy(buffer+groupStart+1+4+1,&_tmp_le,sizeof(_tmp_le));}
+    buffer[groupStart+1+4+1+2]=static_cast<char>(count);
+}
+
+/// min_range (view range visibility): a recipient is told ONLY about the
+/// players inside its view rectangle, on its own map OR on a border map --
+/// see doc/algo/visibility/MapVisibilityAlgorithm-WithBorderAndRange.png.
+///
+/// Nothing is done when a player moves: the tick reads x/y and the border
+/// map list is precomputed at load (resolveNeighbours()), so a move is still
+/// only the two coordinates written by MapBasicMove.
+///
+/// The visible set differs from one recipient to the next, so unlike
+/// min_network() there is no shared snapshot/diff: each recipient owns its
+/// slot table (ClientWithMap::visibleSlots), which is BOTH the wire slot
+/// allocation and the diff baseline. Cost by recipient is
+/// O(candidates + visible slots), with the candidates limited to the maps
+/// whose rect intersects the view.
+void MapVisibilityAlgorithm::min_range(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
+{
+    unsigned int index_client=0;
+    while(index_client<map_clients_id.size())
+    {
+        const PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id[index_client];
+        if(map_c_idP!=PLAYER_INDEX_FOR_CONNECTED_MAX)
+        {
+            #ifdef CATCHCHALLENGER_HARDENED
+            if(!ClientList::list->isNull(map_c_idP))
+            #endif
+            {
+                ClientWithMap &clientWithMap=ClientList::list->rwWithMap(map_c_idP);
+                /* Same ACK flow control as min_network(): a recipient that has
+                 * not answered the previous 0xE3 is handed NOTHING, its link
+                 * can not drain it. It costs no extra code here: visibleSlots
+                 * IS the baseline and does not move while it is held back, so
+                 * the tick it answers it gets ONE delta covering everything
+                 * that happened meanwhile. */
+                #ifdef CATCHCHALLENGER_BENCHMARK
+                //benchmark: drop the throttle, see min_CPU() above
+                if(true)
+                #else
+                if(clientWithMap.pingCountInProgress()<=0)
+                #endif
+                    sendViewDelta(clientWithMap,map_c_idP,mapIndex);
+            }
+            #ifdef CATCHCHALLENGER_HARDENED
+            else
+                std::cerr << "MapVisibilityAlgorithm::min_range() ClientList::list.empty(): " << map_c_idP << std::endl;
+            #endif
+        }
+        index_client++;
+    }
+}
+
+/// The min_range() work for ONE recipient: rebuild what it must see, diff it
+/// against what it already displays, emit the delta.
+/// Buffer layout: [0x65 drop all?][0x69 removes][0x6B inserts by map][0x66 changes][0xE3 ping]
+/// The removes come FIRST so a slot freed this tick can be reused by an
+/// insert of the same tick without the client applying them in the wrong
+/// order.
+void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER_INDEX_FOR_CONNECTED &recipientIndex,
+                                           const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
+{
+    uint32_t posOutput=0;
+    /* PATH 1: first tick on this map, or a teleport. The client keeps its
+     * other players in a list indexed by slot while it drops+reloads the maps
+     * around it, so the whole view has to be dropped and rebuilt -- same as
+     * min_network() PATH 1. A simple border crossing pays it too: telling
+     * both apart would need the teleport path to say so, which is more
+     * existing code changed than what it saves. */
+    if(recipient.sendedMap!=mapIndex)
+    {
+        recipient.sendedMap=mapIndex;
+        recipient.visibleSlots.clear();
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x65;//drop all player on map
+        posOutput+=1;
+    }
+    std::vector<ClientWithMap::VisibleSlot> &slots=recipient.visibleSlots;
+
+    //====== 1) index what this recipient displays right now ======
+    //slot lookup by connected player in O(1), and the seen flags reset in the
+    //same walk so no memset by recipient.
+    uint8_t liveCount=0;
+    unsigned int slotIndex=0;
+    while(slotIndex<slots.size())
+    {
+        const ClientWithMap::VisibleSlot &visibleSlot=slots.at(slotIndex);
+        tempSeenSlot[slotIndex]=0x00;
+        if(visibleSlot.player!=PLAYER_INDEX_FOR_CONNECTED_MAX)
+        {
+            if(tempSlotOfPlayer.size()<=static_cast<size_t>(visibleSlot.player))
+                tempSlotOfPlayer.resize(static_cast<size_t>(visibleSlot.player)+1,0x00);
+            tempSlotOfPlayer[visibleSlot.player]=static_cast<uint8_t>(slotIndex+1);
+            liveCount++;
+        }
+        slotIndex++;
+    }
+
+    //====== 2) walk the candidates: this map, then its border maps ======
+    //mapVisibility Max caps what ONE RECIPIENT sees here, not what the map
+    //holds: 254 is the last slot expressible on the 8 bits wire index.
+    uint8_t visibleMax=254;
+    if(GlobalServerData::serverSettings.mapVisibility.simple.max<254)
+        visibleMax=static_cast<uint8_t>(GlobalServerData::serverSettings.mapVisibility.simple.max);
+    const int16_t recipientX=static_cast<int16_t>(recipient.getX());
+    const int16_t recipientY=static_cast<int16_t>(recipient.getY());
+    //keep range = view + hysteresis margin, see CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN
+    const int16_t keepX=CATCHCHALLENGER_SERVER_MAP_VIEW_X+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN;
+    const int16_t keepY=CATCHCHALLENGER_SERVER_MAP_VIEW_Y+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN;
+    uint8_t changesCount=0;
+    uint8_t removeCount=0;
+    uint8_t insertCount=0;
+    unsigned int sourceIndex=0;
+    while(sourceIndex<=neighbours.size())
+    {
+        const MapVisibilityAlgorithm *sourceMap;
+        int16_t offset_x;
+        int16_t offset_y;
+        if(sourceIndex==0)
+        {
+            sourceMap=this;
+            offset_x=0;
+            offset_y=0;
+        }
+        else
+        {
+            const NeighbourMap &neighbour=neighbours.at(sourceIndex-1);
+            sourceMap=&flat_map_list.at(neighbour.mapIndex);
+            offset_x=neighbour.offset_x;
+            offset_y=neighbour.offset_y;
+        }
+        //whole source map out of the keep rectangle: skip its client list
+        //without reading a single Client. A player standing away from every
+        //border of its map skips ALL its border maps with 4 compares each.
+        if((offset_x+static_cast<int16_t>(sourceMap->width)-1)>=(recipientX-keepX) &&
+           (recipientX+keepX)>=offset_x &&
+           (offset_y+static_cast<int16_t>(sourceMap->height)-1)>=(recipientY-keepY) &&
+           (recipientY+keepY)>=offset_y)
+        {
+            unsigned int sourceSlot=0;
+            while(sourceSlot<sourceMap->map_clients_id.size())
+            {
+                const PLAYER_INDEX_FOR_CONNECTED &candidateIndex=sourceMap->map_clients_id[sourceSlot];
+                //a recipient is never told about itself
+                if(candidateIndex!=PLAYER_INDEX_FOR_CONNECTED_MAX && candidateIndex!=recipientIndex)
+                {
+                    #ifdef CATCHCHALLENGER_HARDENED
+                    if(!ClientList::list->isNull(candidateIndex))
+                    #endif
+                    {
+                        const Client &candidate=ClientList::list->at(candidateIndex);
+                        //integer only: the candidate coordinates translated into
+                        //this map frame, then |dx| and |dy| against the range
+                        int16_t dx=static_cast<int16_t>(static_cast<int16_t>(candidate.getX())+offset_x-recipientX);
+                        if(dx<0)
+                            dx=-dx;
+                        int16_t dy=static_cast<int16_t>(static_cast<int16_t>(candidate.getY())+offset_y-recipientY);
+                        if(dy<0)
+                            dy=-dy;
+                        const uint8_t known=(static_cast<size_t>(candidateIndex)<tempSlotOfPlayer.size())?
+                                    tempSlotOfPlayer[candidateIndex]:static_cast<uint8_t>(0x00);
+                        if(known!=0x00)
+                        {
+                            //already displayed: hysteresis, only dropped past the margin
+                            if(dx<=keepX && dy<=keepY)
+                            {
+                                const uint8_t slot=static_cast<uint8_t>(known-1);
+                                tempSeenSlot[slot]=0x01;
+                                ClientWithMap::VisibleSlot &visibleSlot=slots[slot];
+                                DensePlayerState current;
+                                current.set(candidate.getX(),candidate.getY(),
+                                            static_cast<uint8_t>(candidate.getLastDirection()),candidate.getPlayerId());
+                                if(visibleSlot.map!=candidate.mapIndex || !current.isSameCharacter(visibleSlot.state))
+                                {
+                                    //changed map (0x66 carries no map id), or the connected
+                                    //slot was recycled by another character: full insert
+                                    //again on the SAME wire slot, the client drops its
+                                    //previous entry for that slot by itself
+                                    tempInsertPlayers[insertCount]=candidateIndex;
+                                    tempInsertSlots[insertCount]=slot;
+                                    insertCount++;
+                                    visibleSlot.map=candidate.mapIndex;
+                                    visibleSlot.state=current;
+                                }
+                                else if(!current.isEqual(visibleSlot.state))
+                                {
+                                    //moved: slot + x + y + direction, composed in a
+                                    //register and flushed with one 32 bits store
+                                    char * const changeEntry=MapVisibilityAlgorithm::tempBigBufferForChanges+(1+4+1)+changesCount*(1+1+1+1);
+                                    {const uint32_t _tmp_le=(htole32(current.wireChangeWord(slot)));memcpy(changeEntry,&_tmp_le,sizeof(_tmp_le));}
+                                    changesCount++;
+                                    visibleSlot.state=current;
+                                }
+                            }
+                        }
+                        else if(dx<=CATCHCHALLENGER_SERVER_MAP_VIEW_X && dy<=CATCHCHALLENGER_SERVER_MAP_VIEW_Y)
+                        {
+                            //entered the view: the wire slot is allocated after the
+                            //remove pass, so a slot freed this tick is reused
+                            if(liveCount<visibleMax && insertCount<254)
+                            {
+                                tempInsertPlayers[insertCount]=candidateIndex;
+                                tempInsertSlots[insertCount]=0xff;//allocated below
+                                insertCount++;
+                                liveCount++;
+                            }
+                        }
+                    }
+                    #ifdef CATCHCHALLENGER_HARDENED
+                    else
+                        std::cerr << "MapVisibilityAlgorithm::sendViewDelta() ClientList::list.empty(): " << candidateIndex << std::endl;
+                    #endif
+                }
+                sourceSlot++;
+            }
+        }
+        sourceIndex++;
+    }
+
+    //====== 3) what is no more visible, and drop the sparse index ======
+    //one walk does both: the index MUST be clean when leaving, it is shared
+    //by every recipient of every map.
+    slotIndex=0;
+    while(slotIndex<slots.size())
+    {
+        ClientWithMap::VisibleSlot &visibleSlot=slots[slotIndex];
+        if(visibleSlot.player!=PLAYER_INDEX_FOR_CONNECTED_MAX)
+        {
+            tempSlotOfPlayer[visibleSlot.player]=0x00;
+            if(tempSeenSlot[slotIndex]==0x00)
+            {
+                MapVisibilityAlgorithm::tempBigBufferForRemove[1+4+1+removeCount]=static_cast<char>(slotIndex);
+                removeCount++;
+                visibleSlot.player=PLAYER_INDEX_FOR_CONNECTED_MAX;
+                liveCount--;
+            }
+        }
+        slotIndex++;
+    }
+    if(posOutput==0 && changesCount==0 && removeCount==0 && insertCount==0)
+        return;//nothing changed in this player view
+
+    //====== 4) allocate the wire slot of the players that just appeared ======
+    unsigned int insertIndex=0;
+    unsigned int freeSlot=0;
+    while(insertIndex<insertCount)
+    {
+        if(MapVisibilityAlgorithm::tempInsertSlots[insertIndex]==0xff)
+        {
+            while(freeSlot<slots.size() && slots[freeSlot].player!=PLAYER_INDEX_FOR_CONNECTED_MAX)
+                freeSlot++;
+            if(freeSlot>=slots.size())
+            {
+                //no hole left: grow. Bounded by visibleMax (<=254), and the
+                //vector reaches this player high-water mark then stops
+                //allocating, like map_clients_id does by map.
+                ClientWithMap::VisibleSlot newSlot;
+                newSlot.player=PLAYER_INDEX_FOR_CONNECTED_MAX;
+                newSlot.map=65535;
+                newSlot.state.setEmpty();
+                slots.push_back(newSlot);
+            }
+            const PLAYER_INDEX_FOR_CONNECTED &candidateIndex=MapVisibilityAlgorithm::tempInsertPlayers[insertIndex];
+            const Client &candidate=ClientList::list->at(candidateIndex);
+            ClientWithMap::VisibleSlot &visibleSlot=slots[freeSlot];
+            visibleSlot.player=candidateIndex;
+            visibleSlot.map=candidate.mapIndex;
+            visibleSlot.state.set(candidate.getX(),candidate.getY(),
+                                  static_cast<uint8_t>(candidate.getLastDirection()),candidate.getPlayerId());
+            MapVisibilityAlgorithm::tempInsertSlots[insertIndex]=static_cast<uint8_t>(freeSlot);
+            freeSlot++;
+        }
+        insertIndex++;
+    }
+
+    //====== 5) compose the block ======
+    if(removeCount>0)
+    {
+        char * const removeOut=ProtocolParsingBase::tempBigBufferForOutput+posOutput;
+        //the 0x69 code byte comes from the constructor-seeded shared buffer
+        memcpy(removeOut,MapVisibilityAlgorithm::tempBigBufferForRemove,1+4+1);
+        {const uint32_t _tmp_le=(htole32(1+removeCount));memcpy(removeOut+1,&_tmp_le,sizeof(_tmp_le));}
+        removeOut[1+4]=static_cast<char>(removeCount);
+        memcpy(removeOut+(1+4+1),MapVisibilityAlgorithm::tempBigBufferForRemove+(1+4+1),removeCount);
+        posOutput+=1+4+1+removeCount;
+    }
+    insertIndex=0;
+    while(insertIndex<insertCount)
+    {
+        /* One 0x6B by source map. The candidate walk goes map after map so
+         * the entries are ALREADY grouped: close the group as soon as the map
+         * changes. */
+        const CATCHCHALLENGER_TYPE_MAPID groupMap=
+                ClientList::list->at(MapVisibilityAlgorithm::tempInsertPlayers[insertIndex]).mapIndex;
+        const uint32_t groupStart=posOutput;
+        posOutput+=1+4+1+2+1;//header filled by closeInsertGroup() below
+        uint8_t groupCount=0;
+        while(insertIndex<insertCount)
+        {
+            const Client &candidate=ClientList::list->at(MapVisibilityAlgorithm::tempInsertPlayers[insertIndex]);
+            if(candidate.mapIndex!=groupMap)
+                break;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<char>(MapVisibilityAlgorithm::tempInsertSlots[insertIndex]);
+            posOutput+=1;
+            posOutput+=playerToFullInsert(candidate,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+            groupCount++;
+            insertIndex++;
+        }
+        closeInsertGroup(ProtocolParsingBase::tempBigBufferForOutput,groupStart,posOutput,groupMap,groupCount);
+    }
+    if(changesCount>0)
+    {
+        char * const changeOut=ProtocolParsingBase::tempBigBufferForOutput+posOutput;
+        //the 0x66 code byte comes from the constructor-seeded shared buffer
+        memcpy(changeOut,MapVisibilityAlgorithm::tempBigBufferForChanges,1+4+1);
+        {const uint32_t _tmp_le=(htole32(1+changesCount*(1+1+1+1)));memcpy(changeOut+1,&_tmp_le,sizeof(_tmp_le));}
+        changeOut[1+4]=static_cast<char>(changesCount);
+        memcpy(changeOut+(1+4+1),MapVisibilityAlgorithm::tempBigBufferForChanges+(1+4+1),changesCount*(1+1+1+1));
+        posOutput+=1+4+1+changesCount*(1+1+1+1);
+    }
+    //only append ping if none pending, to avoid exhausting query numbers
+    #ifdef CATCHCHALLENGER_BENCHMARK
+    if(false)//benchmark: skip the ping entirely (see min_CPU above)
+    #else
+    if(recipient.pingCountInProgress()<=0)
+    #endif
+    {
+        posOutput+=recipient.sendPing(ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+    }
+    recipient.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
