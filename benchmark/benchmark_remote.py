@@ -2715,15 +2715,21 @@ def run_profiler_fleet(specs, verbose=False, max_workers=None):
                                                  s["compile_node"]).items()))
 
     def _build_key(s):
-        return (s["compile_node"]["label"], _flag_sig(s))
+        # The spec's OWN cmake_defs are part of the key too: a benchmark may
+        # hand each exec node a different define (a generated workload path, a
+        # per-node tuning) and that changes the binary. Without this, exec
+        # nodes sharing a compile node and flags would silently share the FIRST
+        # one's build -- and run someone else's workload.
+        return (s["compile_node"]["label"], _flag_sig(s),
+                tuple(sorted((s.get("cmake_defs") or {}).items())))
 
     def _build_sub(s):
-        cl, sig = _build_key(s)
+        cl, sig, defs = _build_key(s)
         base = f"{s['build_subdir_base']}-{cl}"
-        if not sig:
+        if not sig and not defs:
             return base
         # short, stable suffix so different flag sets land in distinct dirs
-        h = hashlib.sha1(repr(sig).encode()).hexdigest()[:8]
+        h = hashlib.sha1(repr((sig, defs)).encode()).hexdigest()[:8]
         return f"{base}-{h}"
 
     by_build = {}

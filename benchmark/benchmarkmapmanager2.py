@@ -1,58 +1,57 @@
 #!/usr/bin/env python3
-"""benchmarkmapmanager2.py -- min_network() over the datapack's real world.
+"""benchmarkmapmanager2.py -- min_network() over a per-node generated replay.
 
-Multi-map sibling of benchmarkmapmanager.py. Same production code under
-test (MapVisibilityAlgorithm::min_network), different WORLD and different
-load model.
+Two stages, because the workload and the measurement want opposite things.
 
-The world is the DATAPACK: every .tmx under map/main/generated (647 real
-maps today -- towns, routes, shop/gym/house interiors) is loaded with the
-PRODUCTION loader (general/base/Map_loader.cpp), keeping only what the
-server keeps hot -- width, height and flat_simplified_map, 673 KB for the
-whole world. Every map is broadcast every tick, which is what the server's
-timer does over flat_map_list, so the cost of ticking hundreds of quiet
-maps is measured rather than assumed away.
+STAGE 1 runs HERE, on the orchestrating host, once per execution node
+(benchmarkmapmanager2/stage1). It reads the datapack's real world with the
+PRODUCTION loader -- every .tmx under map/main/generated, 647 real maps --
+asks the node how much memory it has and decides how many players it can
+hold, spreads them 60/30/10 over route/town/interior maps crowded to the
+owner's 35/200/20 per map (253 hard guard), and then SIMULATES their walk:
+every movement vector is truncated at the first obstacle by the production
+predicate MoveOnTheMap::isWalkableWithDirection. What comes out is a C++
+source: the map dimensions, where each player starts, and the vectors they
+will replay.
 
-The players are spread by kind (60% out on the routes, 30% in town, 10%
-indoors) and crowded to the owner's target of 35 per route, 200 per town
-map, 20 per interior -- that decides how many maps are POPULATED; the rest
-of the world is still ticked. They WALK in runs: pick a direction and a
-length, truncate the movement vector at the first obstacle, then walk it
-one cell per tick. The obstacle test is the production predicate itself
-(MoveOnTheMap::isWalkableWithDirection), and the collision scan happens
-once per RUN, not per tick, so a walking player costs a coordinate update
-and the run measures the server, not the movement model.
+STAGE 2 is what gets measured (benchmarkmapmanager2/stage2). It compiles
+that file in and replays it -- no datapack, no map files, no collision test,
+nothing read at runtime. Per player per tick it costs a countdown and a
+coordinate store: a vector saying "3 cells" is walked one cell per tick for
+3 ticks, and only then is the next vector fetched. So the run measures
+min_network and the tick loop around it, not a client simulation. It also
+means the benchmark fits a board with no filesystem, which is the only way
+the ESP32 can ever run it.
 
-That model is also what keeps the benchmark meaningful: ~18% of players
-step in a given tick and ~23% of slots differ from the previous broadcast,
-so three quarters of the diff is the "unchanged, send nothing" path
-min_network exists for. A per-tick coin flip at 70% put that at 91%
-changed, where the skip path is barely taken and optimising it would have
-been unmeasurable.
+Both stages are therefore specific to the execution node AND to the input
+datapack, and the harness rebuilds stage 2 per node for exactly that reason.
 
-THE WORKLOAD IS FIXED: the map set, the world shape, the walk and migrate
-rates and the seed are constants (in main.cpp and in the datapack), not
-flags. A benchmark whose load can be changed from the command line is not
-comparable with its own history; the only arguments are where the datapack
-is, which of the fixed player counts to run, and how the run is bounded.
-Each run records the world it loaded (world_maps / world_cells), so a
-regenerated map set shows up in the timeline instead of silently shifting
-every number.
+The workload is FIXED: nothing about it can be changed from a command line.
+Each run records what it replayed (world_maps, workload_players,
+workload_cycle_ticks) so a regenerated map set, a different datapack or a
+node whose RAM changed shows up in the timeline instead of quietly shifting
+every timing.
 
-Player counts swept: 50, 250, 1000, 2500, 5000 TOTAL connected players --
-the strict 254 ceiling is the 8-bit wire slot inside ONE map (255 reserved,
-min_network clamps to 254), so the population is bounded only by what the
-fleet can hold: 5000 players is ~14 MB resident and the smallest node has
-52 MB. Town maps carry the owner's 200-per-map target from 1000 up.
+When the replay reaches its end everything resets -- every player home,
+every list rewound -- and the same window replays. Stage 1 sizes the list so
+that stays rare (a reset is one tick where the whole world jumps, and enough
+of them poison the tail) without baking megabytes into a small board's
+binary; `resets` is recorded so the cost is never invisible. After a full
+cycle stage 2 hashes its state and compares it with what stage 1 computed:
+`replay_mismatch` must be 0, which also proves no replayed vector walked
+into a wall.
+
+Player counts per node: the generated population, a quarter of it and a
+sixteenth -- the large/medium/small of THAT node, all out of the same
+generated set, since a prefix of the players is a valid workload on its own.
 
 One-command target -- per benchmark/CLAUDE.md, run with no args, 1h
-timeout. Builds the C++ harness (benchmarkmapmanager2/), runs every
+timeout. Builds stage 1, generates a workload per node, builds stage 2 for
+each (on its compile parent, the workload rsync'd there first), runs every
 available profiler (rusage via /usr/bin/time -v, perf stat, callgrind,
-binary-size) on the host and on every benchmark-enabled execution node
-(built on its compile parent, datapack staged there first), prints a
-one-line progress update per cell, records per-platform history + charts,
-and applies the KEEP/DISCARD/ESCALATE matrix against
-benchmark/results/benchmarkmapmanager2/champion.json.
+binary-size), prints a one-line progress update per cell, records
+per-platform history + charts, and applies the KEEP/DISCARD/ESCALATE matrix
+against benchmark/results/benchmarkmapmanager2/champion.json.
 """
 import os
 import sys
@@ -70,8 +69,10 @@ import history_recorder as hr
 
 REPO_ROOT  = bh.REPO_ROOT
 BENCH_DIR  = os.path.dirname(os.path.abspath(__file__))
-SRC_DIR    = os.path.join(BENCH_DIR, "benchmarkmapmanager2")
-BIN_NAME   = "benchmark_min_network_world"
+STAGE1_SRC = os.path.join(BENCH_DIR, "benchmarkmapmanager2", "stage1")
+STAGE2_SRC = os.path.join(BENCH_DIR, "benchmarkmapmanager2", "stage2")
+STAGE1_BIN = "benchmark_world_stage1"
+BIN_NAME   = "benchmark_min_network_replay"
 
 # Concurrency marker: pure in-process visibility loop, no port bind / no
 # network (the binary name is historical). Safe to run in parallel.
@@ -83,40 +84,67 @@ try:
     BUILD_ROOT = test_config.TMPFS_BUILD_ROOT
 except Exception:
     BUILD_ROOT = os.path.join("/tmp", "cc-build")
-BUILD_DIR  = os.path.join(BUILD_ROOT, "benchmark", "benchmarkmapmanager2")
+BUILD_DIR   = os.path.join(BUILD_ROOT, "benchmark", "benchmarkmapmanager2")
+STAGE1_BUILD = os.path.join(BUILD_DIR, "stage1")
+# Generated workloads: one per (execution node, datapack). They are build
+# INPUTS, not sources -- they never enter the repo.
+WORKLOAD_DIR = os.path.join(BUILD_DIR, "workload")
 
-# THE WORKLOAD IS FIXED and lives in the binary (benchmarkmapmanager2/
-# main.cpp): world shape, walk/migrate rates and seed are compile-time
-# constants, not flags -- a benchmark with knobs is not comparable with its own
-# history. This harness only chooses WHICH of the fixed player counts to run
-# and how each run is bounded (fixed-time vs the fixed-iteration callgrind
-# mode). The list below must match PLAYER_COUNTS[] in main.cpp; the binary
-# refuses any other count.
-#
-# These are TOTAL connected players. The strict 254 ceiling is the 8-bit wire
-# slot INSIDE one map (255 is reserved, and min_network clamps to 254), so the
-# population is bounded only by what the fleet can hold -- 5000 players is
-# ~120 maps and ~14 MB resident, and the smallest node has 52 MB. Town maps
-# reach the owner's target crowd of 200 from 1000 players up.
-PLAYER_COUNTS = [50, 250, 1000, 2500, 5000]
-
-# The world IS the workload: the datapack's generated map set (647 real maps --
-# towns, routes, interiors) loaded with the PRODUCTION Map_loader, so the
-# benchmark walks exactly the collision bytes the server would. Same constant
-# as the other benchmarks in this directory. WHERE it lives is mechanical; WHAT
-# it contains is the fixed workload, so a regenerated map set re-baselines the
-# champion (the run prints its shape in the WORLD line and the harness records
-# it, so such a change is visible instead of silent).
+# The world stage 1 reads. Same constant as the other benchmarks here. Only
+# stage 1 ever touches it: the measured binary carries its world compiled in,
+# so no exec node needs a datapack at all.
 DATAPACK_PATH = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
-# Where the datapack lands on an exec node (rsync_datapack_to_exec default).
-REMOTE_DATAPACK = "./datapack"
+# Where a node's generated workload is parked on its compile node (out of the
+# rsync'd source tree, which is mirrored with --delete).
+REMOTE_WORKLOAD_SUBDIR = "bench-workloads"
+
+# THE WORKLOAD IS FIXED and lives in the BINARY: stage 1 generates it (which
+# maps exist, how many players, where they start, every movement vector) and
+# stage 2 compiles it in, so there is nothing to read or decide at runtime and
+# nothing a flag could change. Each node gets its own -- its RAM sets the
+# population -- which is the point: 5000 players says nothing about a 52 MB
+# Pentium MMX and nothing about a 128 GB host either.
+# ---- How many players a node is given -------------------------------------
+# Stage 1 decides the population from the node's RAM, because that is what
+# actually limits it. Measured on this world: ~1.7 KB of resident memory per
+# player (the slope between the 1000- and 5000-player runs) on a ~6 MB base.
+PER_PLAYER_KB   = 1.7
+BASE_RSS_MB     = 10        # binary + world tables + allocator, with slack
+# Only ever take half of a node's RAM: it has a kernel, an NFS root and a shell
+# to keep alive, and a benchmark that OOM-kills its node measures nothing.
+RAM_FRACTION    = 0.5
+# The connected-player index on the wire is 16-bit (65535 is the empty marker).
+MAX_PLAYERS     = 65530
+MIN_PLAYERS     = 50
+# A node we cannot ask right now (unreachable, mid-reboot): fall back to what
+# the fleet recorded about it, and failing that assume a small board rather
+# than a workstation, so a first run cannot swamp it.
+DEFAULT_RAM_MB  = 64
+# The ESP32 has no /proc to ask: 520 KB of SRAM, of which roughly 300 KB is
+# free heap once the firmware and its network stack are up. Its population is
+# a constant for the same reason -- the per-player cost measured on Linux says
+# nothing about a board whose whole world lives in flash.
+ESP32_RAM_KB        = 300
+ESP32_PLAYERS       = 60
+ESP32_REPLAY_BYTES  = 32 * 1024     # flash, not RAM
+# Byte budget for the replay table baked into stage 2. It decides how long the
+# replay runs before it loops: too small and the run is mostly resets (every
+# reset is a tick where the whole world jumps home, and enough of them poison
+# the tail latency), too large and the board has to carry a table it does not
+# need -- an ESP32 has little room for software. Scale it with the node: 2% of
+# its RAM, floored so even a tiny board gets a usable replay and capped so a
+# big one does not bake in megabytes it will never replay.
+REPLAY_RAM_FRACTION = 0.02
+REPLAY_BYTES_MIN    = 64 * 1024
+REPLAY_BYTES_MAX    = 4 * 1024 * 1024
+
 RUN_REPEATS   = 3        # warmup + 3 measured wall passes per cell
 
 # Fixed-TIME model (benchmark/CLAUDE.md): the wall-time / throughput
 # profilers (rusage, perf-stat) run each player-count for a fixed budget
 # and report ticks completed (higher-is-better) -- NOT a fixed tick count
 # timed to completion. Per-player-count budget in ms; total binary wall =
-# MAP_BENCH_MS * len(PLAYER_COUNTS).
+# MAP_BENCH_MS * (number of player counts).
 MAP_BENCH_MS  = 2000
 
 # Callgrind's metric is a DETERMINISTIC instruction count, which a wall budget
@@ -135,7 +163,8 @@ MAP_CALLGRIND_TOGGLE = "*min_network*"
 # Timeout DERIVED from the budget (timeout = budget + margin), not picked
 # independently. The binary self-stops at the budget; the timeout is only
 # the hard backstop for a hung run, so it must exceed total budget wall.
-_BUDGET_WALL_S = (MAP_BENCH_MS / 1000.0) * len(PLAYER_COUNTS)
+# 3 cells per run (this node's small / medium / large).
+_BUDGET_WALL_S = (MAP_BENCH_MS / 1000.0) * 3
 RUN_TIMEOUT    = int(_BUDGET_WALL_S * 3) + 120   # margin: warmup+startup+repeats
 # Callgrind inflates wall ~30x; scale its timeout by the same factor so it
 # measures the same WORK (its tick count is fixed, see MAP_CALLGRIND_TICKS).
@@ -144,30 +173,210 @@ RUN_TIMEOUT_CALLGRIND = RUN_TIMEOUT * 30
 def _color(c, s): return f"{c}{s}{bh.C_RESET}"
 
 
-def build():
-    os.makedirs(BUILD_DIR, exist_ok=True)
-    print(_color(bh.C_CYAN, f"[build] {SRC_DIR} -> {BUILD_DIR}"))
-    cfg = ["cmake", "-S", SRC_DIR, "-B", BUILD_DIR, "-DCMAKE_BUILD_TYPE=Release"]
+def sweep_counts(total):
+    """The small / medium / large of ONE node, out of its own generated set:
+    a prefix of the players is a valid workload on its own, so the three cells
+    cost no extra generated data. Mirrors stage 2's own default."""
+    counts = []
+    for n in (max(1, total // 16), max(1, total // 4), total):
+        if n not in counts:
+            counts.append(n)
+    return counts
+
+
+def _meminfo_mb(text):
+    """MemTotal out of /proc/meminfo, in MB."""
+    for line in (text or "").splitlines():
+        if line.startswith("MemTotal:"):
+            try:
+                return int(line.split()[1]) // 1024
+            except (IndexError, ValueError):
+                return None
+    return None
+
+
+def _recorded_ram_mb(label):
+    """Last resort: the RAM the fleet recorded for this node in an earlier
+    run. Only used when the node cannot be asked right now."""
+    best = None
+    root = os.path.join(BENCH_DIR, "history")
+    if os.path.isdir(root):
+        for bench in os.listdir(root):
+            bdir = os.path.join(root, bench)
+            if not os.path.isdir(bdir):
+                continue
+            for compile_node in os.listdir(bdir):
+                pf = os.path.join(bdir, compile_node, label, "platform.json")
+                if not os.path.isfile(pf):
+                    continue
+                try:
+                    with open(pf, "r", encoding="utf-8") as f:
+                        d = json.load(f)
+                except (OSError, ValueError):
+                    continue
+                got = (d.get("platform") or d).get("ram_total_mb")
+                if isinstance(got, int) and got > 0 and (best is None or got > best):
+                    best = got
+    return best
+
+
+_RAM_MB_CACHE = {}
+
+
+def node_ram_mb(node):
+    """ASK the node how much memory it has. Every node in this fleet runs
+    Linux, so /proc/meminfo is the answer everywhere -- reading it now beats
+    trusting a number recorded weeks ago, and it is the only way a board that
+    gained or lost RAM is noticed at all.
+
+    `node` is either the exec-node dict or a bare label for the host. The
+    diskless-LXC nodes are brought up for the question and put back after;
+    that is a no-op for every other node. The ESP32 has no /proc at all, so
+    its figure is a constant (see ESP32_RAM_KB)."""
+    label = node["label"] if isinstance(node, dict) else node
+    if label in _RAM_MB_CACHE:
+        return _RAM_MB_CACHE[label]
+    got = _probe_ram_mb(node, label)
+    _RAM_MB_CACHE[label] = got
+    return got
+
+
+def _probe_ram_mb(node, label):
+    if label == "local":
+        try:
+            with open("/proc/meminfo", "r", encoding="utf-8") as f:
+                got = _meminfo_mb(f.read())
+        except OSError:
+            got = None
+        return got if got else DEFAULT_RAM_MB
+    if isinstance(node, dict) and node.get("esp32"):
+        return ESP32_RAM_KB // 1024
+    if isinstance(node, dict) and node.get("host"):
+        runtime, msg = br.nfs_lxc_prepare(node, verbose=False)
+        if runtime is not None:
+            try:
+                rc, out, err = br.ssh_run(runtime.get("user"), runtime.get("host"),
+                                          runtime.get("port", 22),
+                                          "cat /proc/meminfo", timeout=60)
+                if rc == 0:
+                    got = _meminfo_mb(out)
+                    if got:
+                        return got
+            finally:
+                br.nfs_lxc_teardown(node, verbose=False)
+        else:
+            br.nfs_lxc_teardown(node, verbose=False)
+    got = _recorded_ram_mb(label)
+    return got if got else DEFAULT_RAM_MB
+
+
+def node_replay_bytes(node):
+    """How many bytes of replay table this node may carry. On the ESP32 the
+    table lives in FLASH, not in its 300 KB of RAM, so its budget is a
+    constant of the board rather than a fraction of anything."""
+    if isinstance(node, dict) and node.get("esp32"):
+        return ESP32_REPLAY_BYTES
+    n = int(node_ram_mb(node) * 1024 * 1024 * REPLAY_RAM_FRACTION)
+    if n < REPLAY_BYTES_MIN: n = REPLAY_BYTES_MIN
+    if n > REPLAY_BYTES_MAX: n = REPLAY_BYTES_MAX
+    return n
+
+
+def node_max_players(node):
+    """How many players this node's RAM allows. Stage 1 clamps it further to
+    what the world itself can hold at 253 players per map."""
+    if isinstance(node, dict) and node.get("esp32"):
+        return ESP32_PLAYERS
+    ram = node_ram_mb(node)
+    usable = ram * RAM_FRACTION - BASE_RSS_MB
+    if usable <= 0:
+        return MIN_PLAYERS
+    n = int(usable * 1024 / PER_PLAYER_KB)
+    if n > MAX_PLAYERS: n = MAX_PLAYERS
+    if n < MIN_PLAYERS: n = MIN_PLAYERS
+    return n
+
+
+def build_stage1():
+    """Build the generator. It runs HERE, on the orchestrating host: it needs
+    the datapack, and nothing it does is measured."""
+    os.makedirs(STAGE1_BUILD, exist_ok=True)
+    print(_color(bh.C_CYAN, f"[stage1] build {STAGE1_SRC}"))
+    cfg = ["cmake", "-S", STAGE1_SRC, "-B", STAGE1_BUILD,
+           "-DCMAKE_BUILD_TYPE=Release"]
     if shutil.which("ninja"):
         cfg += ["-G", "Ninja"]
     cfg += bh.cmake_accel_defs()
     rc, sout, serr, _ = bh.run_capture(cfg, timeout=300)
     if rc != 0:
-        bh.print_local_build_error("build", "cmake configure", sout, serr)
+        bh.print_local_build_error("stage1", "cmake configure", sout, serr)
         return None
-    # Record which libs (system vs vendored) the local build linked, for
-    # the "local" node's history record.
-    bh.record_libs("local", sout)
-    bld = ["cmake", "--build", BUILD_DIR, "--", "-j", str(os.cpu_count() or 1)]
+    bld = ["cmake", "--build", STAGE1_BUILD, "--", "-j", str(os.cpu_count() or 1)]
     rc, sout, serr, _ = bh.run_capture(bld, timeout=900)
     if rc != 0:
-        bh.print_local_build_error("build", "cmake build", sout, serr)
+        bh.print_local_build_error("stage1", "cmake build", sout, serr)
         return None
-    bin_path = os.path.join(BUILD_DIR, BIN_NAME)
-    if not os.path.isfile(bin_path):
-        print(_color(bh.C_RED, f"[build] missing binary: {bin_path}")); return None
-    print(_color(bh.C_GREEN, f"[build] OK ({bh.binary_size(bin_path)} bytes)"))
-    return bin_path
+    path = os.path.join(STAGE1_BUILD, STAGE1_BIN)
+    if not os.path.isfile(path):
+        print(_color(bh.C_RED, f"[stage1] missing binary: {path}"))
+        return None
+    return path
+
+
+def generate_workload(stage1_bin, node):
+    """Run stage 1 for one node: read the world, size the population from that
+    node's RAM, and write the .cpp stage 2 will compile in.
+
+    Returns (workload_path, info_dict) or (None, error_string)."""
+    label = node["label"] if isinstance(node, dict) else node
+    os.makedirs(WORKLOAD_DIR, exist_ok=True)
+    out = os.path.join(WORKLOAD_DIR, f"workload-{label}.cpp")
+    cmd = [stage1_bin, "--datapack", DATAPACK_PATH, "--node", label,
+           "--max-players", str(node_max_players(node)),
+           "--replay-bytes", str(node_replay_bytes(node)), "--out", out]
+    rc, sout, serr, _ = bh.run_capture(cmd, timeout=900)
+    if rc != 0 or not os.path.isfile(out):
+        return None, f"stage1 rc={rc}: {(serr or sout or '').strip()[:400]}"
+    info = {}
+    for line in sout.splitlines():
+        if line.startswith("STAGE1 "):
+            for kv in line[len("STAGE1 "):].split():
+                k, _, v = kv.partition("=")
+                try: info[k] = int(v)
+                except ValueError: info[k] = v
+    print(_color(bh.C_CYAN,
+          f"[stage1] {label}: {info.get('players', '?')} players "
+          f"({node_ram_mb(node)} MB RAM), "
+          f"{info.get('maps', '?')} maps, cycle {info.get('cycle_ticks', '?')} ticks, "
+          f"{info.get('entries_per_player', '?')} vectors each, "
+          f"{info.get('workload_bytes', 0) // 1024} KiB"))
+    return out, info
+
+
+def build_stage2(workload_cpp, build_dir):
+    """Build the measured binary with that workload compiled in."""
+    os.makedirs(build_dir, exist_ok=True)
+    cfg = ["cmake", "-S", STAGE2_SRC, "-B", build_dir,
+           "-DCMAKE_BUILD_TYPE=Release", f"-DCC_WORKLOAD_CPP={workload_cpp}"]
+    if shutil.which("ninja"):
+        cfg += ["-G", "Ninja"]
+    cfg += bh.cmake_accel_defs()
+    rc, sout, serr, _ = bh.run_capture(cfg, timeout=300)
+    if rc != 0:
+        bh.print_local_build_error("stage2", "cmake configure", sout, serr)
+        return None
+    bh.record_libs("local", sout)
+    bld = ["cmake", "--build", build_dir, "--", "-j", str(os.cpu_count() or 1)]
+    rc, sout, serr, _ = bh.run_capture(bld, timeout=1800)
+    if rc != 0:
+        bh.print_local_build_error("stage2", "cmake build", sout, serr)
+        return None
+    path = os.path.join(build_dir, BIN_NAME)
+    if not os.path.isfile(path):
+        print(_color(bh.C_RED, f"[stage2] missing binary: {path}"))
+        return None
+    print(_color(bh.C_GREEN, f"[stage2] OK ({bh.binary_size(path)} bytes)"))
+    return path
 
 
 def parse_bench_lines(stdout):
@@ -190,17 +399,18 @@ def parse_bench_lines(stdout):
     return out
 
 
-def parse_world_line(stdout):
-    """Parse the binary's one-off `WORLD maps=... cells=...` line.
+def parse_workload_line(stdout):
+    """Parse stage 2's one-off `WORKLOAD node=... players=...` line.
 
-    The world is the fixed part of the workload, so its shape is recorded with
-    every run: a regenerated or swapped datapack then shows up as a changed
-    `world_maps` / `world_cells` in the timeline instead of quietly shifting
+    The workload is what stage 1 generated for this node and this datapack, so
+    its shape is recorded with every run: a regenerated map set, a different
+    datapack or a node whose RAM changed then shows up as a changed
+    world_maps / workload_players in the timeline instead of quietly shifting
     every timing below it."""
     for line in stdout.splitlines():
-        if line.startswith("WORLD "):
+        if line.startswith("WORKLOAD "):
             f = {}
-            for kv in line[len("WORLD "):].split():
+            for kv in line[len("WORKLOAD "):].split():
                 k, _, v = kv.partition("=")
                 try: f[k] = int(v)
                 except ValueError: f[k] = v
@@ -216,10 +426,11 @@ def _bench_to_cell(bench, cell):
     so the workload is not what the benchmark claims to measure -- bad data,
     which is the one thing that IS a FAIL (benchmark/CLAUDE.md)."""
     for p, fields in bench.items():
-        viol = fields.get("walk_violations")
-        if viol:
-            return (f"walk_violations={viol} at players={p}: the collision "
-                    f"oracle failed, the measured workload is invalid")
+        bad = fields.get("replay_mismatch")
+        if bad:
+            return (f"replay_mismatch={bad} at players={p}: after a full cycle "
+                    f"the replayed state does not match what stage 1 computed, "
+                    f"so the two stages disagree and the data is invalid")
         # Fixed-time headline: throughput (ticks/s, higher-is-better) + the
         # work done (ticks completed). Latency stays per-tick.
         cell[(p, "ticks_per_s")]    = fields.get("ticks_per_s")
@@ -231,13 +442,10 @@ def _bench_to_cell(bench, cell):
         # derived from the population, so record it with the numbers it
         # explains rather than leaving a reader to recompute it.
         cell[(p, "maps")]           = fields.get("maps")
-        cell[(p, "maps_populated")]  = fields.get("maps_populated")
-        # Where the tick actually goes. Splitting it per map kind separates the
-        # crowded-town diff from the per-map constant every quiet interior
-        # costs, which the single total cannot: a regression in either one
-        # hides inside the other.
-        for kind in ("outdoor", "city", "indoor"):
-            cell[(p, f"tick_{kind}_ns")] = fields.get(f"tick_{kind}_ns")
+        # How often the replay looped back to its first vector. A reset is one
+        # tick where every player jumps home, so it must stay a small fraction
+        # of the run -- and it is only invisible if nobody looks.
+        cell[(p, "resets")]         = fields.get("resets")
         # Harness cost per tick. NOT server work and NOT inside the latency
         # window: recorded so a reviewer can check it stayed a fraction of
         # median_tick_ns instead of taking that on trust.
@@ -250,17 +458,6 @@ def _bench_to_cell(bench, cell):
         changed = fields.get("sampled_changed")
         if slots:
             cell[(p, "changed_pct")] = round(100.0 * changed / slots, 2)
-        # Players standing on a cell someone else also occupies. Legal --
-        # production has no player-player collision, the move check is
-        # canGoTo() on the static map only -- so this is a crowd descriptor:
-        # it says whether the per-map target crowd still fits the floor.
-        if fields.get("sharing_cell") is not None:
-            cell[(p, "sharing_cell_pct")] = round(
-                100.0 * fields["sharing_cell"] / p, 2)
-        # Share of players taking a step in a tick (the walk model's own rate).
-        ticks = fields.get("ticks")
-        if ticks and fields.get("moves") is not None:
-            cell[(p, "walk_pct")] = round(100.0 * fields["moves"] / ticks / p, 2)
     return None
 
 
@@ -274,7 +471,7 @@ def _mode_args(profiler):
 
 
 def run_one(bin_path, profiler="rusage", players_arg=None):
-    cmd = [bin_path, *_mode_args(profiler), "--datapack", DATAPACK_PATH]
+    cmd = [bin_path, *_mode_args(profiler)]
     if players_arg is not None:
         for p in players_arg:
             cmd += ["--players", str(p)]
@@ -304,11 +501,13 @@ def cell_run(bin_path, profiler, label_node):
             if i == 0:
                 continue
             one = {}
-            world = parse_world_line(sout)
-            if world.get("maps"):
-                one[(0, "world_maps")] = world["maps"]
-                one[(0, "world_cells")] = world.get("cells")
-                one[(0, "world_walkable_cells")] = world.get("walkable_cells")
+            wl = parse_workload_line(sout)
+            if wl.get("maps"):
+                one[(0, "world_maps")]            = wl["maps"]
+                one[(0, "workload_players")]      = wl.get("players")
+                one[(0, "workload_cycle_ticks")]  = wl.get("cycle_ticks")
+                one[(0, "workload_entries")]      = wl.get("entries_per_player")
+                one[(0, "workload_replay_bytes")] = wl.get("replay_bytes")
             bad = _bench_to_cell(parse_bench_lines(sout), one)
             if bad is not None:
                 return None, bad
@@ -360,16 +559,15 @@ def cell_run(bin_path, profiler, label_node):
     return None, f"unknown profiler: {profiler}"
 
 
-def probe_cpu_percent_per_player(bin_path):
-    """Run the bench binary once per PLAYER_COUNTS entry (single value
-    via --players N) and derive cpu_percent = (user+sys)/wall*100 from
-    /usr/bin/time -v. Returns {N -> cpu_percent}.
+def probe_cpu_percent_per_player(bin_path, counts):
+    """Run the binary once per player count (single value via --players N) and
+    derive cpu_percent = (user+sys)/wall*100 from /usr/bin/time -v.
 
-    The main sweep runs all player counts in a single process so we
-    can't tease apart per-count CPU there. The probe is MAP_BENCH_MS per
-    count (fixed-time), cheap relative to the sweep + callgrind cells."""
+    The main sweep runs every count in one process so it cannot tease them
+    apart there. The probe is MAP_BENCH_MS per count (fixed-time), cheap next
+    to the sweep itself."""
     out = {}
-    for p in PLAYER_COUNTS:
+    for p in counts:
         cmd = run_one(bin_path, players_arg=[p])
         t = bh.measure_time_v(cmd, timeout=RUN_TIMEOUT)
         if t.get("rc") != 0:
@@ -380,8 +578,8 @@ def probe_cpu_percent_per_player(bin_path):
         if wall <= 0 or u is None or sv is None:
             continue
         pct = (u + sv) / wall * 100.0
-        # Single-threaded binary -> bounded at 100. >100 implies the
-        # binary briefly spawned a worker (or scheduler jitter); clamp.
+        # Single-threaded binary -> bounded at 100. >100 implies scheduler
+        # jitter in the measurement; clamp.
         out[p] = min(100.0, pct)
     return out
 
@@ -418,33 +616,31 @@ def _fit_exponent(points):
     return num / den
 
 
-def print_sweep_table(cell_metrics):
+def print_sweep_table(cell_metrics, counts):
     """Compact per-player-count summary on stdout. The recorded metrics go to
     history; this is what an operator actually reads after a run."""
     rows = []
-    for p in PLAYER_COUNTS:
-        def g(name):
+    for p in counts:
+        row = [p]
+        for name in ("maps", "median_tick_ns", "p95_tick_ns", "median_prep_ns",
+                     "changed_pct", "resets", "ticks"):
             blk = cell_metrics.get(f"p{p}_{name}")
-            return blk["value"] if blk else None
-        rows.append((p, g("maps_populated"), g("median_tick_ns"),
-                     g("p95_tick_ns"), g("median_prep_ns"), g("changed_pct"),
-                     g("tick_outdoor_ns"), g("tick_city_ns"),
-                     g("tick_indoor_ns")))
+            row.append(blk["value"] if blk else None)
+        rows.append(tuple(row))
     if not any(r[2] for r in rows):
         return
-    print(_color(bh.C_CYAN, "[sweep] the datapack's world, per player count "
+    print(_color(bh.C_CYAN, "[sweep] this node's replay, per player count "
                             "(every map is broadcast every tick)"))
-    print("  players  busy_maps   median_ns    p95_ns   prep%   changed%"
-          "    outdoor      city    indoor")
-    for (p, busy, med, p95, prep, chg, out, city, ind) in rows:
+    print("  players   maps   median_ns    p95_ns   prep%   changed%"
+          "   resets     ticks")
+    for (p, maps, med, p95, prep, chg, resets, ticks) in rows:
         pct = (100.0 * prep / med) if (prep and med) else float("nan")
-        print(f"  {p:>7}  {busy if busy is not None else '-':>9}"
+        print(f"  {p:>7}  {maps if maps is not None else '-':>5}"
               f"  {med if med is not None else '-':>10}"
               f"  {p95 if p95 is not None else '-':>8}"
               f"  {pct:>5.1f}%  {chg if chg is not None else float('nan'):>8.1f}%"
-              f"  {out if out is not None else '-':>9}"
-              f"  {city if city is not None else '-':>8}"
-              f"  {ind if ind is not None else '-':>8}")
+              f"  {resets if resets is not None else '-':>7}"
+              f"  {ticks if ticks is not None else '-':>8}")
 
 
 def _metric_unit_better(metric_name):
@@ -503,9 +699,9 @@ def _cell_to_metric_block(per_cell):
 # drifted and that is what needs looking at), and median_prep_ns is the
 # harness's own cost. Letting any of them into the decision matrix would let
 # harness noise veto a real server improvement.
-DIAGNOSTIC_METRICS = ("maps", "maps_populated", "median_prep_ns",
-                      "changed_pct", "walk_pct", "sharing_cell_pct",
-                      "world_maps", "world_cells", "world_walkable_cells")
+DIAGNOSTIC_METRICS = ("maps", "resets", "median_prep_ns", "changed_pct",
+                      "world_maps", "workload_players", "workload_cycle_ticks",
+                      "workload_entries", "workload_replay_bytes")
 
 
 def aggregate_metrics(per_cell):
@@ -533,33 +729,40 @@ def _runtime_cmd_string(profiler="rusage"):
     after push_binary_to_exec; we invoke it as ./BIN_NAME so cwd is the
     work_dir. Per-profiler workload mode: fixed-time (--ms) for throughput
     profilers, fixed-iteration (--ticks) for callgrind."""
-    parts = [f"./{BIN_NAME}", *_mode_args(profiler),
-             "--datapack", REMOTE_DATAPACK]
+    parts = [f"./{BIN_NAME}", *_mode_args(profiler)]
     return " ".join(parts)
 
 
-def _stage_datapack_on_exec(exec_node):
-    """stage_fn for the fleet: put the datapack on the exec node before its
-    binary runs. The world this benchmark walks IS that datapack, so a node
-    without it has nothing to measure -- returning (False, msg) makes the
-    harness record SKIP (unknown), never FAIL.
+def _push_workload(compile_node, workload_path, label):
+    """Park this node's generated workload on its COMPILE node, outside the
+    rsync'd source tree (that one is mirrored with --delete), and return the
+    remote path for -DCC_WORKLOAD_CPP.
 
-    server_mode strips audio/images (the loader reads .tmx/.xml/.tsx only), so
-    ~3.8 MB travels instead of 29 MB, and the helper parks it on persistent
-    disk rather than the node's tmpfs scratch."""
-    rc, msg = br.rsync_datapack_to_exec(exec_node, DATAPACK_PATH,
-                                        server_mode=True)
+    It cannot travel with the sources: it is generated per exec node and per
+    datapack, and a generated file has no business in the repo."""
+    work = compile_node["work_dir"]
+    remote_dir = f"{work}/{REMOTE_WORKLOAD_SUBDIR}"
+    u = compile_node["ssh"]["user"]
+    h = compile_node["ssh"]["host"]
+    port = compile_node["ssh"].get("port", 22)
+    rc, _, _ = br.ssh_run(u, h, port, f"mkdir -p {remote_dir}", timeout=60)
     if rc != 0:
-        return False, f"datapack rsync failed: {msg}"
-    return True, "ok"
+        return None, f"cannot create {remote_dir} on {compile_node['label']}"
+    remote_path = f"{remote_dir}/workload-{label}.cpp"
+    rc, msg = br.rsync_to(u, h, port, workload_path, remote_path, delete=False)
+    if rc != 0:
+        return None, f"workload rsync failed: {msg}"
+    return remote_path, "ok"
 
 
 def _remote_spec(node, avail_profilers, skips, all_profilers,
-                 progress, per_tool):
-    """Build the run_profiler_fleet spec for one remote exec node. Emits
-    the SKIP progress lines (no-compile-node / tool-missing) up front so
-    the counter stays in lock-step, then returns the spec dict -- or None
-    when there's nothing to run (no compile node / no runnable profiler)."""
+                 progress, per_tool, stage1_bin):
+    """Build the run_profiler_fleet spec for one remote exec node: generate
+    ITS workload (its RAM sets the population), push that to its compile node,
+    and point stage 2's build at it. Emits the SKIP progress lines
+    (no-compile-node / tool-missing / generation failed) up front so the
+    counter stays in lock-step, then returns the spec dict -- or None when
+    there is nothing to run."""
     label = node["label"]
     compile_node = node.get("compile_node")
     if compile_node is None:
@@ -593,24 +796,43 @@ def _remote_spec(node, avail_profilers, skips, all_profilers,
             per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
     if not runnable:
         return None
+    # STAGE 1 for this node: its own RAM decides how many players it is given,
+    # so the generator gets the exec-node dict -- that is what gets asked.
+    workload, info = generate_workload(stage1_bin, exec_node)
+    if workload is None:
+        bh.print_node_error("benchmarkmapmanager2", label, "SKIP", str(info))
+        for prof in runnable:
+            progress.emit(prof, "no", label, status="SKIP",
+                          extra="stage1-generate-failed")
+            per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+        return None
+    remote_workload, msg = _push_workload(compile_node, workload, label)
+    if remote_workload is None:
+        bh.print_node_error("benchmarkmapmanager2", label, "SKIP", msg)
+        for prof in runnable:
+            progress.emit(prof, "no", label, status="SKIP",
+                          extra="workload-push-failed")
+            per_tool[label][prof] = {"status": "SKIP", "metrics": {}}
+        return None
     return {
         "exec_node":         exec_node,
         "compile_node":      compile_node,
-        "cmake_src_subdir":  "benchmark/benchmarkmapmanager2",
+        "cmake_src_subdir":  "benchmark/benchmarkmapmanager2/stage2",
         "build_subdir_base": "benchmarkmapmanager2",
         "bin_name":          BIN_NAME,
         # Per-profiler workload mode: fixed-time (--ms) for rusage/perf-stat,
         # fixed-iteration (--ticks) for callgrind.
         "runtime_cmd":       {p: _runtime_cmd_string(p) for p in runnable},
         "profilers":         runnable,
-        "cmake_defs":        {"CMAKE_BUILD_TYPE": "Release"},
+        # The generated workload is a build INPUT: run_profiler_fleet keys its
+        # build dirs on these defs, so each node compiles its own binary.
+        "cmake_defs":        {"CMAKE_BUILD_TYPE": "Release",
+                              "CC_WORKLOAD_CPP": remote_workload},
         # Remote callgrind counts only min_network via --toggle-collect
         # (excludes startup). Resolved against symbols at runtime, so no
         # build define / valgrind header needed on the cross compile node.
         "callgrind_toggle":  MAP_CALLGRIND_TOGGLE,
         "run_timeout":       RUN_TIMEOUT,
-        # The world has to be on the node before the binary runs.
-        "stage_fn":          _stage_datapack_on_exec,
     }
 
 
@@ -664,11 +886,13 @@ def _record_remote_result(label, runnable, out, msg,
                 cell[(0, "wall_s")] = res["wall_s"]
             # Per-player throughput/latency from the binary's BENCH stdout
             # (captured by remote_time_v as res["stdout"]).
-            world = parse_world_line(res.get("stdout") or "")
-            if world.get("maps"):
-                cell[(0, "world_maps")] = world["maps"]
-                cell[(0, "world_cells")] = world.get("cells")
-                cell[(0, "world_walkable_cells")] = world.get("walkable_cells")
+            wl = parse_workload_line(res.get("stdout") or "")
+            if wl.get("maps"):
+                cell[(0, "world_maps")]            = wl["maps"]
+                cell[(0, "workload_players")]      = wl.get("players")
+                cell[(0, "workload_cycle_ticks")]  = wl.get("cycle_ticks")
+                cell[(0, "workload_entries")]      = wl.get("entries_per_player")
+                cell[(0, "workload_replay_bytes")] = wl.get("replay_bytes")
             bad = _bench_to_cell(parse_bench_lines(res.get("stdout") or ""), cell)
             if bad is not None:
                 progress.emit(prof, "no", label, status="FAIL", extra=bad)
@@ -742,20 +966,30 @@ def main():
             f"has map/main/generated/, or generate it with "
             f"tools/map-procedural-generation/.")
         return 2
-    bin_path = build()
+    # STAGE 1 -- here, once: it reads the datapack, which no other machine has.
+    stage1_bin = build_stage1()
+    if stage1_bin is None:
+        return 2
+    # The local baseline gets its own workload too: this host's RAM decides its
+    # population exactly like any other node's.
+    local_workload, local_info = generate_workload(stage1_bin, "local")
+    if local_workload is None:
+        bh.print_local_build_error("benchmarkmapmanager2", "stage1 generate",
+                                   "", str(local_info))
+        return 2
+    bin_path = build_stage2(local_workload, os.path.join(BUILD_DIR, "stage2-local"))
     if bin_path is None:
         return 2
 
     if args.profile:
         tools = bh.profile_tools(args.profile)
         remote_spec = {
-            "cmake_src_subdir": "benchmark/benchmarkmapmanager2",
+            "cmake_src_subdir": "benchmark/benchmarkmapmanager2/stage2",
             "build_subdir_base": "benchmarkmapmanager2",
             "bin_name": BIN_NAME,
             "cmake_defs": {"CMAKE_BUILD_TYPE": "Release"},
             "callgrind_toggle": MAP_CALLGRIND_TOGGLE,
             "runtime_cmd": {t: _runtime_cmd_string(t) for t in tools},
-            "stage_fn": _stage_datapack_on_exec,
         }
         # local: profile each tool with its own workload-mode argv.
         for t in tools:
@@ -833,7 +1067,7 @@ def main():
             # done in parallel by run_profiler_fleet after this loop.
             spec = _remote_spec(node, node_profilers[label],
                                 node_skips[label], all_profilers,
-                                progress, per_tool)
+                                progress, per_tool, stage1_bin)
             if spec is not None:
                 remote_specs.append(spec)
             else:
@@ -863,16 +1097,19 @@ def main():
                                      "metrics": _cell_to_metric_block(cell)}
         all_metrics[label] = aggregate_metrics(flat)
 
-        # Per-CLAUDE.md "CPU% per sub-benchmark": for the rusage profile
-        # only (perf/callgrind/binary-size are deterministic single
-        # values and have no workload axis), probe each PLAYER_COUNTS
-        # value individually and emit one sub-bench slice per count
-        # carrying cpu_percent + the parsed BENCH tick metrics.
+        # Per-CLAUDE.md "CPU% per sub-benchmark": for the rusage profile only
+        # (perf/callgrind/binary-size are deterministic single values and have
+        # no workload axis), probe each player count individually and emit one
+        # sub-bench slice per count carrying cpu_percent + its tick metrics.
         if per_tool[label].get("rusage", {}).get("status") == "PASS":
-            cpu_per_p = probe_cpu_percent_per_player(bin_path)
+            # This node's own counts, learned from the run it just did.
+            counts = sorted(int(k[1:].split("_", 1)[0])
+                            for k in per_tool[label]["rusage"]["metrics"]
+                            if k.startswith("p") and k.endswith("_median_tick_ns"))
+            cpu_per_p = probe_cpu_percent_per_player(bin_path, counts)
             slices = {}
             cell_metrics = per_tool[label]["rusage"]["metrics"]
-            for p in PLAYER_COUNTS:
+            for p in counts:
                 slice_metrics = {}
                 # pull parsed tick/byte values out of the existing flat
                 # metric dict (keys are p<count>_<metric_name>).
@@ -911,11 +1148,11 @@ def main():
             # candidate metric set, so the champion keeps comparing the same
             # fixed workload.
             fit = []
-            for p in PLAYER_COUNTS:
-                blk = per_tool[label]["rusage"]["metrics"].get(f"p{p}_median_tick_ns")
+            for p in counts:
+                blk = cell_metrics.get(f"p{p}_median_tick_ns")
                 if blk is not None:
                     fit.append((p, blk["value"]))
-            print_sweep_table(cell_metrics)
+            print_sweep_table(cell_metrics, counts)
             exp = _fit_exponent(fit)
             if exp is not None:
                 slices["scaling"] = {"scaling_exponent": {
@@ -984,8 +1221,8 @@ def main():
             runner = hr.make_ssh_runner(node.get("ssh_host"),
                                         node.get("ssh_user"),
                                         node.get("ssh_port", 22))
-        # The datapack IS this benchmark's workload; on an exec node it was
-        # staged next to the binary by the spec's stage_fn.
+        # No datapack anywhere but on this host: the measured binary carries
+        # its workload compiled in.
         if node["label"] == "local":
             cc_path = BUILD_DIR
         else:
