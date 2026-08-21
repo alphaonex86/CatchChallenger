@@ -1,5 +1,5 @@
 // HEADLESS: yes
-// Benchmark: MapVisibilityAlgorithm::min_network() under a move-mix
+// Benchmark: MapVisibilityAlgorithm::min_balanced() under a move-mix
 //            workload (--move-pct % of players change direction per
 //            tick, default 100; <10% of ticks insert+remove),
 //            parameterised by player count.
@@ -9,7 +9,7 @@
 //                move_pct=M insrem_pct=P visibility_state_bytes=V
 //   total_ns / median_tick_ns / p95_tick_ns are lower-is-better.
 //   bytes_sent is the cumulative output volume produced by the
-//   algorithm. min_network exists to make this number small (the
+//   algorithm. min_balanced exists to make this number small (the
 //   target is an ADSL / 2G / TOR home server), so it is a FIRST-CLASS
 //   metric here, not a sanity-check: any CPU work that costs bytes is
 //   a regression regardless of what it does to the tick time.
@@ -69,7 +69,7 @@ struct Bench
         ClientList::list = &cl;
         // Match production-typical tunables. simple.max governs the
         // upper bound that triggers the early-out branch in
-        // min_network(); set well above the largest scenario to keep
+        // min_balanced(); set well above the largest scenario to keep
         // it out of the timing path.
         GlobalServerData::serverSettings.mapVisibility.simple.max = 1024;
         GlobalServerData::serverSettings.dontSendPlayerType = false;
@@ -168,11 +168,11 @@ static Direction dir_of(uint32_t r)
 // player draw is short-circuited away).
 // One tick's workload PREP is factored out so the timed (latency-
 // sampled) and untimed (throughput) paths share it without a lambda
-// (CLAUDE.md: no lambdas). min_network() is timed by the caller, NOT
-// here, so the latency window stays exactly around min_network.
+// (CLAUDE.md: no lambdas). min_balanced() is timed by the caller, NOT
+// here, so the latency window stays exactly around min_balanced.
 // LAG MODEL. "Lagging" means the server has NOT received this client's 0xE3
 // reply by the time the tick timer runs, which is the normal state of a 2G /
-// TOR / satellite link whose round trip exceeds the 150ms tick. min_network
+// TOR / satellite link whose round trip exceeds the 150ms tick. min_balanced
 // holds such a recipient back and hands it one coalesced delta on the next
 // ACK, so lag is what decides how much of the work is shared (cheap) versus
 // per-client (a private baseline plus its own diff).
@@ -203,7 +203,7 @@ static void prepare_tick(Bench &b, Lcg &rng, unsigned int insrem_pct,
         // Deliver the 0xE3 reply, exactly as production does in
         // ClientNetworkRead.cpp. A healthy client answers every tick; a
         // lagging one only every lag_rounds-th tick, and is held back by
-        // min_network in between. WITHOUT any ack the whole fleet would look
+        // min_balanced in between. WITHOUT any ack the whole fleet would look
         // permanently lagging after the first tick and the benchmark would
         // measure a server sending nothing.
         if(!client_is_laggy(i, lag_pct) || lag_rounds <= 1
@@ -278,12 +278,12 @@ static int run_scenario(unsigned int players, unsigned int ticks,
     // operator<< a no-op without changing the algorithm.
     std::cout.setstate(std::ios_base::badbit);
 
-    // Warmup tick: PATH 1 in min_network() (sendedMap != mapIndex)
+    // Warmup tick: PATH 1 in min_balanced() (sendedMap != mapIndex)
     // every player does the full "drop + reinsert all" handshake. This
     // is hot-cache priming; not in timed median.
     b.clearCaptured();
     auto warm0 = std::chrono::steady_clock::now();
-    b.mva.min_network(1);
+    b.mva.min_balanced(1);
     auto warm1 = std::chrono::steady_clock::now();
     uint64_t warm_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(warm1 - warm0).count();
     uint64_t bytes_warm = b.totalBytesAndClear();
@@ -302,13 +302,13 @@ static int run_scenario(unsigned int players, unsigned int ticks,
         // instruction count (callgrind), where the wall clock is emulated
         // and irrelevant -- per-tick timing is free of distortion concerns.
         // Startup is excluded from the IR count by the harness running
-        // callgrind with --collect-atstart=no --toggle-collect='*min_network*'
+        // callgrind with --collect-atstart=no --toggle-collect='*min_balanced*'
         // (header-free; no source markers needed).
         while(t < ticks)
         {
             prepare_tick(b, rng, insrem_pct, move_pct, lag_pct, lag_rounds, t, inserts_total, removes_total);
             auto t0 = std::chrono::steady_clock::now();
-            b.mva.min_network(1);
+            b.mva.min_balanced(1);
             auto t1 = std::chrono::steady_clock::now();
             samples.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count());
             bytes_total += b.totalBytesAndClear();
@@ -321,7 +321,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
         //
         // The per-tick clock reads needed for LATENCY would dominate cheap
         // ticks on a slow clock (Geode/old MIPS: clock_gettime is a ~1-2us
-        // syscall, no vDSO; a 5-player min_network is only ~3.7us), badly
+        // syscall, no vDSO; a 5-player min_balanced is only ~3.7us), badly
         // skewing the THROUGHPUT count. So we never time every tick:
         //   1. calibrate per-tick cost from a short UNTIMED burst;
         //   2. size a batch so the budget is polled only ~every
@@ -338,7 +338,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
         for(unsigned int k = 0; k < CALIB; k++)
         {
             prepare_tick(b, rng, insrem_pct, move_pct, lag_pct, lag_rounds, t, inserts_total, removes_total);
-            b.mva.min_network(1);
+            b.mva.min_balanced(1);
             bytes_total += b.totalBytesAndClear();
             t++;
         }
@@ -354,10 +354,10 @@ static int run_scenario(unsigned int players, unsigned int ticks,
 
         while(std::chrono::steady_clock::now() - loop_start < budget)
         {
-            // ONE latency-sampled tick (t0..t1 brackets only min_network).
+            // ONE latency-sampled tick (t0..t1 brackets only min_balanced).
             prepare_tick(b, rng, insrem_pct, move_pct, lag_pct, lag_rounds, t, inserts_total, removes_total);
             auto t0 = std::chrono::steady_clock::now();
-            b.mva.min_network(1);
+            b.mva.min_balanced(1);
             auto t1 = std::chrono::steady_clock::now();
             samples.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count());
             bytes_total += b.totalBytesAndClear();
@@ -366,7 +366,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
             for(unsigned int k = 1; k < check_every; k++)
             {
                 prepare_tick(b, rng, insrem_pct, move_pct, lag_pct, lag_rounds, t, inserts_total, removes_total);
-                b.mva.min_network(1);
+                b.mva.min_balanced(1);
                 bytes_total += b.totalBytesAndClear();
                 t++;
             }

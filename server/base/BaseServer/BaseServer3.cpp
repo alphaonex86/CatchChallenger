@@ -182,10 +182,15 @@ void BaseServer::preload_1_the_data()
     }
 
     /* Both load paths (binary cache and datapack parsing) converge here with
-     * the map list and its border offsets final: precompute the border maps
-     * each map can see into. Not serialised into the cache, it is 6 bytes by
-     * neighbour and rebuilding it is a walk of the map list. */
+     * the map list, its border offsets and the datapack final: precompute the
+     * border maps each map can see into, and the view rectangle from the
+     * datapack zoom. Neither is serialised into the cache: 6 bytes by
+     * neighbour, and rebuilding is a walk of the map list. */
     MapVisibilityAlgorithm::resolveNeighbours();
+    MapVisibilityAlgorithm::resolveViewRange(CommonDatapack::commonDatapack.get_layersOptions().zoom);
+    std::cout << "Visibility: view range " << std::to_string(MapVisibilityAlgorithm::view_x) << "x"
+              << std::to_string(MapVisibilityAlgorithm::view_y) << " tiles around the player (datapack zoom "
+              << std::to_string(CommonDatapack::commonDatapack.get_layersOptions().zoom) << ")" << std::endl;
 
     preload_10_sync_the_gift();
     preload_11_sync_the_players();

@@ -10,19 +10,42 @@
 #define CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER 128*1024
 #endif
 
-/* View range of min_range() (GameServerSettings Minimize_Network), in tiles
- * around the player. Half extents: the view is a
- * (2*VIEW_X+1) x (2*VIEW_Y+1) RECTANGLE, the shape of the client window
- * (800x600 map area / 16px tile = 50x37 tiles). Integer only, no distance,
- * no sqrt/sin/cos: 2 compares by candidate.
+/* View range of min_range() (GameServerSettings Minimize_Network): the half
+ * extents of the RECTANGLE, in tiles, a player sees around itself. The view
+ * is (2*view_x+1) x (2*view_y+1). Integer only, no distance, no sqrt/sin/cos:
+ * 2 compares by candidate.
+ *
+ * NOT a magic number: resolveViewRange() computes it at load from the client
+ * window and the DATAPACK zoom (map/layers.xml). Both clients scale the scene
+ * by an INTEGER factor, so one tile covers TILE_PIXEL*factor screen pixels and
+ * the window draws w/(TILE_PIXEL*factor) tiles -- but they do not pick the
+ * same factor: qtcpu800x600 takes floor(max(w,h)*zoom/512)
+ * (MapControllerMP::setScale, verified against
+ * test/screenshot-windows-qtcpu800x600-autosolo.png: zoom 4 on 800x600 gives
+ * 6, so 96px by tile and 9x7 tiles) while qtopengl takes
+ * ceil(min(w,h)*zoom/512) (CCMap::paint). The qtopengl one is ALWAYS <=, so it
+ * draws MORE tiles and is the one to cover; the max of the two axes is taken
+ * so a portrait/rotated window is covered too, and +1 tile of margin so
+ * somebody arriving by the screen edge is known before it has to be drawn.
+ * With the real datapack (zoom 4) that is 8 tiles: a 17x17 view.
+ *
  * MARGIN is the hysteresis: a player is INSERTED at the view limit but only
  * REMOVED past view+margin, else somebody walking on the edge costs a full
  * insert (~25 bytes) + a remove EVERY tick instead of a 4 bytes move. */
-#ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_X
-#define CATCHCHALLENGER_SERVER_MAP_VIEW_X 25
+#ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_TILE_PIXEL
+#define CATCHCHALLENGER_SERVER_MAP_VIEW_TILE_PIXEL 16//datapack tileset tilewidth/tileheight
 #endif
-#ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_Y
-#define CATCHCHALLENGER_SERVER_MAP_VIEW_Y 19
+//biggest client window to cover, NOT the smallest: a bigger window draws
+//more tiles, and a player must never pop in inside the screen
+#ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_SCREEN_WIDTH
+#define CATCHCHALLENGER_SERVER_MAP_VIEW_SCREEN_WIDTH 1920
+#endif
+#ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_SCREEN_HEIGHT
+#define CATCHCHALLENGER_SERVER_MAP_VIEW_SCREEN_HEIGHT 1080
+#endif
+//same fallback as DatapackGeneralLoaderMap when map/layers.xml has no zoom
+#ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_ZOOM_DEFAULT
+#define CATCHCHALLENGER_SERVER_MAP_VIEW_ZOOM_DEFAULT 2
 #endif
 #ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN
 #define CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN 2
@@ -49,23 +72,30 @@ public:
     // broadcast all, no filter then resend same data
     void min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     // filter if already send, then consume CPU (GameServerSettings "balanced")
-    void min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+    void min_balanced(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     // only the players inside the view range, on this map OR on a border map
     // (GameServerSettings "network")
     void min_range(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     // one recipient view delta, see min_range()
     void sendViewDelta(ClientWithMap &recipient,const PLAYER_INDEX_FOR_CONNECTED &recipientIndex,
                        const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+    /* true when (otherMapIndex,otherX,otherY) sits inside the view range of a
+     * player standing at (x,y) on mapIndex: the SAME rectangle min_range()
+     * broadcasts, border maps included. false when the other map is not even
+     * a border map of this one. Used by Client::otherPlayerIsInRange() so a
+     * player interacts with exactly what it sees. */
+    static bool inViewRange(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,
+                            const CATCHCHALLENGER_TYPE_MAPID &otherMapIndex,const COORD_TYPE &otherX,const COORD_TYPE &otherY);
     // Emit ONE delta between a recipient's PRIVATE baseline
     // (ClientWithMap::sendedStatus, what it last actually received) and the
     // current snapshot. Only used for a client that has just caught up
-    // after lagging -- see the flow-control note in min_network().
+    // after lagging -- see the flow-control note in min_balanced().
     void sendCoalescedDelta(ClientWithMap &clientWithMap,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,
                             const unsigned int index_client,const size_t dense_size);
     //to prevent allocate memory
     //Layout [code][size:4][count:1][entries...]. The code byte is written
     //ONCE in the constructor and never touched again, so the hot path
-    //never re-emits a constant; min_network() fills size+count after its
+    //never re-emits a constant; min_balanced() fills size+count after its
     //diff and then copies the whole pre-composed packet with one memcpy.
     static char tempBigBufferForChanges[1+4+1+255*(1+1+1+1)];
     static char tempBigBufferForRemove[1+4+1+255];
@@ -112,6 +142,16 @@ public:
     std::vector<NeighbourMap> neighbours;
     //call once, after the map list AND the border offsets are resolved
     static void resolveNeighbours();
+
+    /* Half extents of the view rectangle, see the comment on top of this
+     * file. Resolved once at load by resolveViewRange() from the datapack
+     * zoom; the values they start with are the ones of the fallback zoom, so
+     * a server that never resolves still shows a sane view instead of
+     * nobody. */
+    static uint8_t view_x;
+    static uint8_t view_y;
+    //call once, with CommonDatapack::commonDatapack.get_layersOptions().zoom
+    static void resolveViewRange(const uint8_t &datapackZoom);
 
     /* Last state broadcast for THIS map, one entry per slot.
      *

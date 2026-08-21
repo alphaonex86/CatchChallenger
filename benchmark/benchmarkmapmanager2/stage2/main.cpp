@@ -1,5 +1,5 @@
 // HEADLESS: yes
-// Benchmark: MapVisibilityAlgorithm::min_network() over a whole world, driven
+// Benchmark: MapVisibilityAlgorithm::min_balanced() over a whole world, driven
 //            by a PRE-GENERATED REPLAY. Stage 2 of benchmarkmapmanager2.
 //
 // Stage 1 (benchmarkmapmanager2/stage1) read the datapack's real map set with
@@ -10,7 +10,7 @@
 // files, no collision test, nothing to read at runtime. That is what lets the
 // same benchmark run on a board with a few hundred KB and no filesystem, and
 // it is why the load model costs almost nothing here: the measurement is
-// min_network and the tick loop around it, not the client being simulated.
+// min_balanced and the tick loop around it, not the client being simulated.
 //
 // The vectors are NOT re-decided every tick. A vector says "walk 3 cells":
 // the player then walks one cell per tick for 3 ticks and only THEN is its
@@ -29,7 +29,7 @@
 //   median_tick_ns/p95_tick_ns lower-is-better: one tick = the WHOLE world
 //   median_prep_ns            lower-is-better: the replay's own cost per tick.
 //                             NOT server work, and outside the latency window
-//   bytes_sent                lower-is-better (what min_network exists to cut)
+//   bytes_sent                lower-is-better (what min_balanced exists to cut)
 //   visibility_state_bytes    lower-is-better (resident per-map diff state)
 //   sampled_changed/sampled_slots  share of slots that differ from the previous
 //                             broadcast: what the stateful diff gets to SKIP
@@ -287,7 +287,7 @@ struct World
         size_t i = 0;
         while(i < maps.size())
         {
-            maps[i]->mva.min_network((CATCHCHALLENGER_TYPE_MAPID)i);
+            maps[i]->mva.min_balanced((CATCHCHALLENGER_TYPE_MAPID)i);
             i++;
         }
     }

@@ -1,4 +1,4 @@
-// app_main.cpp — ESP-IDF entry for the MapVisibilityAlgorithm::min_network()
+// app_main.cpp — ESP-IDF entry for the MapVisibilityAlgorithm::min_balanced()
 // PURE-CPU microbenchmark on ESP32.
 //
 // Unlike the server firmware (server/cli/esp32/) this image does NOTHING but
@@ -109,7 +109,7 @@ extern "C" void app_main(void)
 
     // BENCH lines must hit the serial verbatim; flush ESP-IDF's logger to the
     // same UART. The numbers themselves come from std::cout in run_scenario.
-    ESP_LOGI(TAG, "MapVisibilityAlgorithm::min_network benchmark — "
+    ESP_LOGI(TAG, "MapVisibilityAlgorithm::min_balanced benchmark — "
                   "seed=0x%X insrem=%u%% move=%u%% budget=%llums",
              BENCH_SEED, BENCH_INSREM_PCT, BENCH_MOVE_PCT, BENCH_MS);
     printf("BENCH_BEGIN free_heap=%u largest_block=%u\n",

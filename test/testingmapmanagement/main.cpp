@@ -3,7 +3,7 @@
 // instantiates the real MapVisibilityAlgorithm (compiled with
 // -DCATCHCHALLENGER_TESTING from server/base/MapManagement/), runs a
 // fixed set of scenarios designed to cover every branch in min_CPU(),
-// min_network() and MapServer::playerToFullInsert(), and checks the
+// min_balanced() and MapServer::playerToFullInsert(), and checks the
 // bytes pushed through Client::sendRawBlock() against a tiny
 // Api_protocol mirror (parsing 0x6C/0x65/0x6B/0x66/0x69/0xE3 exactly
 // the way client/libcatchchallenger/Api_protocol_message.cpp does it).
@@ -179,13 +179,13 @@ static int oracle_live_slot(const HarnessMVA &mva, unsigned int n)
     return -1;
 }
 
-// ---- HARD RULE: min_network must never tell a client about ITSELF ----
+// ---- HARD RULE: min_balanced must never tell a client about ITSELF ----
 //
 // min_CPU broadcasts every player to everyone and relies on the CLIENT to
 // drop its own entry, which it can do because min_CPU sends 0x6C carrying
 // "you are slot N" (Api_protocol::playerExcludeIndex).
 //
-// min_network does NOT send 0x6C. playerExcludeIndex therefore stays at its
+// min_balanced does NOT send 0x6C. playerExcludeIndex therefore stays at its
 // 255 default for the whole session, so the client filters nothing: if the
 // server ever emitted a recipient's own slot, that client would insert a
 // second copy of itself standing on its own head, and every later 0x66 for
@@ -403,7 +403,7 @@ public:
     }
 
     // Pre-tick snapshot, taken AFTER the ACKs are delivered so it is exactly
-    // the state min_network() will see. uint8_t rather than vector<bool> to
+    // the state min_balanced() will see. uint8_t rather than vector<bool> to
     // avoid the bitset specialisation.
     std::vector<uint8_t> preTickPing;
     std::vector<uint8_t> preTickPath2;
@@ -455,7 +455,7 @@ public:
         if(ackEachTick) ackAllPings();
         for(ClientWithMap *c : owned) c->sentBlocks.clear();
         snapshotPreTick();
-        mva.min_network(mapId);
+        mva.min_balanced(mapId);
         last_sync_status = syncCheckFocus();
         // A rule breach outranks whatever the sync diff said: report it
         // through the same channel so every existing scenario enforces both
@@ -627,9 +627,9 @@ static void scenario_min_cpu_skip_ge_max()
     pass_line(name);
 }
 
-static void scenario_min_network_first_tick_path1()
+static void scenario_min_balanced_first_tick_path1()
 {
-    const char *name = "min_network_first_tick_path1";
+    const char *name = "min_balanced_first_tick_path1";
     Fixture f;
     f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
     f.addClient("bob",   6, 6, Direction_look_at_right,  101, 1);
@@ -646,9 +646,9 @@ static void scenario_min_network_first_tick_path1()
     pass_line(name);
 }
 
-static void scenario_min_network_path2_movement()
+static void scenario_min_balanced_path2_movement()
 {
-    const char *name = "min_network_path2_movement";
+    const char *name = "min_balanced_path2_movement";
     Fixture f;
     f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
     uint8_t s1 = f.addClient("bob",   6, 6, Direction_look_at_right,  101, 1);
@@ -688,9 +688,9 @@ static void scenario_min_network_path2_movement()
     pass_line(name);
 }
 
-static void scenario_min_network_path2_no_change_no_send()
+static void scenario_min_balanced_path2_no_change_no_send()
 {
-    const char *name = "min_network_path2_no_change_no_send";
+    const char *name = "min_balanced_path2_no_change_no_send";
     Fixture f;
     f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
     f.addClient("bob",   6, 6, Direction_look_at_right,  101, 1);
@@ -707,10 +707,10 @@ static void scenario_min_network_path2_no_change_no_send()
 // Flow control: a recipient that has not answered the previous ping is
 // HELD BACK — it receives nothing at all, not merely a ping-less diff.
 // Putting more bytes on a link that has not drained the last ones is the
-// thing min_network exists to avoid, and they would be stale on arrival.
-static void scenario_min_network_ping_inflight_blocks_state()
+// thing min_balanced exists to avoid, and they would be stale on arrival.
+static void scenario_min_balanced_ping_inflight_blocks_state()
 {
-    const char *name = "min_network_ping_inflight_blocks_state";
+    const char *name = "min_balanced_ping_inflight_blocks_state";
     Fixture f;
     f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
     f.addClient("bob", 6, 6, Direction_look_at_right, 101, 1);
@@ -741,9 +741,9 @@ static void scenario_min_network_ping_inflight_blocks_state()
 // state. Both are enforced by runMinNetwork() on EVERY tick for EVERY
 // client; this scenario exists so a regression names itself in the test
 // list instead of only surfacing as a side effect somewhere else.
-static void scenario_min_network_hard_rules_under_mixed_lag()
+static void scenario_min_balanced_hard_rules_under_mixed_lag()
 {
-    const char *name = "min_network_hard_rules_under_mixed_lag";
+    const char *name = "min_balanced_hard_rules_under_mixed_lag";
     Fixture f;
     GlobalServerData::serverSettings.mapVisibility.simple.max = 1000;
     unsigned int i = 0;
@@ -800,9 +800,9 @@ static void scenario_min_network_hard_rules_under_mixed_lag()
 // hold-back: K ticks of movement collapse into a single packet whose
 // entries hold the FINAL position, and a slot that appeared and vanished
 // while the client was away costs nothing at all.
-static void scenario_min_network_coalesced_delta_on_ack()
+static void scenario_min_balanced_coalesced_delta_on_ack()
 {
-    const char *name = "min_network_coalesced_delta_on_ack";
+    const char *name = "min_balanced_coalesced_delta_on_ack";
     Fixture f;
     f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
     uint8_t s1 = f.addClient("bob", 6, 6, Direction_look_at_right, 101, 1);
@@ -949,7 +949,7 @@ static void scenario_send_helpers_guards()
     pass_line(name);
 }
 
-// 255 clients -> clamp branch in both min_CPU and min_network, plus
+// 255 clients -> clamp branch in both min_CPU and min_balanced, plus
 // count_ge254 (full insert clamped), plus general "large map" path.
 // Observer can't fully sync — the algorithm only sends the first 254
 // players, so slots 254/255 are absent from the observer. Diff is
@@ -975,14 +975,14 @@ static void scenario_clamp_and_count_ge254()
 // Empty slot in map_clients_id: insert 3, remove the middle one. Hits
 // min_cpu_slot_empty + send_reinsertAll_loop_empty in min_CPU; and
 // min_net_slot_empty + send_filter_loop_skip + min_net_path1_status_empty
-// in min_network PATH1. min_network must run BEFORE min_CPU on the
+// in min_balanced PATH1. min_balanced must run BEFORE min_CPU on the
 // same fixture so PATH1 still fires (min_CPU sets sendedMap which
-// would then force PATH2 on the next min_network tick).
+// would then force PATH2 on the next min_balanced tick).
 //
 // NOTE: a sparse middle (slot 0 valid, slot 1 MAX, slot 2 valid) is NOT
 // artificial -- it is the ordinary state between a player leaving and the
 // next one joining, and insertOnMap's LIFO refill can leave it standing
-// (see scenario_min_network_path1_hole_keeps_live_top_slot). So this
+// (see scenario_min_balanced_path1_hole_keeps_live_top_slot). So this
 // scenario asserts state equivalence too: carol at slot 2 must reach the
 // observer even though slot 1 is a hole.
 static void scenario_empty_slot_in_map()
@@ -994,8 +994,8 @@ static void scenario_empty_slot_in_map()
     f.addClient("carol", 3, 3, Direction_look_at_bottom, 102, 1);
     f.mva.removeOnMap(1); // bob's slot now PLAYER_INDEX_FOR_CONNECTED_MAX
     f.runMinNetwork(1);   // PATH1 hits status_empty for slot 1
-    if(!sync_ok(f)) { fail_line(name, "sync_min_network:" + f.last_sync_status); return; }
-    // No sync check after min_CPU here: min_network already set sendedMap,
+    if(!sync_ok(f)) { fail_line(name, "sync_min_balanced:" + f.last_sync_status); return; }
+    // No sync check after min_CPU here: min_balanced already set sendedMap,
     // so min_CPU takes its "same map as last tick" branch and skips the
     // 0x6C that carries the recipient's own slot. min_CPU relies on the
     // client filtering itself via playerExcludeIndex, which without that
@@ -1007,10 +1007,10 @@ static void scenario_empty_slot_in_map()
     pass_line(name);
 }
 
-// min_network skip_ge_max branch — same shape as min_CPU skip_ge_max.
-static void scenario_min_network_skip_ge_max()
+// min_balanced skip_ge_max branch — same shape as min_CPU skip_ge_max.
+static void scenario_min_balanced_skip_ge_max()
 {
-    const char *name = "min_network_skip_ge_max";
+    const char *name = "min_balanced_skip_ge_max";
     Fixture f;
     GlobalServerData::serverSettings.mapVisibility.simple.max = 2;
     f.addClient("a", 1, 1, Direction_look_at_bottom, 100, 1);
@@ -1024,9 +1024,9 @@ static void scenario_min_network_skip_ge_max()
 
 // PATH1 with ping in flight on focus client -> ping_skip branch
 // inside PATH1 (different code path from PATH2's ping_skip).
-static void scenario_min_network_path1_ping_skip()
+static void scenario_min_balanced_path1_ping_skip()
 {
-    const char *name = "min_network_path1_ping_skip";
+    const char *name = "min_balanced_path1_ping_skip";
     Fixture f;
     f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
     f.addClient("bob",   6, 6, Direction_look_at_right,  101, 1);
@@ -1044,9 +1044,9 @@ static void scenario_min_network_path1_ping_skip()
 // on first PATH2 after a removal; then empty_already on the next.
 // After the remove + PATH2 emits 0x69, the observer's view must drop
 // bob — strict sync check.
-static void scenario_min_network_path2_removal_sequence()
+static void scenario_min_balanced_path2_removal_sequence()
 {
-    const char *name = "min_network_path2_removal_sequence";
+    const char *name = "min_balanced_path2_removal_sequence";
     Fixture f;
     f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
     f.addClient("bob",   6, 6, Direction_look_at_right,  101, 1);
@@ -1063,7 +1063,7 @@ static void scenario_min_network_path2_removal_sequence()
 
 // ---- Byte-exactness oracle -----------------------------------------
 //
-// min_network exists to keep the WIRE small (ADSL / 2G / TOR home
+// min_balanced exists to keep the WIRE small (ADSL / 2G / TOR home
 // servers), so a change to it has to be judged on the exact bytes it
 // emits, not merely on whether the client view converges. This folds the
 // entire output byte stream of a deterministic mixed workload into one
@@ -1093,9 +1093,9 @@ static Direction oracle_dir(uint32_t r)
     }
 }
 
-static void scenario_min_network_byte_oracle()
+static void scenario_min_balanced_byte_oracle()
 {
-    const char *name = "min_network_byte_oracle";
+    const char *name = "min_balanced_byte_oracle";
     Fixture f;
     GlobalServerData::serverSettings.mapVisibility.simple.max = 1000;
     uint32_t rng = 0x5EEDu;
@@ -1169,7 +1169,7 @@ static void scenario_min_network_byte_oracle()
         }
         tick++;
     }
-    std::cout << "[ORACLE] min_network bytes=" << total
+    std::cout << "[ORACLE] min_balanced bytes=" << total
               << " digest=" << std::hex << digest << std::dec << std::endl;
     pass_line(name);
 }
@@ -1195,9 +1195,9 @@ static void scenario_min_network_byte_oracle()
 // ("Other player (%1) not exists", MapControllerMPAPI.cpp:954). PATH2's
 // diff then sees dense[3]==previous[3] and never re-sends. dave stays
 // invisible to erin for as long as erin stays on this map.
-static void scenario_min_network_path1_hole_keeps_live_top_slot()
+static void scenario_min_balanced_path1_hole_keeps_live_top_slot()
 {
-    const char *name = "min_network_path1_hole_keeps_live_top_slot";
+    const char *name = "min_balanced_path1_hole_keeps_live_top_slot";
     Fixture f;
     f.addClient("alice", 1, 1, Direction_look_at_bottom, 100, 1);
     uint8_t bob_g   = f.addClient("bob",   2, 2, Direction_look_at_bottom, 101, 1);
@@ -1244,9 +1244,9 @@ static void scenario_min_network_path1_hole_keeps_live_top_slot()
 // PATH2 with new slots beyond sendedStatus.size(): tick1 PATH1 alone
 // (sendedStatus.size()=2 just alice+seed), then insert late + insert+remove
 // for a beyond_empty case, run tick2 -> both beyond_valid + beyond_empty.
-static void scenario_min_network_path2_beyond_slots()
+static void scenario_min_balanced_path2_beyond_slots()
 {
-    const char *name = "min_network_path2_beyond_slots";
+    const char *name = "min_balanced_path2_beyond_slots";
     Fixture f;
     f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
     // Need >1 player for the outer guard to allow PATH1
@@ -1265,9 +1265,9 @@ static void scenario_min_network_path2_beyond_slots()
 
 // PATH2 no_diff_ping branch: PATH1, then no movement but ping inflight
 // so the no_diff PATH2 still has an inner if(pingInProgress>0) log.
-static void scenario_min_network_path2_no_diff_ping_inflight()
+static void scenario_min_balanced_path2_no_diff_ping_inflight()
 {
-    const char *name = "min_network_path2_no_diff_ping_inflight";
+    const char *name = "min_balanced_path2_no_diff_ping_inflight";
     Fixture f;
     f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
     f.addClient("bob",   6, 6, Direction_look_at_right,  101, 1);
@@ -1282,9 +1282,9 @@ static void scenario_min_network_path2_no_diff_ping_inflight()
 // 255 inserts -> insert_ge254 branch: tick1 PATH1 with just alice +
 // 1 seed (so PATH1 runs), then add 254 more clients before tick2 so
 // PATH2 sees 254 new slots all beyond sendedStatus -> insertCount=254.
-static void scenario_min_network_path2_insert_ge254()
+static void scenario_min_balanced_path2_insert_ge254()
 {
-    const char *name = "min_network_path2_insert_ge254";
+    const char *name = "min_balanced_path2_insert_ge254";
     Fixture f;
     GlobalServerData::serverSettings.mapVisibility.simple.max = 1000;
     f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
@@ -1310,9 +1310,9 @@ static void scenario_min_network_path2_insert_ge254()
 // driven by mutating Client state between ticks (the simplest way to
 // exercise the diff branches without rewiring server-side queues).
 // Observer must remain in sync after every tick.
-static void scenario_min_network_path2_replaced_remove_newslot()
+static void scenario_min_balanced_path2_replaced_remove_newslot()
 {
-    const char *name = "min_network_path2_replaced_remove_newslot";
+    const char *name = "min_balanced_path2_replaced_remove_newslot";
     Fixture f;
     f.addClient("alice", 5, 5, Direction_look_at_bottom, 100, 1);
     f.addClient("bob",   6, 6, Direction_look_at_right,  101, 1);
@@ -1337,7 +1337,7 @@ static void scenario_min_network_path2_replaced_remove_newslot()
     // after the tick the observer should drop bob.
     f.mva.removeOnMap(1);
     f.runMinNetwork(1);
-    // After remove, clients_size = 1 -> min_network early-returns
+    // After remove, clients_size = 1 -> min_balanced early-returns
     // without sending anything. Observer still has stale bob; this is
     // a real desync but matches production behaviour ("no broadcast
     // for solo map"). Skip the diff for this final tick.
@@ -1497,6 +1497,10 @@ public:
         GlobalServerData::serverSettings.dontSendPlayerType=false;
         CommonSettingsServer::commonSettingsServer.dontSendPseudo=false;
         MapVisibilityAlgorithm::flat_map_list.clear();
+        //zoom 1: the widest view a client can ask for (21 tiles), so the
+        //scenarios below have room to place somebody IN and OUT of the range
+        //on a 40 wide map
+        MapVisibilityAlgorithm::resolveViewRange(1);
     }
     ~RangeFixture()
     {
@@ -1669,7 +1673,7 @@ public:
                 int dy=candidateY-focusY;
                 if(dy<0)
                     dy=-dy;
-                if(dx<=CATCHCHALLENGER_SERVER_MAP_VIEW_X && dy<=CATCHCHALLENGER_SERVER_MAP_VIEW_Y)
+                if(dx<=MapVisibilityAlgorithm::view_x && dy<=MapVisibilityAlgorithm::view_y)
                     out.push_back(viewKey(owned.at(index)->public_and_private_informations.public_informations.pseudo,
                                           ownedMap.at(index),owned.at(index)->getX(),owned.at(index)->getY()));
             }
@@ -1907,30 +1911,30 @@ static void scenario_min_range_enter_leave_hysteresis()
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,120,40);
     MapVisibilityAlgorithm::resolveNeighbours();
     f.focus=f.addClient("focus",m0,0,5,100);
-    const PLAYER_INDEX_FOR_CONNECTED walker=f.addClient("walker",m0,CATCHCHALLENGER_SERVER_MAP_VIEW_X,5,101);
+    const PLAYER_INDEX_FOR_CONNECTED walker=f.addClient("walker",m0,MapVisibilityAlgorithm::view_x,5,101);
     std::string status;
     f.tickAndParse(status);
     if(!status.empty()) { fail_line(name,status); return; }
     if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"not_inserted_at_view_limit"); return; }
     //inside the margin: kept, and it costs a 4 bytes 0x66, not an insert
-    f.moveTo(walker,CATCHCHALLENGER_SERVER_MAP_VIEW_X+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN,5);
+    f.moveTo(walker,MapVisibilityAlgorithm::view_x+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN,5);
     f.tickAndParse(status);
     if(!status.empty()) { fail_line(name,status); return; }
     if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"dropped_inside_margin"); return; }
     if(f.focusPacketCount(0x66)!=1 || f.focusPacketCount(0x69)!=0 || f.focusPacketCount(0x6B)!=0)
         { fail_line(name,"margin_move_is_not_a_change"); return; }
     //past the margin: removed
-    f.moveTo(walker,CATCHCHALLENGER_SERVER_MAP_VIEW_X+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN+1,5);
+    f.moveTo(walker,MapVisibilityAlgorithm::view_x+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN+1,5);
     f.tickAndParse(status);
     if(!status.empty()) { fail_line(name,status); return; }
     if(!f.observer.otherPlayerList.empty()) { fail_line(name,"not_removed_past_margin"); return; }
     //back inside the margin but NOT inside the view: stays out
-    f.moveTo(walker,CATCHCHALLENGER_SERVER_MAP_VIEW_X+1,5);
+    f.moveTo(walker,MapVisibilityAlgorithm::view_x+1,5);
     f.tickAndParse(status);
     if(!status.empty()) { fail_line(name,status); return; }
     if(!f.observer.otherPlayerList.empty()) { fail_line(name,"reinserted_inside_margin"); return; }
     //back inside the view: inserted again
-    f.moveTo(walker,CATCHCHALLENGER_SERVER_MAP_VIEW_X,5);
+    f.moveTo(walker,MapVisibilityAlgorithm::view_x,5);
     f.tickAndParse(status);
     if(!status.empty()) { fail_line(name,status); return; }
     status=f.checkView();
@@ -2084,6 +2088,73 @@ static void scenario_min_range_recipient_changes_map()
     pass_line(name);
 }
 
+// inViewRange(): the one-pair form of the same rectangle, used by /trade and
+// /battle through Client::otherPlayerIsInRange(). A map that is not even a
+// border map of this one is never in range, whatever the distance says.
+static void scenario_min_range_in_view_range_helper()
+{
+    const char *name = "min_range_in_view_range_helper";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m2=f.addMap(80,0,40,40);//2 maps away
+    f.linkRight(m0,m1);
+    f.linkRight(m1,m2);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    //same map, inside then outside the rectangle
+    if(!MapVisibilityAlgorithm::inViewRange(m0,5,5,m0,5,5+MapVisibilityAlgorithm::view_y))
+        { fail_line(name,"same_map_limit_not_in_range"); return; }
+    if(MapVisibilityAlgorithm::inViewRange(m0,5,5,m0,5,5+MapVisibilityAlgorithm::view_y+1))
+        { fail_line(name,"same_map_past_limit_in_range"); return; }
+    //border map: one tile away across the seam
+    if(!MapVisibilityAlgorithm::inViewRange(m0,39,10,m1,0,10))
+        { fail_line(name,"border_map_not_in_range"); return; }
+    //border map but too far inside it
+    if(MapVisibilityAlgorithm::inViewRange(m0,39,10,m1,39,10))
+        { fail_line(name,"border_map_far_in_range"); return; }
+    //not a border map of m0 at all
+    if(MapVisibilityAlgorithm::inViewRange(m0,39,10,m2,0,10))
+        { fail_line(name,"non_neighbour_map_in_range"); return; }
+    //out of the map list
+    if(MapVisibilityAlgorithm::inViewRange(60000,5,5,m0,5,5))
+        { fail_line(name,"bad_map_index_in_range"); return; }
+    pass_line(name);
+}
+
+// resolveViewRange(): the view is DERIVED from the client window and the
+// datapack zoom, it is not a magic number. Expected values recomputed here by
+// hand from the client rule (MapControllerMP::setScale) for the reference
+// 800x600 window and a 16px datapack tile:
+//   factor = ceil(min(1920,1080)*zoom/512) (min 1), tile = 16*factor,
+//   tiles = max(ceil(1920/tile),ceil(1080/tile)), view = tiles/2 + 1 margin.
+//   zoom 1 -> factor 3 ->  48px -> 40x23 tiles -> 21
+//   zoom 2 -> factor 5 ->  80px -> 24x14 tiles -> 13
+//   zoom 4 -> factor 9 -> 144px -> 14x8  tiles ->  8   (the real datapack)
+//   zoom 0 -> no map/layers.xml -> falls back on zoom 2
+// Change CATCHCHALLENGER_SERVER_MAP_VIEW_SCREEN_* and this test MUST be
+// re-derived: that is the point.
+static void scenario_min_range_view_range_from_datapack_zoom()
+{
+    const char *name = "min_range_view_range_from_datapack_zoom";
+    const uint8_t expected[4][3]={{1,21,21},{2,13,13},{4,8,8},{0,13,13}};
+    unsigned int index=0;
+    while(index<4)
+    {
+        MapVisibilityAlgorithm::resolveViewRange(expected[index][0]);
+        if(MapVisibilityAlgorithm::view_x!=expected[index][1] || MapVisibilityAlgorithm::view_y!=expected[index][2])
+        {
+            std::ostringstream oss;
+            oss << "zoom=" << static_cast<unsigned>(expected[index][0])
+                << " expected=" << static_cast<unsigned>(expected[index][1]) << "x" << static_cast<unsigned>(expected[index][2])
+                << " got=" << static_cast<unsigned>(MapVisibilityAlgorithm::view_x) << "x" << static_cast<unsigned>(MapVisibilityAlgorithm::view_y);
+            fail_line(name,oss.str());
+            return;
+        }
+        index++;
+    }
+    pass_line(name);
+}
+
 // ---- Driver ---------------------------------------------------------
 
 int main()
@@ -2099,24 +2170,24 @@ int main()
     scenario_min_cpu_first_tick_three_players();
     scenario_min_cpu_second_tick_same_map();
     scenario_min_cpu_ping_in_progress_skips_ping();
-    scenario_min_network_first_tick_path1();
-    scenario_min_network_path2_movement();
-    scenario_min_network_path2_no_change_no_send();
-    scenario_min_network_ping_inflight_blocks_state();
-    scenario_min_network_coalesced_delta_on_ack();
-    scenario_min_network_hard_rules_under_mixed_lag();
-    scenario_min_network_path2_replaced_remove_newslot();
+    scenario_min_balanced_first_tick_path1();
+    scenario_min_balanced_path2_movement();
+    scenario_min_balanced_path2_no_change_no_send();
+    scenario_min_balanced_ping_inflight_blocks_state();
+    scenario_min_balanced_coalesced_delta_on_ack();
+    scenario_min_balanced_hard_rules_under_mixed_lag();
+    scenario_min_balanced_path2_replaced_remove_newslot();
     scenario_send_helpers_guards();
     scenario_clamp_and_count_ge254();
     scenario_empty_slot_in_map();
-    scenario_min_network_skip_ge_max();
-    scenario_min_network_path1_ping_skip();
-    scenario_min_network_path2_removal_sequence();
-    scenario_min_network_path1_hole_keeps_live_top_slot();
-    scenario_min_network_byte_oracle();
-    scenario_min_network_path2_beyond_slots();
-    scenario_min_network_path2_no_diff_ping_inflight();
-    scenario_min_network_path2_insert_ge254();
+    scenario_min_balanced_skip_ge_max();
+    scenario_min_balanced_path1_ping_skip();
+    scenario_min_balanced_path2_removal_sequence();
+    scenario_min_balanced_path1_hole_keeps_live_top_slot();
+    scenario_min_balanced_byte_oracle();
+    scenario_min_balanced_path2_beyond_slots();
+    scenario_min_balanced_path2_no_diff_ping_inflight();
+    scenario_min_balanced_path2_insert_ge254();
     scenario_character_block_bad_compressed_block_no_crash();
     scenario_delayed_messages_requeue_no_infinite_loop();
     scenario_min_range_neighbours_resolved();
@@ -2130,6 +2201,8 @@ int main()
     scenario_min_range_visible_cap();
     scenario_min_range_held_back_then_one_delta();
     scenario_min_range_recipient_changes_map();
+    scenario_min_range_in_view_range_helper();
+    scenario_min_range_view_range_from_datapack_zoom();
     std::cout << "[INFO] pass=" << g_pass << " fail=" << g_fail << std::endl;
     return g_fail == 0 ? 0 : 1;
 }

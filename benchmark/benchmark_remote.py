@@ -1824,7 +1824,7 @@ def remote_callgrind(exec_node, bin_cmd, work_dir, timeout=None,
     BEFORE valgrind so cwd/relative-datapack resolve, but valgrind itself
     execs the binary directly (same PID, traced).
 
-    toggle_collect: a function-name glob (e.g. '*min_network*'). When set,
+    toggle_collect: a function-name glob (e.g. '*min_balanced*'). When set,
     adds --collect-atstart=no --toggle-collect=<glob> so only that function
     (+ callees) is counted, excluding process startup. Header-free: valgrind
     resolves the glob against the binary's symbols at runtime, so it works
@@ -1894,7 +1894,7 @@ def remote_callgrind(exec_node, bin_cmd, work_dir, timeout=None,
     # Toggled run that collected nothing: the glob matched no CALL, which on a
     # good optimiser means the callee was inlined into its caller (the
     # out-of-line copy can still be in .symtab, so "the symbol exists" proves
-    # nothing). x86-64 gcc 15 inlines MapVisibilityAlgorithm::min_network into
+    # nothing). x86-64 gcc 15 inlines MapVisibilityAlgorithm::min_balanced into
     # the benchmark's scenario loop while armv7/armv8 keep it out of line - same
     # source, same harness, different inlining decision. Like the unavailable-
     # tool case above this is a SKIP, not a FAIL: no wrong number was produced,

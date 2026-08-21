@@ -808,7 +808,7 @@ must reflect that:
   startup-dominated micro-profile shows it "slower". `-Wl,-z,now`
   (CATCHCHALLENGER_PERF_LINK) is exactly this: front-loads relocation
   to load time to make every later call a direct GOT hit.
-* Steady-state hot paths (e.g. `MapVisibilityAlgorithm::min_network`,
+* Steady-state hot paths (e.g. `MapVisibilityAlgorithm::min_balanced`,
   packet parse) are the optimisation target; boot-path symbols
   (tinyXML2 parse, `listFolderNotRecursive`, dl-* loader) are noise
   unless the benchmark is explicitly a boot-time benchmark.
@@ -913,7 +913,7 @@ Done so far: **p1mmx** (2026-08-21), clocked 233 -> 133 MHz to limit heat damage
 
 ## `benchmarkmapmanager2.py` -- two-stage, per-node generated replay
 
-Same production `min_network()` as `benchmarkmapmanager.py`, over the datapack's
+Same production `min_balanced()` as `benchmarkmapmanager.py`, over the datapack's
 REAL world (647 maps under `map/main/generated`), driven by a replay that is
 GENERATED PER EXECUTION NODE AND PER DATAPACK.
 

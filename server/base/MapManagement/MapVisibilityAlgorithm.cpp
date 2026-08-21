@@ -29,7 +29,7 @@
  *    receipt. Cheapest possible CPU on the server, at the cost of higher
  *    network usage.
  *
- *  - min_network (stateful): remember what was last broadcast and only emit
+ *  - min_balanced (stateful): remember what was last broadcast and only emit
  *    the players whose data actually changed (insert / remove / move). The
  *    last-broadcast state is kept ONCE PER MAP (previousDenseBuffer): every
  *    recipient on a map is at the same state, so the diff is computed once
@@ -86,11 +86,16 @@ DensePlayerState MapVisibilityAlgorithm::tempDenseBuffer[255];
 PLAYER_INDEX_FOR_CONNECTED MapVisibilityAlgorithm::tempInsertPlayers[255];
 uint8_t MapVisibilityAlgorithm::tempSeenSlot[255];
 std::vector<uint8_t> MapVisibilityAlgorithm::tempSlotOfPlayer;
+//half extents for the fallback zoom 2: 1920x1080 scaled by
+//ceil(1080*2/512)=5 -> 80px by tile -> 24x14 tiles -> 24/2+1=13.
+//resolveViewRange() replaces them at load with the real datapack zoom.
+uint8_t MapVisibilityAlgorithm::view_x=13;
+uint8_t MapVisibilityAlgorithm::view_y=13;
 
 MapVisibilityAlgorithm::MapVisibilityAlgorithm()
 {
     //Packet code bytes are constants: set once here so the hot path never
-    //re-writes them. min_network() only fills the size+count that actually
+    //re-writes them. min_balanced() only fills the size+count that actually
     //vary, and copies the rest straight out.
     MapVisibilityAlgorithm::tempBigBufferForChanges[0x00]=0x66;
     MapVisibilityAlgorithm::tempBigBufferForRemove[0x00]=0x69;
@@ -465,7 +470,7 @@ void MapVisibilityAlgorithm::sendCoalescedDelta(ClientWithMap &clientWithMap,con
     clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-/// min_network (stateful diff): only send the other players that actually
+/// min_balanced (stateful diff): only send the other players that actually
 /// changed since the last broadcast. Uses far less network than min_CPU.
 /// On each tick:
 ///   - Path 1 (new map): sends [0x65 drop_all][0x6B full_insert_filtered][0xE3 ping]
@@ -479,7 +484,7 @@ void MapVisibilityAlgorithm::sendCoalescedDelta(ClientWithMap &clientWithMap,con
 ///     a private baseline, then one coalesced delta once the client ACKs
 ///     (sendCoalescedDelta above)
 /// previousDenseBuffer is refreshed once at the end of the tick.
-void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
+void MapVisibilityAlgorithm::min_balanced(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     //if too many player then just stop update
     //255 is the SPECIAL value of the 8-bit wire slot index, so a real
@@ -519,7 +524,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
         {
             const Client &c=ClientList::list->at(oid);
             #ifdef CATCHCHALLENGER_TESTING
-            assertXYInRange(c.getX(),c.getY(),"min_network_dense_build");
+            assertXYInRange(c.getX(),c.getY(),"min_balanced_dense_build");
             #endif
             tempDenseBuffer[dense_idx].set(c.getX(),c.getY(),static_cast<uint8_t>(c.getLastDirection()),c.getPlayerId());
         }
@@ -603,7 +608,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                     else if(sent.isEmpty() || !dense.isSameCharacter(sent))
                     {
                         #ifdef CATCHCHALLENGER_TESTING
-                        assertXYInRange(dense.getX(),dense.getY(),"min_network_path2_replaced");
+                        assertXYInRange(dense.getX(),dense.getY(),"min_balanced_path2_replaced");
                         #endif
                         MapVisibilityAlgorithm::tempInsertSlots[insertCount]=static_cast<uint8_t>(index);
                         insertCount++;
@@ -612,7 +617,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                     else
                     {
                         #ifdef CATCHCHALLENGER_TESTING
-                        assertXYInRange(dense.getX(),dense.getY(),"min_network_path2_change");
+                        assertXYInRange(dense.getX(),dense.getY(),"min_balanced_path2_change");
                         #endif
                         //only send partial changes: slot + x + y + direction (4 bytes per
                         //entry). The 0x66 wire entry is the byte sequence
@@ -631,7 +636,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
                 if(!dense.isEmpty())
                 {
                     #ifdef CATCHCHALLENGER_TESTING
-                    assertXYInRange(dense.getX(),dense.getY(),"min_network_path2_beyond");
+                    assertXYInRange(dense.getX(),dense.getY(),"min_balanced_path2_beyond");
                     #endif
                     MapVisibilityAlgorithm::tempInsertSlots[insertCount]=static_cast<uint8_t>(index);
                     insertCount++;
@@ -896,7 +901,7 @@ void MapVisibilityAlgorithm::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIn
             }
             #ifdef CATCHCHALLENGER_HARDENED
             else
-                std::cerr << "MapVisibilityAlgorithm::min_network() ClientList::list.empty(): " << map_c_idP << std::endl;
+                std::cerr << "MapVisibilityAlgorithm::min_balanced() ClientList::list.empty(): " << map_c_idP << std::endl;
             #endif
         }
         index_client++;
@@ -1089,6 +1094,40 @@ void MapVisibilityAlgorithm::resolveNeighbours()
     }
 }
 
+/// Half extents of the view rectangle, from the client window and the DATAPACK
+/// zoom -- see the long comment in MapVisibilityAlgorithm.hpp. Uses the
+/// qtopengl scale rule (CCMap::paint), ceil(min(w,h)*zoom/512), because it is
+/// always <= the qtcpu800x600 one and so draws MORE tiles; the max of the two
+/// axes covers a portrait window; +1 tile of margin.
+void MapVisibilityAlgorithm::resolveViewRange(const uint8_t &datapackZoom)
+{
+    uint32_t zoom=datapackZoom;
+    if(zoom<1)
+        zoom=CATCHCHALLENGER_SERVER_MAP_VIEW_ZOOM_DEFAULT;//datapack without map/layers.xml
+    uint32_t screenMin=CATCHCHALLENGER_SERVER_MAP_VIEW_SCREEN_WIDTH;
+    if(CATCHCHALLENGER_SERVER_MAP_VIEW_SCREEN_HEIGHT<screenMin)
+        screenMin=CATCHCHALLENGER_SERVER_MAP_VIEW_SCREEN_HEIGHT;
+    //ceil(screenMin*zoom/512), never below 1
+    uint32_t factor=(screenMin*zoom+511)/512;
+    if(factor<1)
+        factor=1;
+    const uint32_t tileScreen=CATCHCHALLENGER_SERVER_MAP_VIEW_TILE_PIXEL*factor;
+    //tile count rounded UP: a half drawn tile is still a drawn tile
+    uint32_t tiles=(CATCHCHALLENGER_SERVER_MAP_VIEW_SCREEN_WIDTH+tileScreen-1)/tileScreen;
+    const uint32_t tilesHeight=(CATCHCHALLENGER_SERVER_MAP_VIEW_SCREEN_HEIGHT+tileScreen-1)/tileScreen;
+    if(tilesHeight>tiles)
+        tiles=tilesHeight;
+    uint32_t resolvedX=tiles/2+1;
+    uint32_t resolvedY=tiles/2+1;
+    //a map is never bigger than 127x127, a wider view can not see more
+    if(resolvedX>127)
+        resolvedX=127;
+    if(resolvedY>127)
+        resolvedY=127;
+    view_x=static_cast<uint8_t>(resolvedX);
+    view_y=static_cast<uint8_t>(resolvedY);
+}
+
 /// Fill the 0x6B header of a group started at groupStart, once its player
 /// entries are written. One group by SOURCE map: the packet carries a single
 /// map id for its whole player list.
@@ -1103,6 +1142,37 @@ static void closeInsertGroup(char * const buffer,const uint32_t &groupStart,cons
     buffer[groupStart+1+4+1+2]=static_cast<char>(count);
 }
 
+/// Same rectangle as min_range(), asked about ONE pair instead of broadcast:
+/// used by /trade and /battle (Client::otherPlayerIsInRange) so a player can
+/// only interact with somebody it actually sees, border maps included.
+bool MapVisibilityAlgorithm::inViewRange(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,
+                                         const CATCHCHALLENGER_TYPE_MAPID &otherMapIndex,const COORD_TYPE &otherX,const COORD_TYPE &otherY)
+{
+    if(mapIndex>=flat_map_list.size() || otherMapIndex>=flat_map_list.size())
+        return false;
+    int16_t offset_x=0;
+    int16_t offset_y=0;
+    if(otherMapIndex!=mapIndex)
+    {
+        //the other map has to be one this player can see into at all
+        const MapVisibilityAlgorithm &map=flat_map_list.at(mapIndex);
+        unsigned int index=0;
+        while(index<map.neighbours.size() && map.neighbours.at(index).mapIndex!=otherMapIndex)
+            index++;
+        if(index>=map.neighbours.size())
+            return false;
+        offset_x=map.neighbours.at(index).offset_x;
+        offset_y=map.neighbours.at(index).offset_y;
+    }
+    int16_t dx=static_cast<int16_t>(static_cast<int16_t>(otherX)+offset_x-static_cast<int16_t>(x));
+    if(dx<0)
+        dx=-dx;
+    int16_t dy=static_cast<int16_t>(static_cast<int16_t>(otherY)+offset_y-static_cast<int16_t>(y));
+    if(dy<0)
+        dy=-dy;
+    return dx<=static_cast<int16_t>(view_x) && dy<=static_cast<int16_t>(view_y);
+}
+
 /// min_range (view range visibility): a recipient is told ONLY about the
 /// players inside its view rectangle, on its own map OR on a border map --
 /// see doc/algo/visibility/MapVisibilityAlgorithm-WithBorderAndRange.png.
@@ -1112,7 +1182,7 @@ static void closeInsertGroup(char * const buffer,const uint32_t &groupStart,cons
 /// only the two coordinates written by MapBasicMove.
 ///
 /// The visible set differs from one recipient to the next, so unlike
-/// min_network() there is no shared snapshot/diff: each recipient owns its
+/// min_balanced() there is no shared snapshot/diff: each recipient owns its
 /// slot table (ClientWithMap::visibleSlots), which is BOTH the wire slot
 /// allocation and the diff baseline. Cost by recipient is
 /// O(candidates + visible slots), with the candidates limited to the maps
@@ -1130,7 +1200,7 @@ void MapVisibilityAlgorithm::min_range(const CATCHCHALLENGER_TYPE_MAPID &mapInde
             #endif
             {
                 ClientWithMap &clientWithMap=ClientList::list->rwWithMap(map_c_idP);
-                /* Same ACK flow control as min_network(): a recipient that has
+                /* Same ACK flow control as min_balanced(): a recipient that has
                  * not answered the previous 0xE3 is handed NOTHING, its link
                  * can not drain it. It costs no extra code here: visibleSlots
                  * IS the baseline and does not move while it is held back, so
@@ -1166,7 +1236,7 @@ void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER
     /* PATH 1: first tick on this map, or a teleport. The client keeps its
      * other players in a list indexed by slot while it drops+reloads the maps
      * around it, so the whole view has to be dropped and rebuilt -- same as
-     * min_network() PATH 1. A simple border crossing pays it too: telling
+     * min_balanced() PATH 1. A simple border crossing pays it too: telling
      * both apart would need the teleport path to say so, which is more
      * existing code changed than what it saves. */
     if(recipient.sendedMap!=mapIndex)
@@ -1206,8 +1276,10 @@ void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER
     const int16_t recipientX=static_cast<int16_t>(recipient.getX());
     const int16_t recipientY=static_cast<int16_t>(recipient.getY());
     //keep range = view + hysteresis margin, see CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN
-    const int16_t keepX=CATCHCHALLENGER_SERVER_MAP_VIEW_X+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN;
-    const int16_t keepY=CATCHCHALLENGER_SERVER_MAP_VIEW_Y+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN;
+    const int16_t viewX=static_cast<int16_t>(view_x);
+    const int16_t viewY=static_cast<int16_t>(view_y);
+    const int16_t keepX=static_cast<int16_t>(viewX+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN);
+    const int16_t keepY=static_cast<int16_t>(viewY+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN);
     uint8_t changesCount=0;
     uint8_t removeCount=0;
     uint8_t insertCount=0;
@@ -1294,7 +1366,7 @@ void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER
                                 }
                             }
                         }
-                        else if(dx<=CATCHCHALLENGER_SERVER_MAP_VIEW_X && dy<=CATCHCHALLENGER_SERVER_MAP_VIEW_Y)
+                        else if(dx<=viewX && dy<=viewY)
                         {
                             //entered the view: the wire slot is allocated after the
                             //remove pass, so a slot freed this tick is reused
