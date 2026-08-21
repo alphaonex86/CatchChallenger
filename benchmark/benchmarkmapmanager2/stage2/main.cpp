@@ -561,11 +561,22 @@ static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms
     return 0;
 }
 
-// The cell every node runs, whatever its RAM: the fleet's common ground.
-// Small enough for the smallest Linux node in the fleet (a 52 MB Pentium MMX
-// holds ~5400), big enough that the per-player work dominates the fixed cost
-// of ticking the world's 647 maps.
+// The fleet's common ground: fixed player counts, the same on every node, run
+// by whoever can afford them. A node's own population comes from its RAM, so
+// without these no two nodes share a cell and no chart panel holds more than
+// one machine.
+//
+// The rungs are not arbitrary: 4095 / 16382 / 65530 are the counts the fleet
+// already recorded (a sixteenth, a quarter and all of the 16-bit connected
+// index), so a node measured today lands in the SAME panel as runs that
+// predate this. 1000 is added below them because the four RAM-bound boards
+// reach the lower rungs only.
+//
+// A node runs every rung up to its own capacity, then its own capacity: the
+// 52 MB Pentium holds 5461, so it runs 1000, 4095 and 5461 -- and shows up
+// alongside the 65530-player machines at the two rungs they share.
 #define REFERENCE_PLAYERS 1000u
+static const uint32_t LADDER[] = { REFERENCE_PLAYERS, 4095u, 16382u, 65530u };
 
 static void usage()
 {
@@ -577,9 +588,10 @@ static void usage()
                  "there is nothing to read at runtime. The workload is FIXED; the only\n"
                  "arguments are how much of it to run:\n"
                  "  --players N     run the first N players of the generated set.\n"
-                 "                  Default: the REFERENCE cell (1000 players, the same\n"
-                 "                  on every node, so hardware compares directly), then\n"
-                 "                  a quarter of this node's own count and all of it.\n"
+                 "                  Default: the fleet ladder (1000/4095/16382/65530,\n"
+                 "                  the same on every node so hardware compares at the\n"
+                 "                  rungs they share) up to what this node holds, then\n"
+                 "                  its own count.\n"
                  "  --ms BUDGET_MS  fixed-time: run each count for BUDGET_MS and report\n"
                  "                  the ticks completed (default, 2000 ms)\n"
                  "  --ticks T       fixed-iteration: exactly T ticks. Only for\n"
@@ -634,24 +646,25 @@ int main(int argc, char **argv)
         // The other two are this node's own capacity and a quarter of it,
         // which is what says how the SAME machine scales with load.
         const uint32_t big = W::PLAYERS;
-        const uint32_t mid = big / 4 ? big / 4 : 1;
-        if(REFERENCE_PLAYERS <= big)
+        unsigned int rung = 0;
+        while(rung < sizeof(LADDER) / sizeof(LADDER[0]))
         {
-            players_list.push_back(REFERENCE_PLAYERS);
-            if(mid > REFERENCE_PLAYERS) players_list.push_back(mid);
-            if(big > mid && big > REFERENCE_PLAYERS) players_list.push_back(big);
+            if(LADDER[rung] <= big)
+                players_list.push_back(LADDER[rung]);
+            rung++;
         }
-        else
+        if(players_list.empty())
         {
-            // Too small to hold the reference cell (the ESP32 and its 300 KB
-            // of RAM). It cannot join the cross-hardware comparison, but it
-            // still needs its own three points to show how IT scales, so keep
-            // the small/medium/large of its own population.
+            // Below the lowest rung (the ESP32 and its 300 KB of RAM). It
+            // cannot join the cross-hardware comparison, but it still needs
+            // its own points to show how IT scales.
+            const uint32_t mid = big / 4 ? big / 4 : 1;
             const uint32_t small = big / 16 ? big / 16 : 1;
             players_list.push_back(small);
             if(mid > small) players_list.push_back(mid);
-            if(big > mid)   players_list.push_back(big);
         }
+        if(players_list.back() != big)
+            players_list.push_back(big);
     }
     if(budget_ms == 0 && ticks == 0) budget_ms = 2000;
 

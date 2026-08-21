@@ -205,7 +205,18 @@ def derive_normalised(series, meta):
         columns = [("own_load_ns_per_player", "median_tick_ns", "ns",
                     1.0 / players),
                    ("own_load_player_ticks_per_s", "ticks_per_s",
-                    "player-ticks/s", float(players))]
+                    "player-ticks/s", float(players)),
+                   # The two raw figures at that same cell, under a name with
+                   # no count in it so they get a panel holding every node.
+                   # Read as a CAPABILITY, always paired with
+                   # own_load_players: "this box holds M players at T ticks/s"
+                   # is what decides whether hardware can serve a world, and it
+                   # is the question a raw tick rate answers well. It is only
+                   # as a hardware RANKING that it misleads (it counts batches,
+                   # so a node holding a twelfth of the population looks fast)
+                   # -- that is what own_load_player_ticks_per_s is for.
+                   ("own_load_ticks_per_s", "ticks_per_s", "ticks/s", 1.0),
+                   ("own_load_median_tick_ns", "median_tick_ns", "ns", 1.0)]
         for name, from_metric, unit, scale in columns:
             key = source.get(from_metric)
             if key is not None and prefix + name not in series:
@@ -213,6 +224,20 @@ def derive_normalised(series, meta):
                                          for v in series[key]]
                 meta[prefix + name] = unit
                 added += 1
+        # What that population COSTS in memory. max_rss_kb is the peak of the
+        # whole run, and the largest cell is where the peak happens, so it is
+        # already "RAM at max players" -- divided by the count it becomes the
+        # per-player cost, which is the number that says whether a smaller
+        # board could hold the same world. It is NOT a constant: it climbs as
+        # maps crowd, which is exactly why the sizing model has to assume the
+        # worst slope.
+        rss = f"{prefix}max_rss_kb"
+        name = prefix + "own_load_kb_per_player"
+        if rss in series and name not in series:
+            series[name] = [None if v is None else round(float(v) / players, 3)
+                            for v in series[rss]]
+            meta[name] = "kb"
+            added += 1
         # Which N the two above were taken at -- without it a reader cannot
         # tell a fast machine from one that simply ran a smaller load.
         if prefix + "own_load_players" not in series:
