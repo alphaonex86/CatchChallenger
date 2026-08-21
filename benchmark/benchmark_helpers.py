@@ -1280,6 +1280,47 @@ def _drop_core_rlimit():
         pass
 
 
+def drop_stale_cmake_cache(build_dir, src_dir):
+    """Remove a CMakeCache.txt that was generated for ANOTHER source tree.
+
+    cmake refuses to configure over one ("The source ... does not match the
+    source ... used to generate cache") and the benchmark dies before it
+    measures anything -- on a build dir that is pure scratch and costs one
+    reconfigure to rebuild. It happens as soon as the same tmpfs build root is
+    driven from two checkouts, which is the NORMAL fleet setup: the fleet runs
+    from a clean git worktree while the main checkout is where the code is
+    edited. Nobody should have to delete a cache by hand for that.
+
+    Only ever touches CMakeCache.txt + CMakeFiles/ of the given build dir, and
+    only after reading the cache and confirming it points somewhere else.
+    Returns True when it dropped one."""
+    cache = os.path.join(build_dir, "CMakeCache.txt")
+    if not os.path.isfile(cache):
+        return False
+    want = os.path.realpath(src_dir)
+    have = None
+    try:
+        with open(cache, "r", errors="replace") as f:
+            for line in f:
+                if line.startswith("CMAKE_HOME_DIRECTORY:INTERNAL="):
+                    have = line.strip().split("=", 1)[1]
+                    break
+    except OSError:
+        return False
+    if have is None or os.path.realpath(have) == want:
+        return False
+    print(f"{C_YELLOW}[cmake]{C_RESET} {build_dir}: cache was configured for "
+          f"{have}, this run is {want} -- dropping it", flush=True)
+    try:
+        os.remove(cache)
+    except OSError:
+        return False
+    # CMakeFiles/ carries the same stale paths; leaving it makes the
+    # reconfigure fail in its own way.
+    shutil.rmtree(os.path.join(build_dir, "CMakeFiles"), ignore_errors=True)
+    return True
+
+
 def run_capture(cmd, env=None, timeout=None, cwd=None, preexec_fn=None):
     """Run a subprocess; return (rc, stdout, stderr, wall_seconds). cwd
     lets callers pin the child to a tmpfs scratch dir so anything it

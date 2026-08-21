@@ -396,6 +396,7 @@ def build_stage1():
     the datapack, and nothing it does is measured."""
     os.makedirs(STAGE1_BUILD, exist_ok=True)
     print(_color(bh.C_CYAN, f"[stage1] build {STAGE1_SRC}"))
+    bh.drop_stale_cmake_cache(STAGE1_BUILD, STAGE1_SRC)
     cfg = ["cmake", "-S", STAGE1_SRC, "-B", STAGE1_BUILD,
            "-DCMAKE_BUILD_TYPE=Release"]
     if shutil.which("ninja"):
@@ -470,6 +471,7 @@ def generate_workload(stage1_bin, node):
 def build_stage2(workload_cpp, build_dir):
     """Build the measured binary with that workload compiled in."""
     os.makedirs(build_dir, exist_ok=True)
+    bh.drop_stale_cmake_cache(build_dir, STAGE2_SRC)
     cfg = ["cmake", "-S", STAGE2_SRC, "-B", build_dir,
            "-DCMAKE_BUILD_TYPE=Release", f"-DCC_WORKLOAD_CPP={workload_cpp}"]
     if shutil.which("ninja"):
