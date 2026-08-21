@@ -252,6 +252,13 @@ void BaseServer::loadAndFixSettings()
         std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.max<5" << std::endl;
         GlobalServerData::serverSettings.mapVisibility.simple.max=5;
     }
+    //a view is at most 127 tiles (a map is never bigger), so a margin above
+    //that can only be a typo: it would keep everybody for ever
+    if(GlobalServerData::serverSettings.mapVisibility.viewMargin>127)
+    {
+        std::cerr << "GlobalServerData::serverSettings.mapVisibility.viewMargin>127" << std::endl;
+        GlobalServerData::serverSettings.mapVisibility.viewMargin=127;
+    }
     if(GlobalServerData::serverSettings.mapVisibility.simple.reshow<3)
     {
         std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.reshow<3" << std::endl;

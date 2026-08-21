@@ -137,6 +137,7 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.secondToPositionSync              = 0;
     GlobalServerData::serverSettings.mapVisibility.simple.max                   = 30;
     GlobalServerData::serverSettings.mapVisibility.simple.reshow                = 20;
+    GlobalServerData::serverSettings.mapVisibility.viewMargin              = CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN_DEFAULT;
     GlobalServerData::serverSettings.mapVisibility.minimize                = GameServerSettings::MapVisibility::Minimize_CPU;
     GlobalServerData::serverSettings.mapVisibility.enable                = true;
     #ifdef CATCHCHALLENGER_DDOS_FILTER

@@ -307,6 +307,7 @@ public:
         // for our INPUT-driven test we set it explicitly.
         api.allowDynamicSizeForTest();
         GlobalServerData::serverSettings.mapVisibility.simple.max = 200;
+        GlobalServerData::serverSettings.mapVisibility.viewMargin = CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN_DEFAULT;
         GlobalServerData::serverSettings.dontSendPlayerType = false;
         CommonSettingsServer::commonSettingsServer.dontSendPseudo = false;
     }
@@ -1495,6 +1496,7 @@ public:
         api.map_controller=&observer;
         api.allowDynamicSizeForTest();
         GlobalServerData::serverSettings.mapVisibility.simple.max=50;
+        GlobalServerData::serverSettings.mapVisibility.viewMargin=CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN_DEFAULT;
         GlobalServerData::serverSettings.dontSendPlayerType=false;
         CommonSettingsServer::commonSettingsServer.dontSendPseudo=false;
         MapVisibilityAlgorithm::flat_map_list.clear();
@@ -1627,11 +1629,15 @@ public:
             mapIndex++;
         }
     }
-    //feed the focus captured bytes to the REAL production parser
-    std::string parseFocus()
+    //feed the captured bytes of ONE client to the REAL production parser.
+    //A scenario watching TWO recipients at once (they are on the same map and
+    //do NOT see the same thing, which is the whole point of the range mode)
+    //declares its own observer + Api_protocol and calls this for the second.
+    std::string parseClient(const PLAYER_INDEX_FOR_CONNECTED &gid,TestApiProtocol &parser,
+                            MapControllerMpStub &into)
     {
-        api.map_controller=&observer;
-        const ClientWithMap * const fc=owned.at(focus);
+        parser.map_controller=&into;
+        const ClientWithMap * const fc=owned.at(gid);
         size_t blockIndex=0;
         while(blockIndex<fc->sentBlocks.size())
         {
@@ -1639,7 +1645,7 @@ public:
             uint32_t cursor=0;
             while(cursor<b.bytes.size())
             {
-                const int8_t rc=api.parseIncommingDataRaw(b.bytes.data(),static_cast<uint32_t>(b.bytes.size()),cursor);
+                const int8_t rc=parser.parseIncommingDataRaw(b.bytes.data(),static_cast<uint32_t>(b.bytes.size()),cursor);
                 if(rc!=1)
                 {
                     std::ostringstream oss;
@@ -1650,6 +1656,27 @@ public:
             blockIndex++;
         }
         return std::string();
+    }
+    std::string parseFocus()
+    {
+        return parseClient(focus,api,observer);
+    }
+    //take a player off its map WITHOUT putting it anywhere else: what
+    //Client::removeClientOnMap() does when a client goes away
+    void removeFromMap(const PLAYER_INDEX_FOR_CONNECTED &gid)
+    {
+        MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list[ownedMap.at(gid)];
+        PLAYER_INDEX_FOR_CONNECTED slot=0;
+        while(slot<map.map_clients_list_size())
+        {
+            if(map.map_clients_list_isValid(slot) && map.map_clients_list_at(slot)==gid)
+            {
+                map.removeOnMap(slot);
+                slot=map.map_clients_list_size();
+            }
+            else
+                slot++;
+        }
     }
     void tickAndParse(std::string &status)
     {
@@ -1927,14 +1954,14 @@ static void scenario_min_range_enter_leave_hysteresis()
     if(!status.empty()) { fail_line(name,status); return; }
     if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"not_inserted_at_view_limit"); return; }
     //inside the margin: kept, and it costs a 4 bytes 0x66, not an insert
-    f.moveTo(walker,MapVisibilityAlgorithm::view_x+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN,5);
+    f.moveTo(walker,MapVisibilityAlgorithm::view_x+GlobalServerData::serverSettings.mapVisibility.viewMargin,5);
     f.tickAndParse(status);
     if(!status.empty()) { fail_line(name,status); return; }
     if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"dropped_inside_margin"); return; }
     if(f.focusPacketCount(0x66)!=1 || f.focusPacketCount(0x69)!=0 || f.focusPacketCount(0x6B)!=0)
         { fail_line(name,"margin_move_is_not_a_change"); return; }
     //past the margin: removed
-    f.moveTo(walker,MapVisibilityAlgorithm::view_x+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN+1,5);
+    f.moveTo(walker,MapVisibilityAlgorithm::view_x+GlobalServerData::serverSettings.mapVisibility.viewMargin+1,5);
     f.tickAndParse(status);
     if(!status.empty()) { fail_line(name,status); return; }
     if(!f.observer.otherPlayerList.empty()) { fail_line(name,"not_removed_past_margin"); return; }
@@ -2217,7 +2244,7 @@ static void scenario_min_range_visible_player_crosses_then_leaves()
     f.linkRight(m0,m1);
     MapVisibilityAlgorithm::resolveNeighbours();
     const uint8_t view=MapVisibilityAlgorithm::view_x;
-    const uint8_t keep=static_cast<uint8_t>(view+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN);
+    const uint8_t keep=static_cast<uint8_t>(view+GlobalServerData::serverSettings.mapVisibility.viewMargin);
     //focus placed so the walker is AT the view limit on the last column of m0
     f.focus=f.addClient("focus",m0,static_cast<COORD_TYPE>(39-view),10,100);
     const PLAYER_INDEX_FOR_CONNECTED walker=f.addClient("walker",m0,39,10,101);
@@ -2247,6 +2274,10 @@ static void scenario_min_range_visible_player_crosses_then_leaves()
 // "balanced" and "cpu" are WHOLE MAP algorithms: they show every player of the
 // recipient own map whatever the distance, and NEVER anybody of a border map.
 // Only "network" (min_range) crosses the seam.
+// That is the CONCEPT, not a shortcut: staying on the local map is what keeps
+// them cheap -- no walk of another map client list (cache miss) and no
+// distance arithmetic at all. Do not "improve" them by adding the border maps;
+// that algorithm already exists and is called min_range().
 static void scenario_balanced_and_cpu_local_map_only()
 {
     const char *name = "balanced_and_cpu_local_map_only";
@@ -2275,6 +2306,143 @@ static void scenario_balanced_and_cpu_local_map_only()
                 { fail_line(name,"algo"+std::to_string(algo)+":unexpected:"+n.second.info.pseudo); return; }
         }
         algo++;
+    }
+    pass_line(name);
+}
+
+// THE property of the range mode: two recipients standing on the SAME map do
+// NOT see the same thing. Every other scenario watches a single observer, so
+// nothing was proving the sets are really per recipient and not one shared
+// broadcast. Here A and B are too far apart to see each other, and each sees
+// exactly the one player standing next to it.
+static void scenario_min_range_two_recipients_different_views()
+{
+    const char *name = "min_range_two_recipients_different_views";
+    RangeFixture f;
+    MapVisibilityAlgorithm::resolveViewRange(4);//real datapack zoom: small view
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    const uint8_t view=MapVisibilityAlgorithm::view_x;
+    f.focus=f.addClient("A",m0,2,10,100);
+    const PLAYER_INDEX_FOR_CONNECTED b=f.addClient("B",m0,38,10,101);
+    f.addClient("nextToA",m0,static_cast<COORD_TYPE>(2+view),10,102);
+    f.addClient("nextToB",m0,static_cast<COORD_TYPE>(38-view),10,103);
+    //the fixture is only useful if the two halves really are out of each other
+    if((38-2)<=(int)view) { fail_line(name,"fixture_broken_A_and_B_see_each_other"); return; }
+    MapControllerMpStub observerB;
+    TestApiProtocol apiB;
+    apiB.allowDynamicSizeForTest();
+    f.runTick();
+    std::string status=f.parseFocus();
+    if(!status.empty()) { fail_line(name,"A:"+status); return; }
+    status=f.parseClient(b,apiB,observerB);
+    if(!status.empty()) { fail_line(name,"B:"+status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"A_sees="+std::to_string(f.observer.otherPlayerList.size())); return; }
+    if(observerB.otherPlayerList.size()!=1) { fail_line(name,"B_sees="+std::to_string(observerB.otherPlayerList.size())); return; }
+    for(const std::pair<const uint8_t,OtherPlayerView> &n : f.observer.otherPlayerList)
+        if(n.second.info.pseudo!="nextToA") { fail_line(name,"A_sees_the_wrong_one:"+n.second.info.pseudo); return; }
+    for(const std::pair<const uint8_t,OtherPlayerView> &n : observerB.otherPlayerList)
+        if(n.second.info.pseudo!="nextToB") { fail_line(name,"B_sees_the_wrong_one:"+n.second.info.pseudo); return; }
+    pass_line(name);
+}
+
+// One player leaves the view and another enters it in the SAME tick: the wire
+// slot freed by the first is handed to the second immediately, which only
+// works because the removes are composed BEFORE the inserts. Emitted the other
+// way round the client would insert into the slot and then delete it, and the
+// arriving player would simply never be drawn.
+static void scenario_min_range_slot_reused_same_tick()
+{
+    const char *name = "min_range_slot_reused_same_tick";
+    RangeFixture f;
+    MapVisibilityAlgorithm::resolveViewRange(4);
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    const uint8_t view=MapVisibilityAlgorithm::view_x;
+    f.focus=f.addClient("focus",m0,10,10,100);
+    const PLAYER_INDEX_FOR_CONNECTED leaving=f.addClient("leaving",m0,static_cast<COORD_TYPE>(10+view),10,101);
+    const PLAYER_INDEX_FOR_CONNECTED arriving=f.addClient("arriving",m0,39,10,102);
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"leaving_not_visible_first"); return; }
+    const uint8_t usedSlot=f.observer.otherPlayerList.begin()->first;
+    //same tick: one walks out past the hysteresis band, the other walks in
+    f.moveTo(leaving,39,39);
+    f.moveTo(arriving,static_cast<COORD_TYPE>(10+view),10);
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    status=f.checkView();
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"expected_exactly_the_arriving_one count="+std::to_string(f.observer.otherPlayerList.size())); return; }
+    const std::pair<const uint8_t,OtherPlayerView> &only=*f.observer.otherPlayerList.begin();
+    if(only.second.info.pseudo!="arriving") { fail_line(name,"wrong_player_left:"+only.second.info.pseudo); return; }
+    if(only.first!=usedSlot) { fail_line(name,"slot_not_reused old="+std::to_string(usedSlot)+" new="+std::to_string(only.first)); return; }
+    if(f.focusPacketCount(0x69)!=1 || f.focusPacketCount(0x6B)!=1) { fail_line(name,"expected_one_remove_and_one_insert"); return; }
+    pass_line(name);
+}
+
+// A visible player taken off the map (what Client::removeClientOnMap does when
+// a client goes away) is removed from the view, and the tick must not go
+// looking for it in the connected list either.
+static void scenario_min_range_removed_from_map_while_visible()
+{
+    const char *name = "min_range_removed_from_map_while_visible";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    f.focus=f.addClient("focus",m0,10,10,100);
+    const PLAYER_INDEX_FOR_CONNECTED leaver=f.addClient("leaver",m0,12,10,101);
+    f.addClient("stayer",m0,14,10,102);
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=2) { fail_line(name,"expected_two_visible_first"); return; }
+    f.removeFromMap(leaver);
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"gone_player_still_displayed"); return; }
+    for(const std::pair<const uint8_t,OtherPlayerView> &n : f.observer.otherPlayerList)
+        if(n.second.info.pseudo!="stayer") { fail_line(name,"wrong_survivor:"+n.second.info.pseudo); return; }
+    if(f.focusPacketCount(0x69)!=1) { fail_line(name,"leaving_the_map_is_not_one_remove"); return; }
+    pass_line(name);
+}
+
+// The hysteresis is a RUNTIME setting (mapVisibility/ViewMargin), not a
+// constant: with two different margins the SAME walk has to be dropped at two
+// different tiles. Kept + dropped are checked for each, so a hardcoded margin
+// fails whatever value it was hardcoded to.
+static void scenario_min_range_hysteresis_is_configurable()
+{
+    const char *name = "min_range_hysteresis_is_configurable";
+    const uint8_t margins[2]={1,7};
+    unsigned int index=0;
+    while(index<2)
+    {
+        const uint8_t margin=margins[index];
+        RangeFixture f;
+        MapVisibilityAlgorithm::resolveViewRange(4);//small view: room to walk out
+        GlobalServerData::serverSettings.mapVisibility.viewMargin=margin;
+        const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,120,40);
+        MapVisibilityAlgorithm::resolveNeighbours();
+        const uint8_t view=MapVisibilityAlgorithm::view_x;
+        f.focus=f.addClient("focus",m0,0,5,100);
+        const PLAYER_INDEX_FOR_CONNECTED walker=f.addClient("walker",m0,view,5,101);
+        std::string status;
+        f.tickAndParse(status);
+        if(!status.empty()) { fail_line(name,status); return; }
+        if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"margin"+std::to_string(margin)+":not_inserted_at_the_view_limit"); return; }
+        //last tile of the hysteresis band: still displayed
+        f.moveTo(walker,static_cast<COORD_TYPE>(view+margin),5);
+        f.tickAndParse(status);
+        if(!status.empty()) { fail_line(name,status); return; }
+        if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"margin"+std::to_string(margin)+":dropped_inside_its_own_band"); return; }
+        //one tile further: gone
+        f.moveTo(walker,static_cast<COORD_TYPE>(view+margin+1),5);
+        f.tickAndParse(status);
+        if(!status.empty()) { fail_line(name,status); return; }
+        if(!f.observer.otherPlayerList.empty()) { fail_line(name,"margin"+std::to_string(margin)+":not_dropped_past_its_band"); return; }
+        index++;
     }
     pass_line(name);
 }
@@ -2330,6 +2498,10 @@ int main()
     scenario_min_range_non_adjacent_map_never_sent();
     scenario_min_range_visible_player_crosses_then_leaves();
     scenario_balanced_and_cpu_local_map_only();
+    scenario_min_range_two_recipients_different_views();
+    scenario_min_range_slot_reused_same_tick();
+    scenario_min_range_removed_from_map_while_visible();
+    scenario_min_range_hysteresis_is_configurable();
     std::cout << "[INFO] pass=" << g_pass << " fail=" << g_fail << std::endl;
     return g_fail == 0 ? 0 : 1;
 }

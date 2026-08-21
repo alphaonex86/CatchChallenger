@@ -445,6 +445,7 @@ void send_settings(
         formatedServerSettings.mapVisibility.simple.max=1;
     if(formatedServerSettings.mapVisibility.simple.reshow>=formatedServerSettings.mapVisibility.simple.max)
         formatedServerSettings.mapVisibility.simple.reshow=formatedServerSettings.mapVisibility.simple.max-1;
+    formatedServerSettings.mapVisibility.viewMargin			= stringtouint8(settings->value("ViewMargin"));
     if(settings->value("minimize")=="cpu")
         formatedServerSettings.mapVisibility.minimize=GameServerSettings::MapVisibility::Minimize_CPU;
     else if(settings->value("minimize")=="balanced")
