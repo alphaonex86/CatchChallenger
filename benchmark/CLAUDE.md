@@ -948,6 +948,13 @@ Done so far: **p1mmx** (2026-08-21), clocked 233 -> 133 MHz to limit heat damage
 
 ## `benchmarkmapmanager2.py` -- two-stage, per-node generated replay
 
+Measures BOTH visibility strategies on the same machine in the same run: the
+plain metrics are `min_balanced()` (whole map, diffed) and the `net_*` ones are
+`min_network()` (`--algo network`: only what each player SEES, border maps
+included). Stage 1 emits the border topology + the datapack zoom so stage 2 can
+resolve the seams and the view rectangle exactly like the server; `MEASURE_NETWORK
+= False` drops the second pass, which doubles the wall time of a rusage cell.
+
 Same production `min_balanced()` as `benchmarkmapmanager.py`, over the datapack's
 REAL world (647 maps under `map/main/generated`), driven by a replay that is
 GENERATED PER EXECUTION NODE AND PER DATAPACK.

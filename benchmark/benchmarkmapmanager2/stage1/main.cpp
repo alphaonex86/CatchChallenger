@@ -234,7 +234,21 @@ struct LoadedMap
     uint32_t walkable_cells;   // cells a player may stand on -> crowd cap
     uint32_t players;          // how many were placed here
 
-    LoadedMap() : kind(Kind_outdoor), walkable_cells(0), players(0) {}
+    /* Border topology, as the .tmx declares it: the neighbour FILE and the RAW
+     * marker offset, per side (0 top, 1 bottom, 2 left, 3 right). tryLoadMap()
+     * parses one map at a time and cannot resolve a link, so the indices and
+     * the delta offsets are computed once the whole folder is in, exactly the
+     * way Map_loader::loadAllMapsAndLink() does it for the server. Needed
+     * because min_network() only sees a neighbour map through them. */
+    std::string ownFile;
+    std::string borderFile[4];
+    int16_t borderRaw[4];
+
+    LoadedMap() : kind(Kind_outdoor), walkable_cells(0), players(0)
+    {
+        uint8_t s = 0;
+        while(s < 4) { borderRaw[s] = 0; s++; }
+    }
 };
 
 // What the DATAPACK says a map is: its sibling .xml carries
@@ -335,6 +349,63 @@ static bool find_spawn(const CommonMap &m, Lcg &rng, uint8_t &x, uint8_t &y)
 // Load every .tmx under <datapack>/<map_subdir> with the production loader.
 // Returns false + `error` when the datapack cannot be read at all; individual
 // map failures are counted, not fatal.
+/// Resolve the border FILE links into map indices, and the RAW marker offsets
+/// into the delta the server holds:
+/// Map_loader::loadAllMapsAndLink() computes border.left.y_offset as
+/// raw(other.right) - raw(self.left), and the game crosses a seam with it
+/// (MoveOnTheMap.hpp). tryLoadMap() sees one map at a time and cannot do it.
+/// Stage 2 needs the result because min_network() reaches a border map ONLY
+/// through this topology; a link to a map that did not load stays 65535, the
+/// same as a map the server has no index for.
+static void link_borders(std::vector<LoadedMap*> &out)
+{
+    std::map<std::string,uint16_t> indexOf;
+    size_t i = 0;
+    while(i < out.size()) { indexOf[out[i]->ownFile] = (uint16_t)i; i++; }
+    static const uint8_t opposite[4] = {1, 0, 3, 2};//top<->bottom, left<->right
+    i = 0;
+    while(i < out.size())
+    {
+        LoadedMap * const lm = out[i];
+        uint8_t side = 0;
+        while(side < 4)
+        {
+            uint16_t other = 65535;
+            int16_t delta = 0;
+            if(!lm->borderFile[side].empty())
+            {
+                std::map<std::string,uint16_t>::const_iterator it = indexOf.find(lm->borderFile[side]);
+                if(it != indexOf.cend())
+                {
+                    other = it->second;
+                    delta = (int16_t)(out[other]->borderRaw[opposite[side]] - lm->borderRaw[side]);
+                }
+            }
+            switch(side)
+            {
+                case 0:
+                    lm->map.border.top.mapIndex = other;
+                    lm->map.border.top.x_offset = (int8_t)delta;
+                break;
+                case 1:
+                    lm->map.border.bottom.mapIndex = other;
+                    lm->map.border.bottom.x_offset = (int8_t)delta;
+                break;
+                case 2:
+                    lm->map.border.left.mapIndex = other;
+                    lm->map.border.left.y_offset = (int8_t)delta;
+                break;
+                default:
+                    lm->map.border.right.mapIndex = other;
+                    lm->map.border.right.y_offset = (int8_t)delta;
+                break;
+            }
+            side++;
+        }
+        i++;
+    }
+}
+
 static bool load_world(const std::string &datapack, const std::string &map_subdir,
                        std::vector<LoadedMap*> &out, unsigned int &failed,
                        unsigned int &typed, std::string &error)
@@ -400,6 +471,19 @@ static bool load_world(const std::string &datapack, const std::string &map_subdi
                         lm->walkable_cells++;
                     c++;
                 }
+                lm->ownFile = relative;
+                lm->borderFile[0] = Map_loader::resolvRelativeMap(map_path + relative,
+                        loader.map_to_send.border.top.fileName, map_path);
+                lm->borderRaw[0]  = (int16_t)loader.map_to_send.border.top.x_offset;
+                lm->borderFile[1] = Map_loader::resolvRelativeMap(map_path + relative,
+                        loader.map_to_send.border.bottom.fileName, map_path);
+                lm->borderRaw[1]  = (int16_t)loader.map_to_send.border.bottom.x_offset;
+                lm->borderFile[2] = Map_loader::resolvRelativeMap(map_path + relative,
+                        loader.map_to_send.border.left.fileName, map_path);
+                lm->borderRaw[2]  = (int16_t)loader.map_to_send.border.left.y_offset;
+                lm->borderFile[3] = Map_loader::resolvRelativeMap(map_path + relative,
+                        loader.map_to_send.border.right.fileName, map_path);
+                lm->borderRaw[3]  = (int16_t)loader.map_to_send.border.right.y_offset;
                 out.push_back(lm);
             }
             else
@@ -422,6 +506,7 @@ static bool load_world(const std::string &datapack, const std::string &map_subdi
     CommonDatapack::commonDatapack.unload();
     std::cout.clear();
     std::cerr.clear();
+    link_borders(out);
     if(out.empty())
     {
         error = "no .tmx loaded under " + map_path;
@@ -797,6 +882,20 @@ static void emit_u8(FILE *f, const char *type, const char *name, size_t count,
     std::fprintf(f, "\n};\n");
 }
 
+static void emit_i8(FILE *f, const char *name, const std::vector<int16_t> &v)
+{
+    std::fprintf(f, "extern const int8_t %s[%u];\nconst int8_t %s[%u] = {",
+                 name, (unsigned int)v.size(), name, (unsigned int)v.size());
+    size_t i = 0;
+    while(i < v.size())
+    {
+        if((i % 24) == 0) std::fprintf(f, "\n");
+        std::fprintf(f, "%d,", (int)v[i]);
+        i++;
+    }
+    std::fprintf(f, "\n};\n");
+}
+
 static void emit_u16(FILE *f, const char *name, const std::vector<uint16_t> &v)
 {
     std::fprintf(f, "extern const uint16_t %s[%u];\nconst uint16_t %s[%u] = {",
@@ -1070,6 +1169,35 @@ int main(int argc, char **argv)
         emit_u8(f, "uint8_t", "MAP_W", w.size(), w.data());
         emit_u8(f, "uint8_t", "MAP_H", h.size(), h.data());
     }
+    /* Border topology, 4 entries by map in the order top,bottom,left,right:
+     * the neighbour index (65535 = none) and the RESOLVED delta offset, i.e.
+     * exactly what the server holds in CommonMap::border. min_network() walks
+     * a border map only through this, so without it the view-range algorithm
+     * would measure a world of islands. */
+    {
+        std::vector<uint16_t> bmap;
+        std::vector<int16_t> boff;
+        bmap.reserve(loaded.size() * 4);
+        boff.reserve(loaded.size() * 4);
+        size_t m = 0;
+        while(m < loaded.size())
+        {
+            const CommonMap &cm = loaded[m]->map;
+            bmap.push_back(cm.border.top.mapIndex);    boff.push_back(cm.border.top.x_offset);
+            bmap.push_back(cm.border.bottom.mapIndex); boff.push_back(cm.border.bottom.x_offset);
+            bmap.push_back(cm.border.left.mapIndex);   boff.push_back(cm.border.left.y_offset);
+            bmap.push_back(cm.border.right.mapIndex);  boff.push_back(cm.border.right.y_offset);
+            m++;
+        }
+        emit_u16(f, "MAP_BORDER", bmap);
+        emit_i8(f, "MAP_BORDER_OFFSET", boff);
+    }
+    /* The datapack zoom (map/layers.xml): what the CLIENT draws with, so what
+     * MapVisibilityAlgorithm::resolveViewRange() turns into the view rectangle
+     * min_network() broadcasts. Replaying with another one would measure
+     * another view. */
+    std::fprintf(f, "extern const uint8_t WORLD_ZOOM;\nconst uint8_t WORLD_ZOOM = %u;\n",
+                 (unsigned int)CommonDatapack::commonDatapack.get_layersOptions().zoom);
     // Where everyone starts -- and where a reset puts them back.
     {
         std::vector<uint16_t> smap;
