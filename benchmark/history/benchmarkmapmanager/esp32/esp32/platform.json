@@ -1,1 +1,0 @@
-{"arch":"xtensa-lx6","arch_emulated":false,"compiler":"xtensa-esp32-elf-gcc","cpu_cores":2,"cpu_mhz":240.0,"cpu_model":"Espressif ESP32 (Xtensa LX6 dual-core)","disk_kind":"flash","libc":"newlib","net_card":"ESP32 WiFi (802.11 b/g/n)","net_link":"serial","net_link_detail":"uart0","ram_type":"SRAM ~520KiB (no DRAM)","virt_kind":"bare-metal","virt_type":"none"}
