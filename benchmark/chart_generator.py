@@ -871,8 +871,40 @@ def _compact_index_axis(series, commits, champion_idx,
     return new_series, new_commits, new_champion
 
 
-def _render_group(benchmark, comp, exe, records):
-    series, commits, better_map = _extract_series(records)
+def _algo_of_label(label):
+    """Which strategy a series label belongs to, and the label it would have
+    without the prefix. "rusage.1000-players.net_bytes_per_tick" is the
+    view-range measurement of "bytes_per_tick", not another metric."""
+    head, _dot, bare = label.rpartition(".")
+    for prefix, algo in ALGO_PREFIXES:
+        if bare.startswith(prefix):
+            stripped = bare[len(prefix):]
+            return algo, (head + "." + stripped if head else stripped)
+    return "balanced", label
+
+
+def _split_series_by_algo(series, better_map):
+    """{strategy: (series, better_map)} with the prefixes stripped, or None
+    when the benchmark measured a single strategy (every other benchmark:
+    nothing to split, and the caller keeps its one chart)."""
+    out = {}
+    for label, pts in series.items():
+        algo, stripped = _algo_of_label(label)
+        sub, bmap = out.setdefault(algo, ({}, {}))
+        sub[stripped] = pts
+        if label in better_map:
+            bmap[stripped] = better_map[label]
+    if len(out) < 2:
+        return None
+    return out
+
+
+def _render_group(benchmark, comp, exe, records, series_override=None):
+    if series_override is None:
+        series, commits, better_map = _extract_series(records)
+    else:
+        series, better_map = series_override
+        _s, commits, _b = _extract_series(records)
     if not series:
         return None
     cpu_slug = cpu_model_slug(records[0].get("cpu_model")) if records else "unknown"
@@ -932,6 +964,21 @@ def _render_group(benchmark, comp, exe, records):
     return head + "".join(body) + "</svg>\n"
 
 
+def _keep_balanced_only(d):
+    """Drop the series of the extra strategies from a cross-node view.
+
+    Those charts already hold one entry per NODE per metric; adding a
+    strategy axis on top triples the panels and none of them stays readable.
+    The strategies are compared in algo-compare.svg, per hardware and fleet
+    wide, which is the chart built for exactly that question."""
+    out = {}
+    for key, value in d.items():
+        algo, _stripped = _algo_of_label(key)
+        if algo == "balanced":
+            out[key] = value
+    return out
+
+
 def _render_session_chart(benchmark, batches):
     """Cross-node session chart: plots every node's metrics per batch.
 
@@ -950,6 +997,8 @@ def _render_session_chart(benchmark, batches):
     arms = _ab_arms(d for _ts, _cs, docs in batches for d in docs)
     series, commits, better_map = _extract_session_series(batches, champ_short,
                                                           arms)
+    series = _keep_balanced_only(series)
+    better_map = _keep_balanced_only(better_map)
     # A per-node line is only a trend worth charting if it has >=3 points;
     # a node with <3 values (e.g. only "local" reported b128_net_rx_bytes
     # once or twice) is a lone dot that can't drive a decision -- drop it.
@@ -1463,6 +1512,8 @@ def _render_by_node_chart(benchmark, records):
     if arms:
         return _render_ab_by_node_chart(benchmark, records, arms)
     metrics, better = _by_node_metrics(records)
+    metrics = _keep_balanced_only(metrics)
+    better = _keep_balanced_only(better)
     if not metrics:
         return None
     nnodes = len({n for mv in metrics.values() for n in mv})
@@ -1776,19 +1827,40 @@ def regenerate(benchmark, stamp=None):
         arch = recs[0].get("arch") if recs else None
         if not bh.node_allowed(exe, arch):
             continue
-        svg = _render_group(benchmark, comp, exe, recs)
-        if svg is None:
-            continue
         outdir = os.path.join(bh.RESULTS, benchmark, comp, exe)
-        os.makedirs(outdir, exist_ok=True)
-        champ_p = os.path.join(outdir, "champion.svg")
-        _write_if_changed(champ_p, svg)
-        written.append(champ_p)
-        if stamp and WRITE_CHARTS:
-            cand_p = os.path.join(outdir, f"candidate-{stamp}.svg")
-            with open(cand_p, "w") as f:
-                f.write(svg)
-            written.append(cand_p)
+        # A benchmark that measured several strategies gets ONE CHART PER
+        # STRATEGY instead of one carrying all of them: the panels would
+        # triple, and a chart nobody can read is a chart nobody reads. The
+        # cross-strategy comparison is algo-compare.svg right below.
+        all_series, _commits, all_better = _extract_series(recs)
+        by_algo = _split_series_by_algo(all_series, all_better)
+        variants = [(None, "champion.svg")]
+        if by_algo:
+            variants = [(by_algo.get("balanced"), "champion.svg"),
+                        (by_algo.get("network"),  "champion-network.svg"),
+                        (by_algo.get("cpu"),      "champion-cpu.svg")]
+        wrote_one = False
+        for override, fname in variants:
+            if by_algo and override is None:
+                stale = os.path.join(outdir, fname)
+                if os.path.isfile(stale):
+                    os.remove(stale)
+                continue
+            svg = _render_group(benchmark, comp, exe, recs, override)
+            if svg is None:
+                continue
+            os.makedirs(outdir, exist_ok=True)
+            champ_p = os.path.join(outdir, fname)
+            _write_if_changed(champ_p, svg)
+            written.append(champ_p)
+            wrote_one = True
+            if stamp and WRITE_CHARTS and fname == "champion.svg":
+                cand_p = os.path.join(outdir, f"candidate-{stamp}.svg")
+                with open(cand_p, "w") as f:
+                    f.write(svg)
+                written.append(cand_p)
+        if not wrote_one:
+            continue
         # 1b) the strategies of THIS hardware side by side, when the benchmark
         # recorded more than one of them (benchmarkmapmanager2 does).
         algo_svg = _render_algo_compare_node(benchmark, recs)
