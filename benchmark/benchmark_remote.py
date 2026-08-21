@@ -460,7 +460,20 @@ def rsync_to(user, host, port, src, dst, timeout=RSYNC_TIMEOUT,
     args = ["rsync", "-art"]
     if delete:
         args.append("--delete")
-    args += ["--exclude=.git", "--exclude=/build/", "--exclude=*.o",
+    # Build dirs at ANY depth, not just the root one: the layout is "one
+    # CMakeLists.txt per binary", so they appear under tools/, client/,
+    # server/... The anchored /build/ let 878MB of them (a 243MB generated
+    # all.tmx among others) be pushed to EVERY compile node, where the
+    # receiver then failed with rc=23. Same rule as .gitignore, exceptions
+    # included: the vendored zstd and xxhash SHIP a build/cmake as SOURCE and
+    # every 32-bit node dies on "libzstd/build/cmake which is not an existing
+    # directory" without it. rsync takes the FIRST matching rule, so the
+    # includes must stay above the excludes.
+    args += ["--exclude=.git",
+            "--include=**/libzstd/build/", "--include=**/libzstd/build/**",
+            "--include=**/libxxhash/build/", "--include=**/libxxhash/build/**",
+            "--exclude=build/", "--exclude=build-*/", "--exclude=*-build/",
+            "--exclude=*.o",
             "--exclude=moc_*", "--exclude=Makefile",
             "--exclude=__pycache__/", "--exclude=.qtcreator/",
             "-e", f"ssh -p {port} -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR"]
