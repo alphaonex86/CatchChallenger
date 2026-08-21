@@ -346,10 +346,14 @@ static void replay_tick(World &w, uint32_t tick_in_cycle, uint32_t &next_mig)
     while(next_mig < W::MIGRATIONS && W::MIG_TICK[next_mig] == tick_in_cycle)
     {
         const uint32_t pi = W::MIG_PLAYER[next_mig];
-        if(pi < w.players.size())
+        const CATCHCHALLENGER_TYPE_MAPID dest = W::MIG_MAP[next_mig];
+        // pi is out of range on a prefix run (that migration belongs to a
+        // player this cell does not have); dest cannot be, unless the workload
+        // and this binary were built from different generations -- refuse to
+        // index the map list on it rather than corrupt the run.
+        if(pi < w.players.size() && dest < w.maps.size())
         {
             Player &p = w.players[pi];
-            const CATCHCHALLENGER_TYPE_MAPID dest = W::MIG_MAP[next_mig];
             w.maps[p.map]->mva.removeOnMap(p.slot);
             p.map  = dest;
             p.slot = w.maps[dest]->mva.insertOnMap(p.gid);
