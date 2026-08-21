@@ -1095,10 +1095,10 @@ void MapVisibilityAlgorithm::resolveNeighbours()
 }
 
 /// Half extents of the view rectangle, from the client window and the DATAPACK
-/// zoom -- see the long comment in MapVisibilityAlgorithm.hpp. Uses the
-/// qtopengl scale rule (CCMap::paint), ceil(min(w,h)*zoom/512), because it is
-/// always <= the qtcpu800x600 one and so draws MORE tiles; the max of the two
-/// axes covers a portrait window; +1 tile of margin.
+/// zoom -- see the long comment in MapVisibilityAlgorithm.hpp. Same factor
+/// rule as MapControllerMP::scaleFactor(), the one both clients draw with:
+/// ceil(min(w,h)*zoom/512). The max of the two axes covers a portrait window,
+/// +1 tile of margin.
 void MapVisibilityAlgorithm::resolveViewRange(const uint8_t &datapackZoom)
 {
     uint32_t zoom=datapackZoom;

@@ -90,14 +90,9 @@ void CCMap::paintChildItems(QList<QGraphicsItem *> childItems,qreal parentX,qrea
 
 void CCMap::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    qreal zoomW=(qreal)widget->width()/(32.0*16.0);
-    qreal zoomH=(qreal)widget->height()/(32.0*16.0);
-    qreal zoomFinal=zoomW;
-    //keep the greatest value
-    if(zoomFinal>zoomH)
-        zoomFinal=zoomH;
-    zoomFinal*=CatchChallenger::CommonDatapack::commonDatapack.get_layersOptions().zoom;
-    scale=ceil(zoomFinal);
+    //the ONE scale rule of both clients, see MapControllerMP::scaleFactor()
+    scale=static_cast<qreal>(MapControllerMP::scaleFactor(widget->width(),widget->height(),
+                                       CatchChallenger::CommonDatapack::commonDatapack.get_layersOptions().zoom));
     /*MapObjectItem::scale=scale;
     MapObjectItem::playerObject=mapController.getPlayerMapObject();*/
     painter->scale(scale,scale);

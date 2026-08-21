@@ -26,6 +26,19 @@ public:
     virtual void connectAllSignals(CatchChallenger::Api_protocol_Qt *client);
     void setScale(float scaleSize);
     void updateScale();
+    /* THE scale rule of the clients, in ONE place: both of them draw the
+     * scene at an INTEGER factor of the datapack tile, so a tile covers
+     * 16*factor screen pixels and the window shows w/(16*factor) x
+     * h/(16*factor) tiles.
+     * factor = ceil(min(w,h)*datapackZoom/512), never below 1: at zoom 1 the
+     * SMALLEST side of the window shows the 32 tiles of 32*16=512px the UI is
+     * designed around, and a bigger window zooms in by whole pixels only (a
+     * fractional factor would blur the tiles).
+     * The server mirrors it in MapVisibilityAlgorithm::resolveViewRange() to
+     * know how far a player can SEE, so it must stay the same rule in the two
+     * clients -- qtcpu800x600 used to take floor(max(w,h)*zoom/512) instead,
+     * which drew FEWER tiles than qtopengl on the same window. */
+    static unsigned int scaleFactor(const int &width,const int &height,const uint8_t &datapackZoom);
     void resizeEvent(QResizeEvent *event);
 
     //the other player
