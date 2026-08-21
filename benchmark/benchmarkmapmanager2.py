@@ -250,6 +250,13 @@ def _bench_to_cell(bench, cell):
         changed = fields.get("sampled_changed")
         if slots:
             cell[(p, "changed_pct")] = round(100.0 * changed / slots, 2)
+        # Players standing on a cell someone else also occupies. Legal --
+        # production has no player-player collision, the move check is
+        # canGoTo() on the static map only -- so this is a crowd descriptor:
+        # it says whether the per-map target crowd still fits the floor.
+        if fields.get("sharing_cell") is not None:
+            cell[(p, "sharing_cell_pct")] = round(
+                100.0 * fields["sharing_cell"] / p, 2)
         # Share of players taking a step in a tick (the walk model's own rate).
         ticks = fields.get("ticks")
         if ticks and fields.get("moves") is not None:
@@ -497,7 +504,7 @@ def _cell_to_metric_block(per_cell):
 # harness's own cost. Letting any of them into the decision matrix would let
 # harness noise veto a real server improvement.
 DIAGNOSTIC_METRICS = ("maps", "maps_populated", "median_prep_ns",
-                      "changed_pct", "walk_pct",
+                      "changed_pct", "walk_pct", "sharing_cell_pct",
                       "world_maps", "world_cells", "world_walkable_cells")
 
 

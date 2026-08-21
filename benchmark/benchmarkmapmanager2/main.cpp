@@ -1132,6 +1132,33 @@ static int run_scenario(unsigned int players, unsigned int ticks,
             walk_violations++;
         vi++;
     }
+    // How many players share their cell with someone else. Production has NO
+    // player-player collision -- the move check is canGoTo() on the static map
+    // only (LocalClientHandlerMove.cpp) -- so standing on the same tile is
+    // legal and this is a crowd descriptor, not an error: it says whether the
+    // per-map target crowd is still physically plausible on that map's floor.
+    uint64_t sharing_cell = 0;
+    {
+        std::vector<uint64_t> cells;
+        cells.reserve(w.players.size());
+        size_t i = 0;
+        while(i < w.players.size())
+        {
+            const Player &pl = w.players[i];
+            cells.push_back(((uint64_t)pl.map << 32) | ((uint64_t)pl.client->getX() << 8)
+                            | (uint64_t)pl.client->getY());
+            i++;
+        }
+        std::sort(cells.begin(), cells.end());
+        i = 0;
+        while(i < cells.size())
+        {
+            size_t j = i + 1;
+            while(j < cells.size() && cells[j] == cells[i]) j++;
+            if(j - i > 1) sharing_cell += (uint64_t)(j - i);
+            i = j;
+        }
+    }
 
     std::cout.clear();
     std::cout << "BENCH"
@@ -1192,6 +1219,7 @@ static int run_scenario(unsigned int players, unsigned int ticks,
           k++;
       } }
     std::cout
+              << " sharing_cell=" << sharing_cell
               // MUST be 0. The harness treats anything else as a FAIL.
               << " walk_violations=" << walk_violations
               << std::endl;
