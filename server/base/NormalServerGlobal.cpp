@@ -196,7 +196,7 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     if(!settings->contains("Reshow"))
         settings->setValue("Reshow",30);
     if(!settings->contains("minimize"))
-        settings->setValue("minimize","network");//cpu or network
+        settings->setValue("minimize","balanced");//cpu, balanced or network(view range)
     settings->endGroup();
 
     settings->beginGroup("db");

@@ -10,6 +10,24 @@
 #define CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER 128*1024
 #endif
 
+/* View range of min_range() (GameServerSettings Minimize_Network), in tiles
+ * around the player. Half extents: the view is a
+ * (2*VIEW_X+1) x (2*VIEW_Y+1) RECTANGLE, the shape of the client window
+ * (800x600 map area / 16px tile = 50x37 tiles). Integer only, no distance,
+ * no sqrt/sin/cos: 2 compares by candidate.
+ * MARGIN is the hysteresis: a player is INSERTED at the view limit but only
+ * REMOVED past view+margin, else somebody walking on the edge costs a full
+ * insert (~25 bytes) + a remove EVERY tick instead of a 4 bytes move. */
+#ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_X
+#define CATCHCHALLENGER_SERVER_MAP_VIEW_X 25
+#endif
+#ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_Y
+#define CATCHCHALLENGER_SERVER_MAP_VIEW_Y 19
+#endif
+#ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN
+#define CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN 2
+#endif
+
 #define CATCHCHALLENGER_DYNAMIC_MAP_LIST 1
 
 namespace CatchChallenger {
@@ -30,8 +48,14 @@ public:
     unsigned int send_reinsertAllWithFilter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,char *output,const size_t &clients_size,const size_t &skipped_id);
     // broadcast all, no filter then resend same data
     void min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
-    // filter if already send, then consume CPU
+    // filter if already send, then consume CPU (GameServerSettings "balanced")
     void min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+    // only the players inside the view range, on this map OR on a border map
+    // (GameServerSettings "network")
+    void min_range(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+    // one recipient view delta, see min_range()
+    void sendViewDelta(ClientWithMap &recipient,const PLAYER_INDEX_FOR_CONNECTED &recipientIndex,
+                       const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     // Emit ONE delta between a recipient's PRIVATE baseline
     // (ClientWithMap::sendedStatus, what it last actually received) and the
     // current snapshot. Only used for a client that has just caught up
@@ -56,6 +80,38 @@ public:
     // diff is one isEqual() per slot and the sent-state refresh is a flat
     // memcpy of this snapshot.
     static DensePlayerState tempDenseBuffer[255];
+
+    /* min_range() scratch, all reused by every recipient of every map:
+     * - tempInsertPlayers/tempInsertSlots: the pending full inserts, the slot
+     *   is 255 while it still has to be allocated (see min_range()).
+     * - tempSeenSlot: "this slot is still visible this tick", reset by the
+     *   same walk that indexes the slots, so no memset by recipient.
+     * - tempSlotOfPlayer: sparse index connected player -> slot+1 (0: not
+     *   displayed), the O(1) "do I already show him?" lookup. Only the
+     *   entries of the recipient being composed are written AND cleared, so
+     *   the cost stays O(visible slots) and not O(max_players). Grows to the
+     *   highest connected index seen and then stops allocating. */
+    static PLAYER_INDEX_FOR_CONNECTED tempInsertPlayers[255];
+    static uint8_t tempSeenSlot[255];
+    static std::vector<uint8_t> tempSlotOfPlayer;
+
+    /* Map reachable from this one by its borders, with the integer
+     * translation of ITS local coordinates into THIS map frame (the crossing
+     * formulas are in MoveOnTheMap.hpp, the offsets are already resolved by
+     * Map_loader). Built once at load by resolveNeighbours(): the 4 borders
+     * plus what is reached in 2 hops and still TOUCHES this map rect, which
+     * is exactly the map set the client displays around its own map
+     * (MapVisualiser::rectTouch) -- a player is never announced on a map the
+     * client will not load, else its insert stays forever in the client
+     * delayedActions. ~8 entries by map, 6 bytes each. */
+    struct NeighbourMap
+    {
+        CATCHCHALLENGER_TYPE_MAPID mapIndex;
+        int16_t offset_x,offset_y;
+    };
+    std::vector<NeighbourMap> neighbours;
+    //call once, after the map list AND the border offsets are resolved
+    static void resolveNeighbours();
 
     /* Last state broadcast for THIS map, one entry per slot.
      *

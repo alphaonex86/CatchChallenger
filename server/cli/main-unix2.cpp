@@ -447,12 +447,14 @@ void send_settings(
         formatedServerSettings.mapVisibility.simple.reshow=formatedServerSettings.mapVisibility.simple.max-1;
     if(settings->value("minimize")=="cpu")
         formatedServerSettings.mapVisibility.minimize=GameServerSettings::MapVisibility::Minimize_CPU;
+    else if(settings->value("minimize")=="balanced")
+        formatedServerSettings.mapVisibility.minimize=GameServerSettings::MapVisibility::Minimize_Balanced;
     else if(settings->value("minimize")=="network")
         formatedServerSettings.mapVisibility.minimize=GameServerSettings::MapVisibility::Minimize_Network;
     else
     {
-        std::cerr << "minimize should be cpu or network" << std::endl;
-        formatedServerSettings.mapVisibility.minimize=GameServerSettings::MapVisibility::Minimize_Network;
+        std::cerr << "minimize should be cpu, balanced or network" << std::endl;
+        formatedServerSettings.mapVisibility.minimize=GameServerSettings::MapVisibility::Minimize_Balanced;
     }
     settings->endGroup();
 
