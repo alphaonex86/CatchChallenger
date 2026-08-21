@@ -137,6 +137,8 @@ ESP32_REPLAY_BYTES  = 32 * 1024     # flash, not RAM
 REPLAY_RAM_FRACTION = 0.02
 REPLAY_BYTES_MIN    = 64 * 1024
 REPLAY_BYTES_MAX    = 4 * 1024 * 1024
+# Below this many ticks per replay loop, resets stop being a rounding error.
+SHORT_CYCLE_TICKS   = 100
 
 RUN_REPEATS   = 3        # warmup + 3 measured wall passes per cell
 
@@ -350,6 +352,16 @@ def generate_workload(stage1_bin, node):
           f"{info.get('maps', '?')} maps, cycle {info.get('cycle_ticks', '?')} ticks, "
           f"{info.get('entries_per_player', '?')} vectors each, "
           f"{info.get('workload_bytes', 0) // 1024} KiB"))
+    # A short cycle means the world jumps home often, and enough of that shows
+    # up in the tail. It happens when the population is so large that the byte
+    # budget only buys the minimum list; say so rather than let the p95 drift.
+    cycle = info.get("cycle_ticks") or 0
+    if cycle and cycle < SHORT_CYCLE_TICKS:
+        print(_color(bh.C_YELLOW,
+              f"[stage1] {label}: the replay loops every {cycle} ticks -- that "
+              f"is {info.get('players', '?')} players against a "
+              f"{node_replay_bytes(node) // 1024} KiB budget. Resets will be a "
+              f"visible share of the run; check `resets` before reading p95."))
     return out, info
 
 
@@ -422,9 +434,9 @@ def _bench_to_cell(bench, cell):
     """Map one parsed BENCH block into the {(player, metric): value} cell.
 
     Returns an error string when the binary's own oracle failed, else None:
-    walk_violations != 0 means the walk model put a player on a collision cell,
-    so the workload is not what the benchmark claims to measure -- bad data,
-    which is the one thing that IS a FAIL (benchmark/CLAUDE.md)."""
+    replay_mismatch != 0 means stage 2 did not end a cycle where stage 1 said
+    it would, so the two stages disagree about the workload -- bad data, which
+    is the one thing that IS a FAIL (benchmark/CLAUDE.md)."""
     for p, fields in bench.items():
         bad = fields.get("replay_mismatch")
         if bad:
@@ -699,6 +711,10 @@ def _cell_to_metric_block(per_cell):
 # drifted and that is what needs looking at), and median_prep_ns is the
 # harness's own cost. Letting any of them into the decision matrix would let
 # harness noise veto a real server improvement.
+# NOTE binary_size_bytes now includes the workload baked into stage 2, so it
+# reads as "what this node has to carry", not as pure code size. It is stable
+# run to run for a given node (the generated workload is deterministic) and a
+# code-size regression still shows in it, so it stays in the decision set.
 DIAGNOSTIC_METRICS = ("maps", "resets", "median_prep_ns", "changed_pct",
                       "world_maps", "workload_players", "workload_cycle_ticks",
                       "workload_entries", "workload_replay_bytes")
@@ -745,7 +761,9 @@ def _push_workload(compile_node, workload_path, label):
     u = compile_node["ssh"]["user"]
     h = compile_node["ssh"]["host"]
     port = compile_node["ssh"].get("port", 22)
-    rc, _, _ = br.ssh_run(u, h, port, f"mkdir -p {remote_dir}", timeout=60)
+    import shlex
+    rc, _, _ = br.ssh_run(u, h, port, f"mkdir -p {shlex.quote(remote_dir)}",
+                          timeout=60)
     if rc != 0:
         return None, f"cannot create {remote_dir} on {compile_node['label']}"
     remote_path = f"{remote_dir}/workload-{label}.cpp"
@@ -983,11 +1001,24 @@ def main():
 
     if args.profile:
         tools = bh.profile_tools(args.profile)
+        # Each node profiles ITS OWN workload, so the build input is resolved
+        # per node: stage 1 generates it here, it is pushed to that node's
+        # compile parent, and the path comes back as the define stage 2 needs.
+        def _profile_defs(exec_node, compile_node):
+            workload, info = generate_workload(stage1_bin, exec_node)
+            if workload is None:
+                return None
+            remote_workload, msg = _push_workload(compile_node, workload,
+                                                  exec_node["label"])
+            if remote_workload is None:
+                return None
+            return {"CMAKE_BUILD_TYPE": "Release",
+                    "CC_WORKLOAD_CPP": remote_workload}
         remote_spec = {
             "cmake_src_subdir": "benchmark/benchmarkmapmanager2/stage2",
             "build_subdir_base": "benchmarkmapmanager2",
             "bin_name": BIN_NAME,
-            "cmake_defs": {"CMAKE_BUILD_TYPE": "Release"},
+            "cmake_defs_fn": _profile_defs,
             "callgrind_toggle": MAP_CALLGRIND_TOGGLE,
             "runtime_cmd": {t: _runtime_cmd_string(t) for t in tools},
         }
@@ -1035,7 +1066,9 @@ def main():
     # post-run sensor read can attribute throttling to THIS run (delta),
     # not since-boot history. Remote nodes use the single post-run read.
     sensor_pre  = hr.sensor_baseline(hr.local_runner)
-    compile_flags = ["-O3", "-DCMAKE_BUILD_TYPE=Release"]
+    # stage 2's CMakeLists appends -O2, which lands after the Release -O3 and
+    # wins; record what the compiler was actually given.
+    compile_flags = ["-O2", "-DNDEBUG", "-DCMAKE_BUILD_TYPE=Release"]
 
     all_metrics  = {}     # node_label -> {flat metric dict}
     per_tool     = {}     # node_label -> { tool -> {status, metrics, ...} }
@@ -1224,7 +1257,7 @@ def main():
         # No datapack anywhere but on this host: the measured binary carries
         # its workload compiled in.
         if node["label"] == "local":
-            cc_path = BUILD_DIR
+            cc_path = os.path.join(BUILD_DIR, "stage2-local")
         else:
             cc_path = node.get("work_dir") or "/tmp/cc-bench-run"
         pr = hr.PlatformRecord("benchmarkmapmanager2", batch_id,
@@ -1255,6 +1288,29 @@ def main():
     # a partial run can't confirm a change helps/regresses everywhere.
     if not bh.node_filter_active() and not truncated:
         champ = bh.load_champion("benchmarkmapmanager2")
+        # A node's metric NAMES carry its player counts, and those come from
+        # its RAM. If a node gained or lost memory, stage 1 gives it a
+        # different population and NOTHING lines up with the champion any more
+        # -- decide_multi_node quietly skips a metric it cannot pair, so that
+        # node would drop out of the verdict without a word. Say it out loud:
+        # the node has re-baselined and its next run is its new reference.
+        if champ:
+            for label, blk in rec["nodes"].items():
+                ch_metrics = (champ.get("nodes", {}).get(label) or {}).get("metrics", {})
+                if not ch_metrics:
+                    continue
+                common = set(ch_metrics) & set(blk.get("metrics", {}))
+                if not common:
+                    print(_color(bh.C_YELLOW,
+                          f"[champion] {label}: nothing comparable with the "
+                          f"champion -- its workload changed (its RAM decides "
+                          f"the player count, and the metric names carry it). "
+                          f"This node is re-baselining, not regressing."))
+                elif len(common) < len(ch_metrics) / 2:
+                    print(_color(bh.C_YELLOW,
+                          f"[champion] {label}: only {len(common)} of "
+                          f"{len(ch_metrics)} champion metrics could be paired "
+                          f"-- part of its workload changed."))
         decision, summary = bh.decide_multi_node(champ, rec)
         bh.print_decision("benchmarkmapmanager2", decision, summary)
 

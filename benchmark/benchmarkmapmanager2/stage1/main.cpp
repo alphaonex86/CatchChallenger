@@ -899,6 +899,9 @@ int main(int argc, char **argv)
     Lcg rng(WORLD_SEED);
     std::vector<SimPlayer> sim;
     players = place_players(players, loaded, km, WORLD, rng, sim);
+    uint32_t of_kind_placed[Kind_count] = {0, 0, 0};
+    { size_t i = 0;
+      while(i < sim.size()) { of_kind_placed[loaded[sim[i].map]->kind]++; i++; } }
     if(players == 0)
     {
         std::cerr.clear();
@@ -927,6 +930,11 @@ int main(int argc, char **argv)
 
     uint32_t cycle_ticks = 200;                 // probe
     uint32_t worst = 0;
+    // What the streams and the migration schedule below actually cover. The
+    // loop may leave `cycle_ticks` holding an aim it never got to simulate
+    // (it runs out of attempts), and emitting THAT would hand stage 2 a cycle
+    // length its vectors do not match.
+    uint32_t simulated = 0;
     unsigned int attempt = 0;
     while(attempt < 5)
     {
@@ -938,6 +946,7 @@ int main(int argc, char **argv)
         Lcg sim_rng(WORLD_SEED + 1u);
         worst = simulate(cycle_ticks, sim, loaded, km, WORLD, migrate_thr,
                          sim_rng, streams, migrations);
+        simulated = cycle_ticks;
         if(worst == 0)
             break;
         // Ticks per entry, measured on what was just simulated.
@@ -952,7 +961,9 @@ int main(int argc, char **argv)
         cycle_ticks = next;
         attempt++;
     }
-    if(worst > affordable)
+    // Emit the window that was simulated, never the one that was only aimed at.
+    cycle_ticks = simulated;
+    if(worst > affordable || cycle_ticks == 0)
     {
         std::cerr.clear();
         std::cerr << "stage1: cannot fit the replay in " << affordable
@@ -1115,7 +1126,15 @@ int main(int argc, char **argv)
     std::cout << "STAGE1"
               << " node=" << node_label
               << " players=" << players
-              << " maps=" << loaded.size()
+              << " maps=" << loaded.size();
+    { unsigned int k = 0;
+      while(k < Kind_count)
+      {
+          std::cout << " maps_" << kind_name(k) << "=" << km[k].index.size()
+                    << " players_" << kind_name(k) << "=" << of_kind_placed[k];
+          k++;
+      } }
+    std::cout
               << " cycle_ticks=" << cycle_ticks
               << " entries_per_player=" << entries
               << " migrations=" << migrations.size()
