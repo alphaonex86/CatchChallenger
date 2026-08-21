@@ -1488,7 +1488,8 @@ public:
 
     RangeFixture() :
         focus(0),
-        ackEachTick(true)
+        ackEachTick(true),
+        algo(0)
     {
         ClientList::list=&cl;
         api.map_controller=&observer;
@@ -1600,6 +1601,9 @@ public:
         moveTo(gid,x,y);
     }
 
+    //which algorithm the tick runs, the 3 mapVisibility/minimize settings:
+    //0 = "network" min_range(), 1 = "balanced" min_balanced(), 2 = "cpu" min_CPU()
+    int algo;
     void runTick()
     {
         size_t index=0;
@@ -1613,7 +1617,13 @@ public:
         unsigned int mapIndex=0;
         while(mapIndex<MapVisibilityAlgorithm::flat_map_list.size())
         {
-            MapVisibilityAlgorithm::flat_map_list[mapIndex].min_range(static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapIndex));
+            MapVisibilityAlgorithm &map=MapVisibilityAlgorithm::flat_map_list[mapIndex];
+            if(algo==1)
+                map.min_balanced(static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapIndex));
+            else if(algo==2)
+                map.min_CPU(static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapIndex));
+            else
+                map.min_range(static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapIndex));
             mapIndex++;
         }
     }
@@ -2155,6 +2165,120 @@ static void scenario_min_range_view_range_from_datapack_zoom()
     pass_line(name);
 }
 
+// A player can be INSIDE the view rectangle and still NOT be announced: its
+// map must also be one the client loads (a border map of this one, see
+// resolveNeighbours). Two maps away is close enough in world coordinates here
+// and MUST stay invisible -- announcing it would leave the insert stuck in the
+// client delayedActions for ever, on a map it never displays.
+// checkView() cannot state this one: its oracle is pure world distance and
+// knows nothing about which maps the client has.
+static void scenario_min_range_non_adjacent_map_never_sent()
+{
+    const char *name = "min_range_non_adjacent_map_never_sent";
+    RangeFixture f;
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,20,20);
+    const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(20,0,20,20);
+    const CATCHCHALLENGER_TYPE_MAPID m2=f.addMap(40,0,20,20);//2 hops from m0
+    f.linkRight(m0,m1);
+    f.linkRight(m1,m2);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    f.focus=f.addClient("focus",m0,19,10,100);//world x=19
+    f.addClient("neighbour",m1,0,10,101);//world x=20: 1 tile away, border map
+    //world x=40, so exactly at the view limit by DISTANCE, but on a map the
+    //client does not have: it must not be announced
+    f.addClient("twohops",m2,0,10,102);
+    if((40-19)>(int)MapVisibilityAlgorithm::view_x) { fail_line(name,"fixture_broken_twohops_out_of_range_anyway"); return; }
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"expected_only_the_border_map_player count="+std::to_string(f.observer.otherPlayerList.size())); return; }
+    for(const std::pair<const uint8_t,OtherPlayerView> &n : f.observer.otherPlayerList)
+    {
+        if(n.second.current_map==m2 || n.second.info.pseudo=="twohops")
+            { fail_line(name,"player_of_a_non_border_map_announced"); return; }
+        if(n.second.info.pseudo!="neighbour")
+            { fail_line(name,"unexpected_player:"+n.second.info.pseudo); return; }
+    }
+    pass_line(name);
+}
+
+// The border crossing of ANOTHER player, all the way through: it is visible on
+// this map, it steps onto the border map (0x66 carries no map id, so the whole
+// entry has to be re-inserted with the new map), then it walks out of the
+// range and is removed. Zoom 4 (the real datapack) so the view is small enough
+// for a few steps to cross it.
+static void scenario_min_range_visible_player_crosses_then_leaves()
+{
+    const char *name = "min_range_visible_player_crosses_then_leaves";
+    RangeFixture f;
+    MapVisibilityAlgorithm::resolveViewRange(4);
+    const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+    const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
+    f.linkRight(m0,m1);
+    MapVisibilityAlgorithm::resolveNeighbours();
+    const uint8_t view=MapVisibilityAlgorithm::view_x;
+    const uint8_t keep=static_cast<uint8_t>(view+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN);
+    //focus placed so the walker is AT the view limit on the last column of m0
+    f.focus=f.addClient("focus",m0,static_cast<COORD_TYPE>(39-view),10,100);
+    const PLAYER_INDEX_FOR_CONNECTED walker=f.addClient("walker",m0,39,10,101);
+    std::string status;
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"not_visible_at_the_view_limit"); return; }
+    //one step right: it is on the OTHER map now, and still inside the keep band
+    f.mapChange(walker,m1,0,10);
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(f.observer.otherPlayerList.size()!=1) { fail_line(name,"dropped_when_crossing_while_still_in_range"); return; }
+    bool onNewMap=false;
+    for(const std::pair<const uint8_t,OtherPlayerView> &n : f.observer.otherPlayerList)
+        if(n.second.info.pseudo=="walker")
+            onNewMap=(n.second.current_map==m1 && n.second.x==0);
+    if(!onNewMap) { fail_line(name,"crossed_but_still_drawn_on_the_old_map"); return; }
+    //keeps walking into the border map until past the hysteresis band
+    f.moveTo(walker,static_cast<COORD_TYPE>(keep-view+1),10);
+    f.tickAndParse(status);
+    if(!status.empty()) { fail_line(name,status); return; }
+    if(!f.observer.otherPlayerList.empty()) { fail_line(name,"not_removed_after_walking_out_of_range"); return; }
+    if(f.focusPacketCount(0x69)!=1) { fail_line(name,"leaving_is_not_one_remove"); return; }
+    pass_line(name);
+}
+
+// "balanced" and "cpu" are WHOLE MAP algorithms: they show every player of the
+// recipient own map whatever the distance, and NEVER anybody of a border map.
+// Only "network" (min_range) crosses the seam.
+static void scenario_balanced_and_cpu_local_map_only()
+{
+    const char *name = "balanced_and_cpu_local_map_only";
+    int algo=1;
+    while(algo<=2)
+    {
+        RangeFixture f;
+        f.algo=algo;
+        const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
+        const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
+        f.linkRight(m0,m1);
+        MapVisibilityAlgorithm::resolveNeighbours();
+        f.focus=f.addClient("focus",m0,39,10,100);
+        //far away on the SAME map: a whole-map algorithm shows it anyway
+        f.addClient("farlocal",m0,0,39,101);
+        //one tile away but on the BORDER map: never announced by these two
+        f.addClient("across",m1,0,10,102);
+        std::string status;
+        f.tickAndParse(status);
+        if(!status.empty()) { fail_line(name,status); return; }
+        if(f.observer.otherPlayerList.size()!=1)
+            { fail_line(name,"algo"+std::to_string(algo)+":expected_only_the_local_player count="+std::to_string(f.observer.otherPlayerList.size())); return; }
+        for(const std::pair<const uint8_t,OtherPlayerView> &n : f.observer.otherPlayerList)
+        {
+            if(n.second.current_map!=m0 || n.second.info.pseudo!="farlocal")
+                { fail_line(name,"algo"+std::to_string(algo)+":unexpected:"+n.second.info.pseudo); return; }
+        }
+        algo++;
+    }
+    pass_line(name);
+}
+
 // ---- Driver ---------------------------------------------------------
 
 int main()
@@ -2203,6 +2327,9 @@ int main()
     scenario_min_range_recipient_changes_map();
     scenario_min_range_in_view_range_helper();
     scenario_min_range_view_range_from_datapack_zoom();
+    scenario_min_range_non_adjacent_map_never_sent();
+    scenario_min_range_visible_player_crosses_then_leaves();
+    scenario_balanced_and_cpu_local_map_only();
     std::cout << "[INFO] pass=" << g_pass << " fail=" << g_fail << std::endl;
     return g_fail == 0 ? 0 : 1;
 }
