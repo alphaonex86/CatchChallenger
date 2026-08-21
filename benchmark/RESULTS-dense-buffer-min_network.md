@@ -1,5 +1,10 @@
 # Optimization: dense player-state buffer in MapVisibilityAlgorithm::min_network()
 
+> Naming, 2026-08-21: the method measured here is now called `min_balanced()`
+> and the binary `benchmark_min_balanced`. `min_network()` is since then the
+> view-range algorithm (mapVisibility/minimize "network"), a different one.
+> Report kept as written, it is a dated measurement.
+
 Date: 2026-05-28 · Commit baseline: `f4dcacff` · Decision: **KEEP** (fleet-wide win, 12 nodes / 6 architectures)
 
 ## The optimization done

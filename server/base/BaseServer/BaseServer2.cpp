@@ -138,7 +138,9 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.mapVisibility.simple.max                   = 30;
     GlobalServerData::serverSettings.mapVisibility.simple.reshow                = 20;
     GlobalServerData::serverSettings.mapVisibility.viewMargin              = CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN_DEFAULT;
-    GlobalServerData::serverSettings.mapVisibility.minimize                = GameServerSettings::MapVisibility::Minimize_CPU;
+    //same default as the seeded server-properties.xml: a fresh server gets the
+    //view range, the smallest internet usage and the view crossing the seams
+    GlobalServerData::serverSettings.mapVisibility.minimize                = GameServerSettings::MapVisibility::Minimize_Network;
     GlobalServerData::serverSettings.mapVisibility.enable                = true;
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     GlobalServerData::serverSettings.ddos.kickLimitMove                         = 60;

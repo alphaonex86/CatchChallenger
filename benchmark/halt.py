@@ -14,7 +14,7 @@ An explicitly named node is still halted (operator override).
 
 For every remote execution_node in remote_nodes.json it:
   * kills any leftover benchmark / server / bot processes
-    (benchmark_min_network, catchchallenger-server-cli, bot-actions);
+    (benchmark_min_balanced, catchchallenger-server-cli, bot-actions);
   * for an NFS-LXC node (lxc_nfs.enabled), tears the container down
     (lxc-stop -k + unmount the NFS rootfs and its /proc /sys /dev binds)
     via benchmark_remote.nfs_lxc_teardown -- which also kills every
@@ -40,7 +40,7 @@ import benchmark_remote as br
 
 # Process names every benchmark may leave running on an exec node / locally.
 BENCH_PROCS = [
-    "benchmark_min_network",
+    "benchmark_min_balanced",
     "catchchallenger-server-cli",
     "bot-actions",
 ]

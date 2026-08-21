@@ -580,7 +580,7 @@ static const uint32_t LADDER[] = { REFERENCE_PLAYERS, 4095u, 16382u, 65530u };
 
 static void usage()
 {
-    std::cerr << "usage: benchmark_min_network_replay [--players N]... "
+    std::cerr << "usage: benchmark_min_balanced_replay [--players N]... "
                  "[--ms BUDGET_MS | --ticks T]\n"
                  "\n"
                  "Stage 2 of benchmarkmapmanager2: replays the workload stage 1\n"

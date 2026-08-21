@@ -440,7 +440,7 @@ static int run_all_scenarios(const std::vector<unsigned int> &players_list,
 
 static void usage()
 {
-    std::cerr << "usage: benchmark_min_network [--players N]... "
+    std::cerr << "usage: benchmark_min_balanced [--players N]... "
                  "[--ms BUDGET_MS | --ticks T] [--seed S] [--insrem-pct P] [--move-pct M]\n"
                  "  [--lag-pct L]   %% of players whose ACK has not arrived by tick time\n"
                  "  [--lag-rounds R] ticks between a lagging client's ACKs\n"

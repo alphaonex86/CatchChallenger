@@ -38,12 +38,12 @@ import history_recorder as hr
 REPO_ROOT  = bh.REPO_ROOT
 BENCH_DIR  = os.path.dirname(os.path.abspath(__file__))
 SRC_DIR    = os.path.join(BENCH_DIR, "benchmarkmapmanager")
-# HISTORICAL NAME, mind the trap: the binary is called benchmark_min_network*
-# but it measures min_balanced(), the whole-map diff. It was named min_network()
-# until the view-range algorithm took that name (mapVisibility/minimize
-# "network"). The binary and the result keys keep the old name so the recorded
-# history stays comparable -- renaming them would orphan every past series.
-BIN_NAME   = "benchmark_min_network"
+# Was benchmark_min_network* until 2026-08-21: it measures min_balanced(), and
+# that method was itself called min_network() until the view-range algorithm
+# took the name (mapVisibility/minimize "network"). Renaming the binary orphans
+# nothing -- the history is keyed by SCRIPT name (benchmark/history/<script>/)
+# and by metric, never by the binary file name.
+BIN_NAME   = "benchmark_min_balanced"
 
 # Concurrency marker: pure in-process visibility loop, no port bind / no
 # network (the binary name is historical). Safe to run in parallel.
