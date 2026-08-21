@@ -160,6 +160,70 @@ def build_series(runs):
     return runs_axis, meta, series
 
 
+def derive_normalised(series, meta):
+    """Add load-normalised, cell-INDEPENDENT columns to a series read back from
+    disk, so every node lands in the same chart panel.
+
+    Each node sizes its own population from its RAM, so its metrics are named
+    after a count nobody else ran: `p65530_median_tick_ns` and
+    `p5461_median_tick_ns` are two panels holding one machine each, and a chart
+    that drops panels covering less than half the fleet drops both. The way out
+    is a name with no count in it, carrying the node's largest cell divided by
+    its own load:
+
+        own_load_players           N, the largest cell this node could run
+        own_load_ns_per_player     p<N>_median_tick_ns / N
+        own_load_player_ticks_per_s  p<N>_ticks_per_s * N
+
+    Both ratios are identities, not estimates, which is why deriving them on
+    read is right: every run already on disk becomes comparable without
+    rewriting a single recorded number.
+
+    Caveat worth keeping in mind while reading such a panel: the per-player cost
+    falls as the population grows, because the fixed cost of ticking the whole
+    world spreads over more players. So a node that could only afford a small
+    cell is charged for that -- these columns compare MACHINES AS CONFIGURED
+    (silicon plus the RAM it has), which is the honest question for a fleet
+    whose nodes cannot all hold the same load. For silicon alone, read the
+    cell every node ran instead.
+
+    Mutates `series`/`meta` in place and returns how many columns it added."""
+    added = 0
+    by_tool = {}
+    for key in series:
+        tool, _, metric = key.rpartition(".")
+        if metric.startswith("p") and "_" in metric:
+            head, _, tail = metric[1:].partition("_")
+            if head.isdigit() and int(head) > 0:
+                if tail in ("median_tick_ns", "ticks_per_s"):
+                    cells = by_tool.setdefault(tool, {})
+                    cells.setdefault(int(head), {})[tail] = key
+    for tool, cells in by_tool.items():
+        players = max(cells)
+        prefix = f"{tool}." if tool else ""
+        source = cells[players]
+        columns = [("own_load_ns_per_player", "median_tick_ns", "ns",
+                    1.0 / players),
+                   ("own_load_player_ticks_per_s", "ticks_per_s",
+                    "player-ticks/s", float(players))]
+        for name, from_metric, unit, scale in columns:
+            key = source.get(from_metric)
+            if key is not None and prefix + name not in series:
+                series[prefix + name] = [None if v is None else round(v * scale, 2)
+                                         for v in series[key]]
+                meta[prefix + name] = unit
+                added += 1
+        # Which N the two above were taken at -- without it a reader cannot
+        # tell a fast machine from one that simply ran a smaller load.
+        if prefix + "own_load_players" not in series:
+            any_column = series[next(iter(source.values()))]
+            series[prefix + "own_load_players"] = [None if v is None else players
+                                                   for v in any_column]
+            meta[prefix + "own_load_players"] = "count"
+            added += 1
+    return added
+
+
 def platform_of(record):
     """Machine description: every non-empty field that is not run-specific."""
     out = {}

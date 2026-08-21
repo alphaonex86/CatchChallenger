@@ -1009,6 +1009,39 @@ GENERATED PER EXECUTION NODE AND PER DATAPACK.
   tick, so the "same as last broadcast -> send nothing" path stays the majority
   of the diff and an optimisation of it is measurable.
 
+## Comparing HARDWARE when every node runs a different load
+
+Each node sizes its own population from its own RAM, so its metrics are named
+after a count nobody else ran (`p65530_` vs `p5461_`) and a per-metric chart
+panel ends up holding one machine. Two mechanisms fix it, and both are needed:
+
+* **Reference cell** — `REFERENCE_PLAYERS` in `benchmarkmapmanager2/stage2/
+  main.cpp` (the harness reads the number back out of that source; never
+  duplicate it). Every node that can afford it runs that cell, so one point of
+  the sweep is the same load fleet-wide. Same count, same 647 maps, same walk
+  rules — but the vectors come from that node's own generation, so it is
+  statistically the same load, not bit-identical; `changed_pct` is what keeps
+  that claim honest. A node too small for it (ESP32) falls back to the
+  small/medium/large of its own population and sits out the comparison.
+  callgrind runs this cell, so its instruction count is comparable too.
+* **Normalised columns** — `history_series.derive_normalised()` adds
+  `own_load_{players,ns_per_player,player_ticks_per_s}` at READ time from each
+  node's largest cell. They are identities (`median/N`, `ticks_per_s*N`), not
+  estimates, so every run ALREADY on disk becomes comparable without rewriting
+  a recorded number. The name carries no count, which is the point: all nodes
+  land in ONE panel. They compare machines AS CONFIGURED — silicon plus the RAM
+  it has — because per-player cost falls as the population grows, so a node
+  that could only afford a small cell is charged for that. For silicon alone,
+  read the reference cell.
+
+`python3 benchmark/compare_nodes.py <benchmark>` prints both views (SAME LOAD =
+the cell most nodes ran; OWN LOAD = each node's largest, ranked on the
+normalised rate) straight from the history JSONs — no fleet, no build.
+
+**Never rank hardware on a raw `ticks_per_s`/`ops_per_s`.** It counts batches,
+and a node whose RAM holds a twelfth of the population retires a batch far more
+often while doing far less work: it put the 133 MHz Pentium above a Pi 3.
+
 ## epoll vs io_uring A/B — `benchmarkepolliouring.py` (learned the hard way)
 
 IN the routine sweep (`all.sh`). It records the same per-platform history +

@@ -28,6 +28,7 @@ import re
 
 import benchmark_helpers as bh
 from history_recorder import HISTORY_ROOT, cpu_model_slug
+import history_series as hs
 
 # Decision -> (glyph, fill colour). Glyphs are tiny SVG <polygon>s.
 _DECISION_STYLE = {
@@ -119,6 +120,9 @@ def _load_history(benchmark):
         runs = payload.get("runs") or []
         meta = payload.get("meta") or {}
         series = payload.get("series") or {}
+        # Put every node in the same panel even though each ran its own
+        # population: see history_series.derive_normalised.
+        hs.derive_normalised(series, meta)
         for i, entry in enumerate(runs):
             ended = entry[0] if len(entry) > 0 else None
             doc = dict(platform)
