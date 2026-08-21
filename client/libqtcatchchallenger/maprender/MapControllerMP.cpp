@@ -185,6 +185,24 @@ void MapControllerMP::resetAll()
     MapVisualiserPlayer::resetAll();
 }
 
+//see the comment on the declaration: the ONE scale rule of both clients
+unsigned int MapControllerMP::scaleFactor(const int &width,const int &height,const uint8_t &datapackZoom)
+{
+    int smallest=width;
+    if(height<smallest)
+        smallest=height;
+    if(smallest<1)
+        smallest=1;
+    unsigned int zoom=datapackZoom;
+    if(zoom<1)
+        zoom=1;
+    //ceil(smallest*zoom/512), integer only
+    unsigned int factor=(static_cast<unsigned int>(smallest)*zoom+511)/512;
+    if(factor<1)
+        factor=1;
+    return factor;
+}
+
 void MapControllerMP::setScale(float scaleSize)
 {
     if(scaleSize<1)
@@ -200,18 +218,9 @@ void MapControllerMP::setScale(float scaleSize)
     requestedScaleSize=scaleSize;
     //scaleSize 1: 32*16px = 512px
     //scaleSize 4: 8*16px = 128px
-    const int w=width();
-    const int h=height();
-    double scaleSizeW=(double)w*scaleSize/512;
-    double scaleSizeH=(double)h*scaleSize/512;
-    double scaleSizeMax=scaleSizeW;
-    if(scaleSizeH>scaleSizeMax)
-        scaleSizeMax=scaleSizeH;
-    scaleSizeMax=(int)scaleSizeMax;
-    if(scaleSizeMax<1.0)
-        scaleSizeMax=1.0;
-    scale(scaleSizeMax/static_cast<double>(this->scaleSize),scaleSizeMax/static_cast<double>(this->scaleSize));
-    this->scaleSize=scaleSizeMax;
+    const double newScaleSize=static_cast<double>(scaleFactor(width(),height(),static_cast<uint8_t>(scaleSize)));
+    scale(newScaleSize/static_cast<double>(this->scaleSize),newScaleSize/static_cast<double>(this->scaleSize));
+    this->scaleSize=newScaleSize;
     //update to real zoom
 }
 

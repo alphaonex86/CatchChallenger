@@ -16,18 +16,17 @@
  * 2 compares by candidate.
  *
  * NOT a magic number: resolveViewRange() computes it at load from the client
- * window and the DATAPACK zoom (map/layers.xml). Both clients scale the scene
- * by an INTEGER factor, so one tile covers TILE_PIXEL*factor screen pixels and
- * the window draws w/(TILE_PIXEL*factor) tiles -- but they do not pick the
- * same factor: qtcpu800x600 takes floor(max(w,h)*zoom/512)
- * (MapControllerMP::setScale, verified against
- * test/screenshot-windows-qtcpu800x600-autosolo.png: zoom 4 on 800x600 gives
- * 6, so 96px by tile and 9x7 tiles) while qtopengl takes
- * ceil(min(w,h)*zoom/512) (CCMap::paint). The qtopengl one is ALWAYS <=, so it
- * draws MORE tiles and is the one to cover; the max of the two axes is taken
- * so a portrait/rotated window is covered too, and +1 tile of margin so
- * somebody arriving by the screen edge is known before it has to be drawn.
+ * window and the DATAPACK zoom (map/layers.xml), with the SAME rule both
+ * clients draw with -- MapControllerMP::scaleFactor() in
+ * client/libqtcatchchallenger/maprender/, the single source of truth:
+ * factor = ceil(min(w,h)*zoom/512) (never below 1), one tile covers
+ * TILE_PIXEL*factor screen pixels, so the window draws w/(TILE_PIXEL*factor)
+ * x h/(TILE_PIXEL*factor) tiles. The max of the two axes is taken so a
+ * portrait/rotated window is covered too, and +1 tile of margin so somebody
+ * arriving by the screen edge is known before it has to be drawn.
  * With the real datapack (zoom 4) that is 8 tiles: a 17x17 view.
+ * KEEP THE TWO IN SYNC: a client drawing more tiles than the server sends
+ * makes players pop in INSIDE the screen.
  *
  * MARGIN is the hysteresis: a player is INSERTED at the view limit but only
  * REMOVED past view+margin, else somebody walking on the edge costs a full

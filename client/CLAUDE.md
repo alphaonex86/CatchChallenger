@@ -65,6 +65,16 @@ continuing straight just extends the last run (`.back().second++`, no turn)
 while turning starts a new run. Don't "simplify" it into a standard A*/BFS
 shortest-path; the four-direction bookkeeping is the whole point.
 
+## The map scale is ONE rule, shared by both clients AND mirrored by the server
+
+`maprender/MapControllerMP::scaleFactor()` is the only place deciding how much
+the scene is zoomed: `ceil(min(w,h)*datapackZoom/512)`, never below 1, integer
+only (a fractional factor blurs the tiles). qtcpu800x600 (`setScale()`) and
+qtopengl (`CCMap::paint()`) both call it, and the SERVER mirrors it in
+`MapVisibilityAlgorithm::resolveViewRange()` to know how far a player can SEE —
+a client drawing more tiles than the server sends makes players pop in INSIDE
+the screen. Touching it changes what the reference screenshots look like.
+
 ## `monsters/<id>/overworld.png` has TWO accepted sheet layouts
 
 Told apart by image size in `maprender/MonsterSheet.cpp`, which holds ALL the
