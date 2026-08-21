@@ -187,7 +187,7 @@ public:
     CATCHCHALLENGER_TYPE_MAPID sendedMap;
 
     //same layout as production ClientWithMap: the per-recipient wire slot
-    //table min_range() diffs against (see ClientWithMap.hpp)
+    //table min_network() diffs against (see ClientWithMap.hpp)
     struct VisibleSlot
     {
         PLAYER_INDEX_FOR_CONNECTED player;

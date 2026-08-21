@@ -1452,9 +1452,9 @@ static void scenario_delayed_messages_requeue_no_infinite_loop()
         pass_line(name);
 }
 
-// ---- min_range (view range visibility) ------------------------------
+// ---- min_network (view range visibility) ------------------------------
 //
-// Own fixture: min_range() walks the REAL
+// Own fixture: min_network() walks the REAL
 // MapVisibilityAlgorithm::flat_map_list to reach the border maps, so the
 // world is built there, with the border offsets in the state Map_loader
 // leaves them (already resolved: border.right.y_offset is the delta to ADD
@@ -1467,7 +1467,7 @@ static void scenario_delayed_messages_requeue_no_infinite_loop()
 // resolveNeighbours()/sendViewDelta() is reused to state the expectation.
 //
 // The oracle ignores the hysteresis margin, so a scenario checking it (see
-// scenario_min_range_enter_leave_hysteresis) asserts on the packets instead
+// scenario_min_network_enter_leave_hysteresis) asserts on the packets instead
 // of calling checkView().
 
 struct RangeMapPlacement
@@ -1604,7 +1604,7 @@ public:
     }
 
     //which algorithm the tick runs, the 3 mapVisibility/minimize settings:
-    //0 = "network" min_range(), 1 = "balanced" min_balanced(), 2 = "cpu" min_CPU()
+    //0 = "network" min_network(), 1 = "balanced" min_balanced(), 2 = "cpu" min_CPU()
     int algo;
     void runTick()
     {
@@ -1625,7 +1625,7 @@ public:
             else if(algo==2)
                 map.min_CPU(static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapIndex));
             else
-                map.min_range(static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapIndex));
+                map.min_network(static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapIndex));
             mapIndex++;
         }
     }
@@ -1812,9 +1812,9 @@ public:
 // hops, with the right translation, and must NOT keep a map 2 maps away in
 // the same direction: the client only loads/displays what TOUCHES the
 // current map rect, an insert on any other map would never be applied.
-static void scenario_min_range_neighbours_resolved()
+static void scenario_min_network_neighbours_resolved()
 {
-    const char *name = "min_range_neighbours_resolved";
+    const char *name = "min_network_neighbours_resolved";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
     const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
@@ -1845,9 +1845,9 @@ static void scenario_min_range_neighbours_resolved()
 }
 
 // Same map: only what is inside the view rectangle is announced.
-static void scenario_min_range_same_map_only_in_view()
+static void scenario_min_network_same_map_only_in_view()
 {
-    const char *name = "min_range_same_map_only_in_view";
+    const char *name = "min_network_same_map_only_in_view";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
     MapVisibilityAlgorithm::resolveNeighbours();
@@ -1865,9 +1865,9 @@ static void scenario_min_range_same_map_only_in_view()
 
 // A player standing on the BORDER map, inside the view: announced with ITS
 // OWN map id so the client places it on the map it already displays.
-static void scenario_min_range_border_map_in_view()
+static void scenario_min_network_border_map_in_view()
 {
-    const char *name = "min_range_border_map_in_view";
+    const char *name = "min_network_border_map_in_view";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
     const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
@@ -1891,9 +1891,9 @@ static void scenario_min_range_border_map_in_view()
 
 // Border with a non zero offset: the range test must use the TRANSLATED
 // coordinate, not the raw one.
-static void scenario_min_range_border_offset()
+static void scenario_min_network_border_offset()
 {
-    const char *name = "min_range_border_offset";
+    const char *name = "min_network_border_offset";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
     const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,30,40,40);//shifted 30 tiles down
@@ -1914,9 +1914,9 @@ static void scenario_min_range_border_offset()
 
 // The DIAGONAL map is only reachable by composing two borders, and a player
 // standing in its corner is inside the view.
-static void scenario_min_range_diagonal_map()
+static void scenario_min_network_diagonal_map()
 {
-    const char *name = "min_range_diagonal_map";
+    const char *name = "min_network_diagonal_map";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
     const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
@@ -1941,9 +1941,9 @@ static void scenario_min_range_diagonal_map()
 // Hysteresis: inserted at the view limit, kept up to view+margin, removed
 // past it, and NOT re-inserted before it is back inside the view. Without it
 // somebody walking on the edge costs an insert+remove every tick.
-static void scenario_min_range_enter_leave_hysteresis()
+static void scenario_min_network_enter_leave_hysteresis()
 {
-    const char *name = "min_range_enter_leave_hysteresis";
+    const char *name = "min_network_enter_leave_hysteresis";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,120,40);
     MapVisibilityAlgorithm::resolveNeighbours();
@@ -1982,9 +1982,9 @@ static void scenario_min_range_enter_leave_hysteresis()
 
 // A visible player that moves inside the view costs ONE 0x66 change and
 // nothing else. A quiet tick costs no block at all.
-static void scenario_min_range_move_then_quiet()
+static void scenario_min_network_move_then_quiet()
 {
-    const char *name = "min_range_move_then_quiet";
+    const char *name = "min_network_move_then_quiet";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
     MapVisibilityAlgorithm::resolveNeighbours();
@@ -2010,9 +2010,9 @@ static void scenario_min_range_move_then_quiet()
 // A visible player crossing to the border map must be RE-INSERTED: 0x66
 // carries no map id, so a plain change would leave the client drawing it on
 // the map it came from.
-static void scenario_min_range_visible_player_changes_map()
+static void scenario_min_network_visible_player_changes_map()
 {
-    const char *name = "min_range_visible_player_changes_map";
+    const char *name = "min_network_visible_player_changes_map";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
     const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
@@ -2040,9 +2040,9 @@ static void scenario_min_range_visible_player_changes_map()
 
 // mapVisibility Max caps what ONE RECIPIENT sees, not what the map holds:
 // the map keeps every player, the recipient view stops at the cap.
-static void scenario_min_range_visible_cap()
+static void scenario_min_network_visible_cap()
 {
-    const char *name = "min_range_visible_cap";
+    const char *name = "min_network_visible_cap";
     RangeFixture f;
     GlobalServerData::serverSettings.mapVisibility.simple.max=3;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
@@ -2066,9 +2066,9 @@ static void scenario_min_range_visible_cap()
 // ACK flow control: a recipient that has not answered the previous ping is
 // handed NOTHING, and gets ONE delta covering every tick it missed as soon
 // as it answers. visibleSlots IS the baseline, so nothing else is needed.
-static void scenario_min_range_held_back_then_one_delta()
+static void scenario_min_network_held_back_then_one_delta()
 {
-    const char *name = "min_range_held_back_then_one_delta";
+    const char *name = "min_network_held_back_then_one_delta";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
     MapVisibilityAlgorithm::resolveNeighbours();
@@ -2101,9 +2101,9 @@ static void scenario_min_range_held_back_then_one_delta()
 // The recipient changing map itself: PATH 1, the client is told to drop its
 // whole view (0x65) then gets the new one, because it reloads the maps
 // around it and its old entries would point at destroyed maps.
-static void scenario_min_range_recipient_changes_map()
+static void scenario_min_network_recipient_changes_map()
 {
-    const char *name = "min_range_recipient_changes_map";
+    const char *name = "min_network_recipient_changes_map";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
     const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
@@ -2128,9 +2128,9 @@ static void scenario_min_range_recipient_changes_map()
 // inViewRange(): the one-pair form of the same rectangle, used by /trade and
 // /battle through Client::otherPlayerIsInRange(). A map that is not even a
 // border map of this one is never in range, whatever the distance says.
-static void scenario_min_range_in_view_range_helper()
+static void scenario_min_network_in_view_range_helper()
 {
-    const char *name = "min_range_in_view_range_helper";
+    const char *name = "min_network_in_view_range_helper";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
     const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(40,0,40,40);
@@ -2170,9 +2170,9 @@ static void scenario_min_range_in_view_range_helper()
 //   zoom 0 -> no map/layers.xml -> falls back on zoom 2
 // Change CATCHCHALLENGER_SERVER_MAP_VIEW_SCREEN_* and this test MUST be
 // re-derived: that is the point.
-static void scenario_min_range_view_range_from_datapack_zoom()
+static void scenario_min_network_view_range_from_datapack_zoom()
 {
-    const char *name = "min_range_view_range_from_datapack_zoom";
+    const char *name = "min_network_view_range_from_datapack_zoom";
     const uint8_t expected[4][3]={{1,21,21},{2,13,13},{4,8,8},{0,13,13}};
     unsigned int index=0;
     while(index<4)
@@ -2199,9 +2199,9 @@ static void scenario_min_range_view_range_from_datapack_zoom()
 // client delayedActions for ever, on a map it never displays.
 // checkView() cannot state this one: its oracle is pure world distance and
 // knows nothing about which maps the client has.
-static void scenario_min_range_non_adjacent_map_never_sent()
+static void scenario_min_network_non_adjacent_map_never_sent()
 {
-    const char *name = "min_range_non_adjacent_map_never_sent";
+    const char *name = "min_network_non_adjacent_map_never_sent";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,20,20);
     const CATCHCHALLENGER_TYPE_MAPID m1=f.addMap(20,0,20,20);
@@ -2234,9 +2234,9 @@ static void scenario_min_range_non_adjacent_map_never_sent()
 // entry has to be re-inserted with the new map), then it walks out of the
 // range and is removed. Zoom 4 (the real datapack) so the view is small enough
 // for a few steps to cross it.
-static void scenario_min_range_visible_player_crosses_then_leaves()
+static void scenario_min_network_visible_player_crosses_then_leaves()
 {
-    const char *name = "min_range_visible_player_crosses_then_leaves";
+    const char *name = "min_network_visible_player_crosses_then_leaves";
     RangeFixture f;
     MapVisibilityAlgorithm::resolveViewRange(4);
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
@@ -2273,11 +2273,11 @@ static void scenario_min_range_visible_player_crosses_then_leaves()
 
 // "balanced" and "cpu" are WHOLE MAP algorithms: they show every player of the
 // recipient own map whatever the distance, and NEVER anybody of a border map.
-// Only "network" (min_range) crosses the seam.
+// Only "network" (min_network) crosses the seam.
 // That is the CONCEPT, not a shortcut: staying on the local map is what keeps
 // them cheap -- no walk of another map client list (cache miss) and no
 // distance arithmetic at all. Do not "improve" them by adding the border maps;
-// that algorithm already exists and is called min_range().
+// that algorithm already exists and is called min_network().
 static void scenario_balanced_and_cpu_local_map_only()
 {
     const char *name = "balanced_and_cpu_local_map_only";
@@ -2315,9 +2315,9 @@ static void scenario_balanced_and_cpu_local_map_only()
 // nothing was proving the sets are really per recipient and not one shared
 // broadcast. Here A and B are too far apart to see each other, and each sees
 // exactly the one player standing next to it.
-static void scenario_min_range_two_recipients_different_views()
+static void scenario_min_network_two_recipients_different_views()
 {
-    const char *name = "min_range_two_recipients_different_views";
+    const char *name = "min_network_two_recipients_different_views";
     RangeFixture f;
     MapVisibilityAlgorithm::resolveViewRange(4);//real datapack zoom: small view
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
@@ -2351,9 +2351,9 @@ static void scenario_min_range_two_recipients_different_views()
 // works because the removes are composed BEFORE the inserts. Emitted the other
 // way round the client would insert into the slot and then delete it, and the
 // arriving player would simply never be drawn.
-static void scenario_min_range_slot_reused_same_tick()
+static void scenario_min_network_slot_reused_same_tick()
 {
-    const char *name = "min_range_slot_reused_same_tick";
+    const char *name = "min_network_slot_reused_same_tick";
     RangeFixture f;
     MapVisibilityAlgorithm::resolveViewRange(4);
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
@@ -2385,9 +2385,9 @@ static void scenario_min_range_slot_reused_same_tick()
 // A visible player taken off the map (what Client::removeClientOnMap does when
 // a client goes away) is removed from the view, and the tick must not go
 // looking for it in the connected list either.
-static void scenario_min_range_removed_from_map_while_visible()
+static void scenario_min_network_removed_from_map_while_visible()
 {
-    const char *name = "min_range_removed_from_map_while_visible";
+    const char *name = "min_network_removed_from_map_while_visible";
     RangeFixture f;
     const CATCHCHALLENGER_TYPE_MAPID m0=f.addMap(0,0,40,40);
     MapVisibilityAlgorithm::resolveNeighbours();
@@ -2412,9 +2412,9 @@ static void scenario_min_range_removed_from_map_while_visible()
 // constant: with two different margins the SAME walk has to be dropped at two
 // different tiles. Kept + dropped are checked for each, so a hardcoded margin
 // fails whatever value it was hardcoded to.
-static void scenario_min_range_hysteresis_is_configurable()
+static void scenario_min_network_hysteresis_is_configurable()
 {
-    const char *name = "min_range_hysteresis_is_configurable";
+    const char *name = "min_network_hysteresis_is_configurable";
     const uint8_t margins[2]={1,7};
     unsigned int index=0;
     while(index<2)
@@ -2482,26 +2482,26 @@ int main()
     scenario_min_balanced_path2_insert_ge254();
     scenario_character_block_bad_compressed_block_no_crash();
     scenario_delayed_messages_requeue_no_infinite_loop();
-    scenario_min_range_neighbours_resolved();
-    scenario_min_range_same_map_only_in_view();
-    scenario_min_range_border_map_in_view();
-    scenario_min_range_border_offset();
-    scenario_min_range_diagonal_map();
-    scenario_min_range_enter_leave_hysteresis();
-    scenario_min_range_move_then_quiet();
-    scenario_min_range_visible_player_changes_map();
-    scenario_min_range_visible_cap();
-    scenario_min_range_held_back_then_one_delta();
-    scenario_min_range_recipient_changes_map();
-    scenario_min_range_in_view_range_helper();
-    scenario_min_range_view_range_from_datapack_zoom();
-    scenario_min_range_non_adjacent_map_never_sent();
-    scenario_min_range_visible_player_crosses_then_leaves();
+    scenario_min_network_neighbours_resolved();
+    scenario_min_network_same_map_only_in_view();
+    scenario_min_network_border_map_in_view();
+    scenario_min_network_border_offset();
+    scenario_min_network_diagonal_map();
+    scenario_min_network_enter_leave_hysteresis();
+    scenario_min_network_move_then_quiet();
+    scenario_min_network_visible_player_changes_map();
+    scenario_min_network_visible_cap();
+    scenario_min_network_held_back_then_one_delta();
+    scenario_min_network_recipient_changes_map();
+    scenario_min_network_in_view_range_helper();
+    scenario_min_network_view_range_from_datapack_zoom();
+    scenario_min_network_non_adjacent_map_never_sent();
+    scenario_min_network_visible_player_crosses_then_leaves();
     scenario_balanced_and_cpu_local_map_only();
-    scenario_min_range_two_recipients_different_views();
-    scenario_min_range_slot_reused_same_tick();
-    scenario_min_range_removed_from_map_while_visible();
-    scenario_min_range_hysteresis_is_configurable();
+    scenario_min_network_two_recipients_different_views();
+    scenario_min_network_slot_reused_same_tick();
+    scenario_min_network_removed_from_map_while_visible();
+    scenario_min_network_hysteresis_is_configurable();
     std::cout << "[INFO] pass=" << g_pass << " fail=" << g_fail << std::endl;
     return g_fail == 0 ? 0 : 1;
 }

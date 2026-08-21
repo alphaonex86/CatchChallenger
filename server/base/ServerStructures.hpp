@@ -185,7 +185,7 @@ public:
         {
             Minimize_CPU,//"cpu": rebroadcast the whole map every tick, MapVisibilityAlgorithm::min_CPU()
             Minimize_Balanced,//"balanced": whole map too but only what changed, MapVisibilityAlgorithm::min_balanced()
-            Minimize_Network//"network": only the players into the view range, border maps included, MapVisibilityAlgorithm::min_range()
+            Minimize_Network//"network": only the players into the view range, border maps included, MapVisibilityAlgorithm::min_network()
         };
         class MapVisibility_Simple
         {

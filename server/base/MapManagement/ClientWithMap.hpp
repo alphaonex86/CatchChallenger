@@ -22,7 +22,7 @@ public:
     std::vector<DensePlayerState> sendedStatus;
     CATCHCHALLENGER_TYPE_MAPID sendedMap;//see mapIndex
 
-    /* min_range() (Minimize_Network) ONLY: what THIS recipient displays right
+    /* min_network() (Minimize_Network) ONLY: what THIS recipient displays right
      * now, one entry by wire slot. With a view range the visible set differs
      * from one recipient to the next, so the slot numbering is per recipient:
      * the 8 bits wire slot then limits what a player SEES (mapVisibility Max)

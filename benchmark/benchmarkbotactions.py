@@ -219,7 +219,7 @@ IO_URING_VARIANTS = [
 # rebuild is needed — each io_uring binary is run once per mode. The two
 # strategies live in server/base/MapManagement/MapVisibilityAlgorithm.cpp:
 #   "balanced" -> min_balanced(): per-recipient diff, fewer bytes, more CPU.
-#                 It was named "network" before min_range() took that name;
+#                 It was named "network" before min_network() took that name;
 #                 this sweep stays on min_balanced() so its history keeps
 #                 comparing the SAME algorithm.
 #   "cpu"     -> min_CPU(): compose the 0x65+0x6B player block ONCE and fan

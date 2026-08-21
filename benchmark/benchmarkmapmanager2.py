@@ -73,6 +73,11 @@ BENCH_DIR  = os.path.dirname(os.path.abspath(__file__))
 STAGE1_SRC = os.path.join(BENCH_DIR, "benchmarkmapmanager2", "stage1")
 STAGE2_SRC = os.path.join(BENCH_DIR, "benchmarkmapmanager2", "stage2")
 STAGE1_BIN = "benchmark_world_stage1"
+# HISTORICAL NAME, mind the trap: the binary is called benchmark_min_network*
+# but it measures min_balanced(), the whole-map diff. It was named min_network()
+# until the view-range algorithm took that name (mapVisibility/minimize
+# "network"). The binary and the result keys keep the old name so the recorded
+# history stays comparable -- renaming them would orphan every past series.
 BIN_NAME   = "benchmark_min_network_replay"
 
 # Concurrency marker: pure in-process visibility loop, no port bind / no
