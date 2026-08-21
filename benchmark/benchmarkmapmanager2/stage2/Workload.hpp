@@ -30,6 +30,12 @@ extern const uint64_t CYCLE_END_HASH;       // oracle: state after one cycle
 
 extern const uint8_t  MAP_W[];               // all stage 2 needs of a map
 extern const uint8_t  MAP_H[];
+/* 4 by map, top/bottom/left/right: neighbour index (65535 = none) and the
+ * RESOLVED delta offset, the very values CommonMap::border carries on the
+ * server. min_network() reaches a border map only through them. */
+extern const uint16_t MAP_BORDER[];
+extern const int8_t   MAP_BORDER_OFFSET[];
+extern const uint8_t  WORLD_ZOOM;           // datapack map/layers.xml zoom
 
 extern const uint16_t SPAWN_MAP[];
 extern const uint8_t  SPAWN_X[];

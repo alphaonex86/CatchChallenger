@@ -63,13 +63,6 @@
 using namespace CatchChallenger;
 namespace W = CCBenchWorkload;
 
-class HarnessMVA : public MapVisibilityAlgorithm
-{
-public:
-    using MapVisibilityAlgorithm::map_clients_id;
-    using MapVisibilityAlgorithm::map_removed_index;
-};
-
 static Direction look_of(uint8_t facing)
 {
     if(facing == 0) return Direction_look_at_top;
@@ -86,10 +79,14 @@ static Direction move_of(uint8_t facing)
     return Direction_move_at_left;
 }
 
-struct WorldMap
+/* The maps live in MapVisibilityAlgorithm::flat_map_list and NOT in a private
+ * vector: that static list IS how min_network() reaches a border map
+ * (neighbours hold an index into it), so a world built beside it would measure
+ * a set of islands. Everything else here addresses a map by its index. */
+static MapVisibilityAlgorithm &map_at(size_t index)
 {
-    HarnessMVA mva;
-};
+    return MapVisibilityAlgorithm::flat_map_list[index];
+}
 
 // Per player, everything the replay needs and nothing else.
 struct Player
@@ -110,13 +107,15 @@ struct Player
 struct World
 {
     ClientList cl;
-    std::vector<WorldMap*> maps;      // every map of the world, in load order
     std::vector<Player> players;
+    size_t mapCount() const { return MapVisibilityAlgorithm::flat_map_list.size(); }
 
     World()
     {
         ClientList::list = &cl;
         GlobalServerData::serverSettings.mapVisibility.simple.max = 1024;
+        GlobalServerData::serverSettings.mapVisibility.viewMargin = CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN_DEFAULT;
+        useNetwork = false;
         GlobalServerData::serverSettings.dontSendPlayerType = false;
         CommonSettingsServer::commonSettingsServer.dontSendPseudo = false;
     }
@@ -125,25 +124,36 @@ struct World
         size_t i = 0;
         while(i < players.size()) { delete players[i].client; i++; }
         players.clear();
-        i = 0;
-        while(i < maps.size()) { delete maps[i]; i++; }
-        maps.clear();
+        MapVisibilityAlgorithm::flat_map_list.clear();
         cl.clear();
         ClientList::list = NULL;
     }
 
     void build(uint32_t player_count)
     {
+        MapVisibilityAlgorithm::flat_map_list.clear();
+        MapVisibilityAlgorithm::flat_map_list.resize(W::MAPS);
         uint16_t m = 0;
         while(m < W::MAPS)
         {
-            WorldMap *wm = new WorldMap();
+            MapVisibilityAlgorithm &map = map_at(m);
             // All the world stage 2 needs: the x/y range guard reads these.
-            wm->mva.width  = W::MAP_W[m];
-            wm->mva.height = W::MAP_H[m];
-            maps.push_back(wm);
+            map.width  = W::MAP_W[m];
+            map.height = W::MAP_H[m];
+            // and the seams, in the resolved form the server holds
+            map.border.top.mapIndex     = W::MAP_BORDER[m * 4 + 0];
+            map.border.top.x_offset     = W::MAP_BORDER_OFFSET[m * 4 + 0];
+            map.border.bottom.mapIndex  = W::MAP_BORDER[m * 4 + 1];
+            map.border.bottom.x_offset  = W::MAP_BORDER_OFFSET[m * 4 + 1];
+            map.border.left.mapIndex    = W::MAP_BORDER[m * 4 + 2];
+            map.border.left.y_offset    = W::MAP_BORDER_OFFSET[m * 4 + 2];
+            map.border.right.mapIndex   = W::MAP_BORDER[m * 4 + 3];
+            map.border.right.y_offset   = W::MAP_BORDER_OFFSET[m * 4 + 3];
             m++;
         }
+        // what the server does once at load, before any tick
+        MapVisibilityAlgorithm::resolveNeighbours();
+        MapVisibilityAlgorithm::resolveViewRange(W::WORLD_ZOOM);
         players.reserve(player_count);
         uint32_t i = 0;
         while(i < player_count)
@@ -164,7 +174,7 @@ struct World
             c->public_and_private_informations.public_informations.skinId = (uint8_t)(i & 0xff);
             p.client = c;
             p.gid    = cl.add(c);
-            p.slot   = maps[p.map]->mva.insertOnMap(p.gid);
+            p.slot   = map_at(p.map).insertOnMap(p.gid);
             players.push_back(p);
             i++;
         }
@@ -182,9 +192,9 @@ struct World
             const CATCHCHALLENGER_TYPE_MAPID home = W::SPAWN_MAP[i];
             if(p.map != home)
             {
-                maps[p.map]->mva.removeOnMap(p.slot);
+                map_at(p.map).removeOnMap(p.slot);
                 p.map  = home;
-                p.slot = maps[home]->mva.insertOnMap(p.gid);
+                p.slot = map_at(home).insertOnMap(p.gid);
                 p.client->setMapIndex(home);
             }
             p.client->setX(W::SPAWN_X[i]);
@@ -234,17 +244,22 @@ struct World
     {
         uint64_t total = 0;
         size_t mi = 0;
-        while(mi < maps.size())
+        while(mi < mapCount())
         {
-            HarnessMVA &mva = maps[mi]->mva;
+            MapVisibilityAlgorithm &mva = map_at(mi);
             total += (uint64_t)mva.previousDenseBuffer.capacity() * sizeof(DensePlayerState);
-            size_t slot = 0;
-            while(slot < mva.map_clients_id.size())
+            //public slot accessors: no need to reach into map_clients_id
+            PLAYER_INDEX_FOR_CONNECTED slot = 0;
+            while(slot < mva.map_clients_list_size())
             {
-                const PLAYER_INDEX_FOR_CONNECTED gid = mva.map_clients_id[slot];
-                if(gid != PLAYER_INDEX_FOR_CONNECTED_MAX)
-                    total += (uint64_t)cl.rwWithMap(gid).sendedStatus.capacity()
-                             * sizeof(DensePlayerState);
+                if(mva.map_clients_list_isValid(slot))
+                {
+                    const PLAYER_INDEX_FOR_CONNECTED gid = mva.map_clients_list_at(slot);
+                    ClientWithMap &c = cl.rwWithMap(gid);
+                    total += (uint64_t)c.sendedStatus.capacity() * sizeof(DensePlayerState);
+                    //min_network() keeps its per-recipient view here instead
+                    total += (uint64_t)c.visibleSlots.capacity() * sizeof(ClientWithMap::VisibleSlot);
+                }
                 slot++;
             }
             mi++;
@@ -281,15 +296,25 @@ struct World
     }
 
     // One tick of the server timer: broadcast EVERY map, like the server's
-    // timer does over flat_map_list.
+    // timer does over flat_map_list. Which strategy is the point of --algo:
+    // "balanced" is the whole-map diff, "network" only what each player SEES
+    // (border maps included) and costs per RECIPIENT instead of per map.
+    bool useNetwork;
     void broadcast()
     {
         size_t i = 0;
-        while(i < maps.size())
-        {
-            maps[i]->mva.min_balanced((CATCHCHALLENGER_TYPE_MAPID)i);
-            i++;
-        }
+        if(useNetwork)
+            while(i < mapCount())
+            {
+                map_at(i).min_network((CATCHCHALLENGER_TYPE_MAPID)i);
+                i++;
+            }
+        else
+            while(i < mapCount())
+            {
+                map_at(i).min_balanced((CATCHCHALLENGER_TYPE_MAPID)i);
+                i++;
+            }
     }
 
 };
@@ -352,12 +377,12 @@ static void replay_tick(World &w, uint32_t tick_in_cycle, uint32_t &next_mig)
         // player this cell does not have); dest cannot be, unless the workload
         // and this binary were built from different generations -- refuse to
         // index the map list on it rather than corrupt the run.
-        if(pi < w.players.size() && dest < w.maps.size())
+        if(pi < w.players.size() && dest < w.mapCount())
         {
             Player &p = w.players[pi];
-            w.maps[p.map]->mva.removeOnMap(p.slot);
+            map_at(p.map).removeOnMap(p.slot);
             p.map  = dest;
-            p.slot = w.maps[dest]->mva.insertOnMap(p.gid);
+            p.slot = map_at(dest).insertOnMap(p.gid);
             p.client->setMapIndex(dest);
             p.client->setX(W::MIG_X[next_mig]);
             p.client->setY(W::MIG_Y[next_mig]);
@@ -385,9 +410,11 @@ static double cpu_seconds()
          + (double)ru.ru_stime.tv_sec + (double)ru.ru_stime.tv_usec / 1000000.0;
 }
 
-static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms)
+static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms,
+                        bool useNetwork)
 {
     World w;
+    w.useNetwork = useNetwork;
     w.build(players);
     const double cpu0 = cpu_seconds();
 
@@ -534,8 +561,10 @@ static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms
 
     std::cout.clear();
     std::cout << "BENCH"
+              << " algo_network=" << (useNetwork ? 1 : 0)
+              << " view_range=" << (unsigned int)MapVisibilityAlgorithm::view_x
               << " players=" << players
-              << " maps=" << w.maps.size()
+              << " maps=" << w.mapCount()
               << " ticks=" << ticks_done
               << " duration_ms=" << elapsed_ms
               << " ticks_per_s=" << ticks_per_s
@@ -581,7 +610,7 @@ static const uint32_t LADDER[] = { REFERENCE_PLAYERS, 4095u, 16382u, 65530u };
 static void usage()
 {
     std::cerr << "usage: benchmark_min_balanced_replay [--players N]... "
-                 "[--ms BUDGET_MS | --ticks T]\n"
+                 "[--ms BUDGET_MS | --ticks T] [--algo balanced|network]\n"
                  "\n"
                  "Stage 2 of benchmarkmapmanager2: replays the workload stage 1\n"
                  "generated for THIS node and THIS datapack, which is compiled in --\n"
@@ -610,6 +639,10 @@ int main(int argc, char **argv)
     std::vector<uint32_t> players_list;
     unsigned int ticks     = 0;
     uint64_t     budget_ms = 0;
+    /* Which visibility strategy is replayed. Default "balanced": that is what
+     * every recorded series measured before --algo existed, so a plain run
+     * stays comparable with the history. */
+    bool         useNetwork = false;
 
     int i = 1;
     while(i < argc)
@@ -626,6 +659,17 @@ int main(int argc, char **argv)
                 return 2;
             }
             players_list.push_back(n);
+        }
+        else if(a == "--algo" && i + 1 < argc)
+        {
+            const std::string v = argv[++i];
+            if(v == "network")      useNetwork = true;
+            else if(v == "balanced") useNetwork = false;
+            else
+            {
+                std::cerr << "stage2: --algo takes balanced or network, got " << v << std::endl;
+                return 2;
+            }
         }
         else if(a == "--ms" && i + 1 < argc)    { budget_ms = std::strtoull(argv[++i], NULL, 10); }
         else if(a == "--ticks" && i + 1 < argc) { ticks = (unsigned int)std::atoi(argv[++i]); }
@@ -682,7 +726,7 @@ int main(int argc, char **argv)
     size_t pi = 0;
     while(pi < players_list.size())
     {
-        rc |= run_scenario(players_list[pi], ticks, budget_ms);
+        rc |= run_scenario(players_list[pi], ticks, budget_ms, useNetwork);
         pi++;
     }
     return rc;
