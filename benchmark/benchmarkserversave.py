@@ -80,6 +80,7 @@ def build():
         return None
     os.makedirs(BUILD_DIR, exist_ok=True)
     print(_color(bh.C_CYAN, f"[build] {SRC_SUBDIR} -> {BUILD_DIR}"))
+    bh.drop_stale_cmake_cache(BUILD_DIR, SRC_SUBDIR)
     cfg = ["cmake", "-S", SRC_SUBDIR, "-B", BUILD_DIR,
            "-DCMAKE_BUILD_TYPE=Release",
            # -O2 (not the Release default -O3): serversave measures the

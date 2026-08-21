@@ -415,6 +415,7 @@ def stage1_emit(verbose=True):
     os.makedirs(STAGE1_BUILD, exist_ok=True)
     os.makedirs(DATAPACK_CPP_DIR, exist_ok=True)
     _say("cmake configure + build (EMIT + DB_INTERNAL_VARS + SELECT)")
+    bh.drop_stale_cmake_cache(STAGE1_BUILD, SERVER_CLI)
     cfg = ["cmake", "-S", SERVER_CLI, "-B", STAGE1_BUILD, "-DCMAKE_BUILD_TYPE=Release",
            "-DCATCHCHALLENGER_SELECT=ON", "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
            "-DCATCHCHALLENGER_DATAPACK_CPP_EMIT=ON"]

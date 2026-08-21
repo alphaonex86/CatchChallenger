@@ -227,6 +227,7 @@ def measure_esp32(node, progress, per_tool, per_subbench, all_metrics):
 def build():
     os.makedirs(BUILD_DIR, exist_ok=True)
     print(_color(bh.C_CYAN, f"[build] {SRC_DIR} -> {BUILD_DIR}"))
+    bh.drop_stale_cmake_cache(BUILD_DIR, SRC_DIR)
     cfg = ["cmake", "-S", SRC_DIR, "-B", BUILD_DIR, "-DCMAKE_BUILD_TYPE=Release"]
     if shutil.which("ninja"):
         cfg += ["-G", "Ninja"]

@@ -198,6 +198,7 @@ def _c(colour, s):
 def _cmake_build(src_dir, build_dir, defs, label):
     """Configure + build one binary locally. Returns (rc, combined_log)."""
     os.makedirs(build_dir, exist_ok=True)
+    bh.drop_stale_cmake_cache(build_dir, src_dir)
     cfg = ["cmake", "-S", src_dir, "-B", build_dir]
     for k, v in defs.items():
         cfg.append(f"-D{k}={v}")

@@ -266,6 +266,7 @@ def _cmake_build(src_dir, build_dir, extra_defs=None, label="build"):
         return 1, f"missing src: {src_dir}"
     os.makedirs(build_dir, exist_ok=True)
     print(_color(bh.C_CYAN, f"[{label}] {src_dir} -> {build_dir}"))
+    bh.drop_stale_cmake_cache(build_dir, src_dir)
     cfg = ["cmake", "-S", src_dir, "-B", build_dir,
            "-DCMAKE_BUILD_TYPE=Release"]
     if extra_defs:
