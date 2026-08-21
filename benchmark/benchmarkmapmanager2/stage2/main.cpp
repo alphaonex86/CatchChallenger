@@ -561,6 +561,12 @@ static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms
     return 0;
 }
 
+// The cell every node runs, whatever its RAM: the fleet's common ground.
+// Small enough for the smallest Linux node in the fleet (a 52 MB Pentium MMX
+// holds ~5400), big enough that the per-player work dominates the fixed cost
+// of ticking the world's 647 maps.
+#define REFERENCE_PLAYERS 1000u
+
 static void usage()
 {
     std::cerr << "usage: benchmark_min_network_replay [--players N]... "
@@ -571,8 +577,9 @@ static void usage()
                  "there is nothing to read at runtime. The workload is FIXED; the only\n"
                  "arguments are how much of it to run:\n"
                  "  --players N     run the first N players of the generated set.\n"
-                 "                  Default: the generated count, a quarter of it and\n"
-                 "                  a sixteenth (the large/medium/small of one node).\n"
+                 "                  Default: the REFERENCE cell (1000 players, the same\n"
+                 "                  on every node, so hardware compares directly), then\n"
+                 "                  a quarter of this node's own count and all of it.\n"
                  "  --ms BUDGET_MS  fixed-time: run each count for BUDGET_MS and report\n"
                  "                  the ticks completed (default, 2000 ms)\n"
                  "  --ticks T       fixed-iteration: exactly T ticks. Only for\n"
@@ -616,14 +623,35 @@ int main(int argc, char **argv)
     }
     if(players_list.empty())
     {
-        // small / medium / large of THIS node, all out of the same generated
-        // set: a prefix of the players is a valid workload on its own.
+        // The sweep is a REFERENCE cell plus this node's own scale.
+        //
+        // Every node runs REFERENCE_PLAYERS, the same number everywhere, so
+        // hardware can be compared directly: same players, same maps, same
+        // vectors, one number per machine. Without it every node has its own
+        // population (its RAM decides it) and nothing lines up -- not the
+        // metric names, not the values.
+        //
+        // The other two are this node's own capacity and a quarter of it,
+        // which is what says how the SAME machine scales with load.
         const uint32_t big = W::PLAYERS;
         const uint32_t mid = big / 4 ? big / 4 : 1;
-        const uint32_t small = big / 16 ? big / 16 : 1;
-        players_list.push_back(small);
-        if(mid > small) players_list.push_back(mid);
-        if(big > mid)   players_list.push_back(big);
+        if(REFERENCE_PLAYERS <= big)
+        {
+            players_list.push_back(REFERENCE_PLAYERS);
+            if(mid > REFERENCE_PLAYERS) players_list.push_back(mid);
+            if(big > mid && big > REFERENCE_PLAYERS) players_list.push_back(big);
+        }
+        else
+        {
+            // Too small to hold the reference cell (the ESP32 and its 300 KB
+            // of RAM). It cannot join the cross-hardware comparison, but it
+            // still needs its own three points to show how IT scales, so keep
+            // the small/medium/large of its own population.
+            const uint32_t small = big / 16 ? big / 16 : 1;
+            players_list.push_back(small);
+            if(mid > small) players_list.push_back(mid);
+            if(big > mid)   players_list.push_back(big);
+        }
     }
     if(budget_ms == 0 && ticks == 0) budget_ms = 2000;
 

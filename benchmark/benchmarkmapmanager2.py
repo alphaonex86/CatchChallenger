@@ -53,6 +53,7 @@ binary-size), prints a one-line progress update per cell, records
 per-platform history + charts, and applies the KEEP/DISCARD/ESCALATE matrix
 against benchmark/results/benchmarkmapmanager2/champion.json.
 """
+import re
 import os
 import sys
 import json
@@ -121,6 +122,27 @@ RAM_FRACTION    = 0.5
 # The connected-player index on the wire is 16-bit (65535 is the empty marker).
 MAX_PLAYERS     = 65530
 MIN_PLAYERS     = 50
+
+
+def _reference_players():
+    """The player count every node runs, read from stage 2 rather than
+    duplicated here: it is the C++ that acts on it, and two copies of a number
+    that MUST match is how a fleet ends up comparing two different loads."""
+    src = os.path.join(STAGE2_SRC, "main.cpp")
+    try:
+        with open(src, "r") as handle:
+            found = re.search(r"^#define\s+REFERENCE_PLAYERS\s+(\d+)", handle.read(),
+                              re.MULTILINE)
+        if found is not None:
+            return int(found.group(1))
+        print("[warn] stage2 defines no REFERENCE_PLAYERS; the sweep still runs "
+              "but no cell is comparable across nodes")
+    except OSError as e:
+        print(f"[warn] cannot read stage 2 to learn REFERENCE_PLAYERS: {e}")
+    return 0
+
+
+REFERENCE_PLAYERS = _reference_players()
 # A node we cannot ask right now (unreachable, mid-reboot): fall back to what
 # the fleet recorded about it, and failing that assume a small board rather
 # than a workstation, so a first run cannot swamp it.
@@ -410,7 +432,12 @@ def generate_workload(stage1_bin, node):
     # up in the tail. It happens when the population is so large that the byte
     # budget only buys the minimum list; say so rather than let the p95 drift.
     if info.get("players"):
-        NODE_SMALL_CELL[label] = max(1, int(info["players"]) // 16)
+        # callgrind (~30x slower) runs the smallest cell of the sweep, which is
+        # now the fleet-wide reference: its instruction count then compares
+        # across machines directly, since every node counted the same work.
+        players = int(info["players"])
+        NODE_SMALL_CELL[label] = min(REFERENCE_PLAYERS, players) \
+                                 if REFERENCE_PLAYERS else max(1, players // 16)
     cycle = info.get("cycle_ticks") or 0
     if cycle and cycle < SHORT_CYCLE_TICKS:
         print(_color(bh.C_YELLOW,
@@ -540,6 +567,37 @@ def _bench_to_cell(bench, cell):
         changed = fields.get("sampled_changed")
         if slots:
             cell[(p, "changed_pct")] = round(100.0 * changed / slots, 2)
+        # ---- normalised, so two machines compare even at different sizes ----
+        # Each node's population comes from its own RAM, so its p<N>_ cells
+        # carry a different N and the raw times cannot be put side by side: a
+        # 56 ms tick over 5461 players is faster work than a 20 ms tick over
+        # 1000. These three divide the load back out, and they are what answers
+        # "which machine is quicker" across the fleet without first picking a
+        # common population.
+        #
+        # (The REFERENCE cell -- 1000 players on every node -- answers the same
+        # question the other way, by making the load identical instead of
+        # dividing it out. Both are recorded: the reference cell is exact but
+        # covers one size only, these cover every cell but assume the cost is
+        # roughly linear in the population, which the fixed 647-map floor makes
+        # only approximately true at small N.)
+        if p:
+            if fields.get("ticks_per_s") is not None:
+                # Player-broadcasts per second: the work rate itself. This is
+                # the one to rank hardware on -- it rises both with the
+                # machine's speed and with the population it can hold, which is
+                # exactly what a bigger box buys.
+                cell[(p, "player_ticks_per_s")] = round(
+                    float(fields["ticks_per_s"]) * p, 1)
+            if fields.get("median_tick_ns") is not None:
+                # Cost of one player in one broadcast. Falls as the population
+                # grows (the per-map floor amortises), so read it between
+                # machines at similar sizes, or on the reference cell.
+                cell[(p, "ns_per_player")] = round(
+                    float(fields["median_tick_ns"]) / p, 1)
+            per_tick = cell.get((p, "bytes_per_tick"))
+            if per_tick is not None:
+                cell[(p, "bytes_per_player_tick")] = round(float(per_tick) / p, 2)
     return None
 
 
@@ -682,7 +740,8 @@ def print_sweep_table(cell_metrics, counts):
     for p in counts:
         row = [p]
         for name in ("maps", "median_tick_ns", "p95_tick_ns", "median_prep_ns",
-                     "changed_pct", "resets", "ticks"):
+                     "changed_pct", "resets", "ticks",
+                     "ns_per_player", "player_ticks_per_s"):
             blk = cell_metrics.get(f"p{p}_{name}")
             row.append(blk["value"] if blk else None)
         rows.append(tuple(row))
@@ -690,22 +749,37 @@ def print_sweep_table(cell_metrics, counts):
         return
     print(_color(bh.C_CYAN, "[sweep] this node's replay, per player count "
                             "(every map is broadcast every tick)"))
+    # The last two columns are the ones that survive a change of population:
+    # every node runs a different one, so its raw median_ns compares with
+    # nothing until the load is divided back out.
     print("  players   maps   median_ns    p95_ns   prep%   changed%"
-          "   resets     ticks")
-    for (p, maps, med, p95, prep, chg, resets, ticks) in rows:
+          "   resets     ticks    ns/plyr   plyr-tk/s")
+    for (p, maps, med, p95, prep, chg, resets, ticks, nspp, ptps) in rows:
         pct = (100.0 * prep / med) if (prep and med) else float("nan")
         print(f"  {p:>7}  {maps if maps is not None else '-':>5}"
               f"  {med if med is not None else '-':>10}"
               f"  {p95 if p95 is not None else '-':>8}"
               f"  {pct:>5.1f}%  {chg if chg is not None else float('nan'):>8.1f}%"
               f"  {resets if resets is not None else '-':>7}"
-              f"  {ticks if ticks is not None else '-':>8}")
+              f"  {ticks if ticks is not None else '-':>8}"
+              f"  {nspp if nspp is not None else float('nan'):>9.0f}"
+              f"  {ptps if ptps is not None else float('nan'):>10.0f}")
+    if REFERENCE_PLAYERS in counts:
+        print(f"  the {REFERENCE_PLAYERS}-player row is the fleet's reference cell: "
+              f"same load on every node, so it compares as-is")
 
 
 def _metric_unit_better(metric_name):
     # Throughput is higher-is-better; everything else lower-is-better.
-    better = "higher" if metric_name in ("ticks_per_s", "ticks") else "lower"
-    unit = "ticks/s" if metric_name == "ticks_per_s" else \
+    better = "higher" if metric_name in ("ticks_per_s", "ticks",
+                                         "player_ticks_per_s") else "lower"
+    # The cross-hardware trio is named first: player_ticks_per_s would
+    # otherwise fall into the generic "_s means seconds" rule and be labelled
+    # a duration, and the two per-player costs carry no unit suffix at all.
+    unit = "player-ticks/s" if metric_name == "player_ticks_per_s" else \
+           "ns" if metric_name == "ns_per_player" else \
+           "bytes" if metric_name == "bytes_per_player_tick" else \
+           "ticks/s" if metric_name == "ticks_per_s" else \
            "bytes" if metric_name == "bytes_per_tick" else \
            "ns" if metric_name.endswith("_ns") else \
            "bytes" if metric_name.endswith("_bytes") or metric_name == "bytes_sent" or metric_name == "binary_size_bytes" else \
@@ -766,7 +840,12 @@ def _cell_to_metric_block(per_cell):
 DIAGNOSTIC_METRICS = ("maps", "resets", "median_prep_ns", "changed_pct",
                       "bytes_sent",
                       "world_maps", "workload_players", "workload_cycle_ticks",
-                      "workload_entries", "workload_replay_bytes")
+                      "workload_entries", "workload_replay_bytes",
+                      # Derived: exact functions of metrics the champion already
+                      # judges (ticks_per_s, median_tick_ns, bytes_per_tick), so
+                      # they are recorded for cross-hardware reading and kept OUT
+                      # of KEEP/DISCARD -- judging both weighs one movement twice.
+                      "player_ticks_per_s", "ns_per_player", "bytes_per_player_tick")
 
 
 def aggregate_metrics(per_cell):
