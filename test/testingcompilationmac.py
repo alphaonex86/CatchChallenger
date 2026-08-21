@@ -195,9 +195,15 @@ def rsync_to_osx(src, dst, extra_args=None):
     # configure fails with:
     #   add_subdirectory given source "general/libzstd/build/cmake"
     #   which is not an existing directory.
+    # build dirs at ANY depth (see benchmark_remote.py: the anchored form let
+    # ~878MB of nested ones travel), minus the build/cmake the vendored zstd
+    # and xxhash ship as SOURCE -- which is exactly what the comment above is
+    # about. rsync takes the first matching rule, includes stay first.
     args = ["rsync", "-art", "--delete",
             "-e", RSYNC_SSH_E,
-            "--exclude=/build/", "--exclude=/build-*/",
+            "--include=**/libzstd/build/", "--include=**/libzstd/build/**",
+            "--include=**/libxxhash/build/", "--include=**/libxxhash/build/**",
+            "--exclude=build/", "--exclude=build-*/", "--exclude=*-build/",
             "--exclude=.git/"]
     if extra_args:
         args += list(extra_args)
