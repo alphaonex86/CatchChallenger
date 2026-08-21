@@ -6,7 +6,7 @@ Builds and runs test/testingmapmanagement/testmapvisibility, a
 self-contained binary that exercises every branch in:
   - server/base/MapManagement/MapVisibilityAlgorithm.cpp
       min_CPU()
-      min_network()
+      min_balanced()
       send_reinsertAll()
       send_reinsertAllWithFilter()
   - server/base/MapServer.cpp

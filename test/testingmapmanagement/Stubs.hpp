@@ -124,7 +124,7 @@ public:
 
 // Client stub — only the surface referenced by MVA.cpp + production
 // playerToFullInsert is exposed. Every output produced by min_CPU /
-// min_network is captured into `sentPackets` (one entry per
+// min_balanced is captured into `sentPackets` (one entry per
 // sendRawBlock) so the test driver can re-parse it via the same packet
 // grammar Api_protocol uses on the client side.
 class Client
@@ -162,7 +162,7 @@ public:
     CATCHCHALLENGER_TYPE_MAPID mapIndex;
 
     // Captured packets, per-client. Cleared by the test driver between
-    // ticks so each call to min_CPU / min_network can be diffed.
+    // ticks so each call to min_CPU / min_balanced can be diffed.
     struct CapturedBlock { std::vector<char> bytes; };
     std::vector<CapturedBlock> sentBlocks;
 

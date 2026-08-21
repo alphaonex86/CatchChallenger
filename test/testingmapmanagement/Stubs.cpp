@@ -49,7 +49,7 @@ bool Client::sendRawBlock(const char * const data, const unsigned int &size)
 size_t Client::sendPing(char * output)
 {
     // Production increments pingInProgress on send (Client.cpp:894) and
-    // decrements it on the client's 0xE3 reply. min_network uses that count
+    // decrements it on the client's 0xE3 reply. min_balanced uses that count
     // as its flow-control signal, so the stub MUST increment too or the
     // held-back path is never exercised.
     if(ping_in_progress_ < 255)

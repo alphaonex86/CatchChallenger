@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""benchmarkmapmanager.py -- benchmark MapVisibilityAlgorithm::min_network().
+"""benchmarkmapmanager.py -- benchmark MapVisibilityAlgorithm::min_balanced().
 
 Workload: production-like move mix — each tick a deterministic 40% of
 the players change direction (MOVE_PCT; LCG draw per player) and ~5% of
@@ -90,7 +90,7 @@ MAP_AXES_MS     = 600
 # ---- Lag axis -------------------------------------------------------------
 # "Lag" = the server has NOT received a client's 0xE3 reply by the time the
 # tick timer runs, i.e. the link's round trip exceeds the tick. That is the
-# normal state on the 2G / ADSL / TOR home servers min_network targets, and it
+# normal state on the 2G / ADSL / TOR home servers min_balanced targets, and it
 # decides how much of a tick is SHARED work (cheap) versus per-client work (a
 # private baseline plus its own coalesced diff). Sweeping it answers three
 # questions one no-lag run cannot:
@@ -110,8 +110,8 @@ MAP_CALLGRIND_TICKS = 200
 # (dynamic linking ~70% of an otherwise-tiny single-core run). Glob
 # matched against the binary's symbols at runtime — header-free, works on
 # every cross node (benchmark/CLAUDE.md: target the long-lived server,
-# not startup). min_network is the measured hot path and is never inlined.
-MAP_CALLGRIND_TOGGLE = "*min_network*"
+# not startup). min_balanced is the measured hot path and is never inlined.
+MAP_CALLGRIND_TOGGLE = "*min_balanced*"
 
 # Timeout DERIVED from the budget (timeout = budget + margin), not picked
 # independently. The binary self-stops at the budget; the timeout is only
@@ -327,7 +327,7 @@ def cell_run(bin_path, profiler, label_node):
             metrics[(0, f"perf_{evt}")] = val
         return metrics, None
     if profiler == "callgrind":
-        # toggle_collect: count only min_network (+ callees) so the IR
+        # toggle_collect: count only min_balanced (+ callees) so the IR
         # excludes process startup (dynamic linking dominates an
         # otherwise-tiny run).
         ic = bh.measure_callgrind(cmd, timeout=timeout, outdir=BUILD_DIR,
@@ -462,7 +462,7 @@ def probe_axes(bin_path):
                                          "stddev": 0.0, "unit": "ticks/s",
                                          "better": "higher",
                                          "samples": [f["ticks_per_s"]]}
-                # BYTES are what min_network exists to minimise, so carry
+                # BYTES are what min_balanced exists to minimise, so carry
                 # them normalised per tick per player -- the number that
                 # matters on a 2G/ADSL uplink.
                 if bytes_sent is not None and ticks:
@@ -687,7 +687,7 @@ def _remote_spec(node, avail_profilers, skips, all_profilers,
         "runtime_cmd":       {p: _runtime_cmd_string(p) for p in runnable},
         "profilers":         runnable,
         "cmake_defs":        {"CMAKE_BUILD_TYPE": "Release"},
-        # Remote callgrind counts only min_network via --toggle-collect
+        # Remote callgrind counts only min_balanced via --toggle-collect
         # (excludes startup). Resolved against symbols at runtime, so no
         # build define / valgrind header needed on the cross compile node.
         "callgrind_toggle":  MAP_CALLGRIND_TOGGLE,

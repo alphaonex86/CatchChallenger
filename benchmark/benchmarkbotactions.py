@@ -218,7 +218,10 @@ IO_URING_VARIANTS = [
 # is a RUNTIME setting (server-properties.xml mapVisibility/minimize), so no
 # rebuild is needed — each io_uring binary is run once per mode. The two
 # strategies live in server/base/MapManagement/MapVisibilityAlgorithm.cpp:
-#   "network" -> min_network(): per-recipient diff, fewer bytes, more CPU.
+#   "balanced" -> min_balanced(): per-recipient diff, fewer bytes, more CPU.
+#                 It was named "network" before min_range() took that name;
+#                 this sweep stays on min_balanced() so its history keeps
+#                 comparing the SAME algorithm.
 #   "cpu"     -> min_CPU(): compose the 0x65+0x6B player block ONCE and fan
 #                the SAME datablock out to every socket on the map, more
 #                bytes but cache-hot + far less CPU.
@@ -226,7 +229,7 @@ IO_URING_VARIANTS = [
 # flag shift the CPU-vs-bytes tradeoff between the two strategies?" — the
 # hypothesis being that min_CPU's shared datablock stays in cache and wins
 # on server CPU%/latency, paying for it in net_tx_bytes.
-IO_URING_VISIBILITY_MODES = ["network", "cpu"]
+IO_URING_VISIBILITY_MODES = ["balanced", "cpu"]
 # Bot count for the io_uring x visibility sweep. Deliberately high (vs the
 # 'medium' used by the bare network cells): the shared-datablock cache
 # effect only shows when many players share a single map, so maximise
@@ -571,9 +574,9 @@ def _stage_variant_run_dir(server_bin, run_dir, port,
 
     visibility_minimize: None -> omit the <mapVisibility> group entirely
     (server default = disabled, so the MapVisibilityAlgorithm broadcast
-    never fires). "network" or "cpu" -> enable the per-tick broadcast and
-    pick the strategy at RUNTIME (main-unix2.cpp mapVisibility/minimize):
-    "network" routes through MapVisibilityAlgorithm::min_network() (per-
+    never fires). "cpu"/"balanced"/"network" -> enable the per-tick broadcast
+    and pick the strategy at RUNTIME (main-unix2.cpp mapVisibility/minimize):
+    "balanced" routes through MapVisibilityAlgorithm::min_balanced() (per-
     recipient diff), "cpu" through min_CPU() (one shared datablock fanned
     out to every socket). This is the axis the io_uring sweep crosses so
     the cost of each broadcast strategy is visible under each io_uring
@@ -676,7 +679,7 @@ def _run_iouring_variants(bot_bin, iface):
     """LOCAL io_uring x visibility-mode sweep. For every io_uring tuning
     variant (baseline / +SQPOLL / +COOP_TASKRUN / +TASKRUN_FLAG /
     +NO_SQARRAY) the server is built ONCE, then run twice — once with the
-    MapVisibilityAlgorithm broadcast in min_network mode and once in min_CPU
+    MapVisibilityAlgorithm broadcast in min_balanced mode and once in min_CPU
     mode (mapVisibility/minimize toggled at RUNTIME, no rebuild). Per
     (variant, mode) it records wall/sys/user/RSS + server CPU% + requests/s
     + latency tail + bytes-on-wire so the CPU-vs-bytes tradeoff of the two
@@ -701,7 +704,7 @@ def _run_iouring_variants(bot_bin, iface):
         if not os.path.isfile(sbin):
             print(_color(bh.C_YELLOW, f"[iouring] {vlabel}: binary missing; skip"))
             continue
-        # Same binary, two runtime visibility strategies. min_network vs
+        # Same binary, two runtime visibility strategies. min_balanced vs
         # min_CPU is the axis this sweep exists to compare.
         for mode in IO_URING_VISIBILITY_MODES:
             slabel = f"{vlabel}-{mode}"
@@ -746,7 +749,7 @@ def _run_iouring_variants(bot_bin, iface):
                              "better": "lower", "samples": [v]}
             # bytes-on-wire (loopback rx/tx): THE metric that distinguishes
             # the two broadcast strategies. min_CPU rebroadcasts every
-            # player every tick (high tx); min_network sends only the diff
+            # player every tick (high tx); min_balanced sends only the diff
             # (low tx). Without it "min_CPU uses less CPU" is the meaningless
             # half-conclusion benchmark/CLAUDE.md warns against — the CPU win
             # only counts if paired with its bandwidth cost.
@@ -2062,7 +2065,7 @@ def _run_with_server(bin_path, server_proc, comment,
         # io_uring x visibility-mode sweep (LOCAL only): each io_uring
         # tuning variant (baseline / +SQPOLL / +COOP_TASKRUN /
         # +TASKRUN_FLAG / +NO_SQARRAY) run under BOTH MapVisibilityAlgorithm
-        # broadcast strategies — min_network and min_CPU — toggled at
+        # broadcast strategies — min_balanced and min_CPU — toggled at
         # runtime. Recorded as the "server-iouring" tool + per-(variant,mode)
         # sub-benchmark slices carrying CPU% + req/s + bytes-on-wire + the
         # latency tail, so the CPU-vs-bytes tradeoff of the two strategies is

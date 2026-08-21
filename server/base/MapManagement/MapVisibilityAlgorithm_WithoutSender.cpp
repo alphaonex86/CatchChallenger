@@ -33,15 +33,15 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
            index++;
        }
        break;
-    //"balanced": whole map, but only what changed. min_network() keeps its
-    //historical name, it WAS the network minimising algorithm before the
-    //view range one below existed.
+    //"balanced": whole map, but only what changed. It WAS the network
+    //minimising algorithm, named "network", before the view range one below
+    //existed.
     case GameServerSettings::MapVisibility::Minimize_Balanced:
        ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x6B;
        ProtocolParsingBase::tempBigBufferForOutput[1+4]=0x01;//map list count
        while(index<MapVisibilityAlgorithm::flat_map_list.size())//put loop into condition to have best performance
        {
-           MapVisibilityAlgorithm::flat_map_list.at(index).min_network(static_cast<CATCHCHALLENGER_TYPE_MAPID>(index));
+           MapVisibilityAlgorithm::flat_map_list.at(index).min_balanced(static_cast<CATCHCHALLENGER_TYPE_MAPID>(index));
            index++;
        }
        break;

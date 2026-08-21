@@ -1405,7 +1405,7 @@ def measure_callgrind(cmd, env=None, timeout=None, outdir=None,
     """valgrind --tool=callgrind. Returns instruction count when
     callgrind_annotate succeeds, else None.
 
-    toggle_collect: a function-name glob (e.g. '*min_network*'). When set,
+    toggle_collect: a function-name glob (e.g. '*min_balanced*'). When set,
     runs with `--collect-atstart=no --toggle-collect=<glob>` so only the
     matched function (and its callees) is counted — excludes one-time
     startup (dynamic linking) from the IR. Header-free and needs no source

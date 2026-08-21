@@ -178,13 +178,13 @@ public:
     {
     public:
         /* server-properties mapVisibility/minimize: cpu, balanced, network.
-         * Minimize_Balanced was named Minimize_Network before the range
-         * algorithm existed, its method kept the historical name
-         * MapVisibilityAlgorithm::min_network(). */
+         * "balanced" was named "network" before the view range algorithm
+         * existed; only the benchmark binaries (benchmark_min_network*) keep
+         * the old name, they measure min_balanced(). */
         enum Minimize : uint8_t
         {
             Minimize_CPU,//"cpu": rebroadcast the whole map every tick, MapVisibilityAlgorithm::min_CPU()
-            Minimize_Balanced,//"balanced": whole map too but only what changed, MapVisibilityAlgorithm::min_network()
+            Minimize_Balanced,//"balanced": whole map too but only what changed, MapVisibilityAlgorithm::min_balanced()
             Minimize_Network//"network": only the players into the view range, border maps included, MapVisibilityAlgorithm::min_range()
         };
         class MapVisibility_Simple

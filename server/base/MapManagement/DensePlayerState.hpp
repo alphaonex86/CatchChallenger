@@ -6,7 +6,7 @@
 namespace CatchChallenger {
 /* Per-slot player state, shared by MapVisibilityAlgorithm::tempDenseBuffer
  * (the per-tick map snapshot) and ClientWithMap::sendedStatus (the
- * per-recipient last-sent state). The min_network() diff loop talks ONLY to
+ * per-recipient last-sent state). The min_balanced() diff loop talks ONLY to
  * the inline helpers below, so the same algorithm compiles against either
  * layout:
  *
@@ -17,7 +17,7 @@ namespace CatchChallenger {
  * - -DCATCHCHALLENGER_VISIBILITY_TRUNCATED_DB_ID: ONE 32-bit word per slot
  *   (x | y<<8 | direction<<16 | (db_id&0xff)<<24). Halves snapshot +
  *   sent-state memory and the per-slot diff is a single uint32_t compare —
- *   measured +5..+63% min_network throughput across the fleet (see
+ *   measured +5..+63% min_balanced throughput across the fleet (see
  *   doc/algo/visibility/dense-player-state.md) — at the cost of the db id
  *   truncated to its LOW 8 BITS: a slot reuse within one tick where the old
  *   and new character share the low byte (~1/256 of an already-rare event)

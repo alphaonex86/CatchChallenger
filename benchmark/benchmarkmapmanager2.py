@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""benchmarkmapmanager2.py -- min_network() over a per-node generated replay.
+"""benchmarkmapmanager2.py -- min_balanced() over a per-node generated replay.
 
 Two stages, because the workload and the measurement want opposite things.
 
@@ -19,7 +19,7 @@ that file in and replays it -- no datapack, no map files, no collision test,
 nothing read at runtime. Per player per tick it costs a countdown and a
 coordinate store: a vector saying "3 cells" is walked one cell per tick for
 3 ticks, and only then is the next vector fetched. So the run measures
-min_network and the tick loop around it, not a client simulation. It also
+min_balanced and the tick loop around it, not a client simulation. It also
 means the benchmark fits a board with no filesystem, which is the only way
 the ESP32 can ever run it.
 
@@ -164,8 +164,8 @@ MAP_CALLGRIND_TICKS = 200
 # (dynamic linking ~70% of an otherwise-tiny single-core run). Glob
 # matched against the binary's symbols at runtime — header-free, works on
 # every cross node (benchmark/CLAUDE.md: target the long-lived server,
-# not startup). min_network is the measured hot path and is never inlined.
-MAP_CALLGRIND_TOGGLE = "*min_network*"
+# not startup). min_balanced is the measured hot path and is never inlined.
+MAP_CALLGRIND_TOGGLE = "*min_balanced*"
 
 # Timeout DERIVED from the budget (timeout = budget + margin), not picked
 # independently. The binary self-stops at the budget; the timeout is only
@@ -511,7 +511,7 @@ def _bench_to_cell(bench, cell):
         # Bytes PER TICK, not the run's total: the total is proportional to the
         # ticks completed, so a FASTER binary sends more of them and a real
         # speed-up would read as a byte regression (and turn a KEEP into an
-        # ESCALATE). What min_network is judged on is how much it puts on the
+        # ESCALATE). What min_balanced is judged on is how much it puts on the
         # wire per broadcast.
         ticks = fields.get("ticks")
         if ticks and fields.get("bytes_sent") is not None:
@@ -533,7 +533,7 @@ def _bench_to_cell(bench, cell):
         # median_tick_ns instead of taking that on trust.
         cell[(p, "median_prep_ns")] = fields.get("median_prep_ns")
         # Share of slots that differ from the previous broadcast. This is the
-        # workload's defining property: 100 - changed_pct is what min_network's
+        # workload's defining property: 100 - changed_pct is what min_balanced's
         # stateful diff gets to SKIP, and an optimisation of that path is only
         # measurable while this stays well under 100.
         slots   = fields.get("sampled_slots")
@@ -618,7 +618,7 @@ def cell_run(bin_path, profiler, label_node):
             metrics[(0, f"perf_{evt}")] = [val]
         return metrics, None
     if profiler == "callgrind":
-        # toggle_collect: count only min_network (+ callees) so the IR
+        # toggle_collect: count only min_balanced (+ callees) so the IR
         # excludes process startup (dynamic linking dominates an
         # otherwise-tiny run).
         ic = bh.measure_callgrind(cmd, timeout=timeout, outdir=BUILD_DIR,
@@ -911,7 +911,7 @@ def _remote_spec(node, avail_profilers, skips, all_profilers,
         # build dirs on these defs, so each node compiles its own binary.
         "cmake_defs":        {"CMAKE_BUILD_TYPE": "Release",
                               "CC_WORKLOAD_CPP": remote_workload},
-        # Remote callgrind counts only min_network via --toggle-collect
+        # Remote callgrind counts only min_balanced via --toggle-collect
         # (excludes startup). Resolved against symbols at runtime, so no
         # build define / valgrind header needed on the cross compile node.
         "callgrind_toggle":  MAP_CALLGRIND_TOGGLE,

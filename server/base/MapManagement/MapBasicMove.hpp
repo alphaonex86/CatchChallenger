@@ -23,7 +23,7 @@ public:
 
     // Trivial accessors inlined in the header: profiling (callgrind) showed
     // ~5% Ir lost to out-of-line calls of these from MapVisibilityAlgorithm
-    // ::min_network's tight loops. One-liners, safe to inline.
+    // ::min_balanced's tight loops. One-liners, safe to inline.
     inline Direction getLastDirection() const { return last_direction; }
     inline CATCHCHALLENGER_TYPE_MAPID getMapId() const { return mapIndex; }
     inline COORD_TYPE getX() const { return x; }

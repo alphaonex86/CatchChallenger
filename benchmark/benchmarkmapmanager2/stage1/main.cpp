@@ -1,5 +1,5 @@
 // HEADLESS: yes
-// Benchmark: MapVisibilityAlgorithm::min_network() over the REAL WORLD -- the
+// Benchmark: MapVisibilityAlgorithm::min_balanced() over the REAL WORLD -- the
 //            datapack's generated map set -- as opposed to benchmarkmapmanager,
 //            which parks every player on ONE synthetic map at a position it
 //            never changes and only rotates directions.
@@ -59,12 +59,12 @@
 //                             separately instead of hiding in one total
 //   median_prep_ns            lower-is-better (harness cost per tick; NOT
 //                             server work and NOT inside the latency window)
-//   bytes_sent                lower-is-better (what min_network exists to cut)
+//   bytes_sent                lower-is-better (what min_balanced exists to cut)
 //   visibility_state_bytes    lower-is-better (resident per-map diff state)
 //   sampled_changed/sampled_slots  the share of slots that differ from the
 //                             previous broadcast, measured on the sampled
 //                             ticks. This is the workload's most important
-//                             property: what min_network's stateful diff gets
+//                             property: what min_balanced's stateful diff gets
 //                             to SKIP. Descriptive, not better-lower.
 //   walk_violations           MUST be 0 -- the end-of-scenario oracle check
 //                             that every player stands where the production
@@ -76,7 +76,7 @@
 // which times the whole loop, carries it). For scale, a real server spends
 // ~2.6 us of parse+apply per received move, so this walk model is orders of
 // magnitude cheaper than the client work it stands in for -- the run measures
-// min_network, not the movement simulation.
+// min_balanced, not the movement simulation.
 //
 // Determinism: seeded LCG only -- no rand(), no clock, no time in the workload,
 //              and the map list is sorted before use (readdir order is not
@@ -185,7 +185,7 @@ static const KindCfg WORLD[Kind_count] = {
 // with WALK_START_PCT chance per tick, picks a direction, and then walks
 // RUN_LEN_MAX steps at most before stopping again -- which is how people
 // actually move, and it is also the only way this benchmark exercises the
-// half of min_network() that matters most: the slots that did NOT change.
+// half of min_balanced() that matters most: the slots that did NOT change.
 //
 // With a per-tick coin flip at 70%, ~91% of the slots differed EVERY tick
 // (measured), so the "same as last broadcast -> send nothing" path was never
@@ -205,7 +205,7 @@ static const KindCfg WORLD[Kind_count] = {
 #define WORLD_MAP_SUBDIR "map/main/generated/"
 
 // STRICT per-map guard. The wire slot index is 8-bit with 255 reserved, and
-// min_network() clamps its client count to 254; 253 leaves a slot of headroom
+// min_balanced() clamps its client count to 254; 253 leaves a slot of headroom
 // so a map can never sit exactly on the clamp. The POPULATION has no such
 // limit -- it is bounded by the node's RAM and by 65530 (the connected-player
 // index is 16-bit) -- players simply occupy more maps.

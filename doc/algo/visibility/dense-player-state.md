@@ -1,4 +1,4 @@
-# DensePlayerState — packed slot state for min_network()
+# DensePlayerState — packed slot state for min_balanced()
 
 **Build flag:** the packed 32-bit layout described below is OPT-IN via
 `-DCATCHCHALLENGER_VISIBILITY_TRUNCATED_DB_ID` (see general/DEFINES.md).
@@ -6,11 +6,11 @@ The DEFAULT build keeps the 8-byte `{db_id, xyd}` pair with the FULL
 32-bit database id, so "a different character replaced this slot" is
 detected exactly. Both layouts live in DensePlayerState.hpp behind the
 same inline helpers (set/setEmpty/isEmpty/isEqual/isSameCharacter/
-wireChangeWord/getX/getY); min_network() itself is layout-agnostic.
+wireChangeWord/getX/getY); min_balanced() itself is layout-agnostic.
 The benchmark champion tracks the default layout; benchmark the
 truncated one by adding the define to the harness build.
 
-`MapVisibilityAlgorithm::min_network()` (server/base/MapManagement) sends
+`MapVisibilityAlgorithm::min_balanced()` (server/base/MapManagement) sends
 each recipient only the players that changed since the last tick. That
 needs, per recipient, a copy of "what was last sent" (`ClientWithMap::
 sendedStatus`) diffed every tick against the map's current snapshot
@@ -107,7 +107,7 @@ Baseline: champion bc24abf4-era (8-byte slot pair). Candidates
   player moved (probability 0.6^N ≈ never for N≥5), so on ~every tick
   it is a pure second scan on top of the diff.
 * **Collapsing the per-recipient diff into one shared broadcast**:
-  rejected by design — that is what min_CPU is for; min_network exists
+  rejected by design — that is what min_CPU is for; min_balanced exists
   to minimise network per recipient.
 
 History/raw data: `benchmark/history/benchmarkmapmanager/` (local-only,

@@ -427,7 +427,10 @@ def main():
     dp_name = os.path.basename(DATAPACK_SRC)
     log_info(f"datapack: {dp_name}, maincode: {MAINCODE}")
 
-    MINIMIZE_MODES = ("network", "cpu")
+    # the three mapVisibility/minimize strategies, end to end: "network" is
+    # min_range() (view rectangle, border maps included), "balanced" is
+    # min_balanced() (whole map, diffed), "cpu" is min_CPU().
+    MINIMIZE_MODES = ("network", "balanced", "cpu")
     CLIENTS = (CLIENT_CPU_BUILD, CLIENT_GL_BUILD)
     CHECK_TYPES = ("map_displayed", "insert_player", "direction", "chat")
     # per mode: 1 server_start + len(CLIENTS) * len(CHECK_TYPES)
