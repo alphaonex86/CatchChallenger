@@ -28,9 +28,12 @@
  * KEEP THE TWO IN SYNC: a client drawing more tiles than the server sends
  * makes players pop in INSIDE the screen.
  *
- * MARGIN is the hysteresis: a player is INSERTED at the view limit but only
- * REMOVED past view+margin, else somebody walking on the edge costs a full
- * insert (~25 bytes) + a remove EVERY tick instead of a 4 bytes move. */
+ * The HYSTERESIS is a runtime setting, GameServerSettings
+ * mapVisibility.viewMargin (server-properties mapVisibility/ViewMargin), the
+ * define below is only its default: a player is INSERTED at the view limit but
+ * only REMOVED past view+margin, else somebody walking on the edge flip-flops
+ * and costs a full insert (~25 bytes) + a remove EVERY tick instead of a 4
+ * bytes move. */
 #ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_TILE_PIXEL
 #define CATCHCHALLENGER_SERVER_MAP_VIEW_TILE_PIXEL 16//datapack tileset tilewidth/tileheight
 #endif
@@ -46,8 +49,8 @@
 #ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_ZOOM_DEFAULT
 #define CATCHCHALLENGER_SERVER_MAP_VIEW_ZOOM_DEFAULT 2
 #endif
-#ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN
-#define CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN 2
+#ifndef CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN_DEFAULT
+#define CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN_DEFAULT 5
 #endif
 
 #define CATCHCHALLENGER_DYNAMIC_MAP_LIST 1

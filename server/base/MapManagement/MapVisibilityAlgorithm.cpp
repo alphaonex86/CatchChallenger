@@ -1275,11 +1275,14 @@ void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER
         visibleMax=static_cast<uint8_t>(GlobalServerData::serverSettings.mapVisibility.simple.max);
     const int16_t recipientX=static_cast<int16_t>(recipient.getX());
     const int16_t recipientY=static_cast<int16_t>(recipient.getY());
-    //keep range = view + hysteresis margin, see CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN
     const int16_t viewX=static_cast<int16_t>(view_x);
     const int16_t viewY=static_cast<int16_t>(view_y);
-    const int16_t keepX=static_cast<int16_t>(viewX+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN);
-    const int16_t keepY=static_cast<int16_t>(viewY+CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN);
+    //keep range = view + the CONFIGURED hysteresis (mapVisibility/ViewMargin):
+    //somebody walking on the view edge then costs a 4 bytes move instead of a
+    //full insert + a remove every tick
+    const int16_t margin=static_cast<int16_t>(GlobalServerData::serverSettings.mapVisibility.viewMargin);
+    const int16_t keepX=static_cast<int16_t>(viewX+margin);
+    const int16_t keepY=static_cast<int16_t>(viewY+margin);
     uint8_t changesCount=0;
     uint8_t removeCount=0;
     uint8_t insertCount=0;

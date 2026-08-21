@@ -1,5 +1,6 @@
 #include "NormalServerGlobal.hpp"
 #include "VariableServer.hpp"
+#include "MapManagement/MapVisibilityAlgorithm.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/Version.hpp"
 #include "../../general/base/ProtocolVersion.hpp"
@@ -195,6 +196,8 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
         settings->setValue("Max",50);
     if(!settings->contains("Reshow"))
         settings->setValue("Reshow",30);
+    if(!settings->contains("ViewMargin"))
+        settings->setValue("ViewMargin",CATCHCHALLENGER_SERVER_MAP_VIEW_MARGIN_DEFAULT);//network only: hysteresis in tiles
     if(!settings->contains("minimize"))
         settings->setValue("minimize","balanced");//cpu, balanced or network(view range)
     settings->endGroup();

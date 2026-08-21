@@ -206,17 +206,23 @@ public:
             #endif
         };
         MapVisibility_Simple simple;
+        /* Minimize_Network hysteresis, in tiles: a player is INSERTED at the
+         * view limit but only REMOVED past view+viewMargin. Without it
+         * somebody walking on the edge flip-flops, costing a full insert
+         * (~25 bytes) + a remove EVERY tick instead of a 4 bytes move.
+         * server-properties mapVisibility/ViewMargin. */
+        uint8_t viewMargin;
         bool enable;
         Minimize minimize;//most visibility algo will use it
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
-            buf << simple << (uint8_t)minimize;
+            buf << simple << viewMargin << (uint8_t)minimize;
         }
         template <class B>
         void parse(B& buf) {
             uint8_t t;
-            buf >> simple >> t;
+            buf >> simple >> viewMargin >> t;
             minimize=(Minimize)t;
         }
         #endif

@@ -223,7 +223,9 @@ private:
 // are read by MVA/playerToFullInsert. Stub exposes them via the same
 // nested struct path.
 struct _MapVisibilitySimple { unsigned int max; };
-struct _MapVisibility { _MapVisibilitySimple simple; };
+//viewMargin: same runtime hysteresis setting as production, see
+//GameServerSettings::MapVisibility in server/base/ServerStructures.hpp
+struct _MapVisibility { _MapVisibilitySimple simple; uint8_t viewMargin; };
 struct _ServerSettings { _MapVisibility mapVisibility; bool dontSendPlayerType; };
 
 class GlobalServerData
