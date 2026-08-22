@@ -23,10 +23,6 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
     if(GlobalServerData::serverSettings.mapVisibility.simple.max<2)
         return;
 
-    /* A new tick: min_network()'s per-map candidate snapshots are stale. Done
-     * HERE and not inside the algorithm because a map's snapshot is read by
-     * its border maps before its own turn in the loop below comes. */
-    MapVisibilityAlgorithm::beginTick();
     unsigned int index=0;
     switch(GlobalServerData::serverSettings.mapVisibility.minimize)
     {
@@ -53,6 +49,12 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
     //included. min_network() composes each 0x6B header itself (one by source
     //map), so nothing is pre-seeded into the shared buffer here.
     case GameServerSettings::MapVisibility::Minimize_Network:
+       /* A new tick: min_network()'s per-map candidate snapshots are stale.
+        * Done HERE and not inside min_network() because a map's snapshot is
+        * read by its border maps before its own turn in the loop below comes.
+        * Inside the case and not above the switch: the two other algorithms
+        * never read a snapshot, so they must not pay for it. */
+       MapVisibilityAlgorithm::beginTick();
        while(index<MapVisibilityAlgorithm::flat_map_list.size())//put loop into condition to have best performance
        {
            MapVisibilityAlgorithm::flat_map_list.at(index).min_network(static_cast<CATCHCHALLENGER_TYPE_MAPID>(index));
