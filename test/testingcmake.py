@@ -76,6 +76,18 @@ def log_fail(label, why, secs=0.0):
     phase_timer.record_event("fail", label, ok=False, dt=secs, detail=why)
 
 
+# Projects that take a MANDATORY generated input and therefore cannot
+# configure from a bare checkout -- the same class as the ESP-IDF projects
+# excluded below, and each is really configured + built by the test that owns
+# it. Repo-relative directory of the CMakeLists.txt -> who covers it.
+NEEDS_GENERATED_INPUT = {
+    # stage 2 compiles IN the workload stage 1 generated for one node and one
+    # datapack (never checked in, see its header), so -DCC_WORKLOAD_CPP is
+    # required and a bare configure is a FATAL_ERROR by design.
+    "benchmark/benchmarkmapmanager2/stage2": "benchmark/benchmarkmapmanager2.py",
+}
+
+
 def discover_standalone_cmakelists():
     """Find every CMakeLists.txt with a top-level project() declaration.
     Skip anything under a build/ tree to avoid configuring artefacts."""
@@ -100,6 +112,9 @@ def discover_standalone_cmakelists():
         # (which self-skips when ESP-IDF is absent), so exclude them from the
         # "configures with plain cmake -S/-B" contract checked here.
         if "IDF_PATH" in content or "tools/cmake/project.cmake" in content:
+            continue
+        rel_dir = os.path.relpath(dirpath, ROOT).replace(os.sep, "/")
+        if rel_dir in NEEDS_GENERATED_INPUT:
             continue
         # The check is "starts with `project(` after stripping the
         # leading `cmake_minimum_required(...)` line"; every standalone
@@ -229,6 +244,12 @@ def main():
     print(f"  {len(cmakelists)} project(s) to verify:")
     for cl in cmakelists:
         print(f"    - {os.path.relpath(cl, ROOT)}")
+    # Say what was left out and who covers it instead: an exclusion nobody
+    # sees is indistinguishable from a project silently dropping off the list.
+    for rel_dir, covered_by in sorted(NEEDS_GENERATED_INPUT.items()):
+        print(f"    ! {rel_dir}/CMakeLists.txt  not standalone by design "
+              f"(mandatory generated input) -- configured + built by "
+              f"{covered_by}")
     print()
 
     # Configures are independent — run them in parallel. Each cmake
