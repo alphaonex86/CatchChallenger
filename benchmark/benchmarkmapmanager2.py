@@ -712,8 +712,11 @@ def cell_run(bin_path, profiler, label_node):
                     metrics.setdefault(key, []).append(value)
         # Peak RSS + wall come from one extra pass under /usr/bin/time -v
         # (it swallows the child's stdout, so it cannot double as a sample).
-        t = bh.measure_time_v(run_one(bin_path, profiler, algo="balanced"),
-                              timeout=timeout, cwd=run_cwd)
+        # SAME command as the measured passes, three strategies included: an
+        # exec node wraps its single invocation in /usr/bin/time and gets the
+        # peak over the three, so pinning one strategy here would make the
+        # local max_rss_kb mean something else than every other node's.
+        t = bh.measure_time_v(cmd, timeout=timeout, cwd=run_cwd)
         if t["max_rss_kb"] is not None:
             metrics[(0, "max_rss_kb")] = [t["max_rss_kb"]]
         if t["wall_s"] is not None:
@@ -1595,7 +1598,14 @@ def main():
                           f"[champion] {label}: only {len(common)} of "
                           f"{len(ch_metrics)} champion metrics could be paired "
                           f"-- part of its workload changed."))
-        decision, summary = bh.decide_multi_node(champ, rec)
+        # wall_s is NOT a result here: the binary self-stops at the --ms
+        # budget, so its wall time is budget x cells x strategies -- what the
+        # harness asked for, not what the code achieved. It cannot improve
+        # when the algorithm gets faster, and it stepped x3 the day a cell
+        # started replaying the three strategies, which read as a regression on
+        # every node at once and would have frozen the champion for good. The
+        # number stays in the JSON as a diagnostic.
+        decision, summary = bh.decide_multi_node(champ, rec, ignore=("wall_s",))
         bh.print_decision("benchmarkmapmanager2", decision, summary)
 
         if decision == "KEEP":

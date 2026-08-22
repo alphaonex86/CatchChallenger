@@ -871,14 +871,29 @@ def _compact_index_axis(series, commits, champion_idx,
     return new_series, new_commits, new_champion
 
 
+_PLAYER_STEM_RE = re.compile(r"^(p\d+_)(.*)$")
+
+
 def _algo_of_label(label):
     """Which strategy a series label belongs to, and the label it would have
     without the prefix. "rusage.1000-players.net_bytes_per_tick" is the
-    view-range measurement of "bytes_per_tick", not another metric."""
+    view-range measurement of "bytes_per_tick", not another metric.
+
+    The prefix sits at the start of the bare metric name, OR right after a
+    "p<count>_" population stem: a node that records sub-bench slices names it
+    "rusage.1000-players.net_x" while the flat per-cell metric of the same
+    number is "rusage.p1000_net_x". Only the local host produces slices, so
+    matching the start alone classified every exec node as balanced and no
+    fleet node ever got its per-strategy charts."""
     head, _dot, bare = label.rpartition(".")
+    stem = ""
+    rest = bare
+    m = _PLAYER_STEM_RE.match(bare)
+    if m:
+        stem, rest = m.group(1), m.group(2)
     for prefix, algo in ALGO_PREFIXES:
-        if bare.startswith(prefix):
-            stripped = bare[len(prefix):]
+        if rest.startswith(prefix):
+            stripped = stem + rest[len(prefix):]
             return algo, (head + "." + stripped if head else stripped)
     return "balanced", label
 
@@ -1570,10 +1585,20 @@ ALGO_COLOR    = {"cpu": "#1f77b4", "balanced": "#7f7f7f", "network": "#d62728"}
 
 
 def _algo_split(mname):
-    """(strategy, base metric name) of a recorded metric name."""
+    """(strategy, base metric name) of a recorded metric name.
+
+    Same stem rule as _algo_of_label(): the prefix is at the start, or right
+    after the "p<count>_" of a flat per-cell metric ("p1000_net_ticks_per_s").
+    A sub-bench slice carries the population in its slice label instead, so
+    there the name is bare ("net_ticks_per_s")."""
+    stem = ""
+    rest = mname
+    m = _PLAYER_STEM_RE.match(mname)
+    if m:
+        stem, rest = m.group(1), m.group(2)
     for prefix, algo in ALGO_PREFIXES:
-        if mname.startswith(prefix):
-            return algo, mname[len(prefix):]
+        if rest.startswith(prefix):
+            return algo, stem + rest[len(prefix):]
     return "balanced", mname
 
 
