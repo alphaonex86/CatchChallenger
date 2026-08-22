@@ -24,6 +24,7 @@ Never add test code, self-test flags, or test-only branches to `general/`, `clie
 When adding new validation, add a matching broken fixture. Absence of message (or crash on load) = real failure.
 
 * Run `test/all.sh` for all testing*.py sequentially. `--continue` continues on failure.
+* **all.sh NEVER publishes.** Shipping is a separate operator step: `test/publish_binaries.sh windows mac android`.
 * **Fix as many bugs per iteration as possible.** Scan `/mnt/data/perso/tmpfs/failed.json` for ALL failures, group by root cause, fix all in this turn.
 * **Keep host CPU busy.** Always overlap remote compile threads with local work; prefetch next-phase data; pre-warm ccache. At any minute host should have cc1plus running OR a binary in test phase.
 * **Run testing*.py in parallel where they don't conflict.** Group by mutable resources:
