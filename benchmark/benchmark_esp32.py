@@ -45,6 +45,8 @@ import select
 import termios
 import subprocess
 
+import benchmark_helpers as bh
+
 # USB vendor IDs of the serial bridges on ESP32 boards (+ native USB-CDC).
 ESP32_USB_VIDS = {"10c4", "1a86", "0403", "303a"}
 
