@@ -1932,7 +1932,7 @@ def git_sha():
         return "nogit"
 
 
-def _prepare_decision_metrics(metrics):
+def _prepare_decision_metrics(metrics, ignore=()):
     """Return a copy of a node's flat metric dict with throughput-coupled
     cumulative counters made comparable PER-UNIT-OF-WORK before the matrix.
 
@@ -1951,9 +1951,17 @@ def _prepare_decision_metrics(metrics):
         recorded tick count to normalise against. Per-tick speed is already
         carried by the latency + ticks_per_s metrics; perf_* stays in the
         JSON for diagnostics only.
+      * `ignore` names further metrics the CALLER knows cannot be compared.
+        A benchmark whose binary self-stops at a fixed TIME budget must list
+        wall_s there: its wall time is what the harness asked for, not what
+        the code achieved, so it cannot improve with a faster binary and it
+        steps by a constant the day the harness measures more per run --
+        which reads as a fleet wide regression and freezes the champion.
     """
     out = {}
     for name, m in metrics.items():
+        if name in ignore:
+            continue
         if name.startswith("perf_"):
             continue
         if name.endswith("_bytes_sent"):
@@ -1989,7 +1997,7 @@ def _is_tail_jitter(name, improved_map, noise_band):
 
 
 def decide_multi_node(champion, candidate, *, keep_threshold=0.30,
-                      discard_threshold=0.20, noise_band=0.10):
+                      discard_threshold=0.20, noise_band=0.10, ignore=()):
     """Cross-platform KEEP/DISCARD/ESCALATE decision.
 
     Compares EVERY node's metrics between champion and candidate. A
@@ -2002,6 +2010,9 @@ def decide_multi_node(champion, candidate, *, keep_threshold=0.30,
             "metrics": { "<name>": {"median": n, "stddev": n,
                         "unit": "...", "better": "lower|higher"} }
         } } }
+
+    `ignore` is forwarded to _prepare_decision_metrics(): metric names the
+    caller knows carry no comparable signal (see there).
 
     Returns (decision, [per_metric_summary]).
     """
@@ -2018,8 +2029,8 @@ def decide_multi_node(champion, candidate, *, keep_threshold=0.30,
 
     all_node_labels = sorted(set(list(ch_nodes.keys()) + list(ca_nodes.keys())))
     for label in all_node_labels:
-        ch_metrics = _prepare_decision_metrics((ch_nodes.get(label) or {}).get("metrics", {}))
-        ca_metrics = _prepare_decision_metrics((ca_nodes.get(label) or {}).get("metrics", {}))
+        ch_metrics = _prepare_decision_metrics((ch_nodes.get(label) or {}).get("metrics", {}), ignore)
+        ca_metrics = _prepare_decision_metrics((ca_nodes.get(label) or {}).get("metrics", {}), ignore)
         if not ch_metrics and not ca_metrics:
             continue
         arch = (ch_nodes.get(label) or ca_nodes.get(label) or {}).get("arch", "?")
