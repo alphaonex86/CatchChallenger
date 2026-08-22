@@ -199,12 +199,7 @@ ScreenTransition::errorString(Too recently disconnected)
 ScreenTransition::is_started(<n>)
 Select character: <n>
 Selected character not found, reason: Too recently disconnected, data: <n>
-Start split: <hash> and size <n>, cursor: <n>
-Start split: <n>A<n>ADD<n>A<n> and size <n>, cursor: <n>
-Start split: <n>E<n>F and size <n>, cursor: <n>
-Start split: <n>F<n>F<n> and size <n>, cursor: <n>
-Start split: A<n>F<n>CD<n>D<n> and size <n>, cursor: <n>
-Start split: E<n>F and size <n>, cursor: <n>
+Start split: <hex> and size <n>, cursor: <n>
 Stop character loading for now, then character_selected=false
 This plugin does not support propagateSizeHints()
 Try create account: login: <hash> and pass: <hash>
@@ -357,10 +352,6 @@ try connect TCP on: localhost: <n>
 values.at(index): <ptr>
 wait database dictionary_map query
 wait: haveTheDatapack()
-without header cut <hash> and size <n>
-without header cut <n>A<n>ADD<n>A<n> and size <n>
-without header cut <n>E<n>F and size <n>
-without header cut <n>F<n>F<n> and size <n>
-without header cut A<n>F<n>CD<n>D<n> and size <n>
+without header cut <hex> and size <n>
 wrong teleporter on the map: gym(<n>,<n>), to gym(<n>,<n>) because the tp is out of range
 zonecapture point have not the zone attribute: for bot id: <n>,<n>

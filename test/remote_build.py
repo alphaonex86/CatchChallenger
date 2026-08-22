@@ -1076,6 +1076,13 @@ def _build_pro_remote(host, port, cmake, pro_rel, label, use_mold,
                        host=f"{host}:{port}",
                        cmd=f"ssh -p {port} {host} {configure_cmd!r}",
                        compile_output=(out or ""))
+        # An ssh wrapper that hit its own timeout returns rc=-1 with the
+        # marker string, which read as a meaningless negative exit code and
+        # sent two debugging cycles looking for a signal kill. Say TIMEOUT.
+        if _ch.is_ssh_timeout(out):
+            return (name, False,
+                    f"configure TIMEOUT after {compile_timeout_for(label)}s "
+                    f"on {host}:{port} (node busy or unreachable)")
         return (name, False, f"configure rc={rc} on {host}:{port}")
     build_cmd = (
         f"{tmp_prefix}{nice_prefix}"
@@ -1106,7 +1113,10 @@ def _build_pro_remote(host, port, cmake, pro_rel, label, use_mold,
                    cmd=f"ssh -p {port} {host} {build_cmd!r}",
                    compile_output=(out or ""))
     return (name, False,
-            f"build rc={rc} on {host}:{port} [retried after remote ccache -C]")
+            (f"build TIMEOUT after {compile_timeout_for(label)}s on "
+             f"{host}:{port} (node busy or unreachable)"
+             if _ch.is_ssh_timeout(out) else
+             f"build rc={rc} on {host}:{port} [retried after remote ccache -C]"))
 
 
 def _run_server(label, host, port, use_mold, extra_defines, has_gui,
