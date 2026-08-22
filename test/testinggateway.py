@@ -447,10 +447,17 @@ def stop_nginx():
 
 
 # ── server / gateway config writers ─────────────────────────────────────────
-def write_backend_settings(maincode, subcode, http_url):
+def write_backend_settings(maincode, subcode, http_url, minimize):
     """Write backend server-properties.xml. Pin the listen port to
     BACKEND_PORT (otherwise NormalServerGlobal seeds a random one),
-    enable autologin, set datapack codes + http mirror."""
+    enable autologin, set datapack codes + http mirror.
+
+    mapVisibility/minimize is written EXPLICITLY and never left to the
+    default: the gateway used to relay only what min_balanced() happens to
+    send, and a lone player makes that nothing at all. "network" and "cpu"
+    both push a packet on the very first tick and killed the game-server
+    link -- invisible for as long as this test took whatever the default
+    was."""
     xml = os.path.join(SERVER_BUILD, "server-properties.xml")
     ensure_dir(SERVER_BUILD)
     body = (
@@ -463,12 +470,16 @@ def write_backend_settings(maincode, subcode, http_url):
         '    <master>\n'
         '        <external-server-port value="{port}"/>\n'
         '    </master>\n'
+        '    <mapVisibility>\n'
+        '        <minimize value="{minimize}"/>\n'
+        '    </mapVisibility>\n'
         '    <content>\n'
         '        <mainDatapackCode value="{mc}"/>\n'
         '        <subDatapackCode value="{sc}"/>\n'
         '    </content>\n'
         '</configuration>\n'
-    ).format(port=BACKEND_PORT, http=http_url, mc=maincode, sc=subcode)
+    ).format(port=BACKEND_PORT, http=http_url, mc=maincode, sc=subcode,
+             minimize=minimize)
     with open(xml, "w") as f:
         f.write(body)
 
@@ -930,7 +941,17 @@ def main():
                 continue
             for dest_http in (0, 1):
                 for gw_http in (0, 1):
-                    plan.append((dp, mc, sc, dest_http, gw_http))
+                    plan.append((dp, mc, sc, dest_http, gw_http, "network"))
+
+    # The other two mapVisibility/minimize strategies, on the first case only:
+    # what they change is the packets the game server pushes at the client, not
+    # the datapack/http path the matrix above sweeps, so one run each covers
+    # them. Not optional -- "cpu" and "network" both broke the gateway while
+    # "balanced" passed, and nothing here would have said so.
+    if plan:
+        dp, mc, sc, _dest, _gw, _algo = plan[0]
+        plan.append((dp, mc, sc, 0, 0, "balanced"))
+        plan.append((dp, mc, sc, 0, 0, "cpu"))
 
     # Diagnostic focus: CC_GW_ONLY=<substr> runs only the cases whose
     # "<datapackname>/<maincode>" contains the substring (e.g.
@@ -939,6 +960,11 @@ def main():
     if _only:
         plan = [p for p in plan
                 if _only in (os.path.basename(p[0]) + "/" + p[1])]
+    # CC_GW_MINIMIZE=<mode> narrows to one strategy, for bisecting a failure
+    # that only one of them produces.
+    _algo_only = os.environ.get("CC_GW_MINIMIZE", "")
+    if _algo_only:
+        plan = [p for p in plan if p[5] == _algo_only]
 
     if not plan:
         summary()
@@ -949,15 +975,16 @@ def main():
     # plus the upfront 3 builds.
     total_expected[0] = 3 + len(plan) * 4
 
-    # 3. Execute every (datapack, mc, sc, dest_http, gw_http).
+    # 3. Execute every (datapack, mc, sc, dest_http, gw_http, minimize).
     pi = 0
     while pi < len(plan):
-        dp, mc, sc, dest_http, gw_http = plan[pi]
+        dp, mc, sc, dest_http, gw_http, minimize = plan[pi]
         pi += 1
         dp_name = os.path.basename(dp)
         case = (f"{dp_name}/{mc}"
                 + (f"/{sc}" if sc else "")
-                + f" dest_http={dest_http} gw_http={gw_http}")
+                + f" dest_http={dest_http} gw_http={gw_http}"
+                + f" minimize={minimize}")
         if not should_run(case, failed_cases):
             continue
 
@@ -1003,7 +1030,7 @@ def main():
             gw_rewrite_base = ""
             gw_rewrite_main = ""
 
-        write_backend_settings(mc, sc, backend_http_url)
+        write_backend_settings(mc, sc, backend_http_url, minimize)
         write_gateway_settings(gw_rewrite_base, gw_rewrite_main)
 
         # Start backend, then gateway (under valgrind), then client.

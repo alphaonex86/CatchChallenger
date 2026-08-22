@@ -627,7 +627,19 @@ bool LinkToGameServer::parseQuery(const uint8_t &mainCodeType,const uint8_t &que
         parseNetworkReadError("client not connected");
         return false;
     }
-    if(stat!=Stat::WaitingLogin)
+    /* parseInputBeforeLogin() knows ONE code, 0xA0, and only while the
+     * protocol header is pending: every other code falls into its default,
+     * which reports "unknown sort ident" and DROPS the game server link. So
+     * go there during the handshake only -- once the link is established the
+     * gateway is a relay, and a query the game server starts on its own has
+     * to reach the client. WaitingCharacterSelection is where the link then
+     * stays for the whole session (nothing ever assigns
+     * ConnectedOnGameServer), so it belongs on the relay side.
+     * Without it the first 0xE3 visibility ping killed the connection and the
+     * client waited for a map that never came. Only min_balanced() hid it:
+     * its diff sends nothing while a player is alone on the map, while
+     * min_CPU() and min_network() push a packet on the very first tick. */
+    if(stat!=Stat::WaitingLogin && stat!=Stat::WaitingCharacterSelection)
     {
         #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
         std::cout << "LinkToGameServer::parseQuery(), mainCodeType: " << std::to_string(mainCodeType) << ", queryNumber: " << std::to_string(queryNumber)

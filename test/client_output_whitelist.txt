@@ -201,8 +201,10 @@ Select character: <n>
 Selected character not found, reason: Too recently disconnected, data: <n>
 Start split: <hash> and size <n>, cursor: <n>
 Start split: <n>A<n>ADD<n>A<n> and size <n>, cursor: <n>
+Start split: <n>E<n>F and size <n>, cursor: <n>
 Start split: <n>F<n>F<n> and size <n>, cursor: <n>
 Start split: A<n>F<n>CD<n>D<n> and size <n>, cursor: <n>
+Start split: E<n>F and size <n>, cursor: <n>
 Stop character loading for now, then character_selected=false
 This plugin does not support propagateSizeHints()
 Try create account: login: <hash> and pass: <hash>
@@ -210,6 +212,7 @@ Try stop
 Unable to open the file: <path> "bot" has no map= attribute and no <path> format
 Unable to open: <path> errno: <n>
 Using host libthread_db library "<path>".
+Visibility: view range <n>x<n> tiles around the player (datapack zoom <n>)
 WARNING Api_client_real::datapackChecksumDoneMain(): local Main datapack file list is empty
 [CENTER DEBUG] centerOnPlayer=TRUE
 [DOORTEST] PASS came back to the original map <n> by pushing into the return teleport
@@ -220,6 +223,7 @@ WARNING Api_client_real::datapackChecksumDoneMain(): local Main datapack file li
 [DOORTEST] phase<n> on map <n> player (<n>,<n>): looking for a reachable door
 [DOORTEST] return teleport at (<n>,<n>) -> map <n> via PUSH (click next to)
 [DOORTEST] teleporter src=(<n>,<n>) -> map <n> srcReachable=yes reachNeighbour=yes
+[Detaching after vfork from child process <n>]
 [ENTERMAP] player on map <n> at (<n>,<n>)
 [Inferior <n> (process <n>) exited normally]
 [Inferior <n> (process <n>) exited with code <n>]
@@ -355,6 +359,7 @@ wait database dictionary_map query
 wait: haveTheDatapack()
 without header cut <hash> and size <n>
 without header cut <n>A<n>ADD<n>A<n> and size <n>
+without header cut <n>E<n>F and size <n>
 without header cut <n>F<n>F<n> and size <n>
 without header cut A<n>F<n>CD<n>D<n> and size <n>
 wrong teleporter on the map: gym(<n>,<n>), to gym(<n>,<n>) because the tp is out of range
