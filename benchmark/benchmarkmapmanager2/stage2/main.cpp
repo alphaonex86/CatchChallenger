@@ -56,6 +56,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <sys/resource.h>
@@ -424,7 +425,7 @@ static double cpu_seconds()
 }
 
 static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms,
-                        uint8_t algo)
+                        uint8_t algo, const char *prefix, std::string &out)
 {
     World w;
     w.algo = algo;
@@ -572,34 +573,40 @@ static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms
     const double ticks_per_s = elapsed_ms > 0
         ? (double)ticks_done * 1000.0 / (double)elapsed_ms : 0.0;
 
-    std::cout.clear();
-    std::cout << "BENCH"
-              << " algo=" << (unsigned int)algo
-              << " view_range=" << (unsigned int)MapVisibilityAlgorithm::view_x
-              << " players=" << players
-              << " maps=" << w.mapCount()
-              << " ticks=" << ticks_done
-              << " duration_ms=" << elapsed_ms
-              << " ticks_per_s=" << ticks_per_s
-              << " cpu_percent=" << cpu_percent
-              << " cycle_ticks=" << W::CYCLE_TICKS
-              << " entries_per_player=" << W::ENTRIES_PER_PLAYER
-              << " resets=" << resets
-              << " migrations=" << W::MIGRATIONS
-              << " visibility_state_bytes=" << w.visibilityStateBytes()
-              << " warm_ns=" << warm_ns
-              << " bytes_warm=" << bytes_warm
-              << " total_ns=" << total
-              << " median_tick_ns=" << median
-              << " p95_tick_ns=" << p95
-              << " median_prep_ns=" << median_prep
-              << " bytes_sent=" << bytes_total
-              << " sampled_slots=" << sampled_slots
-              << " sampled_changed=" << sampled_changed;
-    // MUST be 0: the replayed state after a full cycle equals what stage 1
-    // predicted, which also proves no vector was decoded into a wall.
-    std::cout << " replay_mismatch=" << mismatches
-              << std::endl;
+    /* ONE line for the three strategies: the fields of the one asked for by
+     * --algo carry the PREFIX of that strategy (none for balanced, so every
+     * series recorded before this existed keeps its name), and the shared
+     * facts of the world are written once, by the balanced pass. The caller
+     * runs the three and concatenates, so an exec node measures all of them
+     * in one invocation -- the fleet runner sends ONE command per cell and
+     * would otherwise never see more than one strategy. */
+    std::ostringstream line;
+    if(prefix[0] == '\0')
+        line << " view_range=" << (unsigned int)MapVisibilityAlgorithm::view_x
+             << " players=" << players
+             << " maps=" << w.mapCount()
+             << " cycle_ticks=" << W::CYCLE_TICKS
+             << " entries_per_player=" << W::ENTRIES_PER_PLAYER
+             << " migrations=" << W::MIGRATIONS
+             << " sampled_slots=" << sampled_slots
+             << " sampled_changed=" << sampled_changed;
+    line << " " << prefix << "ticks=" << ticks_done
+         << " " << prefix << "duration_ms=" << elapsed_ms
+         << " " << prefix << "ticks_per_s=" << ticks_per_s
+         << " " << prefix << "cpu_percent=" << cpu_percent
+         << " " << prefix << "resets=" << resets
+         << " " << prefix << "visibility_state_bytes=" << w.visibilityStateBytes()
+         << " " << prefix << "warm_ns=" << warm_ns
+         << " " << prefix << "bytes_warm=" << bytes_warm
+         << " " << prefix << "total_ns=" << total
+         << " " << prefix << "median_tick_ns=" << median
+         << " " << prefix << "p95_tick_ns=" << p95
+         << " " << prefix << "median_prep_ns=" << median_prep
+         << " " << prefix << "bytes_sent=" << bytes_total
+         // MUST be 0: the replayed state after a full cycle equals what stage 1
+         // predicted, which also proves no vector was decoded into a wall.
+         << " " << prefix << "replay_mismatch=" << mismatches;
+    out = line.str();
     return 0;
 }
 
@@ -624,6 +631,10 @@ static void usage()
 {
     std::cerr << "usage: benchmark_min_balanced_replay [--players N]... "
                  "[--ms BUDGET_MS | --ticks T] [--algo cpu|balanced|network]\n"
+                 "  --algo pins ONE strategy; without it the three are\n"
+                 "  replayed and reported on the same BENCH line (net_* is\n"
+                 "  min_network, mincpu_* is min_CPU, unprefixed is\n"
+                 "  min_balanced).\n"
                  "\n"
                  "Stage 2 of benchmarkmapmanager2: replays the workload stage 1\n"
                  "generated for THIS node and THIS datapack, which is compiled in --\n"
@@ -656,6 +667,7 @@ int main(int argc, char **argv)
      * every recorded series measured before --algo existed, so a plain run
      * stays comparable with the history. */
     uint8_t      algo = (uint8_t)World::Algo_balanced;
+    bool         algoPinned = false;
 
     int i = 1;
     while(i < argc)
@@ -676,6 +688,7 @@ int main(int argc, char **argv)
         else if(a == "--algo" && i + 1 < argc)
         {
             const std::string v = argv[++i];
+            algoPinned = true;
             if(v == "network")       algo = (uint8_t)World::Algo_network;
             else if(v == "balanced") algo = (uint8_t)World::Algo_balanced;
             else if(v == "cpu")      algo = (uint8_t)World::Algo_cpu;
@@ -736,11 +749,44 @@ int main(int argc, char **argv)
               << " datapack=" << W::DATAPACK
               << std::endl;
 
+    /* Which strategies this run measures. --algo pins ONE of them (for a
+     * profiler run, where three passes would triple a callgrind cell); by
+     * default all three are replayed back to back and land on the same BENCH
+     * line, so the exec node compares them under identical conditions and the
+     * fleet runner -- which sends one command per cell -- gets all three. */
+    struct AlgoPass { uint8_t algo; const char *prefix; };
+    static const AlgoPass allPasses[3] = {
+        { (uint8_t)World::Algo_balanced, "" },
+        { (uint8_t)World::Algo_network,  "net_" },
+        { (uint8_t)World::Algo_cpu,      "mincpu_" }
+    };
+    AlgoPass onePass[1];
+    const AlgoPass *passes = allPasses;
+    unsigned int passCount = 3;
+    if(algoPinned)
+    {
+        onePass[0].algo = algo;
+        onePass[0].prefix = "";
+        passes = onePass;
+        passCount = 1;
+    }
+
     int rc = 0;
     size_t pi = 0;
     while(pi < players_list.size())
     {
-        rc |= run_scenario(players_list[pi], ticks, budget_ms, algo);
+        std::string line;
+        unsigned int ai = 0;
+        while(ai < passCount)
+        {
+            std::string part;
+            rc |= run_scenario(players_list[pi], ticks, budget_ms,
+                               passes[ai].algo, passes[ai].prefix, part);
+            line += part;
+            ai++;
+        }
+        std::cout.clear();
+        std::cout << "BENCH" << line << std::endl;
         pi++;
     }
     return rc;

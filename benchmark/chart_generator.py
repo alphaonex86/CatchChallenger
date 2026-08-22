@@ -964,22 +964,27 @@ def _render_group(benchmark, comp, exe, records, series_override=None):
     return head + "".join(body) + "</svg>\n"
 
 
-def _keep_balanced_only(d):
-    """Drop the series of the extra strategies from a cross-node view.
+def _keep_algo_only(d, algo):
+    """Keep only the series of ONE strategy in a cross-node view.
 
     Those charts already hold one entry per NODE per metric; adding a
     strategy axis on top triples the panels and none of them stays readable.
-    The strategies are compared in algo-compare.svg, per hardware and fleet
-    wide, which is the chart built for exactly that question."""
+    So a benchmark that measured several strategies gets one FILE per
+    strategy instead of one crowded chart, and their differences are read in
+    algo-compare.svg, per hardware and fleet wide.
+
+    A benchmark that measured no strategy at all tags everything "balanced",
+    so algo="balanced" leaves it untouched and the other two come out empty
+    (no file written, any stale one removed)."""
     out = {}
     for key, value in d.items():
-        algo, _stripped = _algo_of_label(key)
-        if algo == "balanced":
+        label_algo, _stripped = _algo_of_label(key)
+        if label_algo == algo:
             out[key] = value
     return out
 
 
-def _render_session_chart(benchmark, batches):
+def _render_session_chart(benchmark, batches, algo="balanced"):
     """Cross-node session chart: plots every node's metrics per batch.
 
     Returns SVG string or None when no data. Champion commit is read
@@ -997,8 +1002,8 @@ def _render_session_chart(benchmark, batches):
     arms = _ab_arms(d for _ts, _cs, docs in batches for d in docs)
     series, commits, better_map = _extract_session_series(batches, champ_short,
                                                           arms)
-    series = _keep_balanced_only(series)
-    better_map = _keep_balanced_only(better_map)
+    series = _keep_algo_only(series, algo)
+    better_map = _keep_algo_only(better_map, algo)
     # A per-node line is only a trend worth charting if it has >=3 points;
     # a node with <3 values (e.g. only "local" reported b128_net_rx_bytes
     # once or twice) is a lone dot that can't drive a decision -- drop it.
@@ -1498,7 +1503,7 @@ def _render_ab_by_node_chart(benchmark, records, arms):
     return head + "".join(body) + "</svg>\n"
 
 
-def _render_by_node_chart(benchmark, records):
+def _render_by_node_chart(benchmark, records, algo="balanced"):
     """champion-by-execution-node.svg: one panel per metric CATEGORY (same
     data list as champion.svg, e.g. requests_per_s / cpu_percent /
     b128_invol_ctx), each holding one boxplot PER execution node, sorted by
@@ -1512,8 +1517,8 @@ def _render_by_node_chart(benchmark, records):
     if arms:
         return _render_ab_by_node_chart(benchmark, records, arms)
     metrics, better = _by_node_metrics(records)
-    metrics = _keep_balanced_only(metrics)
-    better = _keep_balanced_only(better)
+    metrics = _keep_algo_only(metrics, algo)
+    better = _keep_algo_only(better, algo)
     if not metrics:
         return None
     nnodes = len({n for mv in metrics.values() for n in mv})
@@ -1875,20 +1880,23 @@ def regenerate(benchmark, stamp=None):
     # when fewer than 2 nodes have history -- a single-node chart carries no
     # cross-node signal. Remove any stale file so it doesn't linger.
     batches = _group_by_batch(records)
-    svg = _render_session_chart(benchmark, batches)
     outdir = os.path.join(bh.RESULTS, benchmark)
-    champ_p = os.path.join(outdir, "champion.svg")
-    if svg:
-        os.makedirs(outdir, exist_ok=True)
-        _write_if_changed(champ_p, svg)
-        written.append(champ_p)
-        if stamp and WRITE_CHARTS:
-            cand_p = os.path.join(outdir, f"candidate-{stamp}.svg")
-            with open(cand_p, "w") as f:
-                f.write(svg)
-            written.append(cand_p)
-    elif os.path.isfile(champ_p):
-        os.remove(champ_p)
+    for algo, fname in (("balanced", "champion.svg"),
+                        ("network",  "champion-network.svg"),
+                        ("cpu",      "champion-cpu.svg")):
+        svg = _render_session_chart(benchmark, batches, algo)
+        champ_p = os.path.join(outdir, fname)
+        if svg:
+            os.makedirs(outdir, exist_ok=True)
+            _write_if_changed(champ_p, svg)
+            written.append(champ_p)
+            if stamp and WRITE_CHARTS and algo == "balanced":
+                cand_p = os.path.join(outdir, f"candidate-{stamp}.svg")
+                with open(cand_p, "w") as f:
+                    f.write(svg)
+                written.append(cand_p)
+        elif os.path.isfile(champ_p):
+            os.remove(champ_p)
 
     # 3) by-execution-node comparison (log scale, sorted, boxplot). Always
     # current (no candidate freeze): it is a cross-node snapshot of the
@@ -1904,14 +1912,17 @@ def regenerate(benchmark, stamp=None):
     elif os.path.isfile(algo_p):
         os.remove(algo_p)
 
-    svg = _render_by_node_chart(benchmark, records)
-    bynode_p = os.path.join(outdir, "champion-by-execution-node.svg")
-    if svg:
-        os.makedirs(outdir, exist_ok=True)
-        _write_if_changed(bynode_p, svg)
-        written.append(bynode_p)
-    elif os.path.isfile(bynode_p):
-        os.remove(bynode_p)
+    for algo, fname in (("balanced", "champion-by-execution-node.svg"),
+                        ("network",  "champion-by-execution-node-network.svg"),
+                        ("cpu",      "champion-by-execution-node-cpu.svg")):
+        svg = _render_by_node_chart(benchmark, records, algo)
+        bynode_p = os.path.join(outdir, fname)
+        if svg:
+            os.makedirs(outdir, exist_ok=True)
+            _write_if_changed(bynode_p, svg)
+            written.append(bynode_p)
+        elif os.path.isfile(bynode_p):
+            os.remove(bynode_p)
 
     return written
 

@@ -79,16 +79,20 @@ STAGE1_BIN = "benchmark_world_stage1"
 # nothing -- the history is keyed by SCRIPT name (benchmark/history/<script>/)
 # and by metric, never by the binary file name.
 BIN_NAME   = "benchmark_min_balanced_replay"
-# Replay every rusage cell with the OTHER two mapVisibility/minimize
-# strategies as well, so the three are measured on the same machine, in the
-# same conditions, in the same run -- the only way their trade-off is a
-# measurement and not an argument. The plain metric names stay "balanced" (what
-# every series recorded before --algo measured, so the history is comparable),
-# the others are prefixed:
-#   net_<metric>     --algo network  min_network()  view range, border maps
-#   mincpu_<metric>  --algo cpu      min_CPU()      whole map, no state
+# A rusage cell replays the three mapVisibility/minimize strategies inside ONE
+# process and reports them on ONE BENCH line, so they are measured on the same
+# machine, in the same conditions, in the same run -- the only way their
+# trade-off is a measurement and not an argument. One process matters for the
+# fleet too: an exec node is sent a SINGLE command per cell, so a strategy that
+# needed its own invocation would never be measured anywhere but locally.
+# The plain metric names stay "balanced" (what every series recorded before the
+# other two existed measured, so the history is comparable), the others are
+# prefixed:
+#   net_<metric>     min_network()  view range, border maps
+#   mincpu_<metric>  min_CPU()      whole map, no state
 # It TRIPLES the wall time of a rusage cell; empty the tuple to go back to
-# balanced-only.
+# balanced-only (the binary then still emits the three -- pass --algo balanced
+# to make it replay one).
 EXTRA_ALGOS = (("net_", "network"), ("mincpu_", "cpu"))
 
 # Concurrency marker: pure in-process visibility loop, no port bind / no
@@ -211,12 +215,16 @@ MAP_CALLGRIND_TOGGLE = "*min_balanced*"
 # Timeout DERIVED from the budget (timeout = budget + margin), not picked
 # independently. The binary self-stops at the budget; the timeout is only
 # the hard backstop for a hung run, so it must exceed total budget wall.
-# 3 cells per run (this node's small / medium / large).
-_BUDGET_WALL_S = (MAP_BENCH_MS / 1000.0) * 3
+# 3 cells per run (this node's small / medium / large), and each cell replays
+# the 3 strategies back to back (one invocation, one BENCH line), so the budget
+# wall is 3 x 3 x MAP_BENCH_MS.
+_BUDGET_WALL_S = (MAP_BENCH_MS / 1000.0) * 3 * (1 + len(EXTRA_ALGOS))
 RUN_TIMEOUT    = int(_BUDGET_WALL_S * 3) + 120   # margin: warmup+startup+repeats
 # Callgrind inflates wall ~30x; scale its timeout by the same factor so it
 # measures the same WORK (its tick count is fixed, see MAP_CALLGRIND_TICKS).
-RUN_TIMEOUT_CALLGRIND = RUN_TIMEOUT * 30
+# It profiles ONE strategy (--algo, see run_one), so it keeps the single-pass
+# budget as its base instead of the tripled one.
+RUN_TIMEOUT_CALLGRIND = (int((MAP_BENCH_MS / 1000.0) * 3 * 3) + 120) * 30
 
 def _color(c, s): return f"{c}{s}{bh.C_RESET}"
 
@@ -537,49 +545,95 @@ def parse_workload_line(stdout):
 def _bench_to_cell(bench, cell):
     """Map one parsed BENCH block into the {(player, metric): value} cell.
 
+    ONE line carries the three strategies: the unprefixed fields are
+    min_balanced (so every series recorded before the other two existed keeps
+    its name), net_* is min_network and mincpu_* is min_CPU. The world facts
+    (maps, changed_pct) describe the replay itself and are written once.
+
     Returns an error string when the binary's own oracle failed, else None:
     replay_mismatch != 0 means stage 2 did not end a cycle where stage 1 said
     it would, so the two stages disagree about the workload -- bad data, which
     is the one thing that IS a FAIL (benchmark/CLAUDE.md)."""
     for p, fields in bench.items():
-        bad = fields.get("replay_mismatch")
-        if bad:
-            return (f"replay_mismatch={bad} at players={p}: after a full cycle "
-                    f"the replayed state does not match what stage 1 computed, "
-                    f"so the two stages disagree and the data is invalid")
-        # Fixed-time headline: throughput (ticks/s, higher-is-better) + the
-        # work done (ticks completed). Latency stays per-tick.
-        cell[(p, "ticks_per_s")]    = fields.get("ticks_per_s")
-        cell[(p, "ticks")]          = fields.get("ticks")
-        # Measured by the binary itself (getrusage over the timed window), so
-        # no extra run per slice just to wrap it in /usr/bin/time.
-        cell[(p, "cpu_percent")]    = fields.get("cpu_percent")
-        cell[(p, "median_tick_ns")] = fields.get("median_tick_ns")
-        cell[(p, "p95_tick_ns")]    = fields.get("p95_tick_ns")
-        # Bytes PER TICK, not the run's total: the total is proportional to the
-        # ticks completed, so a FASTER binary sends more of them and a real
-        # speed-up would read as a byte regression (and turn a KEEP into an
-        # ESCALATE). What min_balanced is judged on is how much it puts on the
-        # wire per broadcast.
-        ticks = fields.get("ticks")
-        if ticks and fields.get("bytes_sent") is not None:
-            cell[(p, "bytes_per_tick")] = round(float(fields["bytes_sent"]) / ticks, 2)
-        cell[(p, "bytes_sent")]     = fields.get("bytes_sent")
-        # Resident state the algorithm keeps between ticks to know what it last
-        # broadcast -- the memory side of the same trade-off.
-        cell[(p, "visibility_state_bytes")] = fields.get("visibility_state_bytes")
+        for pre in ("",) + tuple(_p for _p, _a in EXTRA_ALGOS):
+            if fields.get(pre + "ticks") is None:
+                # Strategy not in this line (a --algo-pinned run measures one).
+                continue
+            bad = fields.get(pre + "replay_mismatch")
+            if bad:
+                return (f"{pre}replay_mismatch={bad} at players={p}: after a "
+                        f"full cycle the replayed state does not match what "
+                        f"stage 1 computed, so the two stages disagree and the "
+                        f"data is invalid")
+            # Fixed-time headline: throughput (ticks/s, higher-is-better) + the
+            # work done (ticks completed). Latency stays per-tick.
+            cell[(p, pre + "ticks_per_s")]    = fields.get(pre + "ticks_per_s")
+            cell[(p, pre + "ticks")]          = fields.get(pre + "ticks")
+            # Measured by the binary itself (getrusage over the timed window),
+            # so no extra run per slice just to wrap it in /usr/bin/time.
+            cell[(p, pre + "cpu_percent")]    = fields.get(pre + "cpu_percent")
+            cell[(p, pre + "median_tick_ns")] = fields.get(pre + "median_tick_ns")
+            cell[(p, pre + "p95_tick_ns")]    = fields.get(pre + "p95_tick_ns")
+            # Bytes PER TICK, not the run's total: the total is proportional to
+            # the ticks completed, so a FASTER binary sends more of them and a
+            # real speed-up would read as a byte regression (and turn a KEEP
+            # into an ESCALATE). What a strategy is judged on is how much it
+            # puts on the wire per broadcast.
+            ticks = fields.get(pre + "ticks")
+            sent  = fields.get(pre + "bytes_sent")
+            if ticks and sent is not None:
+                cell[(p, pre + "bytes_per_tick")] = round(float(sent) / ticks, 2)
+            cell[(p, pre + "bytes_sent")] = sent
+            # Resident state the algorithm keeps between ticks to know what it
+            # last broadcast -- the memory side of the same trade-off.
+            cell[(p, pre + "visibility_state_bytes")] = \
+                fields.get(pre + "visibility_state_bytes")
+            # How often the replay looped back to its first vector. A reset is
+            # one tick where every player jumps home, so it must stay a small
+            # fraction of the run -- and it is only invisible if nobody looks.
+            cell[(p, pre + "resets")]         = fields.get(pre + "resets")
+            # Harness cost per tick. NOT server work and NOT inside the latency
+            # window: recorded so a reviewer can check it stayed a fraction of
+            # median_tick_ns instead of taking that on trust.
+            cell[(p, pre + "median_prep_ns")] = fields.get(pre + "median_prep_ns")
+            # ---- normalised, so two machines compare even at different sizes
+            # Each node's population comes from its own RAM, so its p<N>_ cells
+            # carry a different N and the raw times cannot be put side by side:
+            # a 56 ms tick over 5461 players is faster work than a 20 ms tick
+            # over 1000. These three divide the load back out, and they are what
+            # answers "which machine is quicker" across the fleet without first
+            # picking a common population.
+            #
+            # (The REFERENCE cell -- 1000 players on every node -- answers the
+            # same question the other way, by making the load identical instead
+            # of dividing it out. Both are recorded: the reference cell is exact
+            # but covers one size only, these cover every cell but assume the
+            # cost is roughly linear in the population, which the fixed 647-map
+            # floor makes only approximately true at small N.)
+            if p:
+                if fields.get(pre + "ticks_per_s") is not None:
+                    # Player-broadcasts per second: the work rate itself. This
+                    # is the one to rank hardware on -- it rises both with the
+                    # machine's speed and with the population it can hold,
+                    # which is exactly what a bigger box buys.
+                    cell[(p, pre + "player_ticks_per_s")] = round(
+                        float(fields[pre + "ticks_per_s"]) * p, 1)
+                if fields.get(pre + "median_tick_ns") is not None:
+                    # Cost of one player in one broadcast. Falls as the
+                    # population grows (the per-map floor amortises), so read it
+                    # between machines at similar sizes, or on the reference
+                    # cell.
+                    cell[(p, pre + "ns_per_player")] = round(
+                        float(fields[pre + "median_tick_ns"]) / p, 1)
+                per_tick = cell.get((p, pre + "bytes_per_tick"))
+                if per_tick is not None:
+                    cell[(p, pre + "bytes_per_player_tick")] = round(
+                        float(per_tick) / p, 2)
+        # ---- world facts: one replay, so they are the same for the three ----
         # How many maps this population spread over -- the world shape is
         # derived from the population, so record it with the numbers it
         # explains rather than leaving a reader to recompute it.
-        cell[(p, "maps")]           = fields.get("maps")
-        # How often the replay looped back to its first vector. A reset is one
-        # tick where every player jumps home, so it must stay a small fraction
-        # of the run -- and it is only invisible if nobody looks.
-        cell[(p, "resets")]         = fields.get("resets")
-        # Harness cost per tick. NOT server work and NOT inside the latency
-        # window: recorded so a reviewer can check it stayed a fraction of
-        # median_tick_ns instead of taking that on trust.
-        cell[(p, "median_prep_ns")] = fields.get("median_prep_ns")
+        cell[(p, "maps")] = fields.get("maps")
         # Share of slots that differ from the previous broadcast. This is the
         # workload's defining property: 100 - changed_pct is what min_balanced's
         # stateful diff gets to SKIP, and an optimisation of that path is only
@@ -588,37 +642,6 @@ def _bench_to_cell(bench, cell):
         changed = fields.get("sampled_changed")
         if slots:
             cell[(p, "changed_pct")] = round(100.0 * changed / slots, 2)
-        # ---- normalised, so two machines compare even at different sizes ----
-        # Each node's population comes from its own RAM, so its p<N>_ cells
-        # carry a different N and the raw times cannot be put side by side: a
-        # 56 ms tick over 5461 players is faster work than a 20 ms tick over
-        # 1000. These three divide the load back out, and they are what answers
-        # "which machine is quicker" across the fleet without first picking a
-        # common population.
-        #
-        # (The REFERENCE cell -- 1000 players on every node -- answers the same
-        # question the other way, by making the load identical instead of
-        # dividing it out. Both are recorded: the reference cell is exact but
-        # covers one size only, these cover every cell but assume the cost is
-        # roughly linear in the population, which the fixed 647-map floor makes
-        # only approximately true at small N.)
-        if p:
-            if fields.get("ticks_per_s") is not None:
-                # Player-broadcasts per second: the work rate itself. This is
-                # the one to rank hardware on -- it rises both with the
-                # machine's speed and with the population it can hold, which is
-                # exactly what a bigger box buys.
-                cell[(p, "player_ticks_per_s")] = round(
-                    float(fields["ticks_per_s"]) * p, 1)
-            if fields.get("median_tick_ns") is not None:
-                # Cost of one player in one broadcast. Falls as the population
-                # grows (the per-map floor amortises), so read it between
-                # machines at similar sizes, or on the reference cell.
-                cell[(p, "ns_per_player")] = round(
-                    float(fields["median_tick_ns"]) / p, 1)
-            per_tick = cell.get((p, "bytes_per_tick"))
-            if per_tick is not None:
-                cell[(p, "bytes_per_player_tick")] = round(float(per_tick) / p, 2)
     return None
 
 
@@ -631,8 +654,16 @@ def _mode_args(profiler):
     return ["--ms", str(MAP_BENCH_MS)]
 
 
-def run_one(bin_path, profiler="rusage", players_arg=None):
+def run_one(bin_path, profiler="rusage", players_arg=None, algo=None):
+    """algo=None replays the three strategies in one process (rusage: the
+    BENCH line then carries all of them). Every other profiler measures the
+    PROCESS, so it has to see exactly one strategy or the counters would be a
+    blend of the three -- they pin min_balanced, the historical series."""
     cmd = [bin_path, *_mode_args(profiler)]
+    if algo is None and profiler != "rusage":
+        algo = "balanced"
+    if algo is not None:
+        cmd += ["--algo", algo]
     if profiler == "callgrind" and players_arg is None and NODE_SMALL_CELL.get("local"):
         players_arg = [NODE_SMALL_CELL["local"]]
     if players_arg is not None:
@@ -679,32 +710,10 @@ def cell_run(bin_path, profiler, label_node):
             for key, value in one.items():
                 if value is not None:
                     metrics.setdefault(key, []).append(value)
-        # Same ladder again with each of the other strategies, under their own
-        # prefix: the balanced series keeps the plain names (so every run
-        # recorded before --algo stays comparable) and the three are measured
-        # back to back on the same machine.
-        for prefix, algo_name in EXTRA_ALGOS:
-            algo_cmd = cmd + ["--algo", algo_name]
-            for i in range(RUN_REPEATS + 1):
-                rc, sout, serr, dt = bh.run_capture(algo_cmd, timeout=timeout,
-                                                    cwd=run_cwd,
-                                                    preexec_fn=bh._drop_core_rlimit)
-                if rc != 0:
-                    return None, f"benchmark binary exited with code {rc} (--algo {algo_name})"
-                if i == 0:
-                    continue
-                one = {}
-                bad = _bench_to_cell(parse_bench_lines(sout), one)
-                if bad is not None:
-                    return None, bad + f" (--algo {algo_name})"
-                if not one:
-                    return None, f"no BENCH line parsed with --algo {algo_name}"
-                for key, value in one.items():
-                    if value is not None:
-                        metrics.setdefault((key[0], prefix + key[1]), []).append(value)
         # Peak RSS + wall come from one extra pass under /usr/bin/time -v
         # (it swallows the child's stdout, so it cannot double as a sample).
-        t = bh.measure_time_v(cmd, timeout=timeout, cwd=run_cwd)
+        t = bh.measure_time_v(run_one(bin_path, profiler, algo="balanced"),
+                              timeout=timeout, cwd=run_cwd)
         if t["max_rss_kb"] is not None:
             metrics[(0, "max_rss_kb")] = [t["max_rss_kb"]]
         if t["wall_s"] is not None:
@@ -927,6 +936,12 @@ def _runtime_cmd_string(profiler="rusage", small_players=None):
     work_dir. Per-profiler workload mode: fixed-time (--ms) for throughput
     profilers, fixed-iteration (--ticks) for callgrind."""
     parts = [f"./{BIN_NAME}", *_mode_args(profiler)]
+    # Same rule as run_one(): rusage replays the three strategies in one
+    # process (the exec node runs ONE command per cell, so this is how the
+    # fleet gets all three), every other profiler measures the process itself
+    # and must see exactly one.
+    if profiler != "rusage":
+        parts += ["--algo", "balanced"]
     # Callgrind is ~30x, and a node's largest cell is now whatever its RAM
     # allows -- tens of thousands of players. Give it the SMALL cell only: its
     # metric is a deterministic instruction count, which does not need the
@@ -1414,9 +1429,13 @@ def main():
         # sub-bench slice per count carrying cpu_percent + its tick metrics.
         if per_tool[label].get("rusage", {}).get("status") == "PASS":
             # This node's own counts, learned from the run it just did.
+            # EXACT match on the metric name, not endswith(): the prefixed
+            # net_/mincpu_ series also end in _median_tick_ns and would list
+            # every player count three times.
             counts = sorted(int(k[1:].split("_", 1)[0])
                             for k in per_tool[label]["rusage"]["metrics"]
-                            if k.startswith("p") and k.endswith("_median_tick_ns"))
+                            if k.startswith("p") and
+                            k.split("_", 1)[-1] == "median_tick_ns")
             slices = {}
             cell_metrics = per_tool[label]["rusage"]["metrics"]
             for p in counts:
