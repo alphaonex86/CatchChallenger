@@ -37,6 +37,15 @@ WHITELIST = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 #so the number rule alone shredded it into <n>E<n>F<n>FA... and every checksum then
 #looked like a brand new message nobody could ever whitelist.
 NORMALISERS = [
+    #A raw packet hex dump, whatever its length. PROTOCOLPARSINGDEBUG prints the
+    #bytes of every packet it splits, so the payload is a different string on
+    #every run: short ones (3 bytes -> "021C06") fall THROUGH the <hash> rule
+    #below and get shredded into <n>E<n>F..., which needs one whitelist line per
+    #packet content and never converges -- the same trap the <hash> rule was
+    #added for. Anchored on the two messages that carry a dump, so no ordinary
+    #number is swallowed.
+    (re.compile(r"(?<=without header cut )[0-9A-Fa-f]+"), "<hex>"),
+    (re.compile(r"(?<=Start split: )[0-9A-Fa-f]+"), "<hex>"),
     (re.compile(r"0x[0-9a-fA-F]+"), "<ptr>"),
     (re.compile(r"\b[0-9A-Fa-f]{16,}\b"), "<hash>"),
     #a relative path counts too: the datapack download lists every file it fetches,

@@ -277,9 +277,11 @@ void QtDatabaseThread::receiveQuery(const std::string &query,const QSqlDatabase 
 {
     QSqlQuery queryReturn(db);
 
-    //to debug crash into queryReturn.exec(query.c_str())
+    //named temporary: a crash inside exec() then shows the query in the
+    //backtrace. The std::cerr that printed it on EVERY query was a debug aid
+    //left behind: it dumped the whole SQL traffic of the Qt server and of the
+    //SQLite solo client to stderr.
     const char * const tempString=query.c_str();
-    std::cerr << "[SQL exec] " << tempString << std::endl;
 
     if(!queryReturn.exec(tempString))
     {
