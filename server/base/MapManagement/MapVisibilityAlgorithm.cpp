@@ -1307,9 +1307,29 @@ void MapVisibilityAlgorithm::sendViewDelta(ClientWithMap &recipient,const PLAYER
     if(recipient.sendedMap!=mapIndex)
     {
         recipient.sendedMap=mapIndex;
+        /* Drop only what the client actually DISPLAYS. visibleSlots is the
+         * mirror of that, so an empty one means the 0x65 asks the client to
+         * drop nothing -- and with nobody in view it would be the whole
+         * content of the tick: a packet sent to say nothing, on every map
+         * change of every player walking an empty overworld. */
+        bool displaySomething=false;
+        unsigned int displayedIndex=0;
+        while(displayedIndex<recipient.visibleSlots.size())
+        {
+            if(recipient.visibleSlots.at(displayedIndex).player!=PLAYER_INDEX_FOR_CONNECTED_MAX)
+            {
+                displaySomething=true;
+                displayedIndex=recipient.visibleSlots.size();
+            }
+            else
+                displayedIndex++;
+        }
         recipient.visibleSlots.clear();
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x65;//drop all player on map
-        posOutput+=1;
+        if(displaySomething)
+        {
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x65;//drop all player on map
+            posOutput+=1;
+        }
     }
     std::vector<ClientWithMap::VisibleSlot> &slots=recipient.visibleSlots;
 
