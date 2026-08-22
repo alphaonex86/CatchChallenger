@@ -587,28 +587,13 @@ run_test testingcompilationmsdos.py
 run_test testingcompilationESP32.py
 run_test testingcompilationgit.py
 
-# Publish freshly-built installers to the web VPS files dir and bump
-# updater.txt. publish_binaries.sh aborts (and leaves updater.txt
-# untouched) if any artifact is missing or <10 MiB, so we never
-# advertise a version whose downloads would 404. Skipped under
-# --onlyfailed since the testing*.py scripts that produce the
-# installers haven't necessarily run.
-# Soak guard: publish AT MOST ONCE per all.sh invocation. In --maxtime
-# loop mode the matrix re-runs every pass, but the artifacts are the same
-# commit — re-uploading to the production VPS + re-bumping updater.txt on
-# every green pass would just spam an outward-facing service.
-if [ "$FAILED" = "0" ] && [ "$ONLY_FAILED" = "0" ] && [ "${PUBLISHED:-0}" = "0" ]; then
-    PUBLISHED=1
-    echo -e "\n${CYAN}========================================${RESET}"
-    echo -e "${CYAN}  Publish: windows + mac + android → web VPS${RESET}"
-    echo -e "${CYAN}========================================${RESET}\n"
-    if ./publish_binaries.sh windows mac android; then
-        echo -e "\n${GREEN}[OK] publish_binaries.sh${RESET}\n"
-    else
-        echo -e "\n${RED}[FAILED] publish_binaries.sh${RESET}\n"
-        FAILED=1
-    fi
-fi
+# The test harness NEVER publishes. Building the installers is part of
+# testing (testingcompilation{windows,mac,android}.py leave them under the
+# tmpfs root); shipping them is a separate, deliberate operator step:
+#     test/publish_binaries.sh windows mac android
+# A green test run is not a release decision, and updater.txt drives the
+# self-update of every client in production -- that is not something a
+# regression suite gets to trigger on its own.
 
 # Donut chart of per-script wall time: produces
 # <tmpfs_root>/testing-time-donut.svg from testing-individual-time.json.
