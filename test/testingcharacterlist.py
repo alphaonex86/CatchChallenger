@@ -133,9 +133,18 @@ cleanup_helpers.register_build_dir(BOT_BUILD)
 BOT_COUNTS = (8, 16)
 
 # One port per bot count so a leftover server from the previous case can never
-# be mistaken for this one. Kept away from 61917 (testing-filedb) and 42531
-# (testingbroadcast).
-BASE_PORT = 42541
+# be mistaken for this one. 4 ports: persist uses BASE_PORT+i, race uses
+# BASE_PORT+len(BOT_COUNTS)+i.
+#
+# ABOVE the kernel's ephemeral range (/proc/sys/net/ipv4/ip_local_port_range,
+# 32768-60999 by default). The old 42541 sat INSIDE it, so any outgoing
+# connection anywhere on the host could take one of these as its SOURCE port
+# and the server then failed to bind with EADDRINUSE -- which reads as "our
+# binary cannot bind" and is really somebody else's ephemeral socket. This
+# suite opens thousands of connections, so it hit about once in four runs.
+# SO_REUSEADDR does not help: the squatter holds a live socket, not TIME_WAIT.
+# The other harness ports (61917-61959) were already above the range.
+BASE_PORT = 61946
 
 # max_character is the per-account creation cap (uint8_t, server/base/
 # NormalServerGlobal.cpp default 3, enforced in ClientHeavyLoadLogin2.cpp:268).
