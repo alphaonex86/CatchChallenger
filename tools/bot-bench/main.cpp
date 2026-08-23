@@ -80,7 +80,10 @@ static void printUsage(const char * const programName)
               << "  --pass <pass>       account password (default bench)" << std::endl
               << "  --bots <n>          number of bots to connect (default 1)" << std::endl
               << "  --datapack <path>   local datapack directory (default datapack/)" << std::endl
-              << "  --timeout <ms>      wall-clock budget for the whole run (default 60000)" << std::endl
+              << "  --timeout <ms>      onboarding budget WITHOUT PROGRESS: the clock" << std::endl
+              << "                      restarts each time a bot reaches its next state," << std::endl
+              << "                      so one value fits a desktop and an armv6 board" << std::endl
+              << "                      (default 60000)" << std::endl
               << "  --verbose           print the protocol messages of every bot" << std::endl
               << "  --list-only         stop after the login reply: print" << std::endl
               << "                      \"CHARACTERS <n>\" (n = characters the" << std::endl

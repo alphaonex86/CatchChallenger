@@ -141,14 +141,20 @@ BOT_COUNTS    = [2, 8, 30, 50, 150]
 DURATION_S    = 15
 RUN_REPEATS   = 3        # 1 warmup + 2 measured per (size)
 BUILD_TIMEOUT = 1800
-# Onboarding allowance handed to the client (--timeout): 150 bots log in in
-# waves, and each wave costs a full login round trip on a 66MHz-class board.
-# It is NOT part of the measured window (the client self-times that), only the
-# budget before the window may open.
+# Onboarding allowance handed to the client (--timeout). Budget of time
+# WITHOUT PROGRESS, not total time: the client restarts the clock every time a
+# bot reaches its next state (CliEventLoop::run()). A TOTAL budget made this a
+# machine speed test -- 150 bots onboard in seconds here and in minutes on an
+# armv6 board, so the slow nodes seated a run-to-run varying subset and
+# bots_on_map/survivors moved (150 -> 107) taking every resource metric of the
+# cell with them. It is NOT part of the measured window (the client self-times
+# that), only the budget before the window may open.
 BOT_ONBOARD_TIMEOUT_S = 120
-# Hard backstop for one client run = onboarding + window + margin. It always
-# exceeds the real run, so it only fires on a hang.
-RUN_TIMEOUT   = BOT_ONBOARD_TIMEOUT_S + DURATION_S + 45
+# Hard backstop for one client run. Since the budget above is now per stall and
+# not per run, a slow node may legitimately spend several of them onboarding, so
+# this leaves room for that: it exists only to catch a client that hangs
+# WITHOUT progressing, which the client's own stall deadline already ends.
+RUN_TIMEOUT   = BOT_ONBOARD_TIMEOUT_S * 3 + DURATION_S + 45
 
 # Server boot deadline. Datapack parse + bind has to finish before the
 # bots start; this matches the value the test/ harness uses for an
@@ -1148,6 +1154,17 @@ def _parse_spam_output(text):
     m = _SPAM_RE["on_map"].search(text)
     if m is not None:
         out["bots_on_map"] = int(m.group(1))
+        # A cell that seated FEWER bots than asked did not measure the workload
+        # its name says: its cpu_percent, wall_s and ctx-switch counts belong to
+        # the smaller crowd, and comparing them with a full cell reads as a huge
+        # regression (atom-n455 went 150 -> 107 bots and its wall_s "regressed"
+        # +748%). Say it out loud rather than let the numbers move on their own.
+        asked = int(m.group(2))
+        if out["bots_on_map"] < asked:
+            print(_color(bh.C_YELLOW,
+                  f"[bots] only {out['bots_on_map']}/{asked} bots reached the "
+                  f"map: this cell measured a SMALLER crowd, its resource "
+                  f"metrics are not comparable with a full one"))
     return out, None
 
 

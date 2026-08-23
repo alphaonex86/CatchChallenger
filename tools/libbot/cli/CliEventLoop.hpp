@@ -25,9 +25,13 @@ public:
     ~CliEventLoop();
 
     void addClient(CliApiClient *client);
-    /** \brief run until every client is finished or the deadline expires.
-     * \param timeoutMs total wall-clock budget for the whole set
-     * \return true when every client finished before the deadline */
+    /** \brief run until every client is finished or the set stops progressing.
+     * \param timeoutMs budget of time WITHOUT PROGRESS: the clock restarts
+     *        every time a bot reaches its next state, so the same value works
+     *        on a desktop and on an armv6 board. A total budget instead makes
+     *        the result a machine speed test -- the slow node seats a
+     *        different subset of the bots on every run.
+     * \return true when every client finished before the set stalled */
     bool run(const uint32_t &timeoutMs);
     /** \brief saturation phase: every on-map client moves as fast as the
      * server drains its socket, for `seconds`.
@@ -69,7 +73,9 @@ private:
     /// \brief run the deferred reconnect / datapack work of every client
     void runPendingWork();
     /// \brief print the transitions accumulated since the last call
-    void reportStateChanges();
+    //returns how many bots changed state, which run() uses as its progress
+    //signal
+    size_t reportStateChanges();
     std::vector<CliApiClient *> clients;
     std::string errorString;
 };
