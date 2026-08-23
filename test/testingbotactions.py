@@ -495,9 +495,20 @@ def run_bots(bot_count, map_timeout, action_window):
 
 def _automation_socket_paths(prefix="CatchChallenger-BotActions-", slots=4):
     """QLocalServer names on unix are ExtraSocket::pathSocket(prefix+N), i.e.
-    "<prefix><N>-<uid>", created under the Qt runtime dir or /tmp."""
+    "<prefix><N>-<uid>".
+
+    Qt resolves a bare name against QDir::tempPath(), which is $TMPDIR when the
+    environment sets one and /tmp otherwise -- so $TMPDIR has to be looked at
+    FIRST. Missing it made this check fail on any host with a TMPDIR (the
+    server answered on
+    "$TMPDIR/CatchChallenger-BotActions-0-<uid>" while the test only looked in
+    /run/user/<uid> and /tmp) and pass again the moment TMPDIR was unset --
+    which reads as a flaky product, not as a hole in the search path."""
     uid = os.getuid()
-    roots = [os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{uid}", "/tmp"]
+    roots = [os.environ.get("TMPDIR"),
+             os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{uid}",
+             "/tmp"]
+    roots = [r for r in roots if r]
     out = []
     for root in roots:
         n = 0
