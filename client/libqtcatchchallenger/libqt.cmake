@@ -60,6 +60,7 @@ if(NOT TARGET catchchallenger_qt_lib)
         ${_libqtcc_dir}/Ultimate.cpp
         ${_libqtcc_dir}/LanBroadcastWatcher.cpp
         ${_libqtcc_dir}/LocalListener.cpp
+        ${_libqtcc_dir}/CerrLineAtomic.cpp
         ${_libqtcc_dir}/ExtraSocket.cpp
         ${_libqtcc_dir}/ConnectedSocket.cpp
         ${_libqtcc_dir}/QInfiniteBuffer.cpp

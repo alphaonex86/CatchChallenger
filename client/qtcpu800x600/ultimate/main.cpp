@@ -2,6 +2,7 @@
 #include "mainwindow.h"
 #include "../base/LanguagesSelect.h"
 #include "../base/AutoArgs.h"
+#include "../../libqtcatchchallenger/CerrLineAtomic.hpp"
 #include "../../libqtcatchchallenger/LocalListener.hpp"
 #include "../../libqtcatchchallenger/CliClientOptions.hpp"
 #include "../../../general/base/FacilityLibGeneral.hpp"
@@ -11,6 +12,12 @@
 
 int main(int argc, char *argv[])
 {
+    /* FIRST: this client is multi threaded (embedded server, SQL, datapack
+     * loader, map visualiser, path finder, GUI) and they all log to the same
+     * std::cerr, which has no line granularity -- two threads logging at once
+     * splice or tear each other's message. Wrap the streams before anything
+     * can log. */
+    CatchChallenger::CerrLineAtomic::install();
     AutoArgs::parse(argc,argv);
     // --take-screenshot wants reproducible PNGs: tile-variant
     // selectors (lava, plant cycles, follower-NPC offsets) all
