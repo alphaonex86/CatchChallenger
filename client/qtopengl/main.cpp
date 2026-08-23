@@ -4,6 +4,7 @@
 #include "../libqtcatchchallenger/maprender/MapVisualiserOrder.hpp"
 #include "../libqtcatchchallenger/maprender/MapVisualiserPlayer.hpp"
 #include "../libqtcatchchallenger/maprender/QMap_client.hpp"
+#include "../libqtcatchchallenger/CerrLineAtomic.hpp"
 #include "../libqtcatchchallenger/LocalListener.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
@@ -95,6 +96,12 @@ int main(int argc, char *argv[])
     std::cout.rdbuf(new androidbuf);
     std::cerr.rdbuf(new androidbuferror);
 #endif
+    /* After the Android redirect (so it wraps whatever ends up in place) and
+     * before anything can log: this client is multi threaded (embedded
+     * server, SQL, datapack loader, map visualiser, path finder, GUI) and they
+     * all write to the same std::cerr, which has no line granularity -- two
+     * threads logging at once splice or tear each other's message. */
+    CatchChallenger::CerrLineAtomic::install();
     //work around for android
     QtDatapackClientLoader::datapackLoader=nullptr;
     #ifndef CATCHCHALLENGER_NOAUDIO
