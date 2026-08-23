@@ -45,7 +45,8 @@ private:
     QLocalSocket *controlSocket;
     QByteArray controlBuffer;
 private slots:
-    void listenServer(const uint8_t &count);
+    //false when the channel could NOT be opened, with the reason logged
+    bool listenServer(const uint8_t &count);
     void dataIncomming();
     void deconnectClient();
     void newConnexion();

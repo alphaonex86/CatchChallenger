@@ -40,10 +40,7 @@ bool LocalListener::tryListen()
         if(localSocket.waitForConnected(1000) && localSocket.isValid())
         {}
         else
-        {
-            listenServer(count);
-            return true;
-        }
+            return listenServer(count);
         count++;
     }
     std::cerr << "Too many instance open" << std::endl;
@@ -51,15 +48,27 @@ bool LocalListener::tryListen()
     return false;
 }
 
-void LocalListener::listenServer(const uint8_t &count)
+bool LocalListener::listenServer(const uint8_t &count)
 {
-    QLocalServer::removeServer(QString::fromStdString(ExtraSocket::pathSocket(socketPrefix.toStdString()+std::to_string(count))));
+    const QString name=QString::fromStdString(
+                ExtraSocket::pathSocket(socketPrefix.toStdString()+std::to_string(count)));
+    QLocalServer::removeServer(name);
     #ifndef Q_OS_MAC
     localServer.setSocketOptions(QLocalServer::UserAccessOption);
     #endif
-    if(localServer.listen(QString::fromStdString(ExtraSocket::pathSocket(socketPrefix.toStdString()+std::to_string(count)))))
-        if(!connect(&localServer, &QLocalServer::newConnection, this, &LocalListener::newConnexion))
-            abort();
+    /* A failed listen() used to be dropped on the floor: the caller was told
+     * the channel was up, nothing listened, and whoever drives this instance
+     * just saw "no reply" with no reason anywhere. Say why. */
+    if(!localServer.listen(name))
+    {
+        std::cerr << "LocalListener: can not listen on the automation channel \""
+                  << name.toStdString() << "\": "
+                  << localServer.errorString().toStdString() << std::endl;
+        return false;
+    }
+    if(!connect(&localServer, &QLocalServer::newConnection, this, &LocalListener::newConnexion))
+        abort();
+    return true;
 }
 
 void LocalListener::dataIncomming()
