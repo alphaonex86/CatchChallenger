@@ -64,14 +64,16 @@ void CliEventLoop::runPendingWork()
     }
 }
 
-void CliEventLoop::reportStateChanges()
+size_t CliEventLoop::reportStateChanges()
 {
+    size_t changed=0;
     size_t index=0;
     while(index<clients.size())
     {
         CliApiClient * const client=clients.at(index);
         if(client->takeStateChanged())
         {
+            changed++;
             std::cout << "[" << client->getLabel() << "] "
                       << CliApiClient::stateToString(client->getState());
             if(client->getState()==CliApiClient::State_OnMap)
@@ -87,6 +89,7 @@ void CliEventLoop::reportStateChanges()
         }
         index++;
     }
+    return changed;
 }
 
 /// \brief moves one client hands to the socket per loop round.
@@ -404,12 +407,24 @@ bool CliEventLoop::run(const uint32_t &timeoutMs)
         //NEED_DATAPACK are set inside the parser and consumed by
         //runPendingWork() in the same iteration, so reporting only afterwards
         //would silently swallow both transitions.
-        reportStateChanges();
+        size_t progress=reportStateChanges();
         //deferred work: it is what turns NEED_RECONNECT into a new fd and
         //NEED_DATAPACK into ON_MAP, so a client can finish without any further
         //socket event.
         runPendingWork();
-        reportStateChanges();
+        progress+=reportStateChanges();
+        /* The budget counts time WITHOUT PROGRESS, not total time: as long as
+         * bots keep reaching the next state the loop keeps going. An absolute
+         * deadline is a machine speed test -- 150 bots onboard in seconds on a
+         * desktop and in minutes on an armv6 board, so a fixed budget seated
+         * every bot on the fast nodes and a run-to-run varying SUBSET on the
+         * slow ones, which moved bots_on_map/survivors (150 -> 107) and with
+         * them every resource metric of the cell. */
+        if(progress>0 && ::gettimeofday(&startTime,NULL)<0)
+        {
+            errorString=std::string("gettimeofday() failed: ")+strerror(errno);
+            return false;
+        }
 
         size_t unfinished=0;
         int maxFd=-1;
