@@ -1014,7 +1014,7 @@ fi
 # throttling -- excluded from the sensor-free decay detector below.
 _TREND_SKIP_METRICS = {
     "cpu_percent", "max_rss_kb", "peak_rss_kb", "rss_kb", "vsz_kb",
-    "minor_pf", "major_pf", "vol_ctx", "invol_ctx",
+    "minor_pf", "major_pf",
     "binary_size_bytes", "binary_size",
 }
 

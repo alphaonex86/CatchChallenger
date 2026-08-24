@@ -1680,7 +1680,7 @@ def remote_time_v(exec_node, cmd_str, timeout=RUN_TIMEOUT_DEFAULT):
     wall/user/sys are available in that case; RSS fields remain None.
     Returns the same dict shape as bh.measure_time_v()."""
     out = {"wall_s": None, "user_s": None, "sys_s": None,
-           "max_rss_kb": None, "vol_ctx": None, "invol_ctx": None,
+           "max_rss_kb": None,
            "minor_pf": None, "major_pf": None, "rc": None, "error": None,
            "stdout": None}
 
@@ -1706,12 +1706,6 @@ def remote_time_v(exec_node, cmd_str, timeout=RUN_TIMEOUT_DEFAULT):
                 except: pass
             elif s.startswith("Maximum resident set size (kbytes):"):
                 try: out["max_rss_kb"] = int(s.split(":", 1)[1])
-                except: pass
-            elif s.startswith("Voluntary context switches:"):
-                try: out["vol_ctx"] = int(s.split(":", 1)[1])
-                except: pass
-            elif s.startswith("Involuntary context switches:"):
-                try: out["invol_ctx"] = int(s.split(":", 1)[1])
                 except: pass
             elif s.startswith("Minor (reclaiming a frame) page faults:"):
                 try: out["minor_pf"] = int(s.split(":", 1)[1])

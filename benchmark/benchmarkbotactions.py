@@ -43,7 +43,6 @@ Metrics, per workload slice (b<N>_ prefix in the flat keys):
   * max_rss_kb          -- client peak resident set (lower better)
   * user_s / sys_s      -- client CPU split; sys_s grows with kernel/syscall
                             cost (lower better)
-  * vol_ctx / invol_ctx -- context switches (lower better)
   * net_rx_bytes / net_tx_bytes / net_rx_pkts / net_tx_pkts
                         -- /proc/net/dev delta, HOST ROW ONLY (a node's
                             loopback totals are a different quantity, so they
@@ -1267,7 +1266,7 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None,
                       _bot_crash_report(stdout_log, stderr_log, None))
 
     sample = {"wall_s": wall, "user_s": None, "sys_s": None,
-              "max_rss_kb": None, "vol_ctx": None, "invol_ctx": None,
+              "max_rss_kb": None,
               "minor_pf": None, "major_pf": None}
     sample.update(spam)
     for line in stderr_text.splitlines():
@@ -1283,12 +1282,6 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None,
             except: pass
         elif s.startswith("Maximum resident set size (kbytes):"):
             try: sample["max_rss_kb"] = int(s.split(":", 1)[1])
-            except: pass
-        elif s.startswith("Voluntary context switches:"):
-            try: sample["vol_ctx"] = int(s.split(":", 1)[1])
-            except: pass
-        elif s.startswith("Involuntary context switches:"):
-            try: sample["invol_ctx"] = int(s.split(":", 1)[1])
             except: pass
         elif s.startswith("Minor (reclaiming a frame) page faults:"):
             try: sample["minor_pf"] = int(s.split(":", 1)[1])
@@ -1347,7 +1340,7 @@ def _run_once_on_exec(exec_node, bots, server_pid):
         return None, (f"{exec_node['label']} bots={bots}: {spam_err}\n" +
                       "\n".join(res["err"].splitlines()[-25:]))
     sample = {"wall_s": res["wall_s"], "user_s": None, "sys_s": None,
-              "max_rss_kb": None, "vol_ctx": None, "invol_ctx": None,
+              "max_rss_kb": None,
               "minor_pf": None, "major_pf": None}
     sample.update(spam)
     for line in res["err"].splitlines():
@@ -1358,10 +1351,6 @@ def _run_once_on_exec(exec_node, bots, server_pid):
             sample["sys_s"] = _to_float(s.split(":", 1)[1])
         elif s.startswith("Maximum resident set size (kbytes):"):
             sample["max_rss_kb"] = _to_float(s.split(":", 1)[1])
-        elif s.startswith("Voluntary context switches:"):
-            sample["vol_ctx"] = _to_float(s.split(":", 1)[1])
-        elif s.startswith("Involuntary context switches:"):
-            sample["invol_ctx"] = _to_float(s.split(":", 1)[1])
         elif s.startswith("Minor (reclaiming a frame) page faults:"):
             sample["minor_pf"] = _to_float(s.split(":", 1)[1])
         elif s.startswith("Major (requiring I/O) page faults:"):

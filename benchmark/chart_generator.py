@@ -267,6 +267,15 @@ def _extract_session_series(batches, champion_commit_short, arms=None):
     return series, commits, better_map
 
 
+# Metrics no longer recorded, dropped from every chart so the ones OLD runs
+# still carry cannot draw a series that stops. Context switches say nothing on
+# their own: the count moves with the scheduler, the crowd size and whatever
+# else the host is doing, and it produced most of the movers of an ESCALATE
+# without ever explaining one.
+def _metric_retired(mname):
+    return mname.endswith("vol_ctx")
+
+
 def _extract_series(records):
     """Return ({metric_label -> [(idx, value, commit_short, decision)]},
               [commit_short...], better_map).
@@ -287,6 +296,8 @@ def _extract_series(records):
                 continue
             metrics = blk.get("metrics") or {}
             for mname, m in metrics.items():
+                if _metric_retired(mname):
+                    continue
                 v = m.get("median")
                 if v is None:
                     v = m.get("value")
@@ -305,7 +316,7 @@ def _extract_series(records):
                 if not isinstance(smetrics, dict):
                     continue
                 for mname, m in smetrics.items():
-                    if not isinstance(m, dict):
+                    if not isinstance(m, dict) or _metric_retired(mname):
                         continue
                     v = m.get("median")
                     if v is None:
@@ -1099,6 +1110,8 @@ def _by_node_metrics(records):
             if not isinstance(blk, dict):
                 continue
             for mname, m in (blk.get("metrics") or {}).items():
+                if _metric_retired(mname):
+                    continue
                 v = m.get("median")
                 if v is None:
                     v = m.get("value")
@@ -1122,7 +1135,7 @@ def _by_node_metrics(records):
                 mnum = re.match(r"^(\d+)", slice_label)
                 prefix = ("b" + mnum.group(1)) if mnum else _slug(slice_label)
                 for mname, m in smetrics.items():
-                    if not isinstance(m, dict):
+                    if not isinstance(m, dict) or _metric_retired(mname):
                         continue
                     v = m.get("median")
                     if v is None:

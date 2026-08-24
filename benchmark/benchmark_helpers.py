@@ -1342,7 +1342,7 @@ def measure_time_v(cmd, env=None, timeout=None, cwd=None):
     cwd pins the child to a scratch dir; core dumps are disabled so a
     killed/crashed child never drops a core in the source tree."""
     out = {"wall_s": None, "user_s": None, "sys_s": None,
-           "max_rss_kb": None, "vol_ctx": None, "invol_ctx": None,
+           "max_rss_kb": None,
            "minor_pf": None, "major_pf": None, "rc": None}
     if not os.path.exists("/usr/bin/time"):
         rc, _, _, dt = run_capture(cmd, env=env, timeout=timeout,
@@ -1365,12 +1365,6 @@ def measure_time_v(cmd, env=None, timeout=None, cwd=None):
             except: pass
         elif s.startswith("Maximum resident set size (kbytes):"):
             try: out["max_rss_kb"] = int(s.split(":", 1)[1])
-            except: pass
-        elif s.startswith("Voluntary context switches:"):
-            try: out["vol_ctx"] = int(s.split(":", 1)[1])
-            except: pass
-        elif s.startswith("Involuntary context switches:"):
-            try: out["invol_ctx"] = int(s.split(":", 1)[1])
             except: pass
         elif s.startswith("Minor (reclaiming a frame) page faults:"):
             try: out["minor_pf"] = int(s.split(":", 1)[1])
@@ -1963,6 +1957,13 @@ def _prepare_decision_metrics(metrics, ignore=()):
         if name in ignore:
             continue
         if name.startswith("perf_"):
+            continue
+        # Context switches were dropped as a metric: the count says nothing on
+        # its own (it moves with the scheduler, the crowd size and the host's
+        # other load) and it produced most of the movers of an ESCALATE while
+        # never explaining one. Old runs still carry them, so they are dropped
+        # HERE too and cannot move a verdict any more.
+        if name.endswith("vol_ctx"):
             continue
         if name.endswith("_bytes_sent"):
             pfx = name[:-len("_bytes_sent")]
