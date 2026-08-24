@@ -47,7 +47,6 @@ Metrics, per workload slice (b<N>_ prefix in the flat keys):
                         -- /proc/net/dev delta, HOST ROW ONLY (a node's
                             loopback totals are a different quantity, so they
                             are left null rather than silently redefined)
-  * tcp_retrans         -- /proc/net/snmp Tcp:RetransSegs delta, host row only
   * binary_size_bytes   -- stripped client footprint (lower better)
 Server-side, once per node run (cumulative over its slices, from the server's
 BENCH dump on SIGINT):
@@ -1011,25 +1010,6 @@ def _read_iface_counters(iface):
     return None
 
 
-def _read_tcp_retrans():
-    """/proc/net/snmp Tcp: RetransSegs (column 12 per Linux convention).
-    Returns None on parse failure."""
-    try:
-        with open("/proc/net/snmp") as f:
-            header = None
-            for line in f:
-                if line.startswith("Tcp:"):
-                    if header is None:
-                        header = line.strip().split()[1:]
-                    else:
-                        vals = line.strip().split()[1:]
-                        d = dict(zip(header, vals))
-                        return int(d.get("RetransSegs", 0))
-    except Exception:
-        return None
-    return None
-
-
 # ---- run one cell -------------------------------------------------------
 
 _CLK_TCK = os.sysconf("SC_CLK_TCK") if hasattr(os, "sysconf") else 100
@@ -1189,7 +1169,6 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None,
     env = os.environ.copy()
 
     pre_iface = _read_iface_counters(iface) if iface else None
-    pre_retrans = _read_tcp_retrans()
     pre_srv_ticks = _server_cpu_ticks(server_pid) if server_pid else None
 
     # Per-run temp dir: named by port+bots so concurrent variant runs on
@@ -1250,7 +1229,6 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None,
         return None, msg
 
     post_iface = _read_iface_counters(iface) if iface else None
-    post_retrans = _read_tcp_retrans()
     post_srv_ticks = _server_cpu_ticks(server_pid) if server_pid else None
 
     # The work done in the fixed window. Without it the resource numbers below
@@ -1295,9 +1273,6 @@ def _run_once(bin_path, host, port, bots, iface, server_pid=None,
         sample["net_tx_bytes"] = post_iface["tx_bytes"] - pre_iface["tx_bytes"]
         sample["net_rx_pkts"]  = post_iface["rx_pkts"]  - pre_iface["rx_pkts"]
         sample["net_tx_pkts"]  = post_iface["tx_pkts"]  - pre_iface["tx_pkts"]
-    if pre_retrans is not None and post_retrans is not None:
-        sample["tcp_retrans"] = post_retrans - pre_retrans
-
     if (pre_srv_ticks is not None and post_srv_ticks is not None
             and wall > 0 and _CLK_TCK > 0):
         srv_cpu_s = (post_srv_ticks - pre_srv_ticks) / float(_CLK_TCK)

@@ -1958,12 +1958,14 @@ def _prepare_decision_metrics(metrics, ignore=()):
             continue
         if name.startswith("perf_"):
             continue
-        # Context switches were dropped as a metric: the count says nothing on
-        # its own (it moves with the scheduler, the crowd size and the host's
-        # other load) and it produced most of the movers of an ESCALATE while
-        # never explaining one. Old runs still carry them, so they are dropped
-        # HERE too and cannot move a verdict any more.
-        if name.endswith("vol_ctx"):
+        # Retired metrics. Both count events the run does not control and
+        # neither ever explained a verdict: context switches move with the
+        # scheduler, the crowd size and the host's other load, and TCP
+        # retransmits are the network's mood (2 -> 1 segments is a -50%
+        # "improvement"). Between them they were most of the movers of an
+        # ESCALATE and the reason of none. Old runs still carry them, so they
+        # are dropped HERE too and cannot move a verdict any more.
+        if name.endswith("vol_ctx") or name.endswith("tcp_retrans"):
             continue
         if name.endswith("_bytes_sent"):
             pfx = name[:-len("_bytes_sent")]

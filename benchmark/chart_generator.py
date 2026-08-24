@@ -268,12 +268,13 @@ def _extract_session_series(batches, champion_commit_short, arms=None):
 
 
 # Metrics no longer recorded, dropped from every chart so the ones OLD runs
-# still carry cannot draw a series that stops. Context switches say nothing on
-# their own: the count moves with the scheduler, the crowd size and whatever
-# else the host is doing, and it produced most of the movers of an ESCALATE
-# without ever explaining one.
+# still carry cannot draw a series that stops. Neither says anything on its
+# own: context switches move with the scheduler, the crowd size and whatever
+# else the host is doing, and TCP retransmits are the network's mood (2 -> 1
+# segments reads as a -50% win). Together they were most of the movers of an
+# ESCALATE and the reason of none.
 def _metric_retired(mname):
-    return mname.endswith("vol_ctx")
+    return mname.endswith("vol_ctx") or mname.endswith("tcp_retrans")
 
 
 def _extract_series(records):
