@@ -161,6 +161,57 @@ static std::vector<std::string> parseStartMaps(const std::string &path)
     return maps;
 }
 
+// Maps reachable from mapId by walking the 4 map borders, exactly like
+// map2png --renderAll does: a border is followed only when both sides point at
+// each other. The returned component is therefore the exact set of maps the
+// overview of mapId will contain.
+static std::vector<size_t> borderComponent(const MapStore::MainCodeSet &set,const size_t mapId)
+{
+    std::vector<size_t> component;
+    std::vector<bool> seen(set.mapList.size(),false);
+    std::vector<size_t> todo;
+    todo.push_back(mapId);
+    seen[mapId]=true;
+    while(!todo.empty())
+    {
+        const size_t id=todo.back();
+        todo.pop_back();
+        component.push_back(id);
+        const CatchChallenger::CommonMap &m=set.mapList[id];
+        // order: 0 top, 1 bottom, 2 left, 3 right
+        const CATCHCHALLENGER_TYPE_MAPID links[4]={
+            m.border.top.mapIndex,   m.border.bottom.mapIndex,
+            m.border.left.mapIndex,  m.border.right.mapIndex};
+        uint8_t i=0;
+        while(i<4)
+        {
+            const CATCHCHALLENGER_TYPE_MAPID other=links[i];
+            if(other<set.mapList.size() && !seen[other])
+            {
+                const CatchChallenger::CommonMap &o=set.mapList[other];
+                // the other map must link back here: top pairs with bottom,
+                // left with right
+                CATCHCHALLENGER_TYPE_MAPID back=65535;
+                if(i==0)
+                    back=o.border.bottom.mapIndex;
+                else if(i==1)
+                    back=o.border.top.mapIndex;
+                else if(i==2)
+                    back=o.border.right.mapIndex;
+                else
+                    back=o.border.left.mapIndex;
+                if(back==id)
+                {
+                    seen[other]=true;
+                    todo.push_back(other);
+                }
+            }
+            i++;
+        }
+    }
+    return component;
+}
+
 // Generate overview/preview PNGs and batch single-map renders (map_preview.php logic)
 // Returns the number of overview/preview pairs generated.
 static int generateMapPreviews()
@@ -189,7 +240,20 @@ static int generateMapPreviews()
         }
     }
 
+    // Drop the overview/preview pairs of the previous run: their count varies
+    // with the datapack, and a leftover overview-4.png would still be uploaded
+    // and listed by the index page.
+    {
+        const std::vector<std::string> oldPngs=Helper::getPngList(mapsDir);
+        for(const std::string &pngRel : oldPngs)
+            if(pngRel.compare(0,9,"overview-")==0 || pngRel.compare(0,8,"preview-")==0)
+                std::remove((mapsDir+pngRel).c_str());
+    }
+
     int overviewCount=0;
+    // One overview per already-rendered border component (set index, lowest
+    // map id of the component), to never render the same picture twice.
+    std::set<std::pair<size_t,size_t> > renderedComponents;
 
     // Overview rendering for start maps (--renderAll)
     for(size_t si=0;si<sets.size();++si)
@@ -204,21 +268,38 @@ static int generateMapPreviews()
             // stems: parseStartMaps appends .tmx but the loader's map paths
             // are stored WITHOUT it (mapPathToId keys are fileNameWihtoutTmx),
             // so a raw compare never matched and no overview was generated.
-            std::string mapStem=map;
-            if(mapStem.size()>=4 && mapStem.compare(mapStem.size()-4,4,".tmx")==0)
-                mapStem=mapStem.substr(0,mapStem.size()-4);
-            bool found=false;
+            const std::string mapStem=stripTmx(map);
+            size_t mapId=sets[si].mapList.size();
             for(size_t mi=0;mi<sets[si].mapPaths.size();++mi)
-            {
-                std::string p=sets[si].mapPaths[mi];
-                if(p.size()>=4 && p.compare(p.size()-4,4,".tmx")==0)
-                    p=p.substr(0,p.size()-4);
-                if(p==mapStem)
-                { found=true; break; }
-            }
-            if(!found)
+                if(stripTmx(sets[si].mapPaths[mi])==mapStem)
+                { mapId=mi; break; }
+            if(mapId>=sets[si].mapList.size())
             {
                 std::cout << "map for starter " << map << " missing" << std::endl;
+                continue;
+            }
+
+            // The overview holds the whole border-linked component, so it only
+            // depends on that component: render one image per component (the 5
+            // start maps of the same world produced 5 byte-identical 9MB PNGs)
+            // and none for a component of one map (its per-map preview already
+            // is that same picture).
+            const std::vector<size_t> component=borderComponent(sets[si],mapId);
+            if(component.size()<2)
+            {
+                std::cout << "overview skipped for " << mc << "/" << map
+                          << ": the map has no border-linked neighbour" << std::endl;
+                continue;
+            }
+            size_t componentKey=component[0];
+            for(size_t ci=1;ci<component.size();++ci)
+                if(component[ci]<componentKey)
+                    componentKey=component[ci];
+            if(!renderedComponents.insert(std::make_pair(si,componentKey)).second)
+            {
+                std::cout << "overview skipped for " << mc << "/" << map
+                          << ": same " << component.size()
+                          << " maps as an already rendered overview" << std::endl;
                 continue;
             }
 
