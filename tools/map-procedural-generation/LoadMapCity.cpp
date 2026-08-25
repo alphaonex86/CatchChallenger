@@ -260,7 +260,16 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
         nextHopMap->setLayerDataFormat(Tiled::Map::Base64Zstandard);
 #endif
 
-        nextHopMap->setProperties(Tiled::Properties());
+        //a building interior is an INDOOR map: keep the map properties the
+        //template author drew (template-check.py enforces type="indoor" there)
+        //and add the property when the template lacks it. Clearing them all
+        //dropped "indoor" from every written interior.
+        {
+            Tiled::Properties indoorProperties=properties;
+            if(!indoorProperties.contains("type"))
+                indoorProperties["type"]="indoor";
+            nextHopMap->setProperties(indoorProperties);
+        }
         //MapWriter writes each tileset relative to the file it is writing, from
         //the tileset's own fileName: point them at the SHIPPED copy (absolute)
         //so the reference stays inside the generated label, then put them back.

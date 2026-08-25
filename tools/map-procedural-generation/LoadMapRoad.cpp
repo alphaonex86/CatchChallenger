@@ -2879,15 +2879,16 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             const BotKind slotKind=templateKind.at(templateIndex);
                             const std::string &slotBaseName=templateBaseName.at(templateIndex);
                             const BuildingVariant * const slotVariant=templateVariant.at(templateIndex);
-                            //big city: most houses are doorless facades (no content)
-                            bool facadeOnly=false;
-                            if(isBigCity && slotKind==BotKind_text)
-                            {
-                                if(interiorHouseDone)
-                                    facadeOnly=true;
-                                else
-                                    interiorHouseDone=true;
-                            }
+                            //big city: most FILLER houses are doorless facades (no
+                            //content), ONE keeps its door and its interior. The slot
+                            //is spent only once that doored house REALLY landed: a
+                            //first house that finds no free lot used to consume it
+                            //anyway, and the whole town then had nothing to enter but
+                            //the heal/shop/gym. A "special-N" building is not a filler
+                            //house: it carries content and always keeps its door.
+                            const bool fillerHouse=(slotKind==BotKind_text
+                                    && slotBaseName.compare(0,6,"house-")==0);
+                            const bool facadeOnly=(isBigCity && fillerHouse && interiorHouseDone);
                             bool placed=false;
                             //ORDERED placement, every city size: street-front lots
                             //filled center-out so the buildings line up along the
@@ -2976,6 +2977,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                                 cityDoorFrontsFree(lots,temp,pos.first,pos.second,true);
                                                 connectDoorFrontsToAvenue(lots,temp,pos.first,pos.second);
                                             }
+                                            placed=true;
                                             break;
                                         }
 
@@ -2989,6 +2991,12 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                     }
                                 }
                             }
+
+                            //the ONE doored house of a big city is spent here, not
+                            //at the decision above: a house that never found a lot
+                            //must leave the slot to the next one
+                            if(placed && fillerHouse && !facadeOnly)
+                                interiorHouseDone=true;
 
                             if(!placed && i >= limit && slotKind == BotKind_heal){
                                 Tiled::ObjectGroup* moving = LoadMap::searchObjectGroupByName(worldMap, "Moving");
@@ -3014,6 +3022,12 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             }
                             templateIndex++;
                         }
+
+                        //a town the player can only look at is a bug: say so rather
+                        //than ship it silently
+                        if(isBigCity && !interiorHouseDone)
+                            std::cerr << "City " << city->name << " has no house the player can enter"
+                                      << " (every filler house was drawn as a facade)" << std::endl;
 
                         //big city: fill the remaining street-front lots with extra
                         //doorless facades so the avenue reads as a dense main street
