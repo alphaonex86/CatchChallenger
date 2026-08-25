@@ -2399,84 +2399,87 @@ def verify_installer_asks_install_dir(installer_exe):
     for d in (ask_host, sil_host):
         if os.path.isdir(d):
             shutil.rmtree(d, ignore_errors=True)
-    env = force_headless_env(_wine_env(extra_qt_path=False))
-    cwd = os.path.dirname(installer_exe)
-
-    # ── 1. no /S: must stop on the directory page, install nothing ──
-    win_args = [WINE_BIN, installer_exe, "/D=" + ask_win]
-    diagnostic.record_cmd(win_args, cwd)
-    log_info(f"wine64 {os.path.basename(installer_exe)} /D=... (no /S, "
-             f"expect it to WAIT on the directory page)")
-    proc = subprocess.Popen(win_args, cwd=cwd, stdin=subprocess.DEVNULL,
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                            env=env,
-                            preexec_fn=process_helpers.setsid_and_pdeathsig)
-    waited = 0.0
-    early_rc = None
-    while waited < _INSTALLER_UI_WAIT_SEC:
-        early_rc = proc.poll()
-        if early_rc is not None:
-            break
-        time.sleep(1.0)
-        waited += 1.0
-    still_running = proc.poll() is None
-    _kill_proc(proc)
-    dropped = []
-    if os.path.isdir(ask_host):
-        for root, _dirs, files in os.walk(ask_host):
-            for fn in files:
-                dropped.append(os.path.relpath(os.path.join(root, fn), ask_host))
-    if dropped:
-        log_fail(name_ask,
-                 f"installer wrote {len(dropped)} file(s) into {ask_win} "
-                 f"with NO user confirmation (e.g. {dropped[:3]}) — the .nsi "
-                 f"needs a `Page directory`; unattended installs must use "
-                 f"/S (+ /D=<dir>)")
-    elif not still_running:
-        log_fail(name_ask,
-                 f"installer exited on its own (rc={early_rc}) after "
-                 f"{waited:.0f}s without installing anything — it should be "
-                 f"WAITING on the directory page")
-    else:
-        log_pass(name_ask,
-                 f"nothing installed after {waited:.0f}s; still waiting for "
-                 f"the user")
-
-    # ── 2. /S /D=<dir>: the documented unattended path still works ──
-    win_args = [WINE_BIN, installer_exe, "/S", "/D=" + sil_win]
-    diagnostic.record_cmd(win_args, cwd)
-    log_info(f"wine64 {os.path.basename(installer_exe)} /S /D={sil_win}")
-    proc = subprocess.Popen(win_args, cwd=cwd, stdin=subprocess.DEVNULL,
-                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                            env=env,
-                            preexec_fn=process_helpers.setsid_and_pdeathsig)
+    # try/finally: a FAIL (or a crash) mid-way must not leave the
+    # scratch install — up to 250 MiB — behind in the wine prefix.
     try:
-        proc.communicate(timeout=COMPILE_TIMEOUT)
-    except subprocess.TimeoutExpired:
+        env = force_headless_env(_wine_env(extra_qt_path=False))
+        cwd = os.path.dirname(installer_exe)
+
+        # ── 1. no /S: must stop on the directory page, install nothing ──
+        win_args = [WINE_BIN, installer_exe, "/D=" + ask_win]
+        diagnostic.record_cmd(win_args, cwd)
+        log_info(f"wine64 {os.path.basename(installer_exe)} /D=... (no /S, "
+                 f"expect it to WAIT on the directory page)")
+        proc = subprocess.Popen(win_args, cwd=cwd, stdin=subprocess.DEVNULL,
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                env=env,
+                                preexec_fn=process_helpers.setsid_and_pdeathsig)
+        waited = 0.0
+        early_rc = None
+        while waited < _INSTALLER_UI_WAIT_SEC:
+            early_rc = proc.poll()
+            if early_rc is not None:
+                break
+            time.sleep(1.0)
+            waited += 1.0
+        still_running = proc.poll() is None
         _kill_proc(proc)
-    # NSIS returns before the payload has finished landing — poll for the
-    # three .exe, same pattern as run_installed_payload_e2e step 2.
-    waited = 0.0
-    ok = False
-    while waited < 60.0:
-        ok = all(os.path.isfile(os.path.join(sil_host, b))
-                 for b in (COMBINED_BIN_GL, COMBINED_BIN_CPU, COMBINED_BIN_SRV))
+        dropped = []
+        if os.path.isdir(ask_host):
+            for root, _dirs, files in os.walk(ask_host):
+                for fn in files:
+                    dropped.append(os.path.relpath(os.path.join(root, fn), ask_host))
+        if dropped:
+            log_fail(name_ask,
+                     f"installer wrote {len(dropped)} file(s) into {ask_win} "
+                     f"with NO user confirmation (e.g. {dropped[:3]}) — the .nsi "
+                     f"needs a `Page directory`; unattended installs must use "
+                     f"/S (+ /D=<dir>)")
+        elif not still_running:
+            log_fail(name_ask,
+                     f"installer exited on its own (rc={early_rc}) after "
+                     f"{waited:.0f}s without installing anything — it should be "
+                     f"WAITING on the directory page")
+        else:
+            log_pass(name_ask,
+                     f"nothing installed after {waited:.0f}s; still waiting for "
+                     f"the user")
+
+        # ── 2. /S /D=<dir>: the documented unattended path still works ──
+        win_args = [WINE_BIN, installer_exe, "/S", "/D=" + sil_win]
+        diagnostic.record_cmd(win_args, cwd)
+        log_info(f"wine64 {os.path.basename(installer_exe)} /S /D={sil_win}")
+        proc = subprocess.Popen(win_args, cwd=cwd, stdin=subprocess.DEVNULL,
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                env=env,
+                                preexec_fn=process_helpers.setsid_and_pdeathsig)
+        try:
+            proc.communicate(timeout=COMPILE_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            _kill_proc(proc)
+        # NSIS returns before the payload has finished landing — poll for the
+        # three .exe, same pattern as run_installed_payload_e2e step 2.
+        waited = 0.0
+        ok = False
+        while waited < 60.0:
+            ok = all(os.path.isfile(os.path.join(sil_host, b))
+                     for b in (COMBINED_BIN_GL, COMBINED_BIN_CPU, COMBINED_BIN_SRV))
+            if ok:
+                break
+            time.sleep(1.0)
+            waited += 1.0
         if ok:
-            break
-        time.sleep(1.0)
-        waited += 1.0
-    if ok:
-        log_pass(name_silent, f"installed -> {sil_win}")
-    else:
-        present = sorted(os.listdir(sil_host)) if os.path.isdir(sil_host) else []
-        log_fail(name_silent,
-                 f"/S /D={sil_win} did not produce the 3 .exe "
-                 f"(found {len(present)} entries) — the unattended install "
-                 f"path is broken")
-    # Leave no 250 MiB scratch install behind in the wine prefix.
-    for d in (ask_host, sil_host):
-        if os.path.isdir(d):
-            shutil.rmtree(d, ignore_errors=True)
+            log_pass(name_silent, f"installed -> {sil_win}")
+        else:
+            present = sorted(os.listdir(sil_host)) if os.path.isdir(sil_host) else []
+            log_fail(name_silent,
+                     f"/S /D={sil_win} did not produce the 3 .exe "
+                     f"(found {len(present)} entries) — the unattended install "
+                     f"path is broken")
+    finally:
+        for d in (ask_host, sil_host):
+            if os.path.isdir(d):
+                shutil.rmtree(d, ignore_errors=True)
 
 
 def run_installed_payload_e2e(installer_exe, win_dp_src, win_mc):
@@ -2550,6 +2553,12 @@ def run_installed_payload_e2e(installer_exe, win_dp_src, win_mc):
             waited += 1.0
         if install_dir is not None:
             log_pass(name2, f"installed -> {install_dir}")
+            # ~180 MiB of payload now sits in the wine prefix. Hand it to
+            # the same teardown the build dirs use: removed when the script
+            # exits with no failure, KEPT when something failed so the
+            # installed tree is still there to look at. Step 1 pre-cleans
+            # it either way on the next run.
+            cleanup_helpers.register_build_dir(install_dir)
         else:
             log_fail(name2, "3 exes not found under Program Files "
                             "after silent install")

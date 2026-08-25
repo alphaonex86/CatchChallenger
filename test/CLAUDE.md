@@ -136,6 +136,11 @@ unattended. Unattended installs use `/S` (silent) and `/D=<dir>`
 desktop. The `.msi` has no `WixUI` reference yet (every WiX dialog
 set with a directory page also mandates a license page).
 
+Both installer runs delete their scratch install in a `finally`, and
+the e2e install (~180 MiB in the wine prefix) is handed to
+`cleanup_helpers.register_build_dir()`: wiped when the script exits
+green, KEPT on failure for post-mortem.
+
 ## Cross-platform client phases (testingclient.py)
 
 Three optional client phases at end of `testingclient.py`, all use **local Linux `server-filedb`**. Server/tools NOT cross-compiled.
