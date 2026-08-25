@@ -123,6 +123,19 @@ Both guards fail-fast before NSIS / WiX runs, so a Debug-by-accident
 build never reaches the shipping artefact name and never gets
 uploaded by `publish_binaries.sh`.
 
+### Installer UI contract (testingcompilationwindows.py)
+
+Every generated `.nsi` includes `NSI_UI_PAGES` (`Page directory` +
+`Page instfiles`): started with NO argument the setup .exe must ASK
+where to install and write nothing until the user confirms. An .nsi
+without a `Page` command compiles to `Install: 1 page` and installs
+unattended. Unattended installs use `/S` (silent) and `/D=<dir>`
+(target, must be LAST). Guarded by
+`verify_installer_asks_install_dir()`, headless via
+`force_headless_env()` — no test may open a window on the operator's
+desktop. The `.msi` has no `WixUI` reference yet (every WiX dialog
+set with a directory page also mandates a license page).
+
 ## Cross-platform client phases (testingclient.py)
 
 Three optional client phases at end of `testingclient.py`, all use **local Linux `server-filedb`**. Server/tools NOT cross-compiled.

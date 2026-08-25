@@ -173,6 +173,27 @@ def _resolve_makensis():
     return None
 MAKENSIS_BIN = _resolve_makensis()
 
+# ── NSIS end-user UI contract ─────────────────────────────────────────────
+# An installer started with NO argument MUST ask the end user WHERE to
+# install and must write nothing until they confirm. An .nsi with no `Page`
+# command compiles to a single instfiles page (makensis -V4 prints
+# "Install: 1 page"): the installer jumps straight to extraction and drops
+# the payload into InstallDir unattended — which is exactly what
+# `wine catchchallenger-windows-<ver>-setup.exe` did.
+#
+# Unattended installs go through the documented NSIS arguments instead:
+#   /S            silent, no UI at all
+#   /D=<abs dir>  target directory (must be LAST on the command line)
+# Both harness install paths (run_installed_payload_e2e, run_on_real_windows)
+# already pass /S, so adding the pages changes nothing for automation.
+# verify_installer_asks_install_dir() guards both halves.
+NSI_UI_PAGES = (
+    'Name "CatchChallenger"\n'
+    'Caption "CatchChallenger Setup"\n'
+    'Page directory\n'
+    'Page instfiles\n'
+)
+
 # ── MSI tooling (self-contained, no system install) ────────────────────────
 # WiX 3.11 binaries (Windows .NET .exe) at <paths.msi_dir>/wix3/, driven
 # via wine64 — the operator does not want anything installed in the host
@@ -1295,6 +1316,7 @@ def build_combined_installer(parts):
         'OutFile "' + installer_exe + '"\n'
         'InstallDir "$PROGRAMFILES64\\CatchChallenger"\n'
         'RequestExecutionLevel admin\n'
+        + NSI_UI_PAGES +
         'Section "MainSection" SEC01\n'
         '  SetOutPath "$INSTDIR"\n'
         '  File /r "' + stage + os.sep + '*.*"\n'
@@ -1348,6 +1370,7 @@ def build_combined_installer_user(parts):
         'OutFile "' + installer_exe + '"\n'
         'InstallDir "$LOCALAPPDATA\\CatchChallenger"\n'
         'RequestExecutionLevel user\n'
+        + NSI_UI_PAGES +
         'Section "MainSection" SEC01\n'
         '  SetOutPath "$INSTDIR"\n'
         '  File /r "' + stage + os.sep + '*.*"\n'
@@ -1563,6 +1586,7 @@ def build_installer(exe_path, label):
             'OutFile "' + installer_exe + '"\n'
             'InstallDir "$PROGRAMFILES64\\CatchChallenger"\n'
             'RequestExecutionLevel admin\n'
+            + NSI_UI_PAGES +
             'Section "MainSection" SEC01\n'
             '  SetOutPath "$INSTDIR"\n'
             '  File /r "' + stage_dir + os.sep + '*.*"\n'
@@ -2118,6 +2142,19 @@ _E2E_CASE_NAMES = (
     "wine installed qtcpu800x600 to map",
 )
 
+# The 2 case names verify_installer_asks_install_dir() emits, in order.
+_INSTALLER_UI_CASE_NAMES = (
+    "windows installer asks install dir",
+    "windows installer silent /S /D=",
+)
+
+# How long the no-argument installer is given to prove it is WAITING on the
+# directory page. The reference bug (`Install: 1 page` .nsi) laid all 84
+# payload files down in ~12 s under wine, so 30 s is ~2.5x the observed
+# unattended-install time — long enough that a merely SLOW installer is not
+# mistaken for a well-behaved one.
+_INSTALLER_UI_WAIT_SEC = 30
+
 
 def _wine_prefix():
     """Resolve the wine prefix the same way wine64 itself does:
@@ -2327,6 +2364,119 @@ def _spawn_installed_server_gui(server_exe):
 
     threading.Thread(target=reader, daemon=True).start()
     return proc, out_lines, listening, db_failed, serving
+
+
+def verify_installer_asks_install_dir(installer_exe):
+    """End-user contract for the shipped setup .exe (2 cases).
+
+    `wine catchchallenger-windows-<ver>-setup.exe` with NO argument must
+    ASK where to install and write NOTHING until the user confirms. The
+    installer used to be built from an .nsi with no `Page` command, which
+    NSIS compiles to a single instfiles page: it went straight to
+    extraction and dropped ~250 MiB into $PROGRAMFILES64 unattended.
+
+    Automation keeps its unattended path through the documented NSIS
+    arguments — /S (silent) and /D=<dir> (target) — which is what both
+    harness install steps already use.
+
+    Both cases run fully HEADLESS (force_headless_env => DISPLAY="") so
+    neither ever opens a window on the operator's desktop, and both target
+    a scratch directory inside the wine prefix so the real
+    Program Files\\CatchChallenger install used by the e2e steps is never
+    touched.
+
+    `/D=` is accepted with or without /S and must be the LAST argument;
+    without /S it only pre-fills the directory page, so a well-behaved
+    installer still stops there and creates nothing."""
+    name_ask, name_silent = _INSTALLER_UI_CASE_NAMES
+    if installer_exe is None or not os.path.isfile(installer_exe):
+        log_fail(name_ask, "combined installer .exe not built")
+        log_fail(name_silent, "combined installer .exe not built")
+        return
+    drive_c = os.path.join(_wine_prefix(), "drive_c")
+    ask_win, ask_host = "C:\\cc-installer-ui-ask", os.path.join(drive_c, "cc-installer-ui-ask")
+    sil_win, sil_host = "C:\\cc-installer-ui-silent", os.path.join(drive_c, "cc-installer-ui-silent")
+    for d in (ask_host, sil_host):
+        if os.path.isdir(d):
+            shutil.rmtree(d, ignore_errors=True)
+    env = force_headless_env(_wine_env(extra_qt_path=False))
+    cwd = os.path.dirname(installer_exe)
+
+    # ── 1. no /S: must stop on the directory page, install nothing ──
+    win_args = [WINE_BIN, installer_exe, "/D=" + ask_win]
+    diagnostic.record_cmd(win_args, cwd)
+    log_info(f"wine64 {os.path.basename(installer_exe)} /D=... (no /S, "
+             f"expect it to WAIT on the directory page)")
+    proc = subprocess.Popen(win_args, cwd=cwd, stdin=subprocess.DEVNULL,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            env=env,
+                            preexec_fn=process_helpers.setsid_and_pdeathsig)
+    waited = 0.0
+    early_rc = None
+    while waited < _INSTALLER_UI_WAIT_SEC:
+        early_rc = proc.poll()
+        if early_rc is not None:
+            break
+        time.sleep(1.0)
+        waited += 1.0
+    still_running = proc.poll() is None
+    _kill_proc(proc)
+    dropped = []
+    if os.path.isdir(ask_host):
+        for root, _dirs, files in os.walk(ask_host):
+            for fn in files:
+                dropped.append(os.path.relpath(os.path.join(root, fn), ask_host))
+    if dropped:
+        log_fail(name_ask,
+                 f"installer wrote {len(dropped)} file(s) into {ask_win} "
+                 f"with NO user confirmation (e.g. {dropped[:3]}) — the .nsi "
+                 f"needs a `Page directory`; unattended installs must use "
+                 f"/S (+ /D=<dir>)")
+    elif not still_running:
+        log_fail(name_ask,
+                 f"installer exited on its own (rc={early_rc}) after "
+                 f"{waited:.0f}s without installing anything — it should be "
+                 f"WAITING on the directory page")
+    else:
+        log_pass(name_ask,
+                 f"nothing installed after {waited:.0f}s; still waiting for "
+                 f"the user")
+
+    # ── 2. /S /D=<dir>: the documented unattended path still works ──
+    win_args = [WINE_BIN, installer_exe, "/S", "/D=" + sil_win]
+    diagnostic.record_cmd(win_args, cwd)
+    log_info(f"wine64 {os.path.basename(installer_exe)} /S /D={sil_win}")
+    proc = subprocess.Popen(win_args, cwd=cwd, stdin=subprocess.DEVNULL,
+                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            env=env,
+                            preexec_fn=process_helpers.setsid_and_pdeathsig)
+    try:
+        proc.communicate(timeout=COMPILE_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        _kill_proc(proc)
+    # NSIS returns before the payload has finished landing — poll for the
+    # three .exe, same pattern as run_installed_payload_e2e step 2.
+    waited = 0.0
+    ok = False
+    while waited < 60.0:
+        ok = all(os.path.isfile(os.path.join(sil_host, b))
+                 for b in (COMBINED_BIN_GL, COMBINED_BIN_CPU, COMBINED_BIN_SRV))
+        if ok:
+            break
+        time.sleep(1.0)
+        waited += 1.0
+    if ok:
+        log_pass(name_silent, f"installed -> {sil_win}")
+    else:
+        present = sorted(os.listdir(sil_host)) if os.path.isdir(sil_host) else []
+        log_fail(name_silent,
+                 f"/S /D={sil_win} did not produce the 3 .exe "
+                 f"(found {len(present)} entries) — the unattended install "
+                 f"path is broken")
+    # Leave no 250 MiB scratch install behind in the wine prefix.
+    for d in (ask_host, sil_host):
+        if os.path.isdir(d):
+            shutil.rmtree(d, ignore_errors=True)
 
 
 def run_installed_payload_e2e(installer_exe, win_dp_src, win_mc):
@@ -3326,6 +3476,7 @@ def main():
                              "sign exe qtcpu800x600",
                              "installer combined", "msi combined",
                              "sign installer combined"]
+                            + list(_INSTALLER_UI_CASE_NAMES)
                             + list(_E2E_CASE_NAMES)
                             + list(_WIN_REAL_CASE_NAMES),
             "qtopengl":     ["compile qtopengl (mxe-x86_64)",
@@ -3336,6 +3487,7 @@ def main():
                              "sign exe qtopengl",
                              "installer combined", "msi combined",
                              "sign installer combined"]
+                            + list(_INSTALLER_UI_CASE_NAMES)
                             + list(_E2E_CASE_NAMES)
                             + list(_WIN_REAL_CASE_NAMES),
             # The e2e steps install + run all three binaries, so a
@@ -3343,6 +3495,7 @@ def main():
             "server-gui":   ["compile server-gui (mxe-x86_64)",
                              "installer combined", "msi combined",
                              "sign installer combined"]
+                            + list(_INSTALLER_UI_CASE_NAMES)
                             + list(_E2E_CASE_NAMES)
                             + list(_WIN_REAL_CASE_NAMES),
         }
@@ -3588,6 +3741,14 @@ def main():
                     except OSError as _world_exc:
                         log_info(f"WARNING: could not publish installer to "
                                  f"{world_installer}: {_world_exc}")
+                # End-user UI contract of the shipped setup .exe: no
+                # argument => ask where to install; /S (+ /D=) => unattended.
+                # Run on the SIGNED artefact (that is what ships) and before
+                # the e2e steps, which install into a different directory.
+                if any(should_run(n, failed_cases) for n in _INSTALLER_UI_CASE_NAMES):
+                    if combined_installer is None:
+                        combined_installer = build_combined_installer(parts)
+                    verify_installer_asks_install_dir(combined_installer)
                 if should_run("msi combined", failed_cases):
                     build_combined_msi(parts)
                 # Installed-payload end-to-end. On a normal full run the
@@ -3626,6 +3787,9 @@ def main():
         # Keep the total test count fixed: the 5 installed-payload
         # steps still report (as FAIL) when a binary is missing rather
         # than vanishing from the run.
+        for _n in _INSTALLER_UI_CASE_NAMES:
+            if should_run(_n, failed_cases):
+                log_fail(_n, f"missing binaries: {','.join(missing)}")
         for _n in _E2E_CASE_NAMES:
             if should_run(_n, failed_cases):
                 log_fail(_n, f"missing binaries: {','.join(missing)}")
