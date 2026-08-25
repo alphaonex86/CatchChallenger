@@ -811,11 +811,13 @@ static void deriveCityGround(const MapBrush::MapTemplate &mapTemplate, LoadMapAl
     ground.valid=true;
 }
 
-//perform ONE city building placement at an already validated position: either a
-//doorless facade (big city filler) or the full building chain — exterior brush,
-//interiors written next to the city map, content regenerated from the template
+//perform ONE city building placement at an already validated position: the full
+//building chain — exterior brush, interiors written next to the city map,
+//content regenerated from the template. EVERY house template draws a door, so
+//every house placed is enterable: a "facade" copy of the same art was a door
+//the player walks into and nothing happens.
 static void placeCityBuilding(Tiled::Map &worldMap, MapBrush::MapTemplate &temp,
-        const LoadMapAll::BotKind slotKind, const std::string &slotBaseName, const bool facadeOnly,
+        const LoadMapAll::BotKind slotKind, const std::string &slotBaseName,
         const unsigned int x, const unsigned int y,
         const unsigned int mapWidth, const unsigned int mapHeight,
         const std::pair<uint8_t,uint8_t> &pos,
@@ -833,9 +835,6 @@ static void placeCityBuilding(Tiled::Map &worldMap, MapBrush::MapTemplate &temp,
         buildingRect.h=temp.height;
         LoadMapAll::cityBuildingRects.push_back(buildingRect);
     }
-    if(facadeOnly)
-        LoadMapAll::brushFacade(temp,worldMap,x*mapWidth+pos.first,y*mapHeight+pos.second);
-    else
     {
         //a building with an interior. For a trainer building (gym) build a VALID
         //monster pool from an adjacent road tile (the city tile
@@ -876,9 +875,9 @@ static void placeCityBuilding(Tiled::Map &worldMap, MapBrush::MapTemplate &temp,
 }
 
 //street-front lots along the avenue (classic lot-subdivision town layout):
-//contiguous lots are filled CENTER-OUT on both frontages; the near (top)
-//frontage is for doored buildings (door opens on the avenue), the far (bottom)
-//frontage only takes doorless facades.
+//contiguous lots are filled CENTER-OUT on both frontages. On the near (top)
+//frontage the door opens straight onto the avenue; on the far (bottom) one the
+//door faces away and connectDoorFrontsToAvenue carves the way round.
 struct AvenueLotState
 {
     Tiled::Map *worldMap;
@@ -1037,7 +1036,7 @@ static void connectDoorFrontsToAvenue(AvenueLotState &lots, MapBrush::MapTemplat
 }
 
 static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
-        const LoadMapAll::BotKind slotKind, const std::string &slotBaseName, const bool facadeOnly,
+        const LoadMapAll::BotKind slotKind, const std::string &slotBaseName,
         LoadMapAll::City &city, const std::string &cityLowerCaseName,
         const SettingsAll::SettingsExtra &setting,
         const std::string &gymTypeName, const std::vector<std::string> &gymTypeMonsters,
@@ -1057,9 +1056,8 @@ static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
     int side=0;
     while(side<2)
     {
-        //doors face bottom: only the top frontage gives a door on the avenue
-        if(side==1 && !facadeOnly)
-            return false;
+        //doors face bottom: on the top frontage the door opens straight onto the
+        //avenue, on the bottom one connectDoorFrontsToAvenue carves the way round
         const int posY=(side==0) ? bandTopTile-(int)temp.height : bandBottomTile;
         if(posY>=holeTop && posY+(int)temp.height<=holeBottom)
         {
@@ -1095,12 +1093,12 @@ static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
                         }
                         cy++;
                     }
-                    if(valid && !facadeOnly)
+                    if(valid)
                         valid=cityDoorFrontsFree(lots,temp,posX,posY,false);
                     if(valid)
                     {
                         const std::pair<uint8_t,uint8_t> pos(posX,posY);
-                        placeCityBuilding(*lots.worldMap,temp,slotKind,slotBaseName,facadeOnly,
+                        placeCityBuilding(*lots.worldMap,temp,slotKind,slotBaseName,
                                           lots.chunkX,lots.chunkY,lots.mapWidth,lots.mapHeight,pos,
                                           city,cityLowerCaseName,setting,
                                           gymTypeName,gymTypeMonsters,variant);
@@ -1116,11 +1114,8 @@ static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
                             }
                             cy++;
                         }
-                        if(!facadeOnly)
-                        {
-                            cityDoorFrontsFree(lots,temp,posX,posY,true);
-                            connectDoorFrontsToAvenue(lots,temp,posX,posY);
-                        }
+                        cityDoorFrontsFree(lots,temp,posX,posY,true);
+                        connectDoorFrontsToAvenue(lots,temp,posX,posY);
                         if(goRight)
                             rightCursor=posX+(int)temp.width+1;
                         else
@@ -1143,29 +1138,6 @@ static bool placeOnAvenueLot(AvenueLotState &lots, MapBrush::MapTemplate &temp,
         side++;
     }
     return false;
-}
-
-void LoadMapAll::brushFacade(const MapBrush::MapTemplate &mapTemplate, Tiled::Map &worldMap,
-                             const int &tileX, const int &tileY)
-{
-    //hide the door objects: brushTheMap skips objects whose cell has no tile, so
-    //the facade is drawn without any working door (no content behind it)
-    std::vector<Tiled::MapObject*> doors=getDoorsListAndTp(mapTemplate.tiledMap);
-    std::vector<Tiled::Cell> oldCells;
-    unsigned int index=0;
-    while(index<doors.size())
-    {
-        oldCells.push_back(doors.at(index)->cell());
-        doors.at(index)->setCell(Tiled::Cell());
-        index++;
-    }
-    MapBrush::brushTheMap(worldMap,mapTemplate,tileX,tileY,MapBrush::mapMask,true);
-    index=0;
-    while(index<doors.size())
-    {
-        doors.at(index)->setCell(oldCells.at(index));
-        index++;
-    }
 }
 
 static void writeGymTsx(const QString &destDir, const QString &fileName, const QString &tilesetName)
@@ -2778,9 +2750,9 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         std::cerr << "No template/<style>-city/ folder at all" << std::endl;
                         abort();
                     }
+                    int houseNumber=1;
                     {
                         int lastVariant=-1;
-                        int houseNumber=1;
                         for(int i=0; i<building; i++){
                             int variantIndex=customRand("house-variant")%styleGroup->variants.size();
                             if(variantIndex==lastVariant && styleGroup->variants.size()>1)
@@ -2814,8 +2786,6 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                         if((zoneOrientation & LoadMapAll::Orientation_top) != 0){
                             startingPoint.push_back(std::pair<uint8_t, uint8_t>(scaleWidth/2, 0));
                         }
-
-                        bool interiorHouseDone=false;
 
                         //street-front lot state: the random zones only cover part
                         //of the town, so lots recheck the GROUND directly (the
@@ -2879,16 +2849,6 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             const BotKind slotKind=templateKind.at(templateIndex);
                             const std::string &slotBaseName=templateBaseName.at(templateIndex);
                             const BuildingVariant * const slotVariant=templateVariant.at(templateIndex);
-                            //big city: most FILLER houses are doorless facades (no
-                            //content), ONE keeps its door and its interior. The slot
-                            //is spent only once that doored house REALLY landed: a
-                            //first house that finds no free lot used to consume it
-                            //anyway, and the whole town then had nothing to enter but
-                            //the heal/shop/gym. A "special-N" building is not a filler
-                            //house: it carries content and always keeps its door.
-                            const bool fillerHouse=(slotKind==BotKind_text
-                                    && slotBaseName.compare(0,6,"house-")==0);
-                            const bool facadeOnly=(isBigCity && fillerHouse && interiorHouseDone);
                             bool placed=false;
                             //ORDERED placement, every city size: street-front lots
                             //filled center-out so the buildings line up along the
@@ -2896,7 +2856,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             //small town then reads as a village, not as a field
                             //with one house in it)
                             if(haveHorizontalBand)
-                                placed=placeOnAvenueLot(lots,temp,slotKind,slotBaseName,facadeOnly,
+                                placed=placeOnAvenueLot(lots,temp,slotKind,slotBaseName,
                                                         *city,cityLowerCaseName,setting,
                                                         gymTypeName,gymTypeMonsters,*slotVariant);
                             int i=0;
@@ -2956,11 +2916,11 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
 
                                         //a doored building stays enterable: the
                                         //doorstep tiles must be free ground
-                                        if(valid && !facadeOnly)
+                                        if(valid)
                                             valid=cityDoorFrontsFree(lots,temp,pos.first,pos.second,false);
 
                                         if(valid){
-                                            placeCityBuilding(worldMap,temp,slotKind,slotBaseName,facadeOnly,
+                                            placeCityBuilding(worldMap,temp,slotKind,slotBaseName,
                                                               x,y,mapWidth,mapHeight,pos,*city,cityLowerCaseName,
                                                               setting,gymTypeName,gymTypeMonsters,*slotVariant);
                                             cityDensityAccount(lots,temp);
@@ -2972,11 +2932,8 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                                     map[tx+ty*scaleWidth] = 5;
                                                 }
                                             }
-                                            if(!facadeOnly)
-                                            {
-                                                cityDoorFrontsFree(lots,temp,pos.first,pos.second,true);
-                                                connectDoorFrontsToAvenue(lots,temp,pos.first,pos.second);
-                                            }
+                                            cityDoorFrontsFree(lots,temp,pos.first,pos.second,true);
+                                            connectDoorFrontsToAvenue(lots,temp,pos.first,pos.second);
                                             placed=true;
                                             break;
                                         }
@@ -2991,12 +2948,6 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                                     }
                                 }
                             }
-
-                            //the ONE doored house of a big city is spent here, not
-                            //at the decision above: a house that never found a lot
-                            //must leave the slot to the next one
-                            if(placed && fillerHouse && !facadeOnly)
-                                interiorHouseDone=true;
 
                             if(!placed && i >= limit && slotKind == BotKind_heal){
                                 Tiled::ObjectGroup* moving = LoadMap::searchObjectGroupByName(worldMap, "Moving");
@@ -3023,27 +2974,27 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
                             templateIndex++;
                         }
 
-                        //a town the player can only look at is a bug: say so rather
-                        //than ship it silently
-                        if(isBigCity && !interiorHouseDone)
-                            std::cerr << "City " << city->name << " has no house the player can enter"
-                                      << " (every filler house was drawn as a facade)" << std::endl;
-
                         //big city: fill the remaining street-front lots with extra
-                        //doorless facades so the avenue reads as a dense main street
+                        //HOUSES so the avenue reads as a dense main street. They are
+                        //full buildings like the others: the art draws a door, so a
+                        //copy standing there with nothing behind it is a door the
+                        //player walks into for nothing
                         if(isBigCity && haveHorizontalBand)
                         {
-                            int extraFacades=4+customRand("facade-count")%4;
+                            int extraHouses=4+customRand("extra-house-count")%4;
                             bool lotsLeft=true;
-                            while(extraFacades>0 && lotsLeft)
+                            while(extraHouses>0 && lotsLeft)
                             {
-                                const BuildingVariant &facadeVariant=
-                                    styleGroup->variants.at(customRand("facade-variant")%styleGroup->variants.size());
-                                MapBrush::MapTemplate facadeTemplate=facadeVariant.mapTemplate;
-                                lotsLeft=placeOnAvenueLot(lots,facadeTemplate,BotKind_text,std::string(),true,
+                                const BuildingVariant &extraVariant=
+                                    styleGroup->variants.at(customRand("extra-house-variant")%styleGroup->variants.size());
+                                MapBrush::MapTemplate extraTemplate=extraVariant.mapTemplate;
+                                lotsLeft=placeOnAvenueLot(lots,extraTemplate,BotKind_text,
+                                                          "house-"+std::to_string(houseNumber),
                                                           *city,cityLowerCaseName,setting,
-                                                          gymTypeName,gymTypeMonsters,facadeVariant);
-                                extraFacades--;
+                                                          gymTypeName,gymTypeMonsters,extraVariant);
+                                if(lotsLeft)
+                                    houseNumber++;
+                                extraHouses--;
                             }
                         }
 

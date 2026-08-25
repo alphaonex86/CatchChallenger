@@ -372,10 +372,6 @@ public:
     //gym-<type>.png/.tsx into dest/map/tileset/ (the lower sprite parts sit exactly
     //128px below their position in the building and act as the recolor mask)
     static void generateGymTilesets(const SettingsAll::SettingsExtra &setting);
-    //brush only the building exterior, skipping its door objects: a facade
-    //building without content (big city filler)
-    static void brushFacade(const MapBrush::MapTemplate &mapTemplate, Tiled::Map &worldMap,
-                            const int &tileX, const int &tileY);
     //avenue/plaza ground derived from a city template tmx: Walkable fill tile +
     //OnGrass 3x3 border ring, translated to WORLD tileset cells
     struct CityGround
