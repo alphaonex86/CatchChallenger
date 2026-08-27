@@ -407,6 +407,30 @@ def check_objects(path, text, problems, warnings, fixes):
                                  " (bot id " + props.get("id", "?") +
                                  ") - the generator remaps it to the role "
                                  "skin of settings.ini"))
+    #the engine recognises a teleport ONLY by its type (Map_loaderMain.cpp
+    #reads "teleport on push"/"teleport on it"/"door"), so a Moving object
+    #carrying map+x+y with NO type is a door that lost its type: it shows in
+    #Tiled, it points somewhere, and in game it does nothing. Typing it here
+    #also stops fix_variant adding a SECOND door beside it, which left the
+    #dead one behind in every map the template is stamped into.
+    for start, end, block in reversed(object_blocks(text, "Moving")):
+        props = properties(block)
+        if object_type(block) is None and "map" in props and "x" in props \
+                and "y" in props:
+            fixes.append((path, "door object to " + props["map"] +
+                          " had no type - the engine ignored it, now "
+                          "type=\"teleport on push\""))
+            patched = re.sub(r'(<object id="\d+")',
+                             r'\1 type="teleport on push"', block, count=1)
+            text = text[:start] + patched + text[end:]
+        elif object_type(block) is None:
+            #no type and no target either: the engine can only answer
+            #"Unknown type:" on stderr every time it loads the map, and the
+            #generator stamps the template into every town that uses it
+            fixes.append((path, "object of the Moving group with no type and "
+                          "no target dropped - the engine only logged "
+                          "\"Unknown type\" for it"))
+            text = text[:start] + text[end:]
     for bot_id, count in seen_ids.items():
         if count > 1:
             warnings.append((path, "bot object id " + bot_id + " used " +

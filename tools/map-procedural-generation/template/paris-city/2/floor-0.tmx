@@ -28,7 +28,7 @@
  <objectgroup id="5" name="Moving">
   <object id="42" type="teleport on push" gid="624" x="48" y="160" width="16" height="16">
    <properties>
-    <property name="map" value="floor-0"/>
+    <property name="map" value="building-house"/>
     <property name="x" value="3"/>
     <property name="y" value="10"/>
    </properties>
