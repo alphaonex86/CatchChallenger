@@ -1,0 +1,674 @@
+{
+  "batch_id": "1fa1d3f9772541f9a982d4da3b5a5948",
+  "benchmark": "benchmarkclientlatency",
+  "comment": "",
+  "commit": "801dbbf2b54e133edba3e6887f7f5f7190a8bd69",
+  "date": "2026-08-22T04:05:53Z",
+  "ended_utc": "2026-08-22T04:05:53Z",
+  "nodes": {
+    "atom-n270": {
+      "arch": "i686",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "9.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.1"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.2.13"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.4"
+        }
+      },
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 23726566.40606289,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 17794924.80454717,
+          "stddev": 5931641.601515722,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "atom-n455": {
+      "arch": "x86_64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 11863283.203031445,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 50418953.61288364,
+          "stddev": 44487312.01136792,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 11863283.203031445,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "celeron-b820": {
+      "arch": "x86_64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 5931641.601515722,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 118632832.03031445,
+          "stddev": 71179699.21818867,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 24468021.606252354,
+          "stddev": 22985111.205873426,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 4448731.201136792,
+          "stddev": 1482910.4003789306,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 118632832.03031445,
+          "stddev": 71179699.21818867,
+          "unit": "ns"
+        }
+      }
+    },
+    "cubieboard-2": {
+      "arch": "armv7",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 11863283.203031445,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 35589849.60909434,
+          "stddev": 11863283.203031445,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 100837907.22576728,
+          "stddev": 88974624.02273583,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 11863283.203031445,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 35589849.60909434,
+          "stddev": 11863283.203031445,
+          "unit": "ns"
+        }
+      }
+    },
+    "fitxlan": {
+      "arch": "x86_64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 11863283.203031445,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 26692387.206820752,
+          "stddev": 20760745.605305027,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 11863283.203031445,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "geode": {
+      "arch": "i686",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "10.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 29658208.00757861,
+          "stddev": 17794924.80454717,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 17794924.80454717,
+          "stddev": 5931641.601515722,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 29658208.00757861,
+          "stddev": 17794924.80454717,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "local": {
+      "arch": "amd64",
+      "libs": {},
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 741455.2001894653,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 741455.2001894653,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "odroid-c2": {
+      "arch": "aarch64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 11863283.203031445,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 71179699.21818867,
+          "stddev": 23726566.40606289,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 11863283.203031445,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "pentium-3": {
+      "arch": "i686",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "9.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.1"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.2.13"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.4"
+        }
+      },
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "rpi-3": {
+      "arch": "aarch64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 5931641.601515722,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 142359398.43637735,
+          "stddev": 47453132.81212578,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 8897462.402273584,
+          "stddev": 2965820.800757861,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "rpi-4": {
+      "arch": "aarch64",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 5931641.601515722,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 25209476.80644182,
+          "stddev": 22243656.00568396,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 5931641.601515722,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    },
+    "rpi-zero-w": {
+      "arch": "armv6",
+      "libs": {
+        "blake3": {
+          "source": "vendored",
+          "version": null
+        },
+        "tinyxml2": {
+          "source": "system",
+          "version": "11.0.0"
+        },
+        "xxhash": {
+          "source": "system",
+          "version": "0.8.3"
+        },
+        "zlib": {
+          "source": "system",
+          "version": "1.3.1"
+        },
+        "zstd": {
+          "source": "system",
+          "version": "1.5.7"
+        }
+      },
+      "metrics": {
+        "chat_p50_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "chat_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "join_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p50_ns": {
+          "better": "lower",
+          "median": 47453132.81212578,
+          "stddev": 0.0,
+          "unit": "ns"
+        },
+        "rtt_p99_ns": {
+          "better": "lower",
+          "median": 94906265.62425156,
+          "stddev": 0.0,
+          "unit": "ns"
+        }
+      }
+    }
+  },
+  "started_utc": "2026-08-22T03:37:40Z"
+}
