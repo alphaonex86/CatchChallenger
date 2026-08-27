@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="4" height="5" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="9">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="4" height="6" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="10">
  <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
  <tileset firstgid="17" source="../../../tileset/heal4.tsx"/>
- <tileset firstgid="1111" source="../../../tileset/building-small.tsx"/>
- <tileset firstgid="2135" source="../../../tileset/houses2.tsx"/>
- <tileset firstgid="2819" source="../../../tileset/building3.tsx"/>
- <tileset firstgid="3275" source="../../../tileset/desert.tsx"/>
- <tileset firstgid="3339" source="../../../tileset/desert2.tsx"/>
- <tileset firstgid="3359" source="../../../tileset/desert3.tsx"/>
- <layer id="4" name="OnGrass" width="4" height="5">
+ <tileset firstgid="87" source="../../../tileset/building-small.tsx"/>
+ <tileset firstgid="1111" source="../../../tileset/houses2.tsx"/>
+ <tileset firstgid="1795" source="../../../tileset/building3.tsx"/>
+ <tileset firstgid="2251" source="../../../tileset/desert.tsx"/>
+ <tileset firstgid="2315" source="../../../tileset/desert2.tsx"/>
+ <tileset firstgid="2335" source="../../../tileset/desert3.tsx"/>
+ <layer id="4" name="OnGrass" width="4" height="6">
   <data encoding="base64" compression="zlib">
-   eJxjYMAE+1kZGOYD8QJWCP8+K0TsAJT/nxUi9gDKl2eDiIEAACKPCHE=
+   eJxjYMAE+xkZGOYD8QJGCP8+I0TsAJT/nxEi9gDKl2eCiGEDAKEbCEU=
   </data>
  </layer>
- <layer id="1" name="Collisions" width="4" height="5">
+ <layer id="1" name="Collisions" width="4" height="6">
   <data encoding="base64" compression="zlib">
-   eJxVw8cNACAQBLFtAJGOHPovk/liydLPOykwMjHTWFjZ2Dk4ubh5ePkARaACOQ==
+   eJxlw7cNACAABLFvqcg57D8m1yIsWXpZIzl6BkYmZhZWNnYOTi5uHqPPBVzwAfk=
   </data>
  </layer>
- <layer id="2" name="WalkBehind" width="4" height="5">
+ <layer id="2" name="WalkBehind" width="4" height="6">
   <data encoding="base64" compression="zlib">
-   eJzj5mVg4AFiXiDmA2JiwX9WCIYBeTYIBgBL2gK5
+   eJzj5mRg4AFiXiDmA2JiwX9GCIYBeSYIRgcAcAoCmQ==
   </data>
  </layer>
  <objectgroup id="3" name="Moving">
-  <object id="8" type="teleport on push" gid="4" x="32" y="80" width="16" height="16">
+  <object id="9" type="teleport on push" gid="3" x="16" y="80" width="16" height="16">
    <properties>
     <property name="map" value="floor-0"/>
     <property name="x" value="3"/>

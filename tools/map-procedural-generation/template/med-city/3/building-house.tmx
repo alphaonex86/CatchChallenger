@@ -1,27 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="5" height="7" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="9">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="5" height="8" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="10">
  <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
  <tileset firstgid="17" source="../../../tileset/heal4.tsx"/>
-
- <tileset firstgid="1111" source="../../../tileset/building-small.tsx"/>
- <tileset firstgid="2135" source="../../../tileset/mediteranian.tsx"/>
- <layer id="4" name="OnGrass" width="5" height="7">
+ <tileset firstgid="87" source="../../../tileset/building-small.tsx"/>
+ <tileset firstgid="1111" source="../../../tileset/mediteranian.tsx"/>
+ <layer id="4" name="OnGrass" width="5" height="8">
   <data encoding="base64" compression="zlib">
-   eJxjYCAMDrPil2dkI8IQIgAAU7kA0A==
+   eJxjYCAMDjPil2dkIsIQMgEAYKEAyA==
   </data>
  </layer>
- <layer id="1" name="Collisions" width="5" height="7">
+ <layer id="1" name="Collisions" width="5" height="8">
   <data encoding="base64" compression="zlib">
-   eJxlw00WQgAYAMDPUkvUFUJXIK5A3H/rpyskszfvTcTVkkasbu5+/Xn4N24RiZm5hXcfPi2trH3Z2Pq2s3dw9OPk7AniCQy4
+   eJxtzrsRggAUAMFHIAUo0AIiLQjaAr/+UxRaQNgcb2bzizg3XyI+fFlY2fixE2lEwpUbGTkFJXcqHtQ8aWh58aajZ2BkSv+M6AC6gAxA
   </data>
  </layer>
- <layer id="2" name="WalkBehind" width="5" height="7">
+ <layer id="2" name="WalkBehind" width="5" height="8">
   <data encoding="base64" compression="zlib">
-   eJy7zMnAcAWIrwLxNSC+DsTUAA5sCHY8GwQTAgBozwVn
+   eJy7zMrAcAWIrwLxNSC+DsTUAA5MCHY8EwSTAwDGKwVH
   </data>
  </layer>
  <objectgroup id="3" name="Moving">
-  <object id="8" type="teleport on push" gid="4" x="32" y="112" width="16" height="16">
+  <object id="9" type="teleport on push" gid="3" x="48" y="112" width="16" height="16">
    <properties>
     <property name="map" value="floor-0"/>
     <property name="x" value="3"/>

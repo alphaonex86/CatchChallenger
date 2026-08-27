@@ -1,53 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="15" height="8" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="6">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="15" height="9" tilewidth="16" tileheight="16" infinite="0" nextlayerid="9" nextobjectid="6">
  <properties>
   <property name="type" value="indoor"/>
  </properties>
  <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
  <tileset firstgid="17" source="../../../tileset/heal.tsx"/>
  <tileset firstgid="397" source="../../../tileset/heal3.tsx"/>
- <layer id="1" name="Walkable" width="15" height="8">
+ <tileset firstgid="1348" source="../../../tileset/indoor.tsx"/>
+ <layer id="1" name="Walkable" width="15" height="9">
   <data encoding="base64" compression="zlib">
-   eJxjYBg48IwRlY0NYwO70ORx6cWmfxcetdj0wujrjKTpRTbjLZF60f2C7ObvQPwDiH8C8S8g/g3Ef4D4LxD/wxFOIAAAlXc6aA==
+   eJxjYBg48IwRlY0NYwO70ORx6cWmfxcetdj0wujrjKTpRTbjLZF60f2C7ObvQPwDiH8C8S80ff9whBOlAAAt8Tom
   </data>
  </layer>
- <layer id="2" name="Other" width="15" height="8">
+ <layer id="2" name="Other" width="15" height="9">
   <data encoding="base64" compression="zlib">
-   eJxjYBhZgJVpaNoL00+qOQAOiAAd
+   eJxjYBhZgJVpaNoL0w+jj7AyMBwF4mOslJmLDwAA+H0Cew==
   </data>
  </layer>
- <layer id="3" name="Collisions" width="15" height="8">
+ <layer id="3" name="Collisions" width="15" height="9">
   <data encoding="base64" compression="zlib">
-   eJytzctKggEQBtBf8/XLLDU1rbynkZe8tvCO1QNUT2Ju9Qi6aZNCHxyGgW+Y81AQXBDlkhhXXBMnQZIbUqTJcEuWHHfc80CeAkVKlKlQ5ZEadZ7Y5dls0KRFmxc6dOnRZ8CQ1/3dISP7mAlTZsxZ7HtL8413Pn7d/pVP/S++T7z7r6z8/WF9xP/NrhMOghBhzoiwBTBCKwU=
+   eJytzUlOQlEQBdD/ge0DSm8vICgQARVsBgpqRBYgrASY6iH5TpjQhJuc1HtJ3VQyDIIUaQ44JEOWHHkKFClxxDEnnHLGORdcUqZClStq1LnmhgZNWixza7bp0OWOex7o0eeRJ555iXr/efV/Y8CQdz74jPa+zBHfjFe66/Jjf8J0y96+MnN3zmKD+7/LnVgQhMSIk4jeu/oDTWYrQQ==
   </data>
  </layer>
- <layer id="4" name="Other" width="15" height="8">
+ <layer id="4" name="Other" width="15" height="9">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFwxkAAAHgAAE=
+   eJxjYBgFowA7AAACHAAB
   </data>
  </layer>
- <layer id="5" name="WalkBehind" width="15" height="8">
+ <layer id="5" name="WalkBehind" width="15" height="9">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFtARPGWmjllgAAMBWAc0=
+   eJxjYBgFtARPGWmjlh4AACxxAc0=
   </data>
  </layer>
- <layer id="6" name="other" width="15" height="8">
+ <layer id="6" name="other" width="15" height="9">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFwxkAAAHgAAE=
+   eJxjYBgFowA7AAACHAAB
   </data>
  </layer>
  <objectgroup id="7" name="Moving">
-  <object id="1" type="teleport on push" gid="3" x="96" y="128" width="16" height="16">
+  <object id="1" type="teleport on push" gid="3" x="96" y="144" width="16" height="16">
    <properties>
     <property name="map" value="building-heal"/>
     <property name="x" type="int" value="3"/>
     <property name="y" type="int" value="6"/>
    </properties>
   </object>
-  
-  
  </objectgroup>
- <objectgroup name="Object">
+ <objectgroup id="8" name="Object">
   <object id="2" type="bot" gid="1" x="96" y="80" width="16" height="16">
    <properties>
     <property name="id" value="2"/>
@@ -55,10 +54,10 @@
     <property name="skin" value="nurse"/>
    </properties>
   </object>
-   <object id="3" type="bot" gid="1" x="144" y="64" width="16" height="16">
+  <object id="3" type="bot" gid="1" x="144" y="64" width="16" height="16">
    <properties>
     <property name="id" value="3"/>
    </properties>
   </object>
-</objectgroup>
+ </objectgroup>
 </map>

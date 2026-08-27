@@ -1,29 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="12" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="42">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="12" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="43">
  <properties>
   <property name="type" value="indoor"/>
  </properties>
-
  <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
- <tileset firstgid="4097" source="../../../tileset/indoor.tsx"/>
+ <tileset firstgid="17" source="../../../tileset/indoor.tsx"/>
  <layer id="1" name="Walkable" width="12" height="10">
   <data encoding="base64" compression="zstd">
-   KLUv/WDgAA0BAEgAAxIAAAIShREIAICGmQjgOOgrKfRUKNjJ+KykxUzuCg==
+   KLUv/WDgAA0BAEgAEwIAABIClQEIAICGmQjgOOgrKfRUKNjJ+KykxUzuCg==
   </data>
  </layer>
  <layer id="2" name="Walkable" width="12" height="10">
   <data encoding="base64" compression="zstd">
-   KLUv/WDgAN0BAAQCAAAAAB0QADgQAGkRAABqaxEAhBEAAH2GnxEAAKChEQAJABocNXad4lTIr2U/Jta4Zew6LUA6NIER
+   KLUv/WDgAC0CAIQCAAAAAC0ASAB5AQAAensBAJQBAACNlq8BAACwsQEAkQAAAJIAAACTAAoAC1AkOHTsOsWpkF+WnRlr3DJ2nR4gxZugCA==
   </data>
  </layer>
  <layer id="3" name="Collisions" width="12" height="10">
   <data encoding="base64" compression="zstd">
-   KLUv/WDgAJUCAKQDiRAAAB1TEAAApBAAAC8QAAA4bhAAAEkQAABKEAAASxAAUhEAXhAAAF8QAHkQAAB6EABOEAAAlxGXEQkgUMMDC7LC4OKhDJAR6ICxlvwuvxY=
+   KLUv/WDgAF0CAFQDmQAAAC1jAAAAtAAAAD8AAABIfgAAAFkAAABaAAAAWwBiAQBuAAAAbwCJAAAAigBeAAAApwEHIHDDA2+WD6qEioQOdBTI79JqAQ==
   </data>
  </layer>
  <layer id="4" name="WalkBehind" width="12" height="10">
   <data encoding="base64" compression="zstd">
-   KLUv/WDgADUBAKAAYhBHELMuEAAAmBAAADAQADcRAAYAfkAduOEvkd2EbQVrdE4I
+   KLUv/WDgAB0BAIgAclfDPgAAAKgAAABAAEcBAAYAfkAdOIcv5m4atpIJnbsC
   </data>
  </layer>
  <objectgroup id="5" name="Moving">
@@ -32,6 +31,13 @@
     <property name="map" value="building-house"/>
     <property name="x" value="3"/>
     <property name="y" value="7"/>
+   </properties>
+  </object>
+  <object id="42" type="teleport on push" gid="3" x="48" y="160" width="16" height="16">
+   <properties>
+    <property name="map" value="building-house"/>
+    <property name="x" value="2"/>
+    <property name="y" value="5"/>
    </properties>
   </object>
  </objectgroup>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="12" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="42">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" width="12" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="8" nextobjectid="43">
  <properties>
   <property name="type" value="indoor"/>
  </properties>
@@ -13,12 +13,12 @@
  </layer>
  <layer id="2" name="Walkable" width="12" height="10">
   <data encoding="base64" compression="zstd">
-   KLUv/WDgAJ0BAMgAPABpAQAAamsBAIQBAAAfhp8BAACgoQEACQAaHDV2neJUyC/LDhVr3DJ2nR4gRXA6Ng==
+   KLUv/WDgAA0CADQCADwAaQEAAGprAQCEAQAAH4afAQAAoKEBAIEAAACCAAAAgwAKIFACWuEBiyIhOk6nOIn8lx1jzWXsTo8UwdnZ
   </data>
  </layer>
  <layer id="3" name="Collisions" width="12" height="10">
   <data encoding="base64" compression="zstd">
-   KLUv/WDgAF0CAOQCiQAAAB1TAAAApAAAADhuAAAASQAAAEoASwBSAQABAAABGwEAABwBAE4AlwGXAQsgIIPOAxe0wmA8E0s0NTxNMtHRYsCI8rjUWg==
+   KLUv/WDgADUCAMQCiQAAAB1TAAAApAAAADhuAAAASQAAAEoASwBSAQABAAABGwEAABwBAE4AlwEJAO9MPDCxxFPDE0wyAB3AYhyMgPK4dFo=
   </data>
  </layer>
  <layer id="4" name="WalkBehind" width="12" height="10">
@@ -27,7 +27,7 @@
   </data>
  </layer>
  <objectgroup id="5" name="Moving">
-  <object id="41" type="teleport on push" gid="1081" x="48" y="160" width="16" height="16">
+  <object id="42" type="teleport on push" gid="1080" x="48" y="160" width="16" height="16">
    <properties>
     <property name="map" value="building-house"/>
     <property name="x" value="3"/>
