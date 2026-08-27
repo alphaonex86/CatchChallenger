@@ -1114,6 +1114,29 @@ _SPAM_RE = {
 }
 
 
+_BOT_STATE_RE = re.compile(r"^\[([^\]]+)\] ([A-Z_]+)(.*)$", re.M)
+
+
+def _stuck_bot_states(text):
+    """[(state, how many bots ended there)] for the bots that never reached the
+    map, most frequent first.
+
+    bot-bench prints "[<label>] <STATE>" on every transition, so the LAST line
+    of a bot is where it stopped. A bot that failed also carries its reason on
+    that line, which is kept: "SELECTING_CHARACTER" and "FAILED no free query
+    number" are very different answers to "why is the crowd short"."""
+    last = {}
+    for match in _BOT_STATE_RE.finditer(text):
+        last[match.group(1)] = (match.group(2), (match.group(3) or "").strip())
+    counts = {}
+    for state, detail in last.values():
+        if state == "ON_MAP":
+            continue
+        key = state if not detail else state + " " + detail
+        counts[key] = counts.get(key, 0) + 1
+    return sorted(counts.items(), key=lambda kv: -kv[1])
+
+
 def _parse_spam_output(text):
     """Pull the saturation numbers out of a bot-bench run. Returns
     (metrics_dict, err_or_None) -- err when the run produced no REQ_PER_S line
@@ -1134,16 +1157,22 @@ def _parse_spam_output(text):
     if m is not None:
         out["bots_on_map"] = int(m.group(1))
         # A cell that seated FEWER bots than asked did not measure the workload
-        # its name says: its cpu_percent, wall_s and ctx-switch counts belong to
-        # the smaller crowd, and comparing them with a full cell reads as a huge
-        # regression (atom-n455 went 150 -> 107 bots and its wall_s "regressed"
-        # +748%). Say it out loud rather than let the numbers move on their own.
+        # its name says: its cpu_percent and wall_s belong to the smaller crowd,
+        # and comparing them with a full cell reads as a huge regression
+        # (atom-n455 went 150 -> 107 bots and its wall_s "regressed" +748%).
+        # Say it out loud rather than let the numbers move on their own, and say
+        # WHERE the missing bots stopped -- the client prints one line per state
+        # transition, so the last state of each is in this same output and the
+        # alternative is another run just to learn it.
         asked = int(m.group(2))
         if out["bots_on_map"] < asked:
             print(_color(bh.C_YELLOW,
                   f"[bots] only {out['bots_on_map']}/{asked} bots reached the "
                   f"map: this cell measured a SMALLER crowd, its resource "
                   f"metrics are not comparable with a full one"))
+            for state, count in _stuck_bot_states(text):
+                print(_color(bh.C_YELLOW,
+                      f"[bots]   {count} bot(s) stopped at {state}"))
     return out, None
 
 
