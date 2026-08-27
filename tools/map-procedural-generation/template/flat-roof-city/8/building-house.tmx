@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="11" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="9">
+<map version="1.10" tiledversion="1.11.0" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="11" height="10" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="10">
  <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
  <tileset firstgid="17" source="../../../tileset/heal4.tsx"/>
- <tileset firstgid="1111" source="../../../tileset/building-small.tsx"/>
- <tileset firstgid="2135" source="../../../tileset/houses2.tsx"/>
- <tileset firstgid="2819" source="../../../tileset/building3.tsx"/>
+ <tileset firstgid="87" source="../../../tileset/building-small.tsx"/>
+ <tileset firstgid="1111" source="../../../tileset/houses2.tsx"/>
+ <tileset firstgid="1795" source="../../../tileset/building3.tsx"/>
  <layer id="4" name="OnGrass" width="11" height="10">
   <data encoding="base64" compression="zlib">
-   eJxjYKAMLGJlYFjMSr7+Wh4I/R9oxn0gfgDED3GYB1NLirn2bAwM8mzEqSXF3EAeTEwNc9FBKlA8Aw1nATEANLQNtA==
+   eJxjYKAMLGJkYFjMSL7+Wg4I/R9oxn0gfgDED3GYB1NLirn2TAwM8kzEqSXF3EAOTEwNc9FBKlA8Aw1nATEA8a0NTA==
   </data>
  </layer>
  <layer id="1" name="Collisions" width="11" height="10">
   <data encoding="base64" compression="zlib">
-   eJyVyrcOgmAUhuETKwqrBcuO3UuwXALoPdtxt+su2Fh5N/6BhHiSJ/mS84r8dwtdZIkV1thgix1c7PWoPbCPOOGMC6644Y6H0j7ZHny88MYHX/wQKG3KEEkjgyxyyENDAUUjakvsMiqowkQNdTTQVFqL3UIbHXTRQx8DDJU27kb8x5hgmtDa/B3MME9o4y4EibwfaQ==
+   eJyVyjcOwkAQRuGRwexCbzI92KQjEI5AuDMZetvEngwtr/MWlixG+qRfmify382UyBwLLLHCGhtssVNR67MDhNjjgCNOOONitFf2DXc88MQLb3zwNVpLi6SQho0MFDSyyOmoddh5FFBECWVUUEXNaOvsBlx4aKKFNjroGm3c9fj3McAwoR3xH2OCaUIbdz+gNR5x
   </data>
  </layer>
  <layer id="2" name="WalkBehind" width="11" height="10">
   <data encoding="base64" compression="zlib">
-   eJzbys3AsA2ItwPxDiDeCcS7gHg3EO8B4r1AvA+I9wPxCSAmBlwCqruNpvYBKwPDQ1ZMtU+B6t5hMZeRDVPsB1AdIw+ELc8GwSCgiEUtN1CdCFStPRsE4wJyQHUKQBzPhsAJONQbQs2sZ0PgBpD5PJhqXbCIgUAQDnFSAAArVBZB
+   eJzbys7AsA2ItwPxDiDeCcS7gHg3EO8B4r1AvA+I9wPxCSAmBlwCqruNpvYBIwPDQ0ZMtU+B6t5hMZeRCVPsB1AdIweELc8EwSCgiEUtN1CdCFStPRME4wJyQHUKQBzPhMAJONQbQs2sZ0LgBpD5HJhqXbCIgUAQDnFSAAB6XRWZ
   </data>
  </layer>
  <objectgroup id="3" name="Moving">
-  <object id="8" type="teleport on push" gid="4" x="80" y="112" width="16" height="16">
+  <object id="9" type="teleport on push" gid="3" x="48" y="112" width="16" height="16">
    <properties>
     <property name="map" value="floor-0"/>
-    <property name="x" value="8"/>
-    <property name="y" value="11"/>
+    <property name="x" value="3"/>
+    <property name="y" value="9"/>
    </properties>
   </object>
  </objectgroup>

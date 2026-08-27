@@ -8,6 +8,7 @@
  <tileset firstgid="1041" source="../../tileset/inside-decoration.tsx"/>
  <tileset firstgid="2065" source="../../tileset/inside-mobilier.tsx"/>
  <tileset firstgid="3089" source="../../tileset/rename.tsx"/>
+ <tileset firstgid="4113" source="../../tileset/indoor.tsx"/>
  <layer id="1" name="Walkable" width="11" height="12">
   <data encoding="base64" compression="zlib">
    eJxrYmBgaBrFoxiKAaxrQwk=
@@ -15,7 +16,7 @@
  </layer>
  <layer id="2" name="Other" width="11" height="12">
   <data encoding="base64" compression="zlib">
-   eJxjYBgFowABAAIQAAE=
+   eJxjYBgFIw1MFGBgmATEkwUw5QAvaAHn
   </data>
  </layer>
  <layer id="3" name="Collisions" width="11" height="12">

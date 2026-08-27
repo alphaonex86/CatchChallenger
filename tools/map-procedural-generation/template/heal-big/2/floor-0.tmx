@@ -6,19 +6,20 @@
  <tileset firstgid="1" source="../../../tileset/invisible.tsx"/>
  <tileset firstgid="17" source="../../../tileset/heal.tsx"/>
  <tileset firstgid="397" source="../../../tileset/heal2.tsx"/>
+ <tileset firstgid="1623" source="../../../tileset/indoor.tsx"/>
  <layer id="1" name="Walkable" width="25" height="21">
   <data encoding="base64" compression="zlib">
-   eJzd0klIVVEYwPF736VFamqDSS6Ccp41NUsrbbSCoGjSRiuQ1CZttJnaadCsUAZNq5ZaLSqpkKBFVrusVRYtAheNppbS//HO5X4d3rtPcdeBH+f77vnOd8679xnG/zEem4bxBE9NX96u5memU/Pc/HfPCy1/reX6KPI4/OXv2d+l9fik5Z9F3h3gPLufPXpEXR/xNNZzkKvqBtW6/Vyuj9J6eUcIz0IRptbCmSMQ6ac2Sj2LVvMk5hg/dfqIpSYO8UhAIpKQrPamMqchHRnIRBaytfvnYTryMQMzUYBCcQf7GxRr91rhGTk5SsnLhvDb3UYl+6tcetSwVjvCM06x/7RLj3rWGnBG1JwlPofzuICLuITLaESTqL1CfBXNuCaeXye+gZu4hdt4g07tLneC5C3krbiLe7gv1uMsw3hA/hCP0BbgjPYgeYfH8RKvVJxiOefIM+0z3uJdkO/zgfWPon+x6JViBd73hdqv+Ibv+IGf6MEv9KIP/fiNPxjA4DD+L6M5PwShCMMYhCMCkRiLcRiPCYjCRES73HuyWJtCPBWxlu+9xSMBiUhCsuV7B6lIQzoykIksZIteuSLOV/28ClCIWZiNOSiyfO95LuZhPhZgIRahBIuxBEtVrdcyccZyEa8kXoXVWIO1KEUZ1mE9NmAjNmEzyrEFW7FN9KpQ8XbmSlShGjuwE7uwG3tQg1rsxT7sxwEcxCHU4TCO4CiO4ThO4KTLN/I32kzHcMZfvp50Ew==
+   eJzd0klIVVEYwPF736VFzg0mugic5zHTUlObBwiKJm0eINS00kU2K7aroLmgAZpWLm1YVFIhQYs0dw0rK1oILWyyrBT/j3cu9+vw3n2Juw78ON93z3e+c969zzD+j/HYNIwneGr68i41PzOdmufm33teaHmvluujwuPwl/ex/53W46OW94v8U4Dz7H72GBR1Q8QFrM9AoaobUev2c7k+QevlHSE8C0WYWotgjkSUn9po9SxGzbHMcX7q9JFITRKSkYJUpCFd7c1kzkI2cpCLPORr95+JIhRjFmajBKXiDvY3qNTutdIzfnJUkVf/w293G7Xsr3Pp0cha0zjPaGP/MZcex1k7gZOi5hTxaZzBWZzDeVzARVwStZeJr+Aqronn14lv4CZu4TZe4bV2l/YgeQf5HdzFPdwX60mWYTwgf4hH6AxwRleQvNvj6MFLFWdYzjnyTPuMN3gb5Pu8Z/2D6F8pemVYgfcNUPsZX/AV3/Adg/iBnxjCL/zGHwxjZAz/l4mcH4JQhCEcEYhEFCZhMqZgKqIxDTEu954u1uKJE5Bo+d5bMlKQijSkW753kIksZCMHuchDvuhVKOJi1c+rBKUowxyUo8Lyvee5mIf5WICFWITFWIKlWKZqvZaLM1aIeBXxaqzBWqxDFaqxHhuwEZuwGVuwFduwHTtEr50qrmGuRR12oR4N2I092ItGNGGfphn7cQAHcQiHcQRH0YJWl2/kb3SajrGMUcI2dBk=
   </data>
  </layer>
  <layer id="2" name="Other" width="25" height="21">
   <data encoding="base64" compression="zlib">
-   eJxjYKAdMGVjYDBjo6EFQBAKND+MxnYMF3+MglEwCigHXYwD7YJRMAoGDgAArAkC6A==
+   eJxjYKAdMGVjYDBjo6EFQBAKND+MxnYMF3+MglEwCigHXYwD7YJRMNzBdWBdcAOIbw7COgEAN30Fgg==
   </data>
  </layer>
  <layer id="3" name="Collisions" width="25" height="21">
   <data encoding="base64" compression="zlib">
-   eJy10llI1FEUx/H/zJjagw8thLnXY49FPuVD9F4olFCZuGVgG6QpLaaQLdBM2aZWartarqWpuZASlUaK5lJqaRkpmktq5EvYVzgDf//4ZyZmuvDh3HvOnd8dB80GRbHgIi4hHZdxBVdxDdeRgUxk4QZu4haykYNc3MYd3MU93McDPEQe8lGAR3iMQhShGCUoRRme4CnKUYFnqEQVqvEcNahFHeqhXo1yfin1FfW17JuozXgr53fUFrTKuY3ajvfoQCe60I0P+Ige9Gre7Fedv7IfxDfpfacOYVjOI9RR2Y9RxzGBSfzEFKYxg19y7zd1VvPm/PojvblFZtblalQUN7hjqXHhzENzXsZ5OVZgpcxWSfVU3fVm7wNf+MEfAViDtZpM7VpnY27v2kROkCZrs/S2OOmN7eTsQKgqbyf7XdiNMOxBOCJEJKIQjRjsRSz2qTLi2O/HARzEIRxWzY+wj0cCjiIRSTgmjuMETiIZp5CCVFXGafZpOIOzOIfzmt/FzNli52+Vyb2sRe7m0Mu1kZHHPB8FOvdK6JeiTGdeSb/KxhsvmDegUefeG/pNaLaR0y7zDmqnzt1e+n34hM/oxwC+6Nwfoj8ssxHqKH5gDOOYcPD/dW7+8yZFMcAIE1ywBK5wg7vJsTc8+fxqeMEbPvCVTH9qgIP51rWenA2StZEa6KRcvbWV/G3yRjA1xEnvRZMTI1mx//lvsK46g/0u8J3MsJj+7XN/AQ31krg=
+   eJy10llIVFEcx/E7M+Xy4EMLYqlpPfpo2JM9RO9FgQpmhaUpZCZkGdkKLfrg2qK2aC6lljZjWVpplEilUqJp25Q7KupoZVEvYV/hP3C7eJmhmQ58+J/z/5/7OziYZVCUbOQgF3nIx3lcwEVcQgEKUYTLuIKruIZilOA6SlGGclTgBm6iElWoxi3cRg1qcQdmWFCHu7iHetzHAzSgEQ/xCI/RhGY8gXq1yLlV6nPqC9m3UdvRIedX1NfolHMXtRtv0INevMU7vMcHfIRV82a/6jzEfhgj0huljmFczhPUSdnbqNOYwRd8xTfM4jt+yL2f1F+aN+fXb+nNLTCzLw+jonjCC97Gv2c+mvMSzkuxDMtl5ivVT3XXn30AArEKQQjGaqzRZGpXiIO5syucnPWarA3S2+imNyLIiUSUKi+a/TbEYDt2YCdixS7sRhzisQcJSFRl7GWfhH1Ixn6kqOYH2KfiIA4hDYdxRKTjKI7hOE7gJE6pMk6zP4OzOIcMZGp+lyzO2U7+VoXcK1rgbjG9EgcZlcyrUK1zz0zfgjqdeQP9RgdvPGX+DC06917Sb0O7g5xumfdQe3XuWul/wmf0oR8DGNS5P0Z/XGYT1ElMwYZpzLj4/zo3/71JUQwwwoRFWAwPeMLL5Nobfny/AivhjwAESmYQNdjFfPsKJWetZIVR17kpV29tIn+zvLGFutVN78WREy9ZCf/5b7CvZoPz/vW7P7Y3kQg=
   </data>
  </layer>
  <layer id="4" name="Other" width="25" height="21">
@@ -51,20 +52,19 @@
     <property name="skin" value="nurse"/>
    </properties>
   </object>
-   <object id="4" type="bot" gid="1" x="128" y="208" width="16" height="16">
+  <object id="4" type="bot" gid="1" x="128" y="208" width="16" height="16">
    <properties>
     <property name="id" value="3"/>
    </properties>
   </object>
-</objectgroup>
+ </objectgroup>
  <objectgroup id="7" name="Moving">
-  <object id="1" type="teleport on push" gid="3" x="192" y="320" width="16" height="16">
+  <object id="1" type="teleport on push" gid="3" x="192" y="336" width="16" height="16">
    <properties>
     <property name="map" value="building-heal"/>
     <property name="x" type="int" value="3"/>
     <property name="y" type="int" value="9"/>
    </properties>
   </object>
-  
  </objectgroup>
 </map>
