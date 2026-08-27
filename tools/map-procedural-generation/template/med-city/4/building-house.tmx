@@ -20,7 +20,7 @@
   </data>
  </layer>
  <objectgroup id="3" name="Moving">
-  <object id="9" gid="3" x="48" y="112" width="16" height="16">
+  <object id="9" type="teleport on push" gid="3" x="48" y="112" width="16" height="16">
    <properties>
     <property name="map" value="floor-0"/>
     <property name="x" value="3"/>

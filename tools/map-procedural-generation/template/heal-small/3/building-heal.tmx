@@ -23,7 +23,7 @@
    <properties>
     <property name="map" value="floor-0"/>
     <property name="x" value="6"/>
-    <property name="y" value="6"/>
+    <property name="y" value="7"/>
    </properties>
   </object>
  </objectgroup>

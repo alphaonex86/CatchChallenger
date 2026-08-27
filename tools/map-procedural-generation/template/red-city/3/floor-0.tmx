@@ -30,7 +30,7 @@
    <properties>
     <property name="map" value="building-house"/>
     <property name="x" value="2"/>
-    <property name="y" value="6"/>
+    <property name="y" value="7"/>
    </properties>
   </object>
  </objectgroup>

@@ -46,7 +46,7 @@
   </data>
  </layer>
  <objectgroup id="7" name="Moving">
-  <object id="12" gid="1027" x="64" y="144" width="16" height="16">
+  <object id="12" type="teleport on push" gid="1027" x="64" y="144" width="16" height="16">
    <properties>
     <property name="map" value="building-shop"/>
     <property name="x" value="2"/>
