@@ -113,6 +113,29 @@ MXE_NINJA   = MXE_PREFIX + "/" + MXE_HOST + "/bin/ninja"
 MXE_HOST_BIN = MXE_PREFIX + "/" + MXE_HOST + "/bin"
 WINE_BIN    = shutil.which("wine64") or "/etc/eselect/wine/bin/wine64"
 
+# Dedicated wine prefix — NEVER the operator's ~/.wine. Two reasons:
+#   * the harness installs the shipped payload (~250 MiB) and runs the NSIS
+#     setup; that must not land next to the operator's real wine software.
+#   * its registry pins the graphics driver to NONE (see
+#     ensure_wine_prefix), which is the only way to guarantee no wine
+#     process EVER opens a window on the operator's desktop. Sanitising
+#     DISPLAY / XAUTHORITY / WAYLAND_DISPLAY in the child env is NOT
+#     enough: the NSIS setup re-launches itself outside the direct child
+#     and still reached the host display, popping the "Installation
+#     Folder" dialog in the middle of a production deploy.
+# PERSISTENT on disk, NOT tmpfs: in a brand-new prefix the first run of
+# each client rebuilds its AppData datapack cache, which blows past the
+# screenshot timeouts — paying that once ever beats paying it after every
+# reboot. Path comes from config.json (paths.wine_prefix).
+WINE_PREFIX_DIR = _tc.WINE_PREFIX
+
+# Bootstrap-only override: while the prefix is being created its registry
+# does not carry Graphics="" yet, so disable the display drivers by env for
+# those two commands. mscoree/mshtml=d additionally stops wineboot from
+# popping the wine-mono / wine-gecko installer dialog (and from reaching
+# the network to fetch them — tests run offline).
+WINE_BOOTSTRAP_OVERRIDES = "mscoree,mshtml=d;winex11.drv,winewayland.drv=d;"
+
 # Standard WINEDLLOVERRIDES applied to every wine64 launch performed
 # by this script. Three categories rolled into one string:
 #   - winedbg.exe=d   : disable wine's interactive crash dialog so an
@@ -323,6 +346,8 @@ def force_headless_env(env=None):
     # WINEDLLOVERRIDES (e.g. the WiX run that also disables mscoree/mshtml)
     # is preserved untouched.
     e.setdefault("WINEDLLOVERRIDES", WINE_DLLOVERRIDES_BASE)
+    # Every wine launch goes to the harness prefix, never ~/.wine.
+    e["WINEPREFIX"] = WINE_PREFIX_DIR
     return e
 
 
@@ -1871,7 +1896,10 @@ def build_msi(exe_path, label):
 
 
 def run_wine_client(exe_path, label, args, timeout=WINE_TIMEOUT,
-                    success_marker="MapVisualiserPlayer::mapDisplayedSlot()"):
+                    success_marker="MapVisualiserPlayer::mapDisplayedSlot()",
+                    record=True):
+    """record=False runs the client exactly the same way but reports the
+    outcome as INFO instead of a PASS/FAIL case — see warm_client_cache()."""
     name = f"wine run {label}"
     log_info(f"wine64 {os.path.basename(exe_path)} {' '.join(args)}")
     env = os.environ.copy()
@@ -1946,13 +1974,22 @@ def run_wine_client(exe_path, label, args, timeout=WINE_TIMEOUT,
         elapsed += step
 
     if found.is_set():
-        log_pass(name, f"reached map ({success_marker})")
+        if record:
+            log_pass(name, f"reached map ({success_marker})")
+        else:
+            log_info(f"{name}: reached map ({success_marker})")
         ok = True
     elif proc.poll() is None:
-        log_fail(name, f"timeout {timeout}s without success_marker")
+        if record:
+            log_fail(name, f"timeout {timeout}s without success_marker")
+        else:
+            log_info(f"{name}: timeout {timeout}s")
         ok = False
     else:
-        log_fail(name, f"exit code {proc.returncode} without success_marker")
+        if record:
+            log_fail(name, f"exit code {proc.returncode} without success_marker")
+        else:
+            log_info(f"{name}: exit code {proc.returncode}")
         ok = False
 
     if proc.poll() is None:
@@ -1968,7 +2005,7 @@ def run_wine_client(exe_path, label, args, timeout=WINE_TIMEOUT,
             except ProcessLookupError:
                 pass
             proc.wait(timeout=5)
-    if not ok:
+    if not ok and record:
         li = max(0, len(output_lines) - 30)
         while li < len(output_lines):
             print(f"  | {output_lines[li]}")
@@ -2157,10 +2194,68 @@ _INSTALLER_UI_WAIT_SEC = 30
 
 
 def _wine_prefix():
-    """Resolve the wine prefix the same way wine64 itself does:
-    $WINEPREFIX when set, else ~/.wine. The harness never sets
-    WINEPREFIX, so this is ~/.wine in practice."""
-    return os.environ.get("WINEPREFIX") or os.path.expanduser("~/.wine")
+    """The prefix every wine launch of this harness uses — the dedicated
+    WINE_PREFIX_DIR, pinned in force_headless_env(). Never ~/.wine."""
+    return WINE_PREFIX_DIR
+
+
+def ensure_wine_prefix():
+    """Create WINE_PREFIX_DIR (once) with NO graphics driver.
+
+    HKCU\\Software\\Wine\\Drivers "Graphics" = "" makes wine load no
+    display driver at all: user32 falls back to the null driver, GUI
+    programs still run and still pump messages, but no window can reach
+    the host X / Wayland server. This is a property of the PREFIX, so it
+    holds for every wine process regardless of what env it inherits —
+    unlike DISPLAY="", which the NSIS setup escaped.
+
+    Idempotent: a marker file inside the prefix skips the work."""
+    global WINE_PREFIX_FRESH
+    marker = os.path.join(WINE_PREFIX_DIR, ".cc-headless")
+    if os.path.isfile(marker):
+        return True
+    WINE_PREFIX_FRESH = True
+    ensure_dir(WINE_PREFIX_DIR)
+    env = force_headless_env(None)
+    env["WINEDLLOVERRIDES"] = WINE_BOOTSTRAP_OVERRIDES + WINE_DLLOVERRIDES_BASE
+    log_info(f"creating headless wine prefix {WINE_PREFIX_DIR} (wineboot)")
+    rc, out = run_cmd([WINE_BIN, "wineboot", "-u"], WINE_PREFIX_DIR,
+                      timeout=300, env=env)
+    if rc != 0:
+        log_info(f"wineboot rc={rc}: {out[-400:]}")
+        return False
+    # Set the key AFTER wineboot: a fresh boot rewrites user.reg.
+    rc, out = run_cmd([WINE_BIN, "reg", "add",
+                       "HKCU\\Software\\Wine\\Drivers",
+                       "/v", "Graphics", "/t", "REG_SZ", "/d", "", "/f"],
+                      WINE_PREFIX_DIR, timeout=120, env=env)
+    if rc != 0:
+        log_info(f"reg add Graphics rc={rc}: {out[-400:]}")
+        return False
+    with open(marker, "w") as f:
+        f.write("graphics driver pinned to none by ensure_wine_prefix\n")
+    return True
+
+
+# True when ensure_wine_prefix() had to build the prefix in THIS run.
+WINE_PREFIX_FRESH = False
+
+
+def warm_client_cache(exe_path, label):
+    """Burn the first --autosolo of a client in a BRAND-NEW wine prefix.
+
+    That first run has to create the solo savegame and insert the whole
+    map dictionary (844 rows) into it, which takes longer than the
+    client's own 10 s --autosolo budget: it dumps and exits before
+    reaching the map, so whichever case ran it first FAILED
+    ("exit code 0 without success_marker"). Every later run reuses the
+    savegame and passes in seconds. Doing the burn here — INFO, not a
+    case — makes a fresh prefix behave like an established one. Must run
+    AFTER setup_datapack_client(): a datapack swap invalidates the work."""
+    log_info(f"new wine prefix: warming the solo savegame for {label}")
+    run_wine_client(exe_path, f"{label} warm-up",
+                    ["--autosolo", "--closewhenonmap"], record=False)
+
 
 
 def _wine_install_dirs():
@@ -2379,15 +2474,21 @@ def verify_installer_asks_install_dir(installer_exe):
     arguments — /S (silent) and /D=<dir> (target) — which is what both
     harness install steps already use.
 
-    Both cases run fully HEADLESS (force_headless_env => DISPLAY="") so
-    neither ever opens a window on the operator's desktop, and both target
-    a scratch directory inside the wine prefix so the real
-    Program Files\\CatchChallenger install used by the e2e steps is never
-    touched.
+    Both cases run in WINE_PREFIX_DIR, whose registry pins the graphics
+    driver to none (ensure_wine_prefix), so neither can open a window on
+    the operator's desktop — DISPLAY="" alone did NOT hold here: the setup
+    re-launches itself outside the direct child and popped its dialog on
+    the host display in the middle of a deploy. Both target a scratch
+    directory inside that prefix, so the Program Files\\CatchChallenger
+    install used by the e2e steps is never touched.
 
     `/D=` is accepted with or without /S and must be the LAST argument;
-    without /S it only pre-fills the directory page, so a well-behaved
-    installer still stops there and creates nothing."""
+    without /S it only pre-fills the directory page. What case 1 asserts
+    is therefore "installs NOTHING without /S" — the regression that
+    actually shipped. Whether the setup then waits on the (invisible)
+    directory page or exits because no driver can create it is not a
+    failure: with no graphics driver NSIS exits rc!=0, which is exactly
+    the "did not install" outcome we want."""
     name_ask, name_silent = _INSTALLER_UI_CASE_NAMES
     if installer_exe is None or not os.path.isfile(installer_exe):
         log_fail(name_ask, "combined installer .exe not built")
@@ -2435,15 +2536,14 @@ def verify_installer_asks_install_dir(installer_exe):
                      f"with NO user confirmation (e.g. {dropped[:3]}) — the .nsi "
                      f"needs a `Page directory`; unattended installs must use "
                      f"/S (+ /D=<dir>)")
-        elif not still_running:
-            log_fail(name_ask,
-                     f"installer exited on its own (rc={early_rc}) after "
-                     f"{waited:.0f}s without installing anything — it should be "
-                     f"WAITING on the directory page")
-        else:
+        elif still_running:
             log_pass(name_ask,
                      f"nothing installed after {waited:.0f}s; still waiting for "
                      f"the user")
+        else:
+            log_pass(name_ask,
+                     f"nothing installed; setup exited (rc={early_rc}) after "
+                     f"{waited:.0f}s instead of installing unattended")
 
         # ── 2. /S /D=<dir>: the documented unattended path still works ──
         win_args = [WINE_BIN, installer_exe, "/S", "/D=" + sil_win]
@@ -3463,6 +3563,15 @@ def main():
         summary()
         return
 
+    # No wine command may run before the prefix exists with its graphics
+    # driver pinned to none — that is what keeps every wine window off the
+    # operator's desktop.
+    if not ensure_wine_prefix():
+        log_info(f"could not prepare {WINE_PREFIX_DIR} — skipping windows test")
+        save_failed_cases()
+        summary()
+        return
+
     cpu_exe  = None
     gl_exe   = None
     srv_exe  = None
@@ -3558,12 +3667,16 @@ def main():
         if win_dp_src and win_mc:
             setup_datapack_client(os.path.dirname(cpu_exe), win_dp_src,
                                   win_mc, f"wine qtcpu800x600 ({win_mc})")
+        if WINE_PREFIX_FRESH:
+            warm_client_cache(cpu_exe, "qtcpu800x600")
         run_wine_client(cpu_exe, "qtcpu800x600 --autosolo",
                         ["--autosolo", "--closewhenonmap"])
     if gl_exe is not None and should_run("wine run qtopengl --autosolo", failed_cases):
         if win_dp_src and win_mc:
             setup_datapack_client(os.path.dirname(gl_exe), win_dp_src,
                                   win_mc, f"wine qtopengl ({win_mc})")
+        if WINE_PREFIX_FRESH:
+            warm_client_cache(gl_exe, "qtopengl")
         run_wine_client(gl_exe, "qtopengl --autosolo",
                         ["--autosolo", "--closewhenonmap"])
 
