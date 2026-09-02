@@ -39,6 +39,13 @@ Derived constants exported here:
   SCREENSHOT_DIFF    <tmpfs_root>/fail-map4client.png
   MXE_PREFIX         <paths.mxe_prefix>
   MSI_DIR            <paths.msi_dir>
+  WINE_PREFIX        <paths.wine_prefix> — the dedicated WINEPREFIX the
+                     windows harness runs every wine64 in (never the
+                     operator's ~/.wine). PERSISTENT on-disk: a fresh
+                     prefix makes the first run of each client rebuild its
+                     datapack cache, which overruns the screenshot
+                     timeouts. Set it in config.json; falls back to
+                     ~/.cache/catchchallenger/wineprefix.
   ANDROID_WORKSPACE  <paths.android_workspace>
 
 The config is read lazily on first attribute access so importing the
@@ -170,6 +177,12 @@ def __getattr__(name):
         return _path("mxe_prefix")
     if name == "MSI_DIR":
         return _path("msi_dir")
+    if name == "WINE_PREFIX":
+        # See LOCAL_CACHE_ROOT for the same PERSISTENT-not-tmpfs argument.
+        try:
+            return _path("wine_prefix")
+        except KeyError:
+            return os.path.expanduser("~/.cache/catchchallenger/wineprefix")
     if name == "ANDROID_WORKSPACE":
         return _path("android_workspace")
     if name == "REMOTE_NODES_JSON":
