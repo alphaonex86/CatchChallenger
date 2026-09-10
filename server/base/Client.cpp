@@ -332,6 +332,31 @@ bool Client::disconnectClient()
         closeSocket();
         return false;
     }
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    {
+        //A protocol handshake owns a token before it owns an account.
+        uint32_t index=0;
+        while(index<BaseServerLogin::tokenForAuthSize)
+        {
+            const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[index];
+            if(tokenLink.client==this)
+            {
+                BaseServerLogin::tokenForAuthSize--;
+                while(index<BaseServerLogin::tokenForAuthSize)
+                {
+                    BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
+                    index++;
+                }
+                #ifdef CATCHCHALLENGER_HARDENED
+                if(BaseServerLogin::tokenForAuthSize>0 && BaseServerLogin::tokenForAuth[0].client==NULL)
+                    abort();
+                #endif
+                break;
+            }
+            index++;
+        }
+    }
+    #endif
     if(account_id_db==0)
     {
         closeSocket();
@@ -364,32 +389,6 @@ bool Client::disconnectClient()
     }*/
     #endif
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    {
-        uint32_t index=0;
-        while(index<BaseServerLogin::tokenForAuthSize)
-        {
-            const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[index];
-            if(tokenLink.client==this)
-            {
-                BaseServerLogin::tokenForAuthSize--;
-                if(BaseServerLogin::tokenForAuthSize>0)
-                {
-                    while(index<BaseServerLogin::tokenForAuthSize)
-                    {
-                        BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
-                        index++;
-                    }
-                    //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
-                    #ifdef CATCHCHALLENGER_HARDENED
-                    if(BaseServerLogin::tokenForAuth[0].client==NULL)
-                        abort();
-                    #endif
-                }
-                break;
-            }
-            index++;
-        }
-    }
     /*if(stat==ClientStat::LoggedStatClient)
     {
         done into ClientList::remove(const Client &client)
