@@ -875,7 +875,6 @@ int main(int argc, char *argv[])
     epoll_event events[MAXEVENTS];
 
     bool acceptSocketWarningShow=false;
-    int numberOfConnectedClient=0;
     /* The event loop */
     #ifdef CATCHCHALLENGER_HARDENED
     unsigned int clientnumberToDebug=0;
@@ -978,10 +977,10 @@ int main(int argc, char *argv[])
                             }
                         }
                         // do at the protocol negociation to send the reason
-                        if(numberOfConnectedClient>=GlobalServerData::serverSettings.max_players)
+                        if(unixClientList->connected_size()>=unixClientList->size())
                         {
                             #ifdef PROTOCOLPARSINGDEBUG
-                            std::cout << "numberOfConnectedClient>=GlobalServerData::serverSettings.max_players: " << infd << std::endl;
+                            std::cout << "No free client slot: " << infd << std::endl;
                             #endif
                             cc_close_socket(infd);
                             break;
@@ -989,8 +988,6 @@ int main(int argc, char *argv[])
 
                         /* Make the incoming socket non-blocking and add it to the
                         list of fds to monitor. */
-                        numberOfConnectedClient++;
-
                         //const int s = SocketUtil::make_non_blocking(infd);->do problem with large datapack from interne protocol
                         const int s = 0;
                         if(s == -1)
@@ -1050,9 +1047,7 @@ int main(int argc, char *argv[])
                                         static_cast<BaseClassSwitch *>(&client)))
                                 {
                                     std::cerr << "armRecvMultishot failed for fd " << infd << std::endl;
-                                    client.disconnectClient();
-                                    client.setToDefault();
-                                    unixClientList->remove(client);
+                                    unixClientList->release(client);
                                 }
                             }
                             else
@@ -1066,9 +1061,7 @@ int main(int argc, char *argv[])
                                 if(s2 == -1)
                                 {
                                     std::cerr << "epoll_ctl on socket error" << std::endl;
-                                    client.disconnectClient();
-                                    client.setToDefault();
-                                    unixClientList->remove(client);
+                                    unixClientList->release(client);
                                 }
                             }
                             // SSL preamble byte removed; the server no
@@ -1084,6 +1077,8 @@ int main(int argc, char *argv[])
                 case BaseClassSwitch::EventLoopObjectType::Client:
                 {
                     ClientWithMapEventLoop *client=static_cast<ClientWithMapEventLoop *>(events[i].data.ptr);
+                    if(client->getClientStat()==Client::Free)
+                        break;
                     #ifdef PROTOCOLPARSINGDEBUG
                     std::cout << "client " << events[i].data.ptr << " event: " << events[i].events << std::endl;
                     #endif
@@ -1095,11 +1090,7 @@ int main(int argc, char *argv[])
                         ready for reading (why were we notified then?) */
                         if(!(events[i].events & EPOLLHUP))
                             std::cerr << "client epoll error: " << events[i].events << std::endl;
-                        numberOfConnectedClient--;
-
-                        client->disconnectClient();
-                        client->setToDefault();
-                        unixClientList->remove(*client);
+                        unixClientList->release(*client);
 
                         continue;
                     }
@@ -1122,12 +1113,7 @@ int main(int argc, char *argv[])
                     }
                     if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || !client->isValid())
                     {
-                        // Crash at 51th: /usr/bin/php -f loginserver-json-generator.php 127.0.0.1 39034
-                        numberOfConnectedClient--;
-
-                        client->disconnectClient();
-                        client->setToDefault();
-                        unixClientList->remove(*client);
+                        unixClientList->release(*client);
                     }
                 }
                 break;

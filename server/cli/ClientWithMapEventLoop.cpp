@@ -1,5 +1,10 @@
 #include "ClientWithMapEventLoop.hpp"
 #include "EventLoop.hpp"
+#ifdef CATCHCHALLENGER_IO_URING
+#include <cerrno>
+#include <iostream>
+#include <sys/socket.h>
+#endif
 
 ClientWithMapEventLoop::ClientWithMapEventLoop(const PLAYER_INDEX_FOR_CONNECTED &index_connected_player) :
     CatchChallenger::EventLoopClient(-1),
@@ -29,6 +34,13 @@ void ClientWithMapEventLoop::reset(int infd)
 
 void ClientWithMapEventLoop::closeSocket()
 {
+    #ifdef CATCHCHALLENGER_IO_URING
+    //Finish a pending receive so its EOF event releases the pooled slot.
+    //SHUT_RD preserves queued writes while dropping the receive's socket reference.
+    if(infd!=-1 && EventLoop::loop.multishotEnabled())
+        if(::shutdown(infd,SHUT_RD)!=0 && errno!=ENOTCONN)
+            std::cerr << "Unable to shut down client receive, errno: " << errno << std::endl;
+    #endif
     CatchChallenger::EventLoopClient::closeSocket();
 }
 

@@ -3,6 +3,12 @@
 #include "GlobalServerData.hpp"
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "BaseServer/BaseServerLogin.hpp"
+#ifdef CATCHCHALLENGER_SERVER
+#include "../cli/EventLoopClientList.hpp"
+#ifdef CATCHCHALLENGER_IO_URING
+#include "../cli/EventLoop.hpp"
+#endif
+#endif
 #endif
 #include <cstring>
 
@@ -142,24 +148,19 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                 {
                     //remove the first
                     Client *client=static_cast<Client *>(BaseServerLogin::tokenForAuth[0].client);
+                    #ifdef CATCHCHALLENGER_SERVER
+                    #ifdef CATCHCHALLENGER_IO_URING
+                    //A pending multishot receive releases the slot on its EOF event.
+                    if(EventLoop::loop.multishotEnabled())
+                        client->disconnectClient();
+                    else
+                    #endif
+                        //Polling cannot report this other client's fd after closing it.
+                        static_cast<EventLoopClientList *>(ClientList::list)->release(
+                                    static_cast<ClientWithMapEventLoop &>(*client));
+                    #else
                     client->disconnectClient();
-                    BaseServerLogin::tokenForAuthSize--;
-                    //move the last
-                    if(BaseServerLogin::tokenForAuthSize>0)
-                    {
-                        uint32_t index=0;
-                        while(index<BaseServerLogin::tokenForAuthSize)
-                        {
-                            BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
-                            index++;
-                        }
-                        //don't work:memmove(BaseServerLogin::tokenForAuth,BaseServerLogin::tokenForAuth+sizeof(TokenLink),BaseServerLogin::tokenForAuthSize*sizeof(TokenLink));
-                        //don't set the last wrong entry to improve performance againts DDOS
-                        #ifdef CATCHCHALLENGER_HARDENED
-                        if(BaseServerLogin::tokenForAuth[0].client==NULL)
-                            abort();
-                        #endif
-                    }
+                    #endif
                 }
                 #endif
                 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

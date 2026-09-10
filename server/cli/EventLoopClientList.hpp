@@ -56,7 +56,7 @@ public:
     std::vector<ClientWithMapEventLoop> clients;//65535 = empty slot, else pending auth
 public:
     ClientWithMapEventLoop &getByReference();
-    void remove(const CatchChallenger::Client &client);
+    void release(ClientWithMapEventLoop &client);
 
     PLAYER_INDEX_FOR_CONNECTED size() const;
     bool isNull(const PLAYER_INDEX_FOR_CONNECTED &index) const;

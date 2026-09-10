@@ -162,25 +162,24 @@ def run(server):
             return (False, "victim did not persist (cannot baseline state)")
 
         # ----------------------------------------------------------------
-        # VALID case: send a well-formed move message for every direction.
-        # The engine steps using the PREVIOUS last_direction then updates it,
-        # refusing only an exact repeat (no kick) and kicking only on a real
-        # collision. We alternate directions so consecutive ones never repeat,
-        # and never require the position to change (collision-blocked is valid),
-        # only that the server stays healthy and the mover is not killed by a
-        # well-formed packet.
+        # Exercise every direction with zero steps: framing validity alone
+        # does not make an arbitrary walk legal on the fixture map. Actual
+        # movement and collision rejection are exercised below.
         # ----------------------------------------------------------------
         valid_cases = 0
+        kick_count = H.server_kick_count(server)
         for direction in (5, 6, 7, 8, 1, 2, 3, 4):
-            mover.m(0x02, H.u8(1) + H.u8(direction))
+            mover.m(0x02, H.u8(0) + H.u8(direction))
             valid_cases += 1
             mover.drain(timeout=0.2)
             ok, why = _alive_clean(server)
             if not ok:
                 return (False, "after valid move dir=%d: %s" % (direction, why))
+            if H.server_kick_count(server) != kick_count:
+                return (False, "zero-step direction=%d unexpectedly kicked" % direction)
 
-        # Multi-step move (stepCount=2) — exercises the singleMove loop. Still a
-        # valid frame; the mover must remain connected (a kick would EOF send).
+        # A two-step batch after a LOOK direction has no displacement; its
+        # framing is valid without assuming any neighbouring tile is walkable.
         try:
             mover.m(0x02, H.u8(2) + H.u8(6))  # 2 steps, move-right
             mover.drain(timeout=0.2)
@@ -189,6 +188,8 @@ def run(server):
         ok, why = _alive_clean(server)
         if not ok:
             return (False, "after multi-step valid move: %s" % why)
+        if H.server_kick_count(server) != kick_count:
+            return (False, "two-step batch after LOOK unexpectedly kicked")
 
         # Persisted-state read-back (identity/position) after a clean disconnect.
         mover.close()

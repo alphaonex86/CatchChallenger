@@ -40,8 +40,8 @@ EventLoopClientList::EventLoopClientList()
         clients.emplace_back(index);
         ClientWithMapEventLoop &c=clients[index];
         c.resetAll();
-        c.setToDefault();
         c.reset(-1);
+        c.setToDefault();
         index++;
     }
 }
@@ -67,13 +67,17 @@ ClientWithMapEventLoop &EventLoopClientList::getByReference()
     }
 }
 
-void EventLoopClientList::remove(const CatchChallenger::Client &client)
+void EventLoopClientList::release(ClientWithMapEventLoop &client)
 {
-    const PLAYER_INDEX_FOR_CONNECTED index_global=client.getIndexConnect();
-    if(isNull(index_global))
-        return;
-    clients_removed_index.push_back(index_global);
-    CatchChallenger::ClientList::remove(client);
+    if(client.getClientStat()!=CatchChallenger::Client::Free)
+    {
+        //Visibility removal during disconnect must not recycle the socket slot.
+        client.disconnectClient();
+        CatchChallenger::ClientList::remove(client);
+        client.closeSocket();
+        client.setToDefault();
+        clients_removed_index.push_back(client.getIndexConnect());
+    }
 }
 
 PLAYER_INDEX_FOR_CONNECTED EventLoopClientList::size() const
