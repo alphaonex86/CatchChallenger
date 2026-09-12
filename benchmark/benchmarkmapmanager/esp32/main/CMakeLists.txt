@@ -27,6 +27,9 @@ set(_cc_bench
     ${CC_REPO}/benchmark/benchmarkmapmanager/main.cpp
     ${CC_REPO}/test/testingmapmanagement/Stubs.cpp
     ${CC_REPO}/server/base/MapManagement/MapVisibilityAlgorithm.cpp
+    ${CC_REPO}/server/base/MapManagement/MapVisibilityAlgorithmCpu.cpp
+    ${CC_REPO}/server/base/MapManagement/MapVisibilityAlgorithmBalanced.cpp
+    ${CC_REPO}/server/base/MapManagement/MapVisibilityAlgorithmNetwork.cpp
     ${CC_REPO}/server/base/MapServer.cpp
 )
 

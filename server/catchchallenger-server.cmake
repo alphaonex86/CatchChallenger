@@ -81,6 +81,9 @@ if(NOT TARGET catchchallenger_server_base)
         ${CMAKE_CURRENT_LIST_DIR}/base/MapManagement/ClientMapManagement.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/MapManagement/MapVisibilityAlgorithm_WithoutSender.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/MapManagement/MapVisibilityAlgorithm.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/MapManagement/MapVisibilityAlgorithmCpu.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/MapManagement/MapVisibilityAlgorithmBalanced.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/base/MapManagement/MapVisibilityAlgorithmNetwork.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/MapManagement/MapBasicMove.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/DictionaryLogin.cpp
         ${CMAKE_CURRENT_LIST_DIR}/base/DictionaryServer.cpp

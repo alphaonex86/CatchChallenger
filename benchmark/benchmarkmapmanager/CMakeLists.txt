@@ -34,6 +34,9 @@ add_executable(benchmark_min_balanced
     main.cpp
     ${CC_REPO_ROOT}/test/testingmapmanagement/Stubs.cpp
     ${CC_REPO_ROOT}/server/base/MapManagement/MapVisibilityAlgorithm.cpp
+    ${CC_REPO_ROOT}/server/base/MapManagement/MapVisibilityAlgorithmCpu.cpp
+    ${CC_REPO_ROOT}/server/base/MapManagement/MapVisibilityAlgorithmBalanced.cpp
+    ${CC_REPO_ROOT}/server/base/MapManagement/MapVisibilityAlgorithmNetwork.cpp
     ${CC_REPO_ROOT}/server/base/MapServer.cpp
 )
 
