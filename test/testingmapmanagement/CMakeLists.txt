@@ -50,6 +50,9 @@ add_executable(testmapvisibility
     Stubs.cpp
     TestApiProtocol.cpp
     ${CC_REPO_ROOT}/server/base/MapManagement/MapVisibilityAlgorithm.cpp
+    ${CC_REPO_ROOT}/server/base/MapManagement/MapVisibilityAlgorithmCpu.cpp
+    ${CC_REPO_ROOT}/server/base/MapManagement/MapVisibilityAlgorithmBalanced.cpp
+    ${CC_REPO_ROOT}/server/base/MapManagement/MapVisibilityAlgorithmNetwork.cpp
     ${CC_REPO_ROOT}/server/base/MapServer.cpp
     # Real production Api_protocol code paths the test drives. When the
     # protocol or 0x6B/0x66/0x69/0x6C/0x65/0xE3 payload layout changes
