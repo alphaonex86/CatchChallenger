@@ -1104,7 +1104,7 @@ def tool_analyze(arg):
 
 def parse_tool(answer):
     """If the reply is a single READ/GREP/ANALYZE tool call, return (name, arg)."""
-    stripped = answer.strip()
+    stripped = common.unwrap_tool_call(answer).strip()
     first = stripped.splitlines()[0].strip() if stripped else ""
     for name in ("READ", "GREP", "ANALYZE"):
         prefix = name + " "
@@ -2679,6 +2679,8 @@ def first_codeblock(answer):
 
 def parse_action(answer):
     """Return (kind, arg, block) for the model's single action, or None."""
+    raw = answer
+    answer = common.unwrap_tool_call(answer)
     s = answer.strip()
     if not s:
         return None
@@ -2689,7 +2691,7 @@ def parse_action(answer):
     if up.startswith("GREP "):
         return ("GREP", first[5:].strip(), None)
     if up.startswith("WRITE "):
-        return ("WRITE", first[6:].strip(), first_codeblock(answer))
+        return ("WRITE", first[6:].strip(), first_codeblock(answer) or first_codeblock(raw))
     # RUNHOST (run the ELF on the host WITHOUT the bwrap chroot/seccomp) is
     # deliberately NOT recognised: it was an escape hatch that let the model
     # run arbitrary host code. The sandbox is now mandatory - a SIGSYS under
@@ -2712,7 +2714,7 @@ def parse_action(answer):
     # Read-only inspection of the harness-managed server-under-gdb. The gdb
     # instance lifecycle is the harness's, not the model's.
     if up == "GDB" or up.startswith("GDB "):
-        return ("GDB", "", first_codeblock(answer))
+        return ("GDB", "", first_codeblock(answer) or first_codeblock(raw))
     # Capture the FULL (possibly multi-line) reason after the keyword - the
     # FALSEPOSITIVE logic-path explanation usually spans several lines.
     if up.startswith("VERDICT CONFIRMED"):
@@ -4144,8 +4146,9 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
         if act is None:
             messages.append({"role": "assistant", "content": answer})
             messages.append({"role": "user", "content":
-                "Reply with exactly ONE action (READ/GREP/WRITE/RUN/GDB/VERDICT) "
-                "as specified, nothing else."})
+                "No usable action found. Reply with exactly ONE action as plain "
+                "text, keyword FIRST (e.g. READ server/base/Client.cpp) - no "
+                "preamble, no <tool_call> markup."})
             continue
         kind, arg, block = act
         if kind == "VERDICT":

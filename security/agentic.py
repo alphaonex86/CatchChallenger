@@ -176,7 +176,7 @@ def _tool_grep(arg):
 
 
 def _parse_tool(answer):
-    for line in answer.splitlines():
+    for line in common.unwrap_tool_call(answer).splitlines():
         m = _TOOL_RE.match(line)
         if m:
             return (m.group(1).upper(), m.group(2).strip())
