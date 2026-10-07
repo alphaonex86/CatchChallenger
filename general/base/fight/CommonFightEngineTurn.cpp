@@ -772,7 +772,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
 Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,const Skill::LifeEffect &effect,PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster)
 {
     Skill::LifeEffectReturn effect_to_return;
-    int32_t quantity;
+    int32_t quantity=0;
     const Monster &commonMonster=CatchChallenger::CommonDatapack::commonDatapack.get_monster(currentMonster->monster);
     const Monster &commonOtherMonster=CatchChallenger::CommonDatapack::commonDatapack.get_monster(otherMonster->monster);
     Monster::Stat stat=getStat(commonMonster,currentMonster->level);
