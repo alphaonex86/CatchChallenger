@@ -60,6 +60,7 @@ module, which would not reach this module's functions)."""
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -575,6 +576,86 @@ def _human_dur(seconds):
     """Elapsed seconds as MINmSECs (e.g. 99min09s)."""
     seconds = int(seconds)
     return "%dmin%02ds" % (seconds // 60, seconds % 60)
+
+
+# Models trained on native tool calls (qwen3-coder class) wrap our plain-text
+# action in their own, often malformed, markup even though no tools are offered:
+#   prose... <tool_call><function=READ><parameter=path>x</parameter></function></tool_call>
+#   prose... <tool_call>{"name": "READ", "arguments": {"path": "x"}}</tool_call>
+TOOL_ACTIONS = ("READ", "GREP", "WRITE", "RUN", "GDB", "MODE", "SEEDDB",
+                "RESTARTSERVER", "VERDICT", "BRANCH", "DONE")
+_TOOL_ACTIONS_WITH_ARG = ("READ", "GREP", "WRITE", "MODE", "SEEDDB")
+_TOOL_CALL_START_RE = re.compile(r"<tool_calls?>|<function=|<invoke\b")
+_TOOL_CALL_NAME_RE = re.compile(r'<function=(\w+)\s*>|<invoke\s+name="(\w+)"\s*>')
+_TOOL_CALL_TAG_RE = re.compile(r"</?(?:tool_calls?|function|invoke|parameter)\b[^>\n]*>|</\w*>?")
+# "<read>x", "tool_request:READ x", "=READ>x", "< READ x >" -> keyword + argument
+_TOOL_CALL_ACTION_RE = re.compile(r"^\W*(?:\w+\s*[>:]\s*)?(%s)\b[\s>:]*(.*?)[\s>]*$"
+                                  % "|".join(TOOL_ACTIONS), re.I)
+_TOOL_CALL_JUNK_RE = re.compile(r"^\W*\w*\W*$")     # "function>", "=", "user"
+
+
+def _tool_call_name(match):
+    name = (match.group(1) or match.group(2)).upper()
+    return name + " " if name in TOOL_ACTIONS else ""
+
+
+def _json_tool_call(line):
+    """{"name": "READ", "arguments": {"path": "x"}} -> 'READ x' (first argument)."""
+    try:
+        call = json.loads(line)
+    except ValueError:
+        return line
+    if not isinstance(call, dict):
+        return line
+    args = call.get("arguments", call)
+    if isinstance(args, str):
+        try:
+            args = json.loads(args)
+        except ValueError:
+            args = {"value": args}
+    if not isinstance(args, dict):
+        return line
+    values = [str(v) for k, v in args.items()
+              if k not in ("name", "tool") and isinstance(v, (str, int))]
+    return "%s %s" % (call.get("name") or call.get("tool") or "", " ".join(values[:1]))
+
+
+def _tool_call_line(line):
+    """One line of markup -> plain protocol text ('' when it was markup only)."""
+    line = _TOOL_CALL_NAME_RE.sub(_tool_call_name, line)
+    line = _TOOL_CALL_TAG_RE.sub("", line).strip()
+    if line.startswith("{"):
+        line = _json_tool_call(line)
+    action = _TOOL_CALL_ACTION_RE.match(line)
+    if action:
+        return (action.group(1).upper() + " " + action.group(2)).strip()
+    if _TOOL_CALL_JUNK_RE.match(line):
+        return ""
+    return line
+
+
+def unwrap_tool_call(answer):
+    """Rewrite a native tool call into the plain protocol ("READ x" first), dropping
+    the prose before it. Fenced code is kept verbatim. No markup = unchanged."""
+    start = _TOOL_CALL_START_RE.search(answer or "")
+    if not start:
+        return answer
+    out = []
+    in_fence = False
+    for raw in answer[start.start():].splitlines():
+        if raw.lstrip().startswith("```"):
+            in_fence = not in_fence
+            out.append(raw)
+        elif in_fence:
+            out.append(raw)
+        elif out and out[-1] in _TOOL_ACTIONS_WITH_ARG:
+            # <function=READ>\n<parameter=path>\nx: the argument is on a later line
+            out[-1] = (out[-1] + " " + _TOOL_CALL_TAG_RE.sub("", raw).strip()).strip()
+        else:
+            line = _tool_call_line(raw)
+            if line:
+                out.append(line)
+    return "\n".join(out)
 
 
 # ===========================================================================
