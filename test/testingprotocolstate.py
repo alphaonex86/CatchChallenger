@@ -120,6 +120,7 @@ _DISCONNECT_SETTLE = 1.2
 
 # results: list of dicts (see _mk_rec)
 results = []
+INTERRUPTED = [False]
 _last_log_time = [time.monotonic()]
 
 # Filled in by run_baseline(); a H.parse_valgrind_fingerprint() dict.
@@ -201,6 +202,10 @@ def should_run(test_name, failed):
 
 
 def save_failed_cases():
+    # An interrupted run proved nothing: saving its partial (empty) result would
+    # mark every unrun handler as passed and make the next resume skip them all.
+    if INTERRUPTED[0]:
+        return
     failures = []
     for r in results:
         if not r["ok"] and not r["skipped"]:
@@ -1027,6 +1032,7 @@ def main():
 
 def _on_signal(_signo, _frame):
     # graceful: print whatever we have, then exit non-zero
+    INTERRUPTED[0] = True
     try:
         summary()
     except Exception:

@@ -457,6 +457,11 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") with stat: "+std::to_string(stat));
                 return false;
             }
+            if(stat!=ClientStat::Logged)
+            {
+                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") with stat: "+std::to_string(stat));
+                return false;
+            }
 
             std::string pseudo;
             if((size-pos)<(int)sizeof(uint8_t))
@@ -533,6 +538,11 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         case 0xAB:
         {
             if(stat==ClientStat::CharacterSelected)
+            {
+                errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") with stat: "+std::to_string(stat));
+                return false;
+            }
+            if(stat!=ClientStat::Logged)
             {
                 errorOutput("charaters is logged, deny charaters add/select/delete, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+") with stat: "+std::to_string(stat));
                 return false;

@@ -102,6 +102,31 @@ def _is_kicked(sk):
         return True
 
 
+def _prelogin_0xab_refused(server):
+    """0xAB right after the A0 handshake (stat ProtocolGood, no account) must be
+    refused by the parseQuery state gate. Keyed on the server's own kick line:
+    a socket probe cannot tell it apart, any later packet kicks a pre-login peer."""
+    sk = socket.create_connection(("127.0.0.1", server.port), timeout=5)
+    try:
+        conn = H._RawConn(sk)
+        pa = conn.query(0xA0, H.PROTOCOL_HEADER_LOGIN, dynamic=False)
+        if pa is None or len(pa) < 17:
+            raise RuntimeError("A0 failed: %r" % (pa,))
+        with open(server.log_path, "rb") as f:
+            log_base = len(f.read())
+        sk.sendall(bytes([0xAB, 1, 0]) + H.u32(1))
+        deadline = time.time() + 3.0
+        while time.time() < deadline:
+            with open(server.log_path, "rb") as f:
+                f.seek(log_base)
+                if b"deny charaters add/select/delete, parseQuery(171," in f.read():
+                    return True
+            time.sleep(0.1)
+        return False
+    finally:
+        sk.close()
+
+
 def _firstchar_id(server, login, passh):
     """character_id of the first persisted character for these creds, or None."""
     try:
@@ -145,6 +170,12 @@ def run(server):
             pass
         if server.crash_report() is not None:
             return (False, "crash after CharacterSelected-state 0xAB: " + str(server.crash_report()))
+
+        # ---------- WRONG-STATE: 0xAB before login -> refused + kick ----------
+        if not _prelogin_0xab_refused(server):
+            return (False, "0xAB before login (stat ProtocolGood) was NOT refused by the state gate")
+        if not server.alive() or server.crash_report() is not None:
+            return (False, "server unhealthy after pre-login 0xAB: " + str(server.crash_report()))
 
         # account B : a SECOND, independent owner -> its character_id is a
         # well-formed-but-NOT-OWNED id for account A (the semantic-invalid case).

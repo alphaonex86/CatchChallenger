@@ -217,8 +217,10 @@ StringWithReplacement::StringWithReplacement(StringWithReplacement&& other) // m
 
 StringWithReplacement& StringWithReplacement::operator=(const StringWithReplacement& other) // copy assignment
 {
+    if(this==&other)
+        return *this;
     if(preparedQuery!=NULL)
-        delete preparedQuery;
+        delete[] preparedQuery;
     if(other.preparedQuery==nullptr)
     {
         preparedQuery=nullptr;
@@ -232,8 +234,10 @@ StringWithReplacement& StringWithReplacement::operator=(const StringWithReplacem
 
 StringWithReplacement& StringWithReplacement::operator=(StringWithReplacement&& other) // move assignment
 {
+    if(this==&other)
+        return *this;
     if(preparedQuery!=NULL)
-        delete preparedQuery;
+        delete[] preparedQuery;
 
     preparedQuery = other.preparedQuery;
     /*if you don't care about these errors you may set ASAN_OPTIONS=alloc_dealloc_mismatch=0
