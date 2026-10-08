@@ -78,13 +78,12 @@ Authoritative source: `paths.remote_nodes_json` (default `/home/user/Desktop/Cat
 | x86-lxc | `root@2803:1920::2:ff04` | compile + exec |
 | pentium-m | `user@2803:1920::2:ff01` | exec |
 | atom-n455 | `user@2803:1920::2:ff02` | exec |
-| osxcross | `root@2803:1920::2:ff08` | compile (mac) |
 
 Bracket IPv6 hosts for rsync (`user@[2803:1920::2:ff04]:`); plain ssh accepts unbracketed. `cmd_helpers._rsync_host()` handles brackets.
 
 ## Some "remote" nodes AND execution nodes are local LXC containers
 
-`mips-lxc` (`2803:1920::2:ff03`), `x86-lxc` (`2803:1920::2:ff04`), `osxcross` (`2803:1920::2:ff08`) are **local LXC payloads**. Same containers also appear as exec nodes for other compile entries. Reach via host's `2803:1920::2:/112` private prefix; share host CPU/RAM; live under `/sys/fs/cgroup/lxc.payload.<name>/cgroup.procs`.
+`mips-lxc` (`2803:1920::2:ff03`), `x86-lxc` (`2803:1920::2:ff04`) are **local LXC payloads**. Same containers also appear as exec nodes for other compile entries. Reach via host's `2803:1920::2:/112` private prefix; share host CPU/RAM; live under `/sys/fs/cgroup/lxc.payload.<name>/cgroup.procs`.
 
 * Own PID namespace — `ps` on host won't show container binaries by internal PID. Iterate `/sys/fs/cgroup/lxc.payload.*/cgroup.procs` for host-side pids.
 * ccache slot at `<work_dir>/ccache/` on container FS. Read via `ssh <user>@<lxc-ip> 'CCACHE_DIR=<path> ccache -s'`.
@@ -160,7 +159,7 @@ Reference: `android_env()` in `test/testingclient.py`.
 
 * **Windows** — MXE at `/mnt/data/perso/progs/catchchallenger-mxe/` (`MXE_TARGETS="x86_64-w64-mingw32.shared"`). cmake+ninja with ccache+mold. Run under `wine64`. Deploy `windeployqt.exe` + MXE mingw DLLs (libstdc++/libgcc/libwinpthread). Datapack at `<exe_dir>/datapack/internal/`. Both clients tested with `QT_QPA_PLATFORM=offscreen`: autosolo + multi against local `server-filedb`. Marker `MapVisualiserPlayer::mapDisplayedSlot()`. Produces NSIS .exe (or .zip fallback), .msi via WiX 3.11 under wine64, Authenticode signatures. MSI/signing at `/mnt/data/perso/progs/msi/`: `wix3/`, `test-codesign.pfx` (RSA-2048/SHA-256, password `catchchallenger`), `osslsigncode` 2.9. Timestamp `http://timestamp.digicert.com`; falls back untimestamped.
 
-* **macOS** — osxcross container `root@2803:1920::2:ff08`, target `darwin20.4`, Qt 6.5.3 at `/root/qt6-macos/6.5.3/macos`. Setup: `/mnt/data/perso/pc-virtuel/lxc/osxcross.txt`. Sources rsynced to `/root/catchchallenger-test/`. cmake wrapper + ninja+ccache+lld (no mold for Mach-O). Then `macdeployqt`, datapack sibling of `.app`, ad-hoc `--sign -`. Portable `.zip`. Self-skips on ssh timeout. Compile+package only — no runtime/multi.
+* **macOS** — LOCAL osxcross prefix `/mnt/data/perso/progs/catchchallenger-osxcross` (toolchain extracted from the retired osxcross LXC), target `darwin20.4`, Qt 6.5.3 at `<prefix>/qt6-macos/6.5.3/macos`, sources rsynced to `<prefix>/work/`. cmake wrapper + ninja+ccache+lld (no mold for Mach-O; CCACHE_DIR pinned to `<prefix>/ccache`). Then `macdeployqt_linux.py`, datapack sibling of `.app`, ad-hoc `--sign -`, `.dmg` via libdmg-hfsplus (`.zip` fallback). Self-skips when the prefix is missing. Compile+package only — no runtime/multi.
 
 * **Android** — local Qt-for-Android cross-compile + local emulator. **Only `client/qtopengl`**. Tooling: `/mnt/data/perso/progs/CatchChallenger-android/{sdk,avd,apk,build}/`. Self-skips when VPS unreachable or SDK/adb/emulator/AVD missing. Branding (label "CatchChallenger", landscape lock, icon) lives in `client/qtopengl/resources/android-package-source/` wired via target prop `QT_ANDROID_PACKAGE_SOURCE_DIR`. Qt ships only the openssl TLS *plugin*, not libssl/libcrypto — KDAB android_openssl checkout at `<android_workspace>/android_openssl` bundled via `-DCATCHCHALLENGER_ANDROID_OPENSSL_DIR` (optional; absent → TLS-less apk). Phases `android tls-backend qtopengl`, `android official-connect v4/v6` (literal-IP `--host` forces family; protocol-good marker = connected; host-unreachable → skip-as-pass).
 
