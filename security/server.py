@@ -1054,15 +1054,20 @@ def tool_read(arg):
         end = int(match.group(3)) if match.group(3) else None
     repo_root = os.path.realpath(REPO_ROOT)
     cand = os.path.realpath(os.path.join(REPO_ROOT, path))
+    rrel = os.path.relpath(cand, REPO_ROOT)
     if not (cand.startswith(repo_root + os.sep) and os.path.isfile(cand)):
-        cand = find_by_basename(os.path.basename(path))
+        cand, rrel = _datapack_path(path)
+        if cand and os.path.isdir(cand):
+            return "=== %s/ ===\n%s" % (rrel, "\n".join(sorted(os.listdir(cand))[:TOOL_GREP_HITS]))
+        if not cand:
+            cand = find_by_basename(os.path.basename(path))
+            rrel = cand and os.path.relpath(cand, REPO_ROOT)
     if not cand or not os.path.isfile(cand):
-        return "READ: not found in repo: %s" % path
+        return "READ: not found in repo or datapack: %s" % path
     try:
         lines = open(cand, "r", errors="replace").read().splitlines()
     except OSError as exc:
         return "READ: error: %s" % exc
-    rrel = os.path.relpath(cand, REPO_ROOT)
     if start < 1 or start > len(lines) or (end is not None and end < start):
         return "READ: %s has %d lines; use READ %s:<start>[:<end>]" % (rrel, len(lines), rrel)
     end = min(end or len(lines), len(lines))
@@ -1077,6 +1082,21 @@ def tool_read(arg):
         size += len(line) + 1
         number += 1
     return "\n".join(out)
+
+
+def _datapack_path(path):
+    """'datapack/<rel>' -> (path in the datapack the target runs on, 'datapack/<rel>'),
+    or (None, None). The target's datapack is a read-only staged copy."""
+    if "datapack/" not in path and path.rstrip("/") != "datapack":
+        return None, None
+    rel = path.split("datapack/", 1)[1] if "datapack/" in path else ""
+    root = os.path.realpath(os.path.join(STAGED_RUN, "datapack"))
+    cand = os.path.realpath(os.path.join(root, rel))
+    if cand != root and not cand.startswith(root + os.sep):
+        return None, None
+    if not os.path.exists(cand):
+        return None, None
+    return cand, os.path.join("datapack", os.path.relpath(cand, root)).rstrip("/.")
 
 
 def tool_grep(symbol):
@@ -2536,6 +2556,7 @@ EXPLOIT_SYSTEM = (
     "\n"
     "TOOL PROTOCOL - reply with EXACTLY ONE action per message, nothing else:\n"
     "  READ <repo path>[:<start>[:<end>]]   (numbered lines; a big file is cut - continue from a line)\n"
+    "  READ datapack/<path>       (the target's datapack, e.g. datapack/monsters; a directory lists its entries)\n"
     "  GREP <symbol>\n"
     "  WRITE <relpath-in-your-exploit-dir>\n"
     "  ```\n  <full file content (e.g. exploit.c)>\n  ```\n"
@@ -2798,6 +2819,28 @@ NO_ACTION_NUDGE = (
     "'VERDICT CONFIRMED <proof>'. Otherwise: READ <path> | GREP <symbol> | WRITE "
     "<file> + code block | RUN | GDB | MODE gdb|valgrind.")
 
+# Quoting the model's own last line back works where a generic nudge does not: a model
+# that ended with "Let me check X" re-sent the same prose 5/5 times, quoted it acted 5/5.
+SAID_NO_ACTION_NUDGE = (
+    "You wrote \"%s\" but sent no action, so nothing happened. Send that action now as ONE "
+    "line (READ <path>[:<line>] / GREP <symbol> / WRITE <file> + code block / RUN / GDB), or, "
+    "if your analysis is finished, 'VERDICT FALSEPOSITIVE <the guard that makes it safe, "
+    "FILE:LINE>' or 'VERDICT CONFIRMED <proof>'.")
+
+
+def no_action_nudge(answer):
+    """The nudge for a reply with no action: its last prose line quoted back, if any."""
+    said = []
+    in_fence = False
+    for line in answer.splitlines():
+        line = line.strip()
+        if line.startswith("```"):
+            in_fence = not in_fence
+        elif line and not in_fence and not line.startswith("<"):
+            said.append(line)
+    return SAID_NO_ACTION_NUDGE % said[-1][:200] if said else NO_ACTION_NUDGE
+
+
 # Exact upper-case protocol forms only, so prose like "GDB would show..." never matches.
 _ACTION_LINE_RE = re.compile(r"(?:(?:READ|GREP|WRITE|SEEDDB) \S|(?:RUN|GDB|RESTARTSERVER)$"
                              r"|MODE (?:gdb|valgrind)$|VERDICT (?:CONFIRMED|FALSEPOSITIVE)\b)")
@@ -2888,7 +2931,15 @@ def do_write(outdir, rel, content):
             os.chmod(dest, 0o755)
     except OSError as exc:
         return "WRITE error: %s" % exc
-    return "WROTE %s (%d bytes)" % (rel, len(content))
+    note = ""
+    if dest.endswith(EXPLOIT_SRC_EXT) and _MAIN_RE.search(content):
+        others = [os.path.basename(p) for p in _sources_with_main(
+            os.path.join(outdir, f) for f in os.listdir(outdir)
+            if f.endswith(EXPLOIT_SRC_EXT) and os.path.realpath(os.path.join(outdir, f)) != dest)]
+        if others:
+            note = (" - RUN builds this newest main() program; %s (also main()) is left out"
+                    % ", ".join(sorted(others)))
+    return "WROTE %s (%d bytes)%s" % (rel, len(content), note)
 
 
 BWRAP = shutil.which("bwrap")
@@ -3061,8 +3112,10 @@ SECCOMP_ALLOW_X86_64 = (
     9, 10, 11, 12, 25, 28,
     # signals
     13, 14, 15, 131,
-    # scheduling / ids / basic time
-    24, 35, 39, 60, 63, 72, 102, 104, 107, 108, 231,
+    # scheduling / ids / basic time (230 = clock_nanosleep: glibc's sleep/usleep/nanosleep)
+    24, 35, 39, 60, 63, 72, 102, 104, 107, 108, 230, 231,
+    # waiting on fds it already holds (glibc select() is pselect6; poll 7 is below)
+    23, 270, 271,
     # glibc startup probes / thread infrastructure
     96, 97, 158, 202, 218, 273, 302, 318, 334, 267,
     # IO on already-held fds (stdio + the sockets it opens)
@@ -3107,6 +3160,21 @@ def _seccomp_filter_bytes(allow=None):
     return b"".join(struct.pack("<HBBI", *t) for t in ins)
 
 
+_MAIN_RE = re.compile(r"^[ \t]*(?:int|void)\s+main\s*\(", re.M)
+
+
+def _sources_with_main(paths):
+    """The C/C++ sources among `paths` that define main()."""
+    found = []
+    for path in paths:
+        try:
+            if _MAIN_RE.search(open(path, "r", errors="replace").read()):
+                found.append(path)
+        except OSError as exc:
+            sys.stderr.write("%s     [warn] cannot read %s: %s\n" % (_ts(), path, exc))
+    return found
+
+
 def _compile_exploit(outdir):
     """Compile every C/C++ source in `outdir` into a single STATIC ELF at the
     fixed path outdir/EXPLOIT_BIN_NAME. Returns (binpath, None) or (None, err)."""
@@ -3116,6 +3184,12 @@ def _compile_exploit(outdir):
     if not srcs:
         return None, ("RUN error: no C/C++ source (%s) in your exploit dir - "
                       "WRITE exploit.c first." % "/".join(EXPLOIT_SRC_EXT))
+    # Every source links into ONE program: an older file with its own main() is a
+    # previous probe, so build the newest program only (else "multiple definition of main").
+    mains = _sources_with_main(srcs)
+    if len(mains) > 1:
+        newest = max(mains, key=os.path.getmtime)
+        srcs = [s for s in srcs if s == newest or s not in mains]
     binpath = os.path.join(outdir, EXPLOIT_BIN_NAME)
     cxx = any(s.endswith((".cc", ".cpp", ".cxx")) for s in srcs)
     # Static link so the chroot needs no shared libs / dynamic loader.
@@ -3428,6 +3502,11 @@ def _explain_exploit_exit(returncode, binpath, timeout):
                 "(this is the SANDBOX stopping you, NOT a crash in your code. "
                 "Fix the cause above and RUN again.)"
                 % (name, sig, why))
+    if sig == 13:
+        return ("[exploit stopped by SIGPIPE (signal 13): it wrote to a socket the SERVER "
+                "had already closed - the server dropped that connection (see 'Kicked by' "
+                "in the server console). Not a bug in your code: send with MSG_NOSIGNAL "
+                "and check send()/recv() results.]")
     # Crash IN the model's code: attempt a sandboxed diagnostic, never host exec.
     name = _CRASH_SIGNALS.get(sig, "signal %d" % sig)
     bt = _exploit_backtrace(binpath)
@@ -4536,7 +4615,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
         # back into the one-action protocol.
         if act is None:
             messages.append({"role": "assistant", "content": answer})
-            messages.append({"role": "user", "content": NO_ACTION_NUDGE})
+            messages.append({"role": "user", "content": no_action_nudge(answer)})
             continue
         kind, arg, block = act
         if kind == "VERDICT":
@@ -4685,15 +4764,20 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
                              "%ds left, timeout %ds)\n"
                              % (_ts(), step, remaining, run_to))
             result = do_run(outdir, timeout=run_to, network=live.network)
-            # The exploit just hammered the live server - did it fault it?
-            result += "\n\n--- live server status ---\n" + live.poll_crash()
-            # Expose the last SERVER_TAIL_LINES of the SUPERVISED SERVER's pty
-            # output so the model can read what its attack made the server do
-            # (asserts, error traces, valgrind noise, disconnect logs). Bounded
-            # tail; "_tail" is updated every _drain(), most-recent last.
-            result += ("\n\n--- server console (last %d lines) ---\n%s"
-                       % (SERVER_TAIL_LINES, live.tail()))
-            ran_something = True
+            if result.startswith("RUN: COMPILE FAILED"):
+                # Nothing ran: the server status/console would bury the compiler
+                # error (measured: the model then re-sent RUN 5/5 times, 0/5 with this).
+                result += "\n\nNothing ran. Fix the source: WRITE the WHOLE corrected file, then RUN."
+            else:
+                # The exploit just hammered the live server - did it fault it?
+                result += "\n\n--- live server status ---\n" + live.poll_crash()
+                # Expose the last SERVER_TAIL_LINES of the SUPERVISED SERVER's pty
+                # output so the model can read what its attack made the server do
+                # (asserts, error traces, valgrind noise, disconnect logs). Bounded
+                # tail; "_tail" is updated every _drain(), most-recent last.
+                result += ("\n\n--- server console (last %d lines) ---\n%s"
+                           % (SERVER_TAIL_LINES, live.tail()))
+                ran_something = True
             compile_runs += 1
         elif kind == "SEEDDB":
             spec = _parse_seed_spec(arg)
@@ -5077,6 +5161,26 @@ def _backfill_verdict_cache(candidates):
     return out
 
 
+def _drop_stale_verdict_file(outdir, name):
+    """A dir re-attacked by a later run must not keep the previous run's verdict file."""
+    try:
+        os.remove(os.path.join(outdir, name))
+    except FileNotFoundError:
+        pass
+    except OSError as exc:
+        sys.stderr.write("%s     [warn] could not remove stale %s/%s: %s\n"
+                         % (_ts(), outdir, name, exc))
+
+
+def _write_verdict_index(name, rows, header):
+    """Rewrite OUTPUT_ROOT/<name> from THIS run's results, cached and report-only
+    findings included (appending kept every past run's entries)."""
+    with open(os.path.join(OUTPUT_ROOT, name), "w") as fh:
+        for rel, verdict, reason, kept in rows:
+            fh.write("## %s\n**%s.**\n\n%s\n\nexploit workspace: `%s`\n\n---\n\n"
+                     % (rel, header, reason or "(no explanation given)", kept))
+
+
 def _save_verdict_cache(verdicts, codehash, models):
     """Persist the resume-cache atomically (tmp + rename); best-effort. Stamps the
     server-binary hash + model spec so a later run can invalidate on a mismatch."""
@@ -5396,12 +5500,7 @@ def run_exploit():
         kept = os.path.basename(outdir)
         if verdict != VERDICT_CONFIRMED and outdir != "-" and os.path.isdir(outdir):
             if verdict == VERDICT_UNPROVEN:
-                with open(os.path.join(OUTPUT_ROOT, "unproven.md"), "a") as fh:
-                    fh.write("## %s\n**UNPROVEN - still to fix.** no formal proof "
-                             "was produced, and the finding was NOT refuted:\n\n%s"
-                             "\n\nexploit workspace: `%s`\n\n---\n\n"
-                             % (rel, reason or "(no explanation given)",
-                                os.path.basename(outdir)))
+                _drop_stale_verdict_file(outdir, "fail.md")
                 with open(os.path.join(outdir, "unproven.md"), "w") as fh:
                     fh.write("# UNPROVEN: %s\n\nVERDICT: %s\n\nThe bug report "
                              "STANDS - this is NOT a clean bill of health. The "
@@ -5416,10 +5515,7 @@ def run_exploit():
                                  "to fix (%s/unproven.md)\n"
                                  % (rel, os.path.basename(outdir)))
             else:
-                with open(os.path.join(OUTPUT_ROOT, "not-exploitable.md"), "a") as fh:
-                    fh.write("## %s\n**%s.** logic path why it cannot be "
-                             "exploited:\n\n%s\n\n---\n\n"
-                             % (rel, verdict, reason or "(no explanation given)"))
+                _drop_stale_verdict_file(outdir, "unproven.md")
                 with open(os.path.join(outdir, "fail.md"), "w") as fh:
                     fh.write("# FAIL: %s\n\nVERDICT: %s\n\nlogic path why it cannot "
                              "be exploited:\n\n%s\n"
@@ -5521,6 +5617,10 @@ def run_exploit():
                                  "report / model turns)\n")
                     lines.append("```\n%s\n```\n" % txt[-DETAIL_TAIL_CAP:])
     open(os.path.join(OUTPUT_ROOT, "REPORT.md"), "w").write("\n".join(lines) + "\n")
+    _write_verdict_index("unproven.md", unproven,
+                         "UNPROVEN - still to fix. No formal proof, and NOT refuted")
+    _write_verdict_index("not-exploitable.md", refuted,
+                         "Refuted. Logic path why it cannot be exploited")
     sys.stderr.write("%s [DONE] wrote %s/REPORT.md\n" % (_ts(), OUTPUT_ROOT))
     # To stderr (not stdout) so it never pollutes a findings.txt that stdout
     # may be redirected to in the default `all` pipeline.
