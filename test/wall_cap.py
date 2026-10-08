@@ -67,6 +67,10 @@ _CAPS_SECONDS = {
     "testingserver.py":              120 * 60,
     "testingstats.py":                10 * 60,
     "testingtools.py":                15 * 60,
+    # Compile-only, no runtime phase: a cold full build of the client to
+    # WebAssembly measured 51 s wall on 32 cores (2026-08-27). 10 min is
+    # ~10x that — a wedged emcc surfaces fast instead of soaking the run.
+    "testingwasm.py":                 10 * 60,
     "testingwebsocket.py":            30 * 60,
 }
 _DEFAULT_CAP_SECONDS = 30 * 60

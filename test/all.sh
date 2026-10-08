@@ -460,6 +460,8 @@ declare -A PER_TEST_TIMEOUT_MAP=(
     [testingstats.py]=10m
     [testingbenchmark.py]=15m
     [testingtools.py]=15m
+    # Compile-only cross build; measured 51s cold on 32 cores (2026-08-27).
+    [testingwasm.py]=10m
     [testingwebsocket.py]=30m
 )
 DEFAULT_PER_TEST_TIMEOUT=30m
@@ -586,6 +588,7 @@ run_test testingcompilationandroid.py
 run_test testingcompilationmsdos.py
 run_test testingcompilationESP32.py
 run_test testingcompilationgit.py
+run_test testingwasm.py
 
 # The test harness NEVER publishes. Building the installers is part of
 # testing (testingcompilation{windows,mac,android}.py leave them under the

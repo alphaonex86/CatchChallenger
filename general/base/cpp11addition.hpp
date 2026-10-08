@@ -1,6 +1,7 @@
 #ifndef CATCHCHALLENGER_CPP11ADDITION_H
 #define CATCHCHALLENGER_CPP11ADDITION_H
 
+#include <algorithm>
 #include <vector>
 #include <queue>
 #include <string>
