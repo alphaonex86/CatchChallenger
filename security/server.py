@@ -4566,12 +4566,11 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
         remaining = int(deadline - time.time())
         transcript.append("### assistant (step %d, %ds left)\n%s"
                           % (step, remaining, answer))
-        # Hard repetition guard: if the model emits the EXACT same reply twice
-        # in a row, it is stuck (the 33B sometimes apologises in a tight loop,
-        # e.g. "can't find EventLoop.h ..."). Something is wrong - stop this
-        # exploit and abort the WHOLE run with exit code 255 (per operator
-        # policy: a repeated sentence is a fatal signal, not a soft skip).
-        # The justification nudge asks to repeat the VERDICT: a verbatim one is the answer.
+        # Hard repetition guard: the EXACT same reply twice in a row means the
+        # model is stuck (the 33B sometimes apologises in a tight loop, e.g.
+        # "can't find EventLoop.h ...") -> this finding is skipped as UNPROVEN,
+        # the run continues. Exception: the justification nudge asks the model to
+        # repeat its VERDICT, so a verbatim verdict right after it is the answer.
         reaffirmed = nudged and (parse_action(answer) or ("",))[0] == "VERDICT"
         if (last_answer is not None and answer.strip()
                 and answer.strip() == last_answer.strip() and not reaffirmed):
