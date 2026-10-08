@@ -3160,6 +3160,9 @@ def _seccomp_filter_bytes(allow=None):
     return b"".join(struct.pack("<HBBI", *t) for t in ins)
 
 
+# Ignores SIGPIPE and unbuffers stdout: a dropped socket used to kill the exploit
+# with every printf still in the stdio buffer, so the model saw no output at all.
+EXPLOIT_RUNTIME_SRC = os.path.join(HERE, "exploit_runtime.c")
 _MAIN_RE = re.compile(r"^[ \t]*(?:int|void)\s+main\s*\(", re.M)
 
 
@@ -3197,8 +3200,9 @@ def _compile_exploit(outdir):
         # Source includes and assembler directives can read files during compile.
         # Compile under the same filesystem/credential boundary as execution.
         cmd = _sandbox_base() + ["--bind", outdir, outdir, "--chdir", outdir,
+                                "--ro-bind", EXPLOIT_RUNTIME_SRC, "/exploit_runtime.c",
                                 ("g++" if cxx else "gcc"), "-static", "-O1",
-                                "-g", "-o", binpath] + srcs
+                                "-g", "-o", binpath] + srcs + ["/exploit_runtime.c"]
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=120,
                            env=_sandbox_env(), preexec_fn=_set_server_rlimits)
     except (OSError, RuntimeError, subprocess.SubprocessError) as exc:

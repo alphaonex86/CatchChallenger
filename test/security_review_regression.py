@@ -709,8 +709,9 @@ class SecurityReviewTests(unittest.TestCase):
                     patch.object(server.subprocess, "run", side_effect=fake_compiler) as run:
                 binpath, err = server._compile_exploit(outdir)
             self.assertIsNone(err)
-            built = [os.path.basename(a) for a in run.call_args.args[0] if a.endswith(".c")]
-            self.assertEqual(built, ["probe.c", "util.c"])
+            cmd = run.call_args.args[0]
+            built = [os.path.basename(a) for a in cmd[cmd.index("-o") + 2:]]
+            self.assertEqual(built, ["probe.c", "util.c", "exploit_runtime.c"])
 
     def test_exploit_read_reaches_the_target_datapack_only(self):
         with tempfile.TemporaryDirectory() as run:
@@ -737,6 +738,20 @@ class SecurityReviewTests(unittest.TestCase):
                 self.assertIn("SIGPIPE", text)
                 self.assertNotIn("BUG IN YOUR", text)
         backtrace.assert_not_called()
+
+    def test_exploit_runtime_keeps_output_when_the_server_drops_the_socket(self):
+        probe = ('#include <stdio.h>\n#include <unistd.h>\nint main(void){int fd[2];'
+                 'if(pipe(fd))return 2;printf("before\\n");close(fd[0]);'
+                 'printf("write=%ld\\n",(long)write(fd[1],"x",1));return 0;}\n')
+        with tempfile.TemporaryDirectory() as work:
+            with open(os.path.join(work, "probe.c"), "w") as source:
+                source.write(probe)
+            binary = os.path.join(work, "probe")
+            subprocess.run(["gcc", "-O1", "-o", binary, os.path.join(work, "probe.c"),
+                            server.EXPLOIT_RUNTIME_SRC], check=True)
+            ran = subprocess.run([binary], stdout=subprocess.PIPE, text=True, timeout=30)
+        self.assertEqual(ran.returncode, 0)
+        self.assertEqual(ran.stdout, "before\nwrite=-1\n")
 
     def test_verdict_index_holds_only_this_run(self):
         with tempfile.TemporaryDirectory() as root, patch.object(server, "OUTPUT_ROOT", root):
