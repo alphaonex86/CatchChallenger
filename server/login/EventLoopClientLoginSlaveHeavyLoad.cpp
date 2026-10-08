@@ -626,6 +626,7 @@ void EventLoopClientLoginSlave::createAccount_return(AskLoginParam *askLoginPara
         std::cerr << "is not AskLoginParam" << stringimplode(paramToPassToCallBackType,';') << __FILE__ << __LINE__ << std::endl;
         abort();
     }
+    paramToPassToCallBackType.pop();
     #endif
     callbackRegistred.pop();
     if(!databaseBaseLogin.next())
@@ -646,13 +647,14 @@ void EventLoopClientLoginSlave::createAccount_return(AskLoginParam *askLoginPara
                 #ifdef DEBUG_MESSAGE_QUERY_IDLIST
                 std::cout << "Ask more to master: maxAccountIdList.size()<CATCHCHALLENGER_SERVER_MINIDBLOCK: " << maxAccountIdList.size() << "<" << CATCHCHALLENGER_SERVER_MINIDBLOCK << ", file: " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                 #endif
-                EventLoopClientLoginSlave::maxAccountIdRequested=true;
                 if(LinkToMaster::linkToMaster->queryNumberList.empty())
                 {
                     std::cerr << LinkToMaster::linkToMaster->listTheRunningQuery() << std::endl;
                     errorParsingLayer("Unable to get query id at createAccount_return");
                     return;
                 }
+                //only once a request is really sent, else no master reply ever clears it
+                EventLoopClientLoginSlave::maxAccountIdRequested=true;
                 const uint8_t &queryNumber=LinkToMaster::linkToMaster->queryNumberList.back();
                 LinkToMaster::linkToMaster->queryNumberList.pop_back();
 
