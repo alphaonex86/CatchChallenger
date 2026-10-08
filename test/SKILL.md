@@ -218,7 +218,11 @@ the others can't.
 > `testingpathfinding.py` cover scripted actions; `testingmulti.py`/
 > `testingbots.py` the multi-actor load; `testingprotocolstate.py` spins
 > a fresh valgrind server per `h_*.py` handler test and reports
-> baseline-delta leaks; `testingmap2png.py`/`testingmap4client.py`
+> baseline-delta leaks; `testingprotocolfuzz.py` replays seed-generated
+> STATEFUL session sequences (repeat/cancel/reorder across kick borders,
+> pre-select packets, two players racing) against the plain binary —
+> verdict is crash/hang only, `--seed=N --iter=K` replays one iteration;
+> `testingmap2png.py`/`testingmap4client.py`
 > re-render every map and compare pixels.
 
 ---

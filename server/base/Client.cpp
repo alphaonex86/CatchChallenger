@@ -527,6 +527,16 @@ bool Client::disconnectClient()
 void Client::errorParsingLayer(const std::string &error)
 {
     errorOutput(error);
+    //A parse-layer failure is the one kick path whose socket was never closed:
+    //disconnectClient() defers closeSocket() to the caller ("done into above
+    //layer"), the stat==None branch self-closes, but the CharacterSelected
+    //branch does not, and the CLI epoll loop only releases a connection on
+    //EPOLLRDHUP/HUP or isValid()==false (infd==-1). Without this close the
+    //KICKED client's fd stayed open forever — a zombie that still held its
+    //connection slot (and the fd) until the remote side chose to disconnect:
+    //a remote slot/file-descriptor exhaustion vector. The stat==None kick path
+    //already re-closes after disconnectClient() for exactly this reason.
+    closeSocket();
 }
 
 void Client::messageParsingLayer(const std::string &message) const
