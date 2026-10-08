@@ -281,6 +281,9 @@ def properties(block):
                            r'\s+value="([^"]*)"', block))
 
 
+TELEPORT_TYPES = ("door", "teleport on it", "teleport on push")
+
+
 def object_type(block):
     m = re.search(r'<object\b[^>]*?\stype="([^"]*)"', block)
     return m.group(1) if m else None
@@ -431,6 +434,31 @@ def check_objects(path, text, problems, warnings, fixes):
                           "no target dropped - the engine only logged "
                           "\"Unknown type\" for it"))
             text = text[:start] + text[end:]
+    #two teleports on ONE cell: the engine keeps one and logs "already found
+    #teleporter" on every load, in every map the template is stamped into.
+    #Keep the one carrying a cell (the generator's brush copies only those).
+    cells = {}
+    for start, end, block in object_blocks(text, "Moving"):
+        if object_type(block) in TELEPORT_TYPES:
+            tag = re.match(r"<object\b[^>]*", block).group(0)
+            cell = (re.search(r'\sx="([^"]*)"', tag).group(1),
+                    re.search(r'\sy="([^"]*)"', tag).group(1))
+            cells.setdefault(cell, []).append((start, end, block))
+    dropped = []
+    for (x, y), objects in cells.items():
+        if len(objects) > 1:
+            keep = next((o for o in objects if ' gid="' in o[2]), objects[0])
+            for o in objects:
+                if o is not keep:
+                    dropped.append(o)
+                    fixes.append((path, "second teleport on the cell x=" + x +
+                                  " y=" + y + " dropped - the engine logged "
+                                  "\"already found teleporter\" for it"))
+    for start, end, block in sorted(dropped, reverse=True):
+        line_start = text.rfind("\n", 0, start) + 1
+        if not text[line_start:start].strip() and text[end:end + 1] == "\n":
+            start, end = line_start, end + 1        #the whole line, not a blank one
+        text = text[:start] + text[end:]
     for bot_id, count in seen_ids.items():
         if count > 1:
             warnings.append((path, "bot object id " + bot_id + " used " +
@@ -904,7 +932,8 @@ def main():
               message)
     print("\n%d repairable, %d informational, %d warnings, %d problems" %
           (len(fixes), len(infos), len(warnings), len(problems)))
-    return 1 if problems else 0
+    #a repair left unapplied is a template the generator still stamps broken
+    return 1 if problems or (fixes and not args.fix) else 0
 
 
 sys.exit(main())
