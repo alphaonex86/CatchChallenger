@@ -181,6 +181,10 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
         return;*/
 
     //load the first time the random number list
+    //the file DB restores randomIndex/randomSize, but this connection's client queue starts
+    //empty: continue after the seeds already sent to the previous connection
+    randomIndex=(randomIndex+randomSize)%CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE;
+    randomSize=0;
     generateRandomNumber();
 
     #ifdef CATCHCHALLENGER_HARDENED

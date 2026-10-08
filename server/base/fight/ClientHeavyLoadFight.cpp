@@ -474,22 +474,17 @@ void Client::generateRandomNumber()
     posOutput+=1+4;
     {const uint32_t _tmp_le=(htole32(CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
 
-    if((randomIndex+randomSize+CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE)<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
-    {
-        //can send the next block
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,GlobalServerData::serverPrivateVariables.randomData.data()+randomIndex+randomSize,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE);
-        posOutput+=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
-
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-    }
-    else
-    {
-        //need return to the first block
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,GlobalServerData::serverPrivateVariables.randomData.data(),CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE);
-        posOutput+=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
-
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-    }
+    //randomData is a ring: the client queues every byte in order and getOneSeed() reads
+    //them back from randomIndex, so the block must continue exactly where the last one ended
+    const char * const randomData=GlobalServerData::serverPrivateVariables.randomData.data();
+    const uint32_t start=(randomIndex+randomSize)%CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE;
+    uint32_t beforeWrap=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE-start;
+    if(beforeWrap>CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE)
+        beforeWrap=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,randomData+start,beforeWrap);
+    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput+beforeWrap,randomData,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE-beforeWrap);
+    posOutput+=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     randomSize+=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
 }
 
@@ -505,11 +500,8 @@ uint8_t Client::getOneSeed(const uint8_t &max)
     #endif
     const uint8_t &number=GlobalServerData::serverPrivateVariables.randomData.at(randomIndex);
     randomIndex++;
-    //randomData is a RING of CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE bytes -
-    //generateRandomNumber() already restarts at offset 0 when the next block would
-    //not fit - but this cursor never returned, so a client that consumed that many
-    //seeds (fight actions) reached at(4096) on a 4096-byte vector: out_of_range
-    //with no handler = the whole server aborts, every player dropped.
+    //randomData is a RING of CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE bytes, wrapped
+    //the same way generateRandomNumber() sends it
     if(randomIndex>=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
         randomIndex=0;
     randomSize--;
