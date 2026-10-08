@@ -64,7 +64,6 @@ _MAX_BRANCHES = 10           # cap callee branches audited per function
 _MAX_TYPES = 16              # cap the param/local types listed (don't saturate)
 _TYPE_CACHE_DIR = os.path.join(codetree.OUTPUT_ROOT, "types-cache")
 _TIDY_CDB_DIR = None         # dir of the merged compile DB clang-tidy is pointed at
-_TYPE_RE = re.compile(r"\b(?:Parm)?VarDecl\b.*?\b([A-Za-z_]\w*)\s+'([^']+)'")
 
 # Triviality pre-filter: skip functions with <= this many real body lines.
 _TRIVIAL_MAX_LINES = int(os.environ.get("CC_TRIVIAL_MAX_LINES", "4"))
@@ -389,6 +388,8 @@ def setup_caches(scope=None):
     deterministic --sweep, which needs the compile DB but NOT the IR index."""
     global _TYPE_CACHE_DIR, _TIDY_CACHE_DIR, _VERDICT_CACHE_DIR
     root = _cache_root()
+    codetree.refresh_source_stamp()
+    codetree._CDB_FILES = None
     codetree.OUTPUT_ROOT = root
     codetree._IR_CACHE_DIR = os.path.join(root, "ast-cache", "ir")
     os.makedirs(codetree._IR_CACHE_DIR, exist_ok=True)
@@ -518,7 +519,7 @@ def _leading_comment(file_path, start_line):
 
 
 def _body(fi, cap):
-    body, _ = codetree.source_body(fi.file, fi.line)
+    body, _ = codetree.function_body(fi)
     if not body:
         return "(body not found)"
     # Prepend the function's own doc-comment (source_body starts at the signature,
@@ -544,6 +545,33 @@ def callee_branches(idx, qual):
     return [(c, idx.by_name[c]) for c in callees[:_MAX_BRANCHES]]
 
 
+def _types_from_ast(text, mangled_name):
+    """Read Clang's concatenated JSON roots without copying the remaining dump."""
+    decoder = json.JSONDecoder()
+    offset = 0
+    while offset < len(text):
+        common.check_cancelled()
+        if text[offset] in " \t\r\n":
+            offset += 1
+            continue
+        node, offset = decoder.raw_decode(text, offset)
+        if node.get("mangledName") != mangled_name:
+            continue
+        types = {}
+        pending = list(reversed(node.get("inner", [])))
+        while pending and len(types) < _MAX_TYPES:
+            common.check_cancelled()
+            child = pending.pop()
+            if child.get("kind") in ("ParmVarDecl", "VarDecl"):
+                name = child.get("name")
+                type_name = child.get("type", {}).get("qualType")
+                if name and type_name and name not in types:
+                    types[name] = type_name
+            pending.extend(reversed(child.get("inner", [])))
+        return types
+    return {}
+
+
 def _var_types(fi):
     """Param/local variable TYPES of the focused function, via clang's AST
     (`-ast-dump-filter` scopes the dump to just this function). Ordered
@@ -553,6 +581,7 @@ def _var_types(fi):
     it can reason about the code without the full headers — e.g. that `size` is a
     `const uint32_t &` or `buf` is a `char[4096]`. Empty on any failure: a hint,
     never required."""
+    common.check_cancelled()
     if not codetree.CLANG:
         return {}
     real = os.path.realpath(fi.file)
@@ -560,33 +589,35 @@ def _var_types(fi):
         mtime = os.path.getmtime(real)
     except OSError:
         return {}
-    name = fi.qual_name.split("::")[-1]
-    key = "%s.%s.%s" % (os.path.basename(real), name,
-                        format(mtime, ".0f").replace("-", "_"))
+    name = fi.demangled.split("(", 1)[0].split("::")[-1]
+    if not name:
+        return {}
+    flags = codetree.flags_for(real)
+    key = hashlib.sha256(json.dumps(["types-v2", real, fi.name, fi.line, mtime,
+                                    flags, codetree._SOURCE_STAMP]).encode()).hexdigest()
     cache = os.path.join(_TYPE_CACHE_DIR, key + ".json")
     try:
         with open(cache) as fh:
             return json.load(fh)
     except (OSError, ValueError):
         pass
-    flags = codetree.flags_for(real)
     cmd = [codetree.CLANG, "-fsyntax-only", "-fno-color-diagnostics",
-           "-Xclang", "-ast-dump", "-Xclang", "-ast-dump-filter=" + name]
+           "-Xclang", "-ast-dump=json", "-Xclang", "-ast-dump-filter=" + name]
     cmd += flags.split() if flags else ["-std=gnu++23"]
     cmd.append(real)
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=40)
     except (OSError, subprocess.SubprocessError):
         return {}
-    types = {}
-    for line in r.stdout.splitlines():
-        m = _TYPE_RE.search(line)
-        if m:
-            n, t = m.group(1), m.group(2)
-            if n not in types:
-                types[n] = t
-            if len(types) >= _MAX_TYPES:
-                break
+    if r.returncode != 0:
+        return {}
+    # Clang may emit multiple JSON roots for a name filter. Only this exact
+    # overload's variables are evidence; a same-name method's types are not.
+    try:
+        types = _types_from_ast(r.stdout, fi.name)
+    except (ValueError, TypeError):
+        return {}
+    common.check_cancelled()
     try:
         os.makedirs(_TYPE_CACHE_DIR, exist_ok=True)
         with open(cache, "w") as fh:
@@ -596,26 +627,36 @@ def _var_types(fi):
     return types
 
 
-def prewarm_types(funcs, workers=8):
+def prewarm_types(funcs, workers=8, progress=None):
     """Populate the var-type cache for many functions in parallel (each is its own
     clang parse) so a whole-tree scan isn't serialized on per-function clang runs.
     Call before iterating build_views over many functions (e.g. a bulk scan)."""
-    from concurrent.futures import ThreadPoolExecutor
+    from concurrent.futures import ThreadPoolExecutor, as_completed
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        list(pool.map(_var_types, funcs))
+        futures = [pool.submit(_var_types, fi) for fi in funcs]
+        try:
+            if progress:
+                progress(0, len(futures))
+            for done, future in enumerate(as_completed(futures), 1):
+                future.result()
+                if progress:
+                    progress(done, len(futures))
+        except BaseException:
+            common.request_cancel()
+            for future in futures:
+                future.cancel()
+            raise
 
 
 # ---------------------------------------------------------------------------
 # Triviality pre-filter — don't spend an IA call on a function with no logic
 # ---------------------------------------------------------------------------
-def is_trivial(fi):
-    """True for a function not worth auditing: a destructor, or a body of <=
-    _TRIVIAL_MAX_LINES real lines (empty/defaulted, a getter/setter, a thin
-    forwarder). These are a large fraction of the tree and an LLM finds nothing in
-    them — skipping them focuses the budget on real logic."""
-    if fi.qual_name.split("::")[-1].startswith("~"):
+def is_trivial(fi, security=False):
+    """General review skips destructors and short bodies; security only skips
+    compiler-generated members whose source location is a type declaration."""
+    if not security and fi.demangled.split("(", 1)[0].split("::")[-1].startswith("~"):
         return True
-    body, _ = codetree.source_body(fi.file, fi.line)
+    body, _ = codetree.function_body(fi)
     if not body:
         return False
     # A ctor/dtor the COMPILER generates has no body of its own: its debug info
@@ -624,6 +665,10 @@ def is_trivial(fi):
     # reporting "this destructor loads XML files" - there is no function to audit.
     if _TYPE_DECL_RE.match(body.lstrip()):
         return True
+    # Line count and destructor names say nothing about security: a one-line
+    # copy, authorization check, or cleanup can be the entire vulnerability.
+    if security:
+        return False
     n = 0
     for ln in body.splitlines():
         s = ln.strip()
@@ -632,13 +677,13 @@ def is_trivial(fi):
     return n <= _TRIVIAL_MAX_LINES
 
 
-def audit_targets(funcs, out=sys.stderr):
+def audit_targets(funcs, out=sys.stderr, security=False):
     """`funcs` minus the trivial ones (reports how many were skipped)."""
-    keep = [f for f in funcs if not is_trivial(f)]
+    keep = [f for f in funcs if not is_trivial(f, security=security)]
     sk = len(funcs) - len(keep)
     if sk:
-        out.write("[codecheck] skipping %d trivial function(s); auditing %d\n"
-                  % (sk, len(keep)))
+        out.write("[codecheck] skipping %d %s function(s); auditing %d\n"
+                  % (sk, "compiler-generated" if security else "trivial", len(keep)))
     return keep
 
 
@@ -663,7 +708,8 @@ def _file_tidy(path, checks, run=True):
         mtime = os.path.getmtime(real)
     except OSError:
         return []
-    key = hashlib.sha256(("%s|%s|%s" % (real, mtime, checks)).encode()).hexdigest()[:24]
+    key = hashlib.sha256(json.dumps([real, mtime, checks, codetree.flags_for(real),
+                                    codetree._SOURCE_STAMP]).encode()).hexdigest()[:24]
     cache = os.path.join(_TIDY_CACHE_DIR, key + ".json")
     try:
         with open(cache) as fh:
@@ -696,12 +742,12 @@ def tidy_for_function(fi, checks=None, run=True):
     items = _file_tidy(fi.file, checks or TIDY_CHECKS, run=run)
     if not items:
         return []
-    _b, end = codetree.source_body(fi.file, fi.line)
+    _b, end = codetree.function_body(fi)
     hi = end if end and end >= fi.line else fi.line + 300
     return [it for it in items if fi.line <= it[0] <= hi]
 
 
-def prewarm_tidy(funcs, checks=None, workers=6):
+def prewarm_tidy(funcs, checks=None, workers=6, progress=None):
     """Run clang-tidy ONCE per file (parallel) so per-function lookups hit the
     cache. Slower than the AST type dump, so fewer workers."""
     seen, files = set(), []
@@ -711,9 +757,15 @@ def prewarm_tidy(funcs, checks=None, workers=6):
             seen.add(rp)
             files.append(rp)
     ck = checks or TIDY_CHECKS
-    from concurrent.futures import ThreadPoolExecutor
+    from concurrent.futures import ThreadPoolExecutor, as_completed
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        list(pool.map(lambda p: _file_tidy(p, ck), files))
+        futures = [pool.submit(_file_tidy, p, ck) for p in files]
+        if progress:
+            progress(0, len(futures))
+        for done, future in enumerate(as_completed(futures), 1):
+            future.result()
+            if progress:
+                progress(done, len(futures))
 
 
 # ---------------------------------------------------------------------------
@@ -810,7 +862,8 @@ _CACHE_STATS = {"hit": 0, "miss": 0}
 
 
 def _verdict_path(material):
-    h = hashlib.sha256("\x00".join(material).encode("utf-8", "replace")).hexdigest()
+    h = hashlib.sha256("\x00".join([codetree._SOURCE_STAMP] + material)
+                       .encode("utf-8", "replace")).hexdigest()
     return os.path.join(_VERDICT_CACHE_DIR, h[:32] + ".json")
 
 
@@ -917,7 +970,7 @@ def verify_finding(idx, fi, finding, model, ctx=None):
     body + branch) so the verifier has ALL the data to judge; without it, falls
     back to the bare body."""
     if not ctx:
-        body, _ = codetree.source_body(fi.file, fi.line)
+        body, _ = codetree.function_body(fi)
         ctx = body[:6000]
     msg = [{"role": "system", "content": _VERIFY_SYS},
            {"role": "user", "content":
@@ -1090,7 +1143,8 @@ def run(scope=None, only_file=None, only_func=None, limit=None,
         emit_sweep(file_sweep([only_file] if only_file else scope), out)
         out.write("\n")
     if only_func:
-        funcs = [idx.by_name[only_func]] if only_func in idx.by_name else []
+        funcs = [f for f in funcs if f.qual_name == only_func
+                 or f.qual_name.startswith(only_func + "(")]
         if not funcs:
             out.write("[not in index: %s]\n" % only_func)
             return 2
@@ -1143,7 +1197,8 @@ def run_panel(specs, scope=None, only_file=None, only_func=None, limit=None,
         emit_sweep(file_sweep([only_file] if only_file else scope), out)
         out.write("\n")
     if only_func:
-        funcs = [idx.by_name[only_func]] if only_func in idx.by_name else []
+        funcs = [f for f in funcs if f.qual_name == only_func
+                 or f.qual_name.startswith(only_func + "(")]
     elif only_file:
         funcs = idx.functions_in(only_file)
     else:

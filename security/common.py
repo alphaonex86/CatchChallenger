@@ -48,6 +48,10 @@ Env contract (identical for both tools):
                     remote daemon, or the PHP router). A scheme-less host:port is
                     accepted (http:// assumed). CC_IA_SETTINGS, if present,
                     overrides this with an explicit multi-host table.
+  CC_OLLAMA_API     wire API a backend URL speaks: 'ollama' (default - native
+                    /api/chat), 'router' (the PHP front controller) or 'llamacpp'
+                    (a plain llama.cpp llama-server, OpenAI-compat
+                    /v1/chat/completions; its --alias is the model name)
   CC_CLAUDE_MODEL   Claude model id (default claude-opus-4-8)
   CC_IA_SETTINGS    JSON declaring multiple Ollama backends (default
                     ./ia-settings.json next to this file)
@@ -69,8 +73,20 @@ import threading
 import time
 import urllib.error
 import urllib.request
+from concurrent.futures import CancelledError
 
 HERE = os.path.dirname(os.path.realpath(__file__))
+_CANCEL_REQUESTED = False
+
+
+def request_cancel():
+    global _CANCEL_REQUESTED
+    _CANCEL_REQUESTED = True
+
+
+def check_cancelled():
+    if _CANCEL_REQUESTED:
+        raise CancelledError("audit interrupted")
 
 # ===========================================================================
 # Backend configuration
@@ -363,14 +379,18 @@ def _ollama_headers():
 
 def _ollama_api_kind():
     """Which wire API the backend speaks: 'ollama' (default - native /api/chat
-    with a messages array) or 'router' (our PHP front controller: a single POST
-    of {model, prompt, preprompt} with a Bearer token, replying {response,...}).
+    with a messages array), 'router' (our PHP front controller: a single POST
+    of {model, prompt, preprompt} with a Bearer token, replying {response,...}),
+    or 'llamacpp' (llama-server's OpenAI-compatible /v1/chat/completions, i.e.
+    a local llama.cpp WITHOUT Ollama in the middle).
     From env CC_OLLAMA_API or the out-of-repo settings key 'ollama_api'."""
     kind = (os.environ.get("CC_OLLAMA_API") or "").strip().lower()
     if not kind:
         cfg = load_settings().get("ollama_api")
         if isinstance(cfg, str):
             kind = cfg.strip().lower()
+    if kind in ("llamacpp", "llama.cpp", "llama-cpp", "llama-server", "llama"):
+        return "llamacpp"
     return "router" if kind == "router" else "ollama"
 
 
@@ -452,6 +472,13 @@ def _ollama_turn_max():
 # (recoverable). Reset at the start of each transport call.
 # ---------------------------------------------------------------------------
 _LAST_REPLY_TRUNCATED = False
+_CHAT_OBSERVER = threading.local()
+
+
+def _chat_activity(event, size=0):
+    observer = getattr(_CHAT_OBSERVER, "callback", None)
+    if observer is not None:
+        observer(event, size)
 
 
 def last_reply_truncated():
@@ -550,6 +577,125 @@ def _chat_router(messages, timeout=None, model=None):
             time.sleep(3 * attempt)
 
 
+def _chat_llamacpp(messages, timeout=None, model=None, tools=None):
+    """One streamed llama-server /v1/chat/completions turn (the OpenAI-compat
+    API a plain llama.cpp build speaks, no Ollama anywhere). Same contract as
+    chat(): returns the assistant text.
+
+    The server is stateless here: the whole [{system},{user},{assistant},...]
+    history goes in every request and the jinja template renders it, so a system
+    turn must stay at the FRONT of the list (the qwen3-class templates reject one
+    anywhere else). Unlike the Ollama path there is no runner to keep a window
+    per model: one llama-server serves one model (its --alias), so `model` is
+    only echoed for naming, and the window is whatever the host started it with.
+
+    The reply streams as Server-Sent Events: `data: {chunk}` lines with an
+    INCREMENTAL choices[].delta.content, a final chunk carrying finish_reason
+    ("length" = the max_tokens cap chopped it), then `data: [DONE]`.
+
+    Like chat_ollama, the caller's `timeout` is a SOFT hint: the hard stops stay
+    CC_OLLAMA_TURN_TIMEOUT (per-chunk read) and CC_OLLAMA_TURN_MAX (whole turn)."""
+    mdl = model or MODEL_NAME
+    url = backend_for_model(mdl) + "/v1/chat/completions"
+    # No repeat_penalty: llama-server applies it to the prompt tail too, so the model
+    # could not echo the action keyword/path the protocol asks for and ended its turn
+    # in prose (measured: 0/6 usable replies at 1.3 vs 6/6 without). max_tokens bounds loops.
+    payload = {"model": mdl, "messages": messages, "stream": True,
+                "temperature": 0.1, "max_tokens": _ollama_num_predict()}
+    # A model trained on native tool calls emits broken <tool_call> fragments when
+    # none is declared; a declared tool makes llama-server parse the call for us.
+    if tools:
+        payload["tools"] = tools
+    if getattr(_CHAT_OBSERVER, "callback", None) is not None:
+        payload["timings_per_token"] = True
+        payload["stream_options"] = {"include_usage": True}
+    # Thinking control, same tri-state as Ollama's `think`: the qwen3-class jinja
+    # templates read an `enable_thinking` kwarg and DEFAULT TO THINKING ON (xhigh
+    # effort) when the flag is absent, so an omitted flag makes every answer spend
+    # the whole max_tokens on thought instead.
+    think = _ollama_think()
+    if think is not None:
+        payload["chat_template_kwargs"] = {"enable_thinking": think}
+    data = json.dumps(payload).encode("utf-8")
+    turn_start = time.time()
+    turn_max = _ollama_turn_max()
+    sock_to = _ollama_turn_timeout()
+    _set_truncated(False)
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            req = urllib.request.Request(url, data=data, headers=_ollama_headers())
+            chunks = []
+            calls = {}
+            _chat_activity("request")
+            finished = False
+            _set_truncated(False)
+            with urllib.request.urlopen(req, timeout=sock_to) as resp:
+                for raw in resp:
+                    # Absolute per-turn runaway cap, as chat_ollama's: a turn that
+                    # streamed for TURN_MAX without a finish_reason is a stuck model.
+                    if time.time() - turn_start > turn_max:
+                        sys.stderr.write(
+                            "    [chat abort: turn exceeded %ds absolute cap "
+                            "(CC_OLLAMA_TURN_MAX) - stuck model? returning what "
+                            "arrived]\n" % turn_max)
+                        break
+                    raw = raw.strip()
+                    if not raw.startswith(b"data:"):
+                        continue            # SSE field lines / keepalives we don't want
+                    body = raw[len(b"data:"):].strip()
+                    if body == b"[DONE]":
+                        break
+                    if not body:
+                        continue
+                    try:
+                        obj = json.loads(body)
+                    except ValueError:
+                        continue
+                    if obj.get("error"):
+                        raise RuntimeError("llama.cpp stream error: %s" % obj["error"])
+                    count = (obj.get("usage") or {}).get("completion_tokens")
+                    if count is None:
+                        count = (obj.get("timings") or {}).get("predicted_n")
+                    if isinstance(count, int) and count >= 0:
+                        _chat_activity("tokens", count)
+                    for ch in obj.get("choices") or []:
+                        delta = ch.get("delta") or {}
+                        piece = delta.get("content")
+                        size = len(piece or "") + len(delta.get("reasoning_content") or "")
+                        if size:
+                            _chat_activity("output", size)
+                        if piece:
+                            chunks.append(piece)
+                        for call in delta.get("tool_calls") or []:
+                            calls.setdefault(call.get("index", 0), []).append(
+                                (call.get("function") or {}).get("arguments") or "")
+                        reason = ch.get("finish_reason")
+                        if reason is not None:
+                            finished = True
+                            _set_truncated(reason not in ("stop", "tool_calls"))
+            if not finished:
+                _set_truncated(True)
+                sys.stderr.write("    [llamacpp] stream ended without a completion marker\n")
+            if last_reply_truncated():
+                sys.stderr.write("    [llamacpp] incomplete reply; not a final verdict\n")
+            actions = [_tool_call_text("".join(calls[i])) for i in sorted(calls)]
+            return "\n".join(actions + ["".join(chunks)]).strip()
+        except (urllib.error.URLError, ConnectionError, OSError) as exc:
+            # Transient outage: retry up to 5x with backoff, as chat_ollama.
+            if time.time() - turn_start > turn_max:
+                sys.stderr.write("    [chat give up: turn exceeded %ds cap after "
+                                 "%s]\n" % (turn_max, exc))
+                return ""
+            if attempt >= 5:
+                raise
+            sys.stderr.write("    [chat retry %d/5 after %ds %s]\n" % (attempt, sock_to, exc))
+            time.sleep(3 * attempt)
+        finally:
+            _chat_activity("end")
+
+
 # ===========================================================================
 # Tiny shared helpers
 # ===========================================================================
@@ -632,6 +778,17 @@ def _tool_call_line(line):
     if _TOOL_CALL_JUNK_RE.match(line):
         return ""
     return line
+
+
+def _tool_call_text(arguments):
+    """Native tool-call arguments ({"text": "READ x"}) -> the plain protocol line."""
+    try:
+        args = json.loads(arguments)
+    except ValueError:
+        return arguments
+    if isinstance(args, dict):
+        return str(args.get("text") or " ".join(str(v) for v in args.values()))
+    return str(args)
 
 
 def unwrap_tool_call(answer):
@@ -748,6 +905,13 @@ def ensure_context():
         # the Ollama host anyway, so there is nothing to discover here.
         sys.stderr.write("%s [ctx] backend=router (model metadata not exposed; "
                          "window managed by the Ollama host)\n" % _ts())
+        return None
+    if _ollama_api_kind() == "llamacpp":
+        # llama-server has no /api/show and never reports the window it was
+        # started with (-c), so there is nothing to discover. Keep CC_OLLAMA_CTX
+        # equal to that -c for the prompt budgeting (assumed_ctx()).
+        sys.stderr.write("%s [ctx] backend=llamacpp (window set by the server's "
+                         "-c; keep CC_OLLAMA_CTX equal to it)\n" % _ts())
         return None
     try:
         req = urllib.request.Request(
@@ -1283,7 +1447,7 @@ def claude_cli_preflight(timeout=90):
 # ===========================================================================
 # Ollama transport
 # ===========================================================================
-def chat_ollama(messages, timeout=None, model=None):
+def chat_ollama(messages, timeout=None, model=None, tools=None):
     """One streamed Ollama /api/chat turn. Returns the assistant message text;
     `model` overrides MODEL_NAME (a panel targets a specific local model).
 
@@ -1298,10 +1462,15 @@ def chat_ollama(messages, timeout=None, model=None):
     per-turn runaway cap) as the only hard stops. None = no hint.
 
     Delegates to the custom PHP router (_chat_router) when CC_OLLAMA_API /
-    settings 'ollama_api' selects 'router' - that backend speaks a different wire
-    format, so every Ollama entry point funnels through this dispatch."""
-    if _ollama_api_kind() == "router":
+    settings 'ollama_api' selects 'router', or to a plain llama.cpp llama-server
+    (_chat_llamacpp) when it selects 'llamacpp' - those backends speak a
+    different wire format, so every Ollama entry point funnels through this
+    dispatch."""
+    kind = _ollama_api_kind()
+    if kind == "router":
         return _chat_router(messages, timeout=timeout, model=model)
+    if kind == "llamacpp":
+        return _chat_llamacpp(messages, timeout=timeout, model=model, tools=tools)
     _set_truncated(False)
     turn_start = time.time()
     turn_max = _ollama_turn_max()
@@ -1343,6 +1512,9 @@ def chat_ollama(messages, timeout=None, model=None):
         try:
             req = urllib.request.Request(chat_url, data=data, headers=_ollama_headers())
             chunks = []
+            _chat_activity("request")
+            finished = False
+            _set_truncated(False)
             with urllib.request.urlopen(req, timeout=sock_to) as resp:
                 for raw in resp:
                     # Absolute per-turn runaway cap: a turn that has streamed
@@ -1361,14 +1533,27 @@ def chat_ollama(messages, timeout=None, model=None):
                         except ValueError:
                             pass
                         else:
+                            if obj.get("error"):
+                                raise RuntimeError("Ollama stream error: %s" % obj["error"])
+                            if isinstance(obj.get("eval_count"), int):
+                                _chat_activity("tokens", obj["eval_count"])
                             msg = obj.get("message") or {}
                             piece = msg.get("content")
+                            size = len(piece or "") + len(msg.get("thinking") or "")
+                            if size:
+                                _chat_activity("output", size)
                             if piece:
                                 chunks.append(piece)
                             # Final stream object carries the stop reason; "length"
                             # means the num_predict cap chopped the reply.
                             if obj.get("done_reason") == "length":
                                 _set_truncated(True)
+                            if obj.get("done"):
+                                finished = True
+                                break
+            if not finished:
+                _set_truncated(True)
+                sys.stderr.write("    [ollama] stream ended without a completion marker\n")
             return "".join(chunks).strip()
         except (urllib.error.URLError, ConnectionError, OSError) as exc:
             # A transient outage: retry up to 5x with backoff. Don't backoff past
@@ -1382,31 +1567,33 @@ def chat_ollama(messages, timeout=None, model=None):
             sys.stderr.write("    [chat retry %d/5 after %ds %s]\n" % (attempt, sock_to, exc))
             nap = 3 * attempt
             time.sleep(nap)
+        finally:
+            _chat_activity("end")
 
 
-def chat(messages, timeout=None):
+def chat(messages, timeout=None, tools=None):
     """Single-model turn against the CONFIGURED backend: the official `claude`
     CLI when CC_IA_BACKEND=claude-cli, the Claude API when =claude, else Ollama."""
     if USE_CLAUDE:
         if CLAUDE_VIA_CLI:
             return chat_claude_cli(messages, timeout)
         return chat_claude(messages, timeout)
-    return chat_ollama(messages, timeout)
+    return chat_ollama(messages, timeout, tools=tools)
 
 
-def chat_with(spec, messages, timeout=None):
+def chat_with(spec, messages, timeout=None, tools=None):
     """Single turn against a SPECIFIC model. spec None -> chat() (the configured
     backend); 'claude-cli'/'claude-cli:<id>' -> the official CLI; 'claude'/
     'claude:<id>' -> the Claude API; anything else -> Ollama with that name."""
     if not spec:
-        return chat(messages, timeout)
+        return chat(messages, timeout, tools)
     if spec == "claude-cli" or spec.startswith("claude-cli:"):
         mdl = spec.split(":", 1)[1] if ":" in spec else None
         return chat_claude_cli(messages, timeout, model=mdl)
     if spec == "claude" or spec.startswith("claude:"):
         mdl = spec.split(":", 1)[1] if ":" in spec else None
         return chat_claude(messages, timeout, model=mdl)
-    return chat_ollama(messages, timeout, model=spec)
+    return chat_ollama(messages, timeout, model=spec, tools=tools)
 
 
 # Backend preflight timeout (seconds). The probe is a REAL minimal chat round-trip
@@ -1465,8 +1652,9 @@ def preflight_backend():
         return (True, CLAUDE_API, False)
     url = backend_for_model(MODEL_NAME)
     is_local = _is_local_url(url)
-    sys.stderr.write("%s [backend] Ollama %s: %s (model %s)\n"
-                     % (_ts(), "local" if is_local else "REMOTE", url, MODEL_NAME))
+    sys.stderr.write("%s [backend] %s %s: %s (model %s)\n"
+                     % (_ts(), _ollama_api_kind(),
+                        "local" if is_local else "REMOTE", url, MODEL_NAME))
     try:
         # Real minimal chat: validates the EXACT path the scan uses. The router
         # requires an authenticated POST and proxies only chat, so a non-empty
