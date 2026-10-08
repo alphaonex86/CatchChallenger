@@ -4403,8 +4403,10 @@ EXPLOIT_ACTION_TOOLS = [{"type": "function", "function": {
     "parameters": {"type": "object", "required": ["text"], "properties": {"text": {
         "type": "string",
         "description": "The whole action, e.g. 'READ server/base/Client.cpp:100', 'GREP symbol', "
-                       "'WRITE exploit.c' followed by the file in a ``` block, 'RUN', "
-                       "'VERDICT FALSEPOSITIVE <guard FILE:LINE>'."}}}}}]
+                       "'WRITE exploit.c', 'RUN', 'VERDICT FALSEPOSITIVE <guard FILE:LINE>'."},
+        # A one-line `text` cannot carry a file: the model sent WRITE without code 5/5
+        # times; with this parameter it sent the code 5/5.
+        "content": {"type": "string", "description": "WRITE only: the full file content (the code itself)."}}}}}]
 
 
 def _exploit_chat(messages, timeout=None):
@@ -4569,8 +4571,10 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
         # e.g. "can't find EventLoop.h ..."). Something is wrong - stop this
         # exploit and abort the WHOLE run with exit code 255 (per operator
         # policy: a repeated sentence is a fatal signal, not a soft skip).
+        # The justification nudge asks to repeat the VERDICT: a verbatim one is the answer.
+        reaffirmed = nudged and (parse_action(answer) or ("",))[0] == "VERDICT"
         if (last_answer is not None and answer.strip()
-                and answer.strip() == last_answer.strip()):
+                and answer.strip() == last_answer.strip() and not reaffirmed):
             # A reply cut at the output-token cap is DETERMINISTIC at our low
             # temperature, so it re-truncates to the same bytes and repeats
             # verbatim. That is an infrastructure limit, NOT a stuck model: don't
