@@ -781,14 +781,19 @@ def _tool_call_line(line):
 
 
 def _tool_call_text(arguments):
-    """Native tool-call arguments ({"text": "READ x"}) -> the plain protocol line."""
+    """Native tool-call arguments ({"text": "WRITE x", "content": "..."}) -> the plain
+    protocol text; a `content` file body follows as a fenced block."""
     try:
         args = json.loads(arguments)
     except ValueError:
         return arguments
-    if isinstance(args, dict):
-        return str(args.get("text") or " ".join(str(v) for v in args.values()))
-    return str(args)
+    if not isinstance(args, dict):
+        return str(args)
+    text = str(args.get("text") or " ".join(str(v) for k, v in args.items() if k != "content"))
+    content = str(args.get("content") or "")
+    if content and not content.lstrip().startswith("```"):
+        content = "```\n%s\n```" % content
+    return text + "\n" + content if content else text
 
 
 def unwrap_tool_call(answer):

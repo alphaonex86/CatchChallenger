@@ -445,6 +445,11 @@ class SecurityReviewTests(unittest.TestCase):
         self.assertFalse(common.last_reply_truncated())
         self.assertEqual(json.loads(opened.call_args.args[0].data)['tools'], server.EXPLOIT_ACTION_TOOLS)
         self.assertEqual(server.parse_action(answer), ('READ', 'h.cpp:3', None))
+        write = common._tool_call_text(json.dumps({"text": "WRITE e.c", "content": "int main(){}"}))
+        self.assertEqual(server.parse_action(write), ("WRITE", "e.c", "int main(){}\n"))
+        fenced = common._tool_call_text(json.dumps({"text": "WRITE e.c", "content": "```c\nint x;\n```"}))
+        self.assertEqual(server.parse_action(fenced), ("WRITE", "e.c", "int x;\n"))
+        self.assertIn("content", server.EXPLOIT_ACTION_TOOLS[0]["function"]["parameters"]["properties"])
 
     def test_prewarm_reports_completions(self):
         seen = []
@@ -683,6 +688,11 @@ class SecurityReviewTests(unittest.TestCase):
         with open(os.path.join(outdir, "exploit.c")) as written:
             self.assertEqual(written.read(), "int main(){return 0;}\n")
         self.assertEqual(verdict, server.VERDICT_REFUTED)
+
+    def test_exploit_verdict_repeated_after_the_justification_nudge_stands(self):
+        verdict, _, sent = self.run_exploit_one([self.REFUTE[0], self.REFUTE[0]])
+        self.assertEqual(verdict, server.VERDICT_REFUTED)
+        self.assertEqual(len(sent), 2)
 
     def test_exploit_compile_failure_shows_only_the_compiler_error(self):
         failed = "RUN: COMPILE FAILED\nexploit.c:86:5: error: expected declaration or statement at end of input"
