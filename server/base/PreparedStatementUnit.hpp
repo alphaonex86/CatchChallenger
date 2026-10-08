@@ -8,6 +8,7 @@
 #include <vector>
 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
 #include <unordered_map>
+#include <limits>
 #endif
 
 namespace CatchChallenger {
@@ -33,11 +34,13 @@ private:
     //convert asyncPrepared to async, then need database
     CatchChallenger::DatabaseBase * database;
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-    //prepared statement
-    char uniqueName[3];
+    //prepared statement name = the per-connection counter in decimal: sized from the
+    //counter type at compile time, so every value fits (max digits + NUL)
+    typedef uint16_t StatementNumber;
+    char uniqueName[std::numeric_limits<StatementNumber>::digits10+2];
     static std::string writeToPrepare(const std::string &query);
 
-    static std::unordered_map<CatchChallenger::DatabaseBase *,uint16_t> queryCount;
+    static std::unordered_map<CatchChallenger::DatabaseBase *,StatementNumber> queryCount;
     #endif
     StringWithReplacement query;
 };

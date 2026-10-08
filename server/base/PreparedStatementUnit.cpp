@@ -13,7 +13,7 @@
 using namespace CatchChallenger;
 
 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-std::unordered_map<CatchChallenger::DatabaseBase *,uint16_t> PreparedStatementUnit::queryCount;
+std::unordered_map<CatchChallenger::DatabaseBase *,PreparedStatementUnit::StatementNumber> PreparedStatementUnit::queryCount;
 #endif
 
 PreparedStatementUnit::PreparedStatementUnit()
@@ -75,10 +75,18 @@ bool PreparedStatementUnit::setQuery(const std::string &query)
         return false;
     }
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-    if(PreparedStatementUnit::queryCount.find(database)==PreparedStatementUnit::queryCount.cend())
-        PreparedStatementUnit::queryCount[database]=0;
-    strcpy(uniqueName,std::to_string(PreparedStatementUnit::queryCount.at(database)).c_str());
-    PreparedStatementUnit::queryCount[database]++;
+    //Names must stay unique on a connection: a reconnect re-prepares the stored names
+    //(no new number), a second init on the same connection takes new ones. At the
+    //counter maximum refuse instead of wrapping onto a name already prepared.
+    StatementNumber &count=PreparedStatementUnit::queryCount[database];
+    if(count==std::numeric_limits<StatementNumber>::max())
+    {
+        std::cerr << "Too many prepared statements on one database connection, unable to prepare: " << query << std::endl;
+        return false;
+    }
+    const std::string name=std::to_string(count);
+    memcpy(uniqueName,name.c_str(),name.size()+1);
+    count++;
     const std::string &newQuery=PreparedStatementUnit::writeToPrepare(query);
     if(!database->queryPrepare(uniqueName,newQuery.c_str(),this->query.argumentsCount()/*, NULL*//*paramTypes*/))
     { //if failed quit
@@ -276,7 +284,7 @@ PreparedStatementUnit::PreparedStatementUnit(PreparedStatementUnit&& other) : //
         break;
     }
     #endif
-    strcpy(this->uniqueName,other.uniqueName);
+    memcpy(this->uniqueName,other.uniqueName,sizeof(uniqueName));
     #else
     (void)other;
     #endif
