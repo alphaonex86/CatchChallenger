@@ -76,8 +76,7 @@ void Client::server_list_object()
     if(askLoginParam==NULL)
         abort();
     #endif
-    server_list_return(askLoginParam->query_id,askLoginParam->characterOutputData,askLoginParam->characterOutputDataSize);
-    delete[] askLoginParam->characterOutputData;
+    server_list_return(askLoginParam->query_id,askLoginParam->characterOutputData.data(),askLoginParam->characterOutputData.size());
     delete askLoginParam;
 }
 
@@ -992,6 +991,7 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     #endif
     removeCharacterLater_object();
     #elif CATCHCHALLENGER_DB_FILE
+    delete removeCharacterParam;
     #else
     #error Define what do here
     #endif

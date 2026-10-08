@@ -51,6 +51,7 @@ import os
 import signal
 import time
 import glob
+import re
 import socket
 import importlib
 import traceback
@@ -518,8 +519,19 @@ def _run_one(modname, name, run, fpath, binary, maincode):
 
     # A clean handler test must: report ok, leave NO crash/hang, and introduce
     # NO valgrind finding BEYOND the baseline (delta-clean).
-    final_ok = ok and (crash is None) and (not timed_out[0]) and vg_clean
-    detail_bits = [detail] if detail else []
+    retained = {}
+    try:
+        retained = request_param_retention(srv.valgrind_log)
+    except OSError as e:
+        detail = "%s  (request-param retention check skipped: %r)" % (detail, e)
+    final_ok = ok and (crash is None) and (not timed_out[0]) and vg_clean and not retained
+    detail_bits = []
+    for allocator, (blocks, nbytes) in sorted(retained.items()):
+        detail_bits.append("REQUEST-PARAM-LEAK: %s: %d block(s) / %d B still allocated "
+                           "after every client disconnected (new'd per request, never "
+                           "deleted)" % (allocator, blocks, nbytes))
+    if detail:
+        detail_bits.append(detail)
     if crash is not None:
         detail_bits.append("CRASH/ABORT: %s" % crash[:400])
     if not vg_clean:
@@ -586,6 +598,37 @@ def _reclaim_run_dir(run_dir):
                 os.remove(p)
         except OSError:
             pass
+
+
+# Per-request heap params: each of these new()s an XxxParam that must be deleted
+# once its request completes. After close_all_sessions() + stop, ANY such block
+# still allocated (valgrind "still reachable" included, which the definitely-lost
+# delta does not count) was never freed: memory grows with every request.
+REQUEST_PARAM_ALLOCATORS = ("Client::askLogin(", "Client::createAccount(",
+                            "Client::addCharacter(", "Client::removeCharacterLater(",
+                            "Client::selectCharacter(", "Client::selectCharacterServer(",
+                            "Client::clanAction(")
+_LOSS_RECORD_RE = re.compile(r"== ([\d,]+)(?: \([^)]*\))? bytes in ([\d,]+) blocks are .+ in loss record")
+
+
+def request_param_retention(valgrind_log):
+    """{allocator: [blocks, bytes]} for request params alive at exit; the allocator
+    must be the DIRECT caller of operator new (a member container grown inside the
+    same function is legitimately long-lived and must not count)."""
+    with open(valgrind_log, "r", errors="replace") as f:
+        lines = f.read().splitlines()
+    retained = {}
+    i = 0
+    while i + 2 < len(lines):
+        record = _LOSS_RECORD_RE.search(lines[i])
+        if record and "operator new" in lines[i + 1]:
+            for allocator in REQUEST_PARAM_ALLOCATORS:
+                if allocator in lines[i + 2]:
+                    entry = retained.setdefault(allocator[:-1], [0, 0])
+                    entry[0] += int(record.group(2).replace(",", ""))
+                    entry[1] += int(record.group(1).replace(",", ""))
+        i += 1
+    return retained
 
 
 def _fmt_sig(sig):

@@ -57,6 +57,7 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     selectCharacterServer_object();
     #elif CATCHCHALLENGER_DB_FILE
     (void)characterCreationDate;
+    delete selectCharacterParam;
     #else
     #error Define what do here
     #endif
