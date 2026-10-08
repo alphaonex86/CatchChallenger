@@ -475,12 +475,10 @@ def build_project(pro_file, build_dir, label, *,
         # breaches into SIGABRT for live players) — the test harness
         # is the opt-in path. HARDENED turns `#ifdef
         # CATCHCHALLENGER_HARDENED` blocks (across server/general
-        # code) into abort()-on-invariant-violation, including a
-        # SIGABRT with packetCode + queryNumber + hex dump on stderr
-        # when parseReplyData/parseMessage/parseQuery return false
-        # (see ProtocolParsingInput.cpp). Surfaces protocol-formula
-        # drift as a SIGABRT instead of a silent disconnect that the
-        # parent-side wall watchdog reports as a generic timeout.
+        # code) into abort()-on-invariant-violation, and logs a parse
+        # failure (parseReplyData/parseMessage/parseQuery returning
+        # false, see ProtocolParsingInput.cpp) with packetCode + hex
+        # dump before the peer is dropped.
         "-DCATCHCHALLENGER_HARDENED=ON",
     ]
     cmake_args.extend(configure_flags)
