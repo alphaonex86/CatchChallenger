@@ -211,6 +211,7 @@ struct UringState
 {
     io_uring ring;
     std::unordered_map<int,void *> ptrs;//fd -> user data
+    std::unordered_map<int,__u64> recvUserData;//fd -> its recv_multishot user_data, cancelled on DEL
     //Phase 2 buffer ring (provided buffers, bgid=0). nullptr when setup
     //failed or kernel is too old.
     io_uring_buf_ring *buf_ring;
@@ -1446,6 +1447,23 @@ int EventLoop::ctl(int __op, int __fd,epoll_event *__event)
     }
     else if(__op==EPOLL_CTL_DEL)
     {
+        //an armed recv_multishot holds a reference on the socket: close() alone
+        //left it ESTABLISHED for ever (no FIN, the peer waited). Cancel by its
+        //user_data, NOT by fd: a send still queued on the fd must go out.
+        const std::unordered_map<int,__u64>::iterator recv=g_uring->recvUserData.find(__fd);
+        if(recv!=g_uring->recvUserData.end())
+        {
+            io_uring_sqe *sqe=io_uring_get_sqe(&g_uring->ring);
+            if(sqe!=nullptr)
+            {
+                io_uring_prep_cancel(sqe,reinterpret_cast<void *>(static_cast<uintptr_t>(recv->second)),0);
+                io_uring_sqe_set_data(sqe,nullptr);
+                io_uring_submit(&g_uring->ring);
+            }
+            else
+                std::cerr << "EventLoop::ctl(DEL): no SQE to cancel the recv_multishot of fd " << __fd << std::endl;
+            g_uring->recvUserData.erase(recv);
+        }
         const std::unordered_map<int,void *>::iterator it=g_uring->ptrs.find(__fd);
         if(it==g_uring->ptrs.end())
             return 0;
@@ -1516,6 +1534,7 @@ bool EventLoop::armRecvMultishot(int fd,void *user_data)
     io_uring_sqe_set_data64(sqe,URING_TAG_RECV(user_data));
     if(io_uring_submit(&g_uring->ring)<0)
         return false;
+    g_uring->recvUserData[fd]=URING_TAG_RECV(user_data);
     return true;
 }
 
