@@ -45,6 +45,7 @@ _CALLS_FILE = os.path.join(OUTPUT_ROOT, "ast-cache", "call_index.json")
 
 # IR cache
 _IR_CACHE_DIR = os.path.join(OUTPUT_ROOT, "ast-cache", "ir")
+_SOURCE_STAMP = ""
 os.makedirs(_IR_CACHE_DIR, exist_ok=True)
 _BUILD_CDB_ONLY = False  # process all scope dirs, not just compile-DB files
 
@@ -87,6 +88,30 @@ def is_generated(path):
 def _ts():
     import time
     return time.strftime("%H:%M %d/%m/%Y")
+
+
+def refresh_source_stamp():
+    """Invalidate derived evidence when any repository C/C++ dependency changes."""
+    global _SOURCE_STAMP
+    files = subprocess.run(['git', '-C', REPO_ROOT, 'ls-files', '-z', '--cached',
+                            '--others', '--exclude-standard'], capture_output=True,
+                           check=True).stdout.split(b'\0')
+    digest = hashlib.sha256()
+    for raw in sorted(set(files)):
+        path = os.fsdecode(raw)
+        if not path.endswith(SOURCE_EXT + ('.inc', '.inl', '.ipp', '.tpp')):
+            continue
+        full = os.path.join(REPO_ROOT, path)
+        if is_generated(full):
+            continue
+        digest.update(raw + b'\0')
+        try:
+            with open(full, 'rb') as source:
+                digest.update(hashlib.sha256(source.read()).digest())
+        except FileNotFoundError:
+            digest.update(b'deleted')
+    _SOURCE_STAMP = digest.hexdigest()
+    return _SOURCE_STAMP
 
 
 # ---------------------------------------------------------------------------
@@ -221,12 +246,14 @@ def ir_for(path):
     if not CLANG:
         return ('', "clang not found")
     flags = flags_for(path)
-    cmd = [CLANG, '-S', '-emit-llvm', '-g', '-O0', '-o', '-']
+    cmd = [CLANG, '-S', '-emit-llvm', '-o', '-']
     if flags:
         cmd += flags.split()
     else:
         cmd += ['-std=gnu++23']
-    cmd.append(path)
+    # Compile-DB release flags must not override the indexer's settings: inlining
+    # and dead-code elimination hide functions/calls; -g0 hides source locations.
+    cmd += ['-g', '-O0', path]
     try:
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=25)
     except subprocess.TimeoutExpired:
@@ -242,7 +269,7 @@ _CACHE_LOCK = threading.Lock()
 
 
 def _ir_cached(path):
-    """Return cached IR or compile fresh.  Uses file mtime as cache key.
+    """Return cached IR or compile fresh, keyed by source, mtime and flags.
     Returns (ir_text, '') or ('', err_msg)."""
     real = os.path.realpath(path)
     if is_generated(real):
@@ -251,8 +278,13 @@ def _ir_cached(path):
         mtime = os.path.getmtime(real)
     except OSError:
         return ('', 'cannot stat ' + real)
+    # Version the extraction policy so old optimized IR is never reused. Include
+    # path and flags: same-basename TUs and changed build defines are not equivalent.
+    key = hashlib.sha256(json.dumps(
+        ["unoptimized-v3", CLANG, real, flags_for(real), _SOURCE_STAMP]
+    ).encode()).hexdigest()[:20]
     cache_file = os.path.join(_IR_CACHE_DIR,
-                              os.path.basename(real) + '.'
+                              os.path.basename(real) + '.' + key + '.'
                               + format(mtime, '.9f').replace('.', 'x')
                               + '.ir')
     # Fast path: cache hit
@@ -279,29 +311,35 @@ def _ir_cached(path):
 # ---------------------------------------------------------------------------
 # IR parser: extract function definitions + call edges
 # ---------------------------------------------------------------------------
-# Match a mangled name after '@' on a define line (handles nested parens
-# in the parameter list).  The `^define` anchor ensures we only capture
-# function *definitions*, not call sites.
+# Only parse the symbol prefix, not the parameter/attribute grammar (nested
+# initializes((0, 48)), local_unnamed_addr, align, etc.). Stay on the define line.
 _DEF_RE = re.compile(
-    r'^define\s+[^@]*@\"?([A-Za-z_0-9$<>]+)\"?\('
-    r'(?:[^()]*(?:\([^()]*\)[^()]*)*)\)\s*(?:unnamed_addr|#\d+|!dbg|{)',
+    r'^define\s+[^\n@]*@\"?([A-Za-z_0-9.$<>]+)\"?\(',
     re.MULTILINE)
 # Call instructions: @<mangled>(
 _CALL_RE = re.compile(
-    r'\bcall\b\s+\S+\s+@\"?([A-Za-z_0-9$<>]+)\"?\(', re.MULTILINE)
+    r'^\s*(?:%[^\s=]+\s*=\s*)?(?:(?:tail|musttail|notail)\s+)?'
+    r'(?:call|invoke)\s+[^\n@]*@\"?([A-Za-z_0-9.$<>]+)\"?\(', re.MULTILINE)
 # DILocation metadata: line number from !dbg
 _DBG_MD = re.compile(r'!(\d+)\s*=\s*!DILocation\(line:\s*(\d+),', re.MULTILINE)
-# Map from IR metadata ID to line number for a function (also DISubprogram)
-_DBG_SUBPROG = re.compile(
-    r'!(\d+)\s*=\s*distinct\s+!DISubprogram\([^)]*?line:\s*(\d+)', re.MULTILINE)
-# Same DISubprogram, whole field list: we also need the DIFile it points at.
+# Parentheses inside quoted names (operator(), lambdas) are not metadata delimiters.
 _DBG_SUBPROG_FULL = re.compile(
-    r'!(\d+)\s*=\s*distinct\s+!DISubprogram\(([^)]*)\)', re.MULTILINE)
+    r'!(\d+)\s*=\s*distinct\s+!DISubprogram\('
+    r'((?:[^"()\n]|"(?:\\.|[^"\\])*")*)\)', re.MULTILINE)
 _SUBPROG_LINE_RE = re.compile(r'\bline:\s*(\d+)')
 _SUBPROG_FILE_RE = re.compile(r'\bfile:\s*!(\d+)')
 _DBG_DIFILE = re.compile(
     r'!(\d+)\s*=\s*!DIFile\(filename:\s*"([^"]*)"'
     r'(?:,\s*directory:\s*"([^"]*)")?')
+_STD_SYMBOL_RE = re.compile(r'^_Z(?:St|N[rVK]*[RO]?St)')
+
+
+def _excluded_symbol(name, demangled):
+    """Library internals and compiler trampolines are not source review targets."""
+    return bool(_STD_SYMBOL_RE.match(name)) or demangled.startswith((
+        'std::', '__cxa', '__gnu', 'hps::', 'llvm::',
+        '__cxx_global_var_init', '__cxx_global_array_dtor', '_GLOBAL__sub_I_',
+        'non-virtual thunk to ', 'virtual thunk to ', 'covariant return thunk to '))
 
 
 class FuncInfo:
@@ -324,26 +362,26 @@ class FuncInfo:
 
     @property
     def qual_name(self):
-        """The demangled function name without parameter types,
-        e.g. 'CatchChallenger::Client::handle'."""
-        # Remove everything after (including) the first '('
-        paren = self.demangled.find('(')
-        if paren >= 0:
-            return self.demangled[:paren].strip()
+        """Full signature: overloads and operator() must remain separate targets."""
         return self.demangled.strip()
 
 
-def _demangle(name):
-    """Demangle a single mangled name, returning the full string.
-    Returns the original on failure."""
-    if not name or not name.startswith('_Z'):
-        return name
+def _demangle_many(names):
+    """One c++filt process per TU instead of one process per symbol."""
+    result = {name: name for name in names}
+    mangled = sorted(name for name in result if name.startswith('_Z'))
+    if not mangled:
+        return result
     try:
-        r = subprocess.run(['c++filt', '-p'], input=name,
-                           capture_output=True, text=True, timeout=5)
-        return r.stdout.strip() if r.stdout.strip() else name
-    except (OSError, subprocess.SubprocessError):
-        return name
+        run = subprocess.run(['c++filt'], input='\n'.join(mangled) + '\n',
+                             capture_output=True, text=True, timeout=30)
+        values = run.stdout.splitlines()
+        if run.returncode != 0 or len(values) != len(mangled):
+            raise ValueError("c++filt returned incomplete symbol output")
+        result.update(zip(mangled, values))
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        sys.stderr.write("[codetree] demangling unavailable: %s; keeping symbols\n" % exc)
+    return result
 
 
 def _extract_line_map(ir_text):
@@ -351,8 +389,10 @@ def _extract_line_map(ir_text):
     m = {}
     for match in _DBG_MD.finditer(ir_text):
         m[match.group(1)] = int(match.group(2))
-    for match in _DBG_SUBPROG.finditer(ir_text):
-        m[match.group(1)] = int(match.group(2))
+    for match in _DBG_SUBPROG_FULL.finditer(ir_text):
+        line = _SUBPROG_LINE_RE.search(match.group(2))
+        if line:
+            m[match.group(1)] = int(line.group(1))
     return m
 
 
@@ -391,30 +431,24 @@ def parse_function_defs(ir_text, src_file):
 
     line_map = _extract_line_map(ir_text)
     subprog_files = _extract_subprog_files(ir_text)
+    definitions = list(_DEF_RE.finditer(ir_text))
+    call_sites = list(_CALL_RE.finditer(ir_text))
+    demangled_cache = _demangle_many(m.group(1) for m in definitions + call_sites)
 
     # ---- build definition index (one regex scan) ----
     # Each entry: (start_pos, end_pos, mname, demangled, dbg_id)
     defs = []
-    for match in _DEF_RE.finditer(ir_text):
+    for match in definitions:
         mname = match.group(1)
-        demangled = _demangle(mname)
-        # '_ZNSt'/'_ZSt' catch a std:: symbol whose demangling FAILED (no c++filt,
-        # or a name it cannot parse) - the readable prefixes below miss those.
-        if demangled.startswith(('std::', '__cxa', '__gnu', '_ZSt', '_ZNSt',
-                                 'hps::', 'llvm::')):
-            continue
-        # A thunk is a compiler-generated trampoline that only fixes `this` and
-        # jumps to the real override: same source location, no code of its own.
-        # Indexing it audits every virtual override TWICE and emits the finding
-        # twice ("non-virtual thunk to Client::singleMove" next to
-        # "Client::singleMove").
-        if demangled.startswith(('non-virtual thunk to ', 'virtual thunk to ',
-                                 'covariant return thunk to ')):
-            continue
+        demangled = demangled_cache[mname]
+        # Keep every boundary, including excluded functions: otherwise their calls
+        # are incorrectly attributed to the previous project function by bisect.
         # Get source line from full physical line
         ms = ir_text.rfind('\n', 0, match.start()) + 1
         me = ir_text.find('\n', match.end())
         full = ir_text[ms:me if me >= 0 else len(ir_text)]
+        if re.search(r'\b(?:internal|private)\b', full[:full.find('@')]):
+            demangled += " [TU %s]" % os.path.relpath(src_file, REPO_ROOT)
         dbg = re.search(r'!dbg\s*!(\d+)', full)
         dbg_id = dbg.group(1) if dbg else None
         end_pos = match.end()
@@ -426,13 +460,14 @@ def parse_function_defs(ir_text, src_file):
     # ---- second pass: build FuncInfo list ----
     funcs = []
     # Cache demangled lookups
-    demangled_cache = {}
     for start, end, mname, demangled, dbg_id in defs:
         # EVERY definition feeds the demangle cache, including the ones skipped
         # below: the call-edge pass looks a CALLER up by its mangled name and a
         # miss raises KeyError inside the worker thread, losing that whole TU's
         # functions and edges ("worker error: _ZNK8tinyxml2...").
         demangled_cache[mname] = demangled
+        if _excluded_symbol(mname, demangled):
+            continue
         line = line_map.get(dbg_id, 0) if dbg_id else 0
         qname = FuncInfo(mname, demangled, "", 0, 0).qual_name
         cls = ""
@@ -453,6 +488,8 @@ def parse_function_defs(ir_text, src_file):
         if is_vendor(def_file):
             continue
         fi = FuncInfo(mname, demangled, def_file, line, 0, class_name=cls)
+        if '::$_' in demangled and '::operator()' in demangled:
+            fi.kind = "LambdaExpr"
         funcs.append(fi)
 
     # Build a list of definition start positions for bisect lookup
@@ -462,7 +499,7 @@ def parse_function_defs(ir_text, src_file):
 
     # ---- extract call edges via binary search ----
     calls = []
-    for cmatch in _CALL_RE.finditer(ir_text):
+    for cmatch in call_sites:
         callee = cmatch.group(1)
         if not callee:
             continue
@@ -471,11 +508,10 @@ def parse_function_defs(ir_text, src_file):
                                "free", "realloc", "calloc", "assert",
                                "fprintf", "sprintf", "snprintf")):
             continue
-        callee_dm = demangled_cache.get(callee) or _demangle(callee)
-        demangled_cache[callee] = callee_dm
+        callee_dm = demangled_cache[callee]
         if not callee_dm:
             continue
-        if callee_dm.startswith(('std::', '__cxa', '__gnu', '_ZSt')):
+        if _excluded_symbol(callee, callee_dm):
             continue
 
         # Find enclosing definition: largest start_pos <= cmatch.start()
@@ -483,6 +519,8 @@ def parse_function_defs(ir_text, src_file):
         if idx < 0:
             continue
         caller_name = defs[idx][2]
+        if _excluded_symbol(caller_name, demangled_cache[caller_name]):
+            continue
         if caller_name == callee:
             continue
 
@@ -512,7 +550,11 @@ def parse_function_defs(ir_text, src_file):
 # ---------------------------------------------------------------------------
 # Source body extraction (brace matching)
 # ---------------------------------------------------------------------------
-def source_body(file_path, start_line):
+def function_body(fi):
+    return source_body(fi.file, fi.line, lambda_body=fi.kind == "LambdaExpr")
+
+
+def source_body(file_path, start_line, lambda_body=False):
     """Extract a function body from source starting at `start_line`.
 
     Brace-matches from the first real '{' to the '}' that brings nesting depth back
@@ -523,7 +565,8 @@ def source_body(file_path, start_line):
     multi-line block-comment body, a string ("[a-z]{2,4}$") or a char literal
     ('{'/'}') — cutting the body short at a fake brace, so the reviewer saw a
     TRUNCATED function. Returns (body_text, end_line) or ('', start_line) on
-    failure. (Raw strings R"(...)" are the only residual edge — rare here.)"""
+    failure. Signature/default-argument and constructor initializer braces are
+    skipped before matching the actual body."""
     try:
         lines = open(file_path, "r", errors="replace").readlines()
     except OSError:
@@ -534,14 +577,41 @@ def source_body(file_path, start_line):
     opened = False
     in_block = False                 # inside a /* ... */ block (persists across lines)
     in_str = None                    # the quote char while inside "..." or '...'
+    raw_end = None
+    parens = brackets = prefix_braces = 0
+    initializer = False
+    has_parameters = False
+    previous = ''
+    conditionals = []
     lineno = start_line - 1
     while lineno < len(lines):
         line = lines[lineno]
+        if opened and not in_block and in_str is None and raw_end is None:
+            directive = re.match(r'^\s*#\s*(if|ifdef|ifndef|elif|else|endif)\b', line)
+            if directive:
+                name = directive.group(1)
+                if name in ('if', 'ifdef', 'ifndef'):
+                    conditionals.append(depth)
+                elif conditionals:
+                    if name == 'endif':
+                        conditionals.pop()
+                    else:
+                        depth = conditionals[-1]
+                lineno += 1
+                continue
         n = len(line)
         col = 0
         while col < n:
             ch = line[col]
             nxt = line[col + 1] if col + 1 < n else ''
+            if raw_end is not None:
+                end = line.find(raw_end, col)
+                if end < 0:
+                    break
+                col = end + len(raw_end)
+                raw_end = None
+                previous = '"'
+                continue
             if in_block:
                 if ch == '*' and nxt == '/':
                     in_block = False
@@ -560,6 +630,12 @@ def source_body(file_path, start_line):
                     in_block = True
                     col += 2
                     continue
+                if ch == 'R' and nxt == '"':
+                    raw = re.match(r'R"([^\s()\\]{0,16})\(', line[col:])
+                    if raw:
+                        raw_end = ')' + raw.group(1) + '"'
+                        col += raw.end()
+                        continue
                 if ch == '"':
                     in_str = '"'
                 elif ch == "'":
@@ -575,13 +651,44 @@ def source_body(file_path, start_line):
                         col += 3
                         continue
                 elif ch == '{':
+                    if not opened and (prefix_braces or parens or brackets or
+                                       (initializer and (previous.isalnum() or
+                                                         previous in '_>'))):
+                        prefix_braces += 1
+                        col += 1
+                        continue
                     depth += 1
                     opened = True
+                elif ch == '}' and prefix_braces:
+                    prefix_braces -= 1
                 elif ch == '}' and opened:           # a '}' before the body opens is a
                     depth -= 1                        # stray close (misattributed start
                     if depth == 0:                   # line / #ifdef scope) — ignore it
                         body = "".join(lines[start_line - 1:lineno + 1])
                         return (body, lineno + 1)
+                elif not opened and not prefix_braces:
+                    if ch == '(':
+                        parens += 1
+                    elif ch == ')':
+                        parens = max(0, parens - 1)
+                        if not parens:
+                            has_parameters = True
+                    elif ch == '[':
+                        if lambda_body:
+                            # Debug locations for inline lambdas start on a call
+                            # line (sort(..., [](...){...})), outside its capture.
+                            parens = 0
+                            lambda_body = False
+                        brackets += 1
+                    elif ch == ']':
+                        brackets = max(0, brackets - 1)
+                    elif (ch == ':' and has_parameters and not parens
+                          and previous != ':' and nxt != ':'):
+                        initializer = True
+                    elif ch == ';' and not parens and not brackets:
+                        return ("", start_line)  # declaration, not the next function
+                if not ch.isspace():
+                    previous = ch
             col += 1
         lineno += 1
     return ("", start_line)
@@ -659,12 +766,21 @@ class Index:
         self._reverse_callers = {}   # callee_qual -> {caller_qual: [line,...]}
         self._lock = threading.Lock()
         self._built = False
+        self.errors = []
 
     def _collect_sources(self):
         seen = set()
         out = []
         cdb_files = set(_load_cdb().keys()) if _BUILD_CDB_ONLY else None
         for d in SCOPE_DIRS:
+            if os.path.isfile(d):
+                fp = os.path.realpath(d)
+                if (fp not in seen and not is_vendor(fp) and not is_generated(fp)
+                        and fp.endswith((".cpp", ".cc", ".cxx", ".c"))
+                        and (cdb_files is None or fp in cdb_files)):
+                    seen.add(fp)
+                    out.append(fp)
+                continue
             if not os.path.isdir(d):
                 continue
             for root, dirs, names in os.walk(os.path.realpath(d)):
@@ -675,14 +791,12 @@ class Index:
                 dirs[:] = [x for x in dirs
                            if not (x.endswith("_autogen") or x == "CMakeFiles")]
                 for n in sorted(names):
-                    if n.endswith((".cpp", ".cc", ".cxx")) and not is_generated(n):
+                    if n.endswith((".cpp", ".cc", ".cxx", ".c")) and not is_generated(n):
                         fp = os.path.realpath(os.path.join(root, n))
                         if fp not in seen:
                             seen.add(fp)
                             if cdb_files is None or fp in cdb_files:
                                 out.append(fp)
-        if cdb_files is not None and len(out) < 10:
-            return [f for f in sorted(seen) if f in cdb_files or True]
         return sorted(out)
 
     def build(self, max_workers=None):
@@ -701,7 +815,8 @@ class Index:
                              % (total, max_workers))
             done = [0]
             lock = threading.Lock()
-            errs = []
+            errs = self.errors
+            parsed = []
 
             def process(src):
                 ir, err = _ir_cached(src)
@@ -712,28 +827,19 @@ class Index:
                     return
                 fi_lst, call_lst = parse_function_defs(ir, src)
                 with lock:
-                    for fi in fi_lst:
-                        qn = fi.qual_name
-                        if (qn not in self.by_name
-                                or self.by_name[qn].line == 0):
-                            self.by_name[qn] = fi
-                            self.def_loc[qn] = (fi.file, fi.line)
-                    for caller_q, callee_q, cl in call_lst:
-                        self._forward_callees.setdefault(
-                            caller_q, {}).setdefault(callee_q, []).append(cl)
-                        self._reverse_callers.setdefault(
-                            callee_q, {}).setdefault(caller_q, []).append(cl)
+                    parsed.append((src, fi_lst, call_lst))
                     done[0] += 1
                     if done[0] % 50 == 0:
                         sys.stderr.write("  %d/%d TUs\n"
                                          % (done[0], total))
 
             with ThreadPoolExecutor(max_workers=max_workers) as pool:
-                futures = [pool.submit(process, src) for src in sources]
+                futures = {pool.submit(process, src): src for src in sources}
                 for f in as_completed(futures):
                     try:
                         f.result()
-                    except BaseException as exc:
+                    except Exception as exc:
+                        errs.append((futures[f], "worker error: %s" % exc))
                         sys.stderr.write(
                             "  worker error: %s\n" % exc)
 
@@ -746,13 +852,59 @@ class Index:
                     sys.stderr.write("  ... %d more failures\n"
                                      % (len(errs) - 10))
 
+            self._merge_definitions(parsed)
             self._built = True
             sys.stderr.write("[codetree] index done: %d functions, "
                              "%d forward edges, %d failures\n"
                              % (len(self.by_name),
                                 sum(len(v)
                                     for v in self._forward_callees.values()),
-                                len(errs)))
+                                 len(errs)))
+
+    def _merge_definitions(self, parsed):
+        """Keep same-signature implementations from different server binaries.
+
+        Calls prefer definitions emitted in their own TU. An external call with
+        several possible implementations retains all candidates, never an
+        arbitrary first-completed worker's implementation.
+        """
+        variants = {}
+        for _src, funcs, _calls in sorted(parsed, key=lambda item: item[0]):
+            for fi in funcs:
+                if os.path.realpath(fi.file).startswith(REPO_ROOT + os.sep):
+                    variants.setdefault(fi.qual_name, {}).setdefault((fi.file, fi.line), fi)
+        keys = {}
+        for name, locations in sorted(variants.items()):
+            # Prefer a real location over missing debug info for the same file.
+            for loc, fi in sorted(locations.items()):
+                if fi.line == 0 and any(f == fi.file and line > 0 for f, line in locations):
+                    continue
+                key = name
+                if len(locations) > 1:
+                    key += " [definition %s:%d]" % (os.path.relpath(fi.file, REPO_ROOT), fi.line)
+                keys[(name, loc)] = key
+                self.by_name[key] = fi
+                self.def_loc[key] = loc
+        for _src, funcs, calls in sorted(parsed, key=lambda item: item[0]):
+            local = {}
+            for fi in funcs:
+                key = keys.get((fi.qual_name, (fi.file, fi.line)))
+                if key:
+                    local.setdefault(fi.qual_name, set()).add(key)
+            for caller, callee, line in calls:
+                targets = local.get(callee) or {
+                    keys[(callee, loc)] for loc in variants.get(callee, {})
+                    if (callee, loc) in keys} or {callee}
+                for origin in local.get(caller, ()):
+                    for target in sorted(targets):
+                        self._forward_callees.setdefault(origin, {}).setdefault(target, set()).add(line)
+                        self._reverse_callers.setdefault(target, {}).setdefault(origin, set()).add(line)
+        for graph in (self._forward_callees, self._reverse_callers):
+            for edges in graph.values():
+                for target, lines in edges.items():
+                    edges[target] = sorted(lines)
+        for key, fi in self.by_name.items():
+            fi.demangled = key
 
     # ---- queries -----------------------------------------------------------
 
@@ -816,11 +968,11 @@ class TreeRender:
         seen = set()
 
         def render(qn, d, indent):
-            if qn in seen:
+            if d <= 0 or qn in seen:
                 return
             seen.add(qn)
             for callee_q, call_lines in \
-                    idx._forward_callees.get(qn, {}).items():
+                    sorted(idx._forward_callees.get(qn, {}).items()):
                 if callee_q in seen:
                     continue
                 loc = ""
@@ -848,11 +1000,11 @@ class TreeRender:
         seen = set()
 
         def render(qn, d, indent):
-            if qn in seen:
+            if d <= 0 or qn in seen:
                 return
             seen.add(qn)
             for caller_q, call_lines in \
-                    idx._reverse_callers.get(qn, {}).items():
+                    sorted(idx._reverse_callers.get(qn, {}).items()):
                 if caller_q in seen:
                     continue
                 loc = ""
@@ -885,7 +1037,7 @@ class TreeRender:
         ifd = IfdefMap()
         g = ifd.guards(fi.file, fi.line)
         guard_str = " [#%s]" % ", #".join(c for _, c, _ in g) if g else ""
-        body, endline = source_body(fi.file, fi.line)
+        body, endline = function_body(fi)
 
         parts = [
             "=== %s (%s:%d%s) ===" % (qual_name, rel, fi.line, guard_str),

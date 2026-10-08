@@ -122,7 +122,7 @@ Options:
                  --llm= is accepted as an alias.
   --ollama-host=URL   Ollama backend serving that model - a full URL or a bare
                  host:port (http assumed); BRACKET an IPv6 address, e.g.
-                 --ollama-host='[2803:1920::4:100]:11434'. Same as
+                 --ollama-host='[2001:db8::1]:11434'. Same as
                  CC_CODECHECK_OLLAMA_HOST, and as the '@host' suffix of --model.
                  Default: the out-of-repo settings
                  (~/.config/CatchChallenger/ia-settings.json 'ollama_backends'
@@ -387,6 +387,12 @@ def _ia_review(eng, idx, funcs, opt, failures):
 def main():
     t0 = time.monotonic()
     opt = _parse_args(sys.argv[1:])
+    import codetree_regression
+    if not codetree_regression.run_tests():
+        _save_and_exit([("index-regressions", "LLVM index regression failed")])
+    import security_review_regression
+    if not security_review_regression.run_tests():
+        _save_and_exit([("security-review-regressions", "Security review regression failed")])
     global SCOPE_REL
     SCOPE_REL = opt["scope"]
     # Thinking models (gemma4) spend the whole num_predict on thought and return

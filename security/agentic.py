@@ -79,18 +79,20 @@ def _convo_char_budget():
     ([TRUNCATED REPEAT] -> finding skipped)."""
     ctx = common.assumed_ctx() or _CTX_BUDGET_TOKENS
     reply = common._ollama_num_predict() + 1024      # answer (thought included) + slab
-    return max(4096, ctx - reply) * 3
+    return max(0, ctx - reply) * 3
 
 _TOOL_HELP = (
     "\n\nBefore concluding you MAY request more data — ONE request per reply, on "
     "its own first line:\n"
-    "  READ <repo-relative-path>   read a file (follow a caller / a type)\n"
+    "  READ <repo-relative-path>[:start[:end]]   read numbered source lines; "
+    "use ranges to inspect truncated bodies or guards\n"
     "  GREP <symbol>               find where a symbol is defined / used\n"
     "  BRANCH                      show the NEXT thing this function calls\n"
     "  DONE                        finish — then give your findings\n"
     "Keep each request minimal (small context). When you have enough, reply with "
     "your findings directly (no tool line). If the function is clean, reply NO "
-    "ISSUES.")
+    "ISSUES. If required evidence is unavailable, reply INCONCLUSIVE: <reason>. "
+    "Never treat truncated code or a failed tool request as evidence of safety.")
 
 _DISCUSS_SYS = (
     "You are in a review panel. You are shown the other reviewers' findings for one "
@@ -142,8 +144,14 @@ def _label(spec):
 
 
 def _chat(spec, messages, deadline):
+    common.check_cancelled()
     timeout = max(10, int(deadline - time.time()))
-    return common.chat_with(spec, messages, timeout=timeout)
+    answer = common.chat_with(spec, messages, timeout=timeout)
+    common.check_cancelled()
+    if common.last_reply_truncated():
+        raise ReviewIncomplete("model reply was truncated; no complete verdict: %s"
+                               % (answer or "(empty response)")[:1000])
+    return answer
 
 
 # ---------------------------------------------------------------------------
@@ -151,13 +159,39 @@ def _chat(spec, messages, deadline):
 # ---------------------------------------------------------------------------
 def _tool_read(arg):
     p = arg.strip().strip("`'\"")
+    start, end = 1, None
+    match = re.fullmatch(r"(.+?):(\d+)(?::(\d+))?", p)
+    if match:
+        p, start = match.group(1), int(match.group(2))
+        end = int(match.group(3)) if match.group(3) else None
+    if start < 1 or (end is not None and end < start):
+        return "(read error: expected 1-based start <= end)"
     full = p if os.path.isabs(p) else os.path.join(REPO_ROOT, p)
+    full = os.path.realpath(full)
+    if not full.startswith(os.path.realpath(REPO_ROOT) + os.sep):
+        return "(refused: file outside repository)"
     if codetree.is_vendor(full):
         return "(refused: vendored library, out of scope)"
     try:
-        return open(full, "r", errors="replace").read()
+        with open(full, "r", errors="replace") as source:
+            lines = source.readlines()
     except OSError as exc:
         return "(read error: %s)" % exc
+    if start > len(lines):
+        return "(read error: start exceeds file length %d)" % len(lines)
+    end = min(end or len(lines), len(lines))
+    out, size = [], 0
+    for number in range(start, end + 1):
+        line = "%d: %s" % (number, lines[number - 1])
+        if size + len(line) > _TOOL_RESULT_CAP - 256:
+            if not out:
+                return codecheck._cap(line, _TOOL_RESULT_CAP - 256, "source line")
+            out.append("\n[truncated; continue with READ %s:%d:%d]\n"
+                       % (p, number, end))
+            break
+        out.append(line)
+        size += len(line)
+    return "".join(out)
 
 
 def _tool_grep(arg):
@@ -168,8 +202,10 @@ def _tool_grep(arg):
     try:
         r = subprocess.run(["grep", "-rnI", "--include=*.cpp", "--include=*.h",
                             "--include=*.hpp", "--include=*.cc", "--include=*.cxx",
-                            sym] + list(codecheck.DEFAULT_SCOPE),
+                            "-F", "--", sym] + list(codecheck.DEFAULT_SCOPE),
                            capture_output=True, text=True, timeout=30)
+        if r.returncode not in (0, 1):
+            return "(grep error: %s)" % (r.stderr.strip() or r.returncode)
         return r.stdout or "(no matches)"
     except (OSError, subprocess.SubprocessError) as exc:
         return "(grep error: %s)" % exc
@@ -183,23 +219,65 @@ def _parse_tool(answer):
     return None
 
 
+class ReviewIncomplete(RuntimeError):
+    """The reviewer did not produce a usable conclusion; never a clean verdict."""
+
+
+def _review_result(answer):
+    """Accept explicit clean verdicts or structured findings, never stray prose."""
+    answer = (answer or "").strip()
+    findings = []
+    for line in answer.splitlines():
+        # Local models sometimes emit "high | file:line" despite the template.
+        # Normalize this equivalent form rather than losing a security candidate.
+        line = re.sub(r"^\s*(low|medium|high|critical)\s*\|",
+                      lambda m: "SEVERITY(%s) |" % m.group(1).upper(), line,
+                      count=1, flags=re.I)
+        if (codecheck._SEVERITY_RE.match(line.strip())
+                and re.search(r'\|\s*[^\s|]+:\d+(?:\s*\||:)', line)):
+            findings.append(line.strip())
+    if findings:
+        return "\n".join(findings)
+    # Accept an explicit terminal verdict with an explanation, not a mention of
+    # the required format inside reasoning. Findings always take precedence.
+    if (re.search(r"\bINCONCLUSIVE\b", answer, re.I)
+            or "[reply truncated at " in answer):
+        return None
+    lines = answer.splitlines()
+    if lines and (re.fullmatch(r"NO ISSUES\.?\s*(?:\[done\])?", lines[-1], re.I)
+                  or (len(lines) == 1
+                      and re.match(r"^NO ISSUES\s+[—–-]\s+\S", answer, re.I))):
+        return "NO ISSUES"
+    return None
+
+
 def _agentic_review(spec, idx, fi, sysprompt, deadline):
     """One IA reviews `fi` agentically. INCREMENTAL: a CONCLUDED (spec, function-
     source, sysprompt) result is cached, so a re-run skips unchanged functions for
     this IA. A transport error / budget timeout is inconclusive and is NOT cached,
     so a transient outage can't poison the cache."""
+    body, _ = codetree.function_body(fi)
+    if not body:
+        raise ReviewIncomplete("source body unavailable at %s:%d; no model request sent"
+                               % (os.path.relpath(fi.file, REPO_ROOT), fi.line))
     views = list(codecheck.build_views(idx, fi))   # materialize: cache key + the loop
     if not views:
-        return "NO ISSUES"
-    material = ["agentic:" + str(spec), sysprompt, codecheck.TIDY_CHECKS,
+        raise ReviewIncomplete("no source views available")
+    identity = _label(spec)
+    if not common.USE_CLAUDE and not identity.startswith("claude"):
+        identity += repr((common._ollama_api_kind(), common.backend_for_model(identity),
+                          common._ollama_think()))
+    material = ["agentic-v3:" + identity, sysprompt, _TOOL_HELP, codecheck.TIDY_CHECKS,
                 "".join(c for _, c in views)]
     cached = codecheck.verdict_get(material)
     if cached is not None:
         return cached
     codecheck._CACHE_STATS["miss"] += 1
-    result = _agentic_review_run(spec, views, fi, sysprompt, deadline)
+    answer = _agentic_review_run(spec, views, fi, sysprompt, deadline)
+    result = _review_result(answer)
     if result is None:
-        return "NO ISSUES"              # inconclusive: return but do NOT cache
+        raise ReviewIncomplete("review lacks an explicit clean verdict or structured finding: %s"
+                               % ((answer or "(empty response)")[:1000]))
     codecheck.verdict_put(material, result)
     return result
 
@@ -209,42 +287,61 @@ def _agentic_review_run(spec, views, fi, sysprompt, deadline):
     pull the next callee BRANCH (or READ/GREP) on request. Returns the concluded
     findings text (or 'NO ISSUES'), or None when it could NOT conclude (transport
     error, empty reply, ran out of rounds/time)."""
-    convo = [{"role": "system", "content": sysprompt},
-             {"role": "user", "content": views[0][1] + _TOOL_HELP}]
+    # Keep fixed instructions before variable source so llama.cpp can reuse their
+    # KV prefix between functions. Content and verdict-cache inputs are unchanged.
+    convo = [{"role": "system", "content": sysprompt + _TOOL_HELP},
+             {"role": "user", "content": views[0][1]}]
     budget = _convo_char_budget()
     vi = 1                              # next callee-branch index into `views`
     rounds = 0
+    format_retried = False
     while rounds < ROUNDS and time.time() < deadline:
         rounds += 1
         # CONTEXT GUARD: near the model's limit -> force a final answer this turn so
         # the accumulated prompt is NEVER truncated.
-        forced = sum(len(m["content"]) for m in convo) > budget
-        if forced:
-            convo.append({"role": "user", "content":
-                "CONTEXT BUDGET REACHED — request no more data; give your FINAL "
-                "findings now (file:line), or reply NO ISSUES."})
+        if sum(len(m["content"]) for m in convo) > budget:
+            raise ReviewIncomplete("conversation exceeds context budget; no oversized request sent")
         try:
             ans = _chat(spec, convo, deadline)
-        except Exception:
-            return None                 # transport error: inconclusive (don't cache)
+        except Exception as exc:
+            raise ReviewIncomplete("model request failed: %s" % exc) from exc
         if not ans:
             return None
         ans = codecheck.collapse_repetition(ans)       # defang an LLM text-loop
         convo.append({"role": "assistant", "content": ans})
         tool = _parse_tool(ans)
         if tool is None:
+            # A verbose conclusion otherwise discards the completed review and
+            # repeats all inference on the next run. Repair once, within budget,
+            # retaining the evidence and every suspected finding in context.
+            if (_review_result(ans) is None and not format_retried
+                    and not ans.lstrip().upper().startswith("INCONCLUSIVE")
+                    and rounds < ROUNDS and time.time() < deadline):
+                format_retried = True
+                convo.append({"role": "user", "content":
+                    "Reformat your conclusion using the required output format. "
+                    "Preserve every suspected issue and its evidence; do not "
+                    "restart the analysis or invent evidence. Use one "
+                    "SEVERITY(low|medium|high|critical) | file:line | evidence "
+                    "line per finding. Only if your review concluded clean, "
+                    "reply exactly NO ISSUES. If evidence is missing, reply "
+                    "INCONCLUSIVE: <reason>. No preamble or explanation outside "
+                    "the finding lines."})
+                continue
             return ans                  # no tool line -> these are the findings
-        if forced:                      # told it to conclude; ignore any tool request
-            rest = "\n".join(l for l in ans.splitlines() if not _TOOL_RE.match(l))
-            return rest.strip() or "NO ISSUES"
         name, arg = tool
         if name == "DONE":
             # strip the DONE line; the rest (if any) are findings
             rest = "\n".join(l for l in ans.splitlines() if not _TOOL_RE.match(l))
-            return rest.strip() or "NO ISSUES"
+            return rest.strip() or None
         if name == "BRANCH":
             if vi < len(views):
                 result = views[vi][1]
+                # The base view is already in the conversation. Repeating it can
+                # exhaust the tool-result cap before the new callee body appears.
+                branch_start = result.find("\n=== ONE THING IT CALLS")
+                if branch_start >= 0:
+                    result = result[branch_start:]
                 vi += 1
             else:
                 result = "(no more callee branches — conclude now)"
@@ -255,20 +352,21 @@ def _agentic_review_run(spec, views, fi, sysprompt, deadline):
         else:
             result = "(unknown tool)"
         convo.append({"role": "user",
-                      "content": "TOOL RESULT:\n" + result[:_TOOL_RESULT_CAP]})
-    # Rounds/time exhausted. Do NOT drop the review here: the caller turns None
-    # into "NO ISSUES", so every function whose review needed more than ROUNDS
-    # turns or FUNC_SECS seconds - the NORM for a big local model, which spends
-    # its first turns pulling BRANCH/READ data - was silently reported CLEAN.
+                      "content": "TOOL RESULT:\n" + codecheck._cap(
+                          result, _TOOL_RESULT_CAP, "tool result")})
+    # Rounds/time exhausted: give the model one final chance to conclude.
     # Ask ONCE, on a small extra grace window, for the findings it already has;
     # only a failed/empty final turn stays inconclusive (and uncached).
     convo.append({"role": "user", "content":
         "TIME/STEP BUDGET REACHED - request no more data. Give your FINAL "
-        "findings now (file:line), or reply NO ISSUES."})
+        "findings now (file:line). Reply NO ISSUES only if the available evidence "
+        "is sufficient; otherwise reply INCONCLUSIVE: <missing evidence>."})
+    if sum(len(m["content"]) for m in convo) > budget:
+        raise ReviewIncomplete("conversation exceeds context budget before final verdict")
     try:
         ans = _chat(spec, convo, time.time() + FINAL_GRACE_SECS)
-    except Exception:
-        return None
+    except Exception as exc:
+        raise ReviewIncomplete("final model request failed: %s" % exc) from exc
     if not ans:
         return None
     ans = codecheck.collapse_repetition(ans)
@@ -281,12 +379,13 @@ def _agentic_review_run(spec, views, fi, sysprompt, deadline):
 # ---------------------------------------------------------------------------
 def _finding_lines(text):
     """Non-trivial finding lines from an IA reply ('NO ISSUES' -> none)."""
-    if not text or "NO ISSUES" in text.upper():
+    if not text:
         return []
     out = []
     for ln in text.splitlines():
         s = ln.strip()
-        if s and not s.startswith(("#", "//", "===")) and len(s) > 8:
+        if (s and s.upper().rstrip(".") != "NO ISSUES"
+                and not s.startswith(("#", "//", "===")) and len(s) > 8):
             out.append(s)
     return out
 
@@ -350,7 +449,7 @@ _BRIEF_SYS = (
 
 def _redact_brief(lead_spec, idx, fi, finding, deadline):
     """The workgroup (via its lead) redacts the consensus brief for one finding."""
-    body, _ = codetree.source_body(fi.file, fi.line)
+    body, _ = codetree.function_body(fi)
     try:
         ans = _chat(lead_spec, [
             {"role": "system", "content": _BRIEF_SYS},
@@ -380,15 +479,17 @@ def audit_function(idx, fi, specs, role="codecheck", exploit_cb=None, sysprompt=
     # every function) — NOT re-emitted here; this is pure IA judgment.
     # 1. independent agentic review (shared budget)
     per_ia = {}
+    if not specs:
+        raise ReviewIncomplete("no reviewers configured")
     for spec in specs:
         if time.time() >= deadline:
-            break
+            raise ReviewIncomplete("review budget exhausted before every reviewer ran")
         per_ia[_label(spec) + ":" + str(id(spec))] = (
             spec, _agentic_review(spec, idx, fi, sysprompt, deadline))
 
     # single-IA: no workgroups
     if len(specs) < 2:
-        spec, txt = next(iter(per_ia.values()), (specs[0], "NO ISSUES"))
+        spec, txt = next(iter(per_ia.values()))
         flines = _finding_lines(txt)
         if not flines:
             return []

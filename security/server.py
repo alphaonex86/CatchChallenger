@@ -30,11 +30,13 @@ Usage:
 
 import concurrent.futures
 import functools
+import faulthandler
 import hashlib
 import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import threading
@@ -1041,23 +1043,40 @@ def append_notes(rel, block):
 
 
 def tool_read(arg):
-    """READ <path>: return a repo file, resolved by relative path or bare
-    basename under SEARCH_DIRS. Capped to TOOL_READ_BYTES."""
+    """READ <path>[:<start>[:<end>]]: numbered lines of a repo file, resolved by
+    relative path or bare basename under SEARCH_DIRS. Capped to TOOL_READ_BYTES;
+    the cut names the READ that continues, so a big file is never a dead end."""
+    path = arg.strip().strip("`'\"")
+    start, end = 1, None
+    match = re.fullmatch(r"(.+?):(\d+)(?::(\d+))?", path)
+    if match:
+        path, start = match.group(1), int(match.group(2))
+        end = int(match.group(3)) if match.group(3) else None
     repo_root = os.path.realpath(REPO_ROOT)
-    cand = os.path.realpath(os.path.join(REPO_ROOT, arg))
+    cand = os.path.realpath(os.path.join(REPO_ROOT, path))
     if not (cand.startswith(repo_root + os.sep) and os.path.isfile(cand)):
-        cand = find_by_basename(os.path.basename(arg))
+        cand = find_by_basename(os.path.basename(path))
     if not cand or not os.path.isfile(cand):
-        return "READ: not found in repo: %s" % arg
+        return "READ: not found in repo: %s" % path
     try:
-        text = open(cand, "r", errors="replace").read()
+        lines = open(cand, "r", errors="replace").read().splitlines()
     except OSError as exc:
         return "READ: error: %s" % exc
     rrel = os.path.relpath(cand, REPO_ROOT)
-    clipped = text[:TOOL_READ_BYTES]
-    if len(text) > TOOL_READ_BYTES:
-        clipped += "\n... [truncated]"
-    return "=== %s ===\n%s" % (rrel, clipped)
+    if start < 1 or start > len(lines) or (end is not None and end < start):
+        return "READ: %s has %d lines; use READ %s:<start>[:<end>]" % (rrel, len(lines), rrel)
+    end = min(end or len(lines), len(lines))
+    out, size = ["=== %s (%d lines) ===" % (rrel, len(lines))], 0
+    number = start
+    while number <= end:
+        line = "%d\t%s" % (number, lines[number - 1])
+        if size + len(line) > TOOL_READ_BYTES:
+            out.append("... [truncated; continue with READ %s:%d:%d]" % (rrel, number, end))
+            break
+        out.append(line)
+        size += len(line) + 1
+        number += 1
+    return "\n".join(out)
 
 
 def tool_grep(symbol):
@@ -1358,15 +1377,19 @@ def _param_billions(model):
 
 
 def ollama_models(max_b=None):
-    """Installed Ollama models across ALL configured backends, as [(name,
-    size_b)] (deduped, first backend reporting a name wins). When max_b is set,
-    keep only models whose KNOWN parameter size is < max_b (unknown-size models
-    are excluded - conservative). [] if no backend is reachable."""
+    """Installed models across ALL configured backends, as [(name, size_b)]
+    (deduped, first backend reporting a name wins). When max_b is set, keep only
+    models whose KNOWN parameter size is < max_b (unknown-size models are
+    excluded - conservative). [] if no backend is reachable. The listing path
+    depends on the wire kind: /api/tags for Ollama (and the router-style hosts),
+    /v1/models for a plain llama.cpp llama-server - both answer a `models` array
+    with the same details fields."""
+    path = "/v1/models" if common._ollama_api_kind() == "llamacpp" else "/api/tags"
     seen = {}
     order = []
     for url, _pins in ollama_backends():
         try:
-            with urllib.request.urlopen(url + "/api/tags", timeout=10) as resp:
+            with urllib.request.urlopen(url + path, timeout=10) as resp:
                 info = json.loads(resp.read().decode("utf-8", "replace"))
         except (urllib.error.URLError, OSError, ValueError) as exc:
             sys.stderr.write("%s [panel] backend %s not listable: %s\n"
@@ -1737,31 +1760,49 @@ def has_findings(answer):
 # cross-packet inconsistencies: a handler reading more bytes than the parser
 # declared for its code, a packet accepted in the wrong auth state, a query
 # reply code that bypasses the per-player lock. This is a single CROSS-FILE
-# turn that feeds the dispatch table (ProtocolParsingGeneral.cpp) + the
-# per-packet handler bodies (ClientNetworkRead*, ProtocolParsingInput) to the
-# model in one prompt, so it can compare parser-declared sizes vs handler-read
-# sizes and auth-state guards across the whole protocol at once. Env-gated
-# (CC_NO_PROTOCOL_SWEEP=1 disables); default on because it is the highest-
-# value remote surface and the per-file sweep structurally cannot cover it.
+# turn that feeds the FULL PATH - the dispatch table + wire parser
+# (packet->validation), the per-packet handlers, and the OPERATION +
+# PERSISTENCE functions they drive (mutations, cash/item changes, DB writes) -
+# to the model in one prompt, so it can compare parser-declared sizes vs
+# handler-read sizes, auth-state guards, and the checks the later functions
+# ASSUME already happened upstream, across the whole protocol at once.
+# Env-gated (CC_NO_PROTOCOL_SWEEP=1 disables); default on because it is the
+# highest-value remote surface and the per-file sweep structurally cannot
+# cover it. Runs in BOTH audit modes: the legacy `scan` and the DEFAULT
+# agentic `codecheck` (per-function reviews cannot see checks missing BETWEEN
+# functions, so codecheck merges this sweep into FINDINGS too).
 # ---------------------------------------------------------------------------
+# (relpath, byte slice cap). First five: packet -> validation (dispatch table
+# + framing + per-code handlers). Last four: operation -> persistence (the
+# mutations a handler performs and the serialize/DB path that stores them).
 PROTOCOL_SWEEP_FILES = (
-    "general/base/ProtocolParsingGeneral.cpp",
-    "general/base/ProtocolParsingInput.cpp",
-    "general/base/ProtocolParsingBase.cpp",
-    "server/base/ClientNetworkReadMessage.cpp",
-    "server/base/ClientNetworkReadQuery.cpp",
+    ("general/base/ProtocolParsingGeneral.cpp", 26000),
+    ("general/base/ProtocolParsingInput.cpp", 26000),
+    ("general/base/ProtocolParsingBase.cpp", 26000),
+    ("server/base/ClientNetworkReadMessage.cpp", 26000),
+    ("server/base/ClientNetworkReadQuery.cpp", 26000),
+    ("server/base/ClientEvents/LocalClientHandlerObject.cpp", 14000),
+    ("server/base/ClientEvents/LocalClientHandlerShop.cpp", 14000),
+    ("server/base/ClientEvents/LocalClientHandler.cpp", 18000),
+    ("server/base/Client.cpp", 18000),
 )
-SWEEP_FILE_CAP = 26000
-SWEEP_TOTAL_CAP = 90000
+SWEEP_TOTAL_CAP = 140000
+# Function-definition heads (col 0, Class::name(...)): the operation /
+# persistence files carry no `case 0x` dispatch, so this keeps their mutation
+# + DB-write entry points inside the slice budget.
+_FUNC_HEAD_RE = re.compile(r"^\w[\w:<>,&*\s]*::[~\w]+\s*\(")
 
 PROTOCOL_SWEEP_SYSTEM = (
     "You are a security auditor doing ONE CROSS-FILE protocol sweep of the "
-    "CatchChallenger game server. The files below contain the WIRE PARSER "
-    "(packetFixedSize[] table: the byte size declared for each packet code; "
-    "0xFE = variable-size, parsed via an inner length) and the PER-PACKET "
-    "HANDLERS (the `case 0xNN:` switch bodies that consume the bytes). A bug "
-    "here is the single highest-value remote defect: the input is untrusted "
-    "TCP from a game client.\n"
+    "CatchChallenger game server. The files below contain the FULL packet path: "
+    "the WIRE PARSER (packetFixedSize[] table: the byte size declared for each "
+    "packet code; 0xFE = variable-size, parsed via an inner length), the "
+    "PER-PACKET HANDLERS (the `case 0xNN:` switch bodies that consume the "
+    "bytes), and the OPERATION + PERSISTENCE functions they drive "
+    "(Client::addObject/removeObject, buy/sell, addCash/removeCash, "
+    "serialize/parse -> the FILE_DB blob). A bug here is the single "
+    "highest-value remote defect: the input is untrusted TCP from a game "
+    "client.\n"
     "\n"
     "Hunt SPECIFICALLY for these cross-file defects the per-file audit misses:\n"
     "- SIZE MISMATCH: a handler reads MORE bytes than packetFixedSize[code] "
@@ -1775,6 +1816,11 @@ PROTOCOL_SWEEP_SYSTEM = (
     "table's real size.\n"
     "- REPLY-CODE ABUSE: a query reply (replyTo) routed to a handler that "
     "writes shared state without the per-player lock.\n"
+    "- MISSING CROSS-PATH CHECK: an operation/persistence function TRUSTS a "
+    "validation its handler caller already performed - find a packet path "
+    "that reaches the SAME mutation without that check (an item/cash change "
+    "that one entry point persists although price, ownership, quantity or "
+    "bounds were only validated on the other path).\n"
     "\n"
     "The LIVE compile defines are: CATCHCHALLENGER_SERVER, "
     "CATCHCHALLENGER_CLASS_ALLINONESERVER, CATCHCHALLENGER_DB_FILE, "
@@ -1791,15 +1837,17 @@ PROTOCOL_SWEEP_SYSTEM = (
 
 def _sweep_slice(text, cap):
     """Return up to `cap` bytes of `text`, keeping the dispatch-relevant lines
-    (packetFixedSize assignments, case 0xNN: handlers, and a few lines of
-    context around each) so the model sees the wire contract, not the file's
-    full boilerplate."""
+    (packetFixedSize assignments, `case 0xNN:` handlers) and the OPERATION /
+    PERSISTENCE function heads (Client::addObject, addCash, serialize - those
+    files carry no cases), each with a few lines of context, so the model sees
+    the wire contract and the mutation path, not the file's boilerplate."""
     lines = text.splitlines()
     keep_idx = set()
     for i, ln in enumerate(lines):
         if (re.search(r"packetFixedSize\d*\[0x", ln)
                 or re.match(r"\s*case\s+0x[0-9A-Fa-f]+\s*:", ln)
-                or re.match(r"\s*case\s+\d+\s*:", ln)):
+                or re.match(r"\s*case\s+\d+\s*:", ln)
+                or _FUNC_HEAD_RE.match(ln)):
             for j in range(max(0, i - 2), min(len(lines), i + 14)):
                 keep_idx.add(j)
     out = [lines[j] for j in sorted(keep_idx)]
@@ -1807,24 +1855,28 @@ def _sweep_slice(text, cap):
 
 
 def protocol_sweep(out, spec=None):
-    """One cross-file audit turn over the wire parser + per-packet handlers.
-    Writes any finding to `out` in the same FINDINGS block shape as the per-
-    file sweep so the exploit phase picks it up. Returns 0 always (best-effort:
-    a backend failure is logged, never fatal)."""
+    """One cross-file audit turn over the FULL packet path: wire parser ->
+    per-packet handlers -> operation -> persistence. Writes any finding to
+    `out` in the same FINDINGS block shape as the per-file sweep so the exploit
+    phase picks it up. Returns (groups, generic): {repo-relative path: [finding
+    lines]} plus the unattributed lines, so the DEFAULT agentic codecheck mode
+    can MERGE the sweep into its own FINDINGS writer (per-function reviews
+    cannot see checks missing BETWEEN functions). Best effort: a backend
+    failure is logged, never fatal -> ({}, [])."""
     if os.environ.get("CC_NO_PROTOCOL_SWEEP"):
-        return 0
+        return ({}, [])
     sys.stderr.write("%s [protocol-sweep] cross-file audit of the wire parser + "
-                     "packet handlers\n" % _ts())
+                     "packet handlers + operation/persistence path\n" % _ts())
     blocks = []
     total = 0
-    for rel in PROTOCOL_SWEEP_FILES:
+    for rel, cap in PROTOCOL_SWEEP_FILES:
         fp = os.path.join(REPO_ROOT, rel)
         try:
             text = open(fp, "r", errors="replace").read()
         except OSError as exc:
             sys.stderr.write("    [protocol-sweep] skip %s: %s\n" % (rel, exc))
             continue
-        sliced = _sweep_slice(text, SWEEP_FILE_CAP)
+        sliced = _sweep_slice(text, cap)
         if total + len(sliced) > SWEEP_TOTAL_CAP:
             sliced = sliced[:SWEEP_TOTAL_CAP - total]
         if not sliced.strip():
@@ -1835,16 +1887,20 @@ def protocol_sweep(out, spec=None):
             break
     if not blocks:
         sys.stderr.write("    [protocol-sweep] no dispatch code found; skipping\n")
-        return 0
+        return ({}, [])
     notes = read_notes()
     notes_block = ("=== SECURITY-IA.md (project notebook) ===\n%s\n\n"
                    % notes if notes.strip() else "")
     user = (
-        "%sPerform ONE cross-file protocol sweep. For EACH packet code that has "
-        "both a packetFixedSize[] entry AND a `case 0xNN:` handler, verify the "
-        "handler reads AT MOST the declared size and bounds every inner length "
-        "/ id / index. Report only real exploitable mismatches in the mandatory "
-        "LINE format.\n\n%s\n=== ALL DISPATCH FILES ===\n%s"
+        "%sPerform ONE cross-file protocol sweep of the FULL packet path. For "
+        "EACH packet code that has both a packetFixedSize[] entry AND a "
+        "`case 0xNN:` handler, verify the handler reads AT MOST the declared "
+        "size and bounds every inner length / id / index; then follow each "
+        "handler into the OPERATION + PERSISTENCE functions below and check "
+        "every validation those functions ASSUME their callers already did - "
+        "name the packet path that reaches the mutation WITHOUT it. Report "
+        "only real exploitable mismatches in the mandatory LINE format.\n\n"
+        "%s\n=== ALL DISPATCH + OPERATION/PERSISTENCE FILES ===\n%s"
         % (notes_block, PROTOCOL_SWEEP_SYSTEM, "\n\n".join(blocks)))
     messages = [{"role": "system", "content": PROTOCOL_SWEEP_SYSTEM},
                 {"role": "user", "content": user}]
@@ -1852,8 +1908,10 @@ def protocol_sweep(out, spec=None):
         answer = chat_with(spec, messages)
     except Exception as exc:
         sys.stderr.write("    [protocol-sweep] backend error: %s\n" % exc)
-        return 0
+        return ({}, [])
     answer = _finalize_answer("protocol-sweep", answer)
+    groups = {}
+    generic = []
     if has_findings(answer):
         # Group finding lines by the cited source file so each becomes its own
         # FINDINGS block keyed by the REAL repo-relative path -> the exploit
@@ -1862,9 +1920,7 @@ def protocol_sweep(out, spec=None):
         # skip (no source to read) but the human still sees.
         sweep_line_re = re.compile(
             r"^\s*LINE\s+\d+\s+of\s+(\S+)\s*:", re.IGNORECASE)
-        groups = {}
         order = []
-        generic = []
         for ln in answer.splitlines():
             m = sweep_line_re.match(ln)
             if m:
@@ -1894,7 +1950,7 @@ def protocol_sweep(out, spec=None):
     else:
         sys.stderr.write("    [protocol-sweep] no exploitable cross-file "
                          "mismatch found\n")
-    return 0
+    return (groups, generic)
 
 
 def run_scan(out=sys.stdout):
@@ -2296,6 +2352,14 @@ SANDBOX_DISK_BYTES = int(os.environ.get("SECSERVER_DISK", str(16 * 1024 * 1024))
 # its attack made the server print). Capped so we don't flood the model's
 # context from a chatty boot.
 SERVER_TAIL_LINES = int(os.environ.get("SECSERVER_TAIL", "100"))
+# Bytes of the supervised server's pty output kept IN FLIGHT by _drain(): a
+# sliding window, newest bytes kept. Bounds harness RAM against a chatty or
+# looping server WHILE RECEIVING (the crash / memcheck banners arrive late, so
+# the newest bytes are exactly the ones that matter). 2 MiB is >> any real
+# crash or valgrind report; override via SECSERVER_PTY_CAP.
+PTY_OUT_CAP = int(os.environ.get("SECSERVER_PTY_CAP", str(2 * 1024 * 1024)))
+# Cap on the crash evidence kept in crash_info (reports/transcripts).
+CRASH_INFO_CAP = 100000
 # RLIMIT_AS for the SUPERVISED TARGET server (the exploit client has its own
 # tighter SANDBOX_MEM_BYTES). The server loads the full datapack + keeps client
 # state, so it needs much more RAM than the exploit client; this cap only
@@ -2471,7 +2535,7 @@ EXPLOIT_SYSTEM = (
     "something you need, or give the final VERDICT - SUCCESS or FAIL.\n"
     "\n"
     "TOOL PROTOCOL - reply with EXACTLY ONE action per message, nothing else:\n"
-    "  READ <repo-or-abs path>\n"
+    "  READ <repo path>[:<start>[:<end>]]   (numbered lines; a big file is cut - continue from a line)\n"
     "  GREP <symbol>\n"
     "  WRITE <relpath-in-your-exploit-dir>\n"
     "  ```\n  <full file content (e.g. exploit.c)>\n  ```\n"
@@ -2721,6 +2785,35 @@ def parse_action(answer):
         return ("VERDICT", "CONFIRMED", s[len("VERDICT CONFIRMED"):].strip())
     if up.startswith("VERDICT FALSEPOSITIVE"):
         return ("VERDICT", "FALSEPOSITIVE", s[len("VERDICT FALSEPOSITIVE"):].strip())
+    # Small models reason in prose first and put the action on a later line.
+    later = _later_action(s)
+    return parse_action(later) if later else None
+
+
+# Spelling out the verdict forms is what turns a prose conclusion into a VERDICT line.
+NO_ACTION_NUDGE = (
+    "No usable action found. START your reply with exactly ONE action keyword, plain "
+    "text, no <tool_call> markup. If your analysis is finished, that action is the "
+    "verdict: 'VERDICT FALSEPOSITIVE <the guard that makes it safe, FILE:LINE>' or "
+    "'VERDICT CONFIRMED <proof>'. Otherwise: READ <path> | GREP <symbol> | WRITE "
+    "<file> + code block | RUN | GDB | MODE gdb|valgrind.")
+
+# Exact upper-case protocol forms only, so prose like "GDB would show..." never matches.
+_ACTION_LINE_RE = re.compile(r"(?:(?:READ|GREP|WRITE|SEEDDB) \S|(?:RUN|GDB|RESTARTSERVER)$"
+                             r"|MODE (?:gdb|valgrind)$|VERDICT (?:CONFIRMED|FALSEPOSITIVE)\b)")
+
+
+def _later_action(text):
+    """The text from the first action line after line 1 (outside ``` fences), or None."""
+    lines = text.splitlines()
+    in_fence = lines[0].lstrip().startswith("```")
+    i = 1
+    while i < len(lines):
+        if lines[i].lstrip().startswith("```"):
+            in_fence = not in_fence
+        elif not in_fence and _ACTION_LINE_RE.match(lines[i].strip()):
+            return "\n".join(lines[i:])
+        i += 1
     return None
 
 
@@ -2782,6 +2875,9 @@ def do_write(outdir, rel, content):
     dest = os.path.realpath(os.path.join(outdir, rel))
     if not dest.startswith(os.path.realpath(outdir) + os.sep):
         return "WRITE error: path escapes the exploit dir: %s" % rel
+    if os.path.relpath(dest, os.path.realpath(outdir)).split(os.sep)[0] in (
+            "gdb-run", ".seccomp.bpf", EXPLOIT_BIN_NAME):
+        return "WRITE error: path is reserved for the harness: %s" % rel
     # Any other filesystem refusal is reported to the model, never raised: one bad
     # path must cost a turn, not the finding.
     try:
@@ -2796,6 +2892,121 @@ def do_write(outdir, rel, content):
 
 
 BWRAP = shutil.which("bwrap")
+
+
+def _sandbox_env():
+    """Allow only the environment needed by our tools, never host credentials."""
+    return {"PATH": "/usr/bin:/bin", "HOME": "/tmp", "TMPDIR": "/tmp",
+            "LANG": "C", "LC_ALL": "C"}
+
+
+def _sandbox_base():
+    """Runtime/tool sandbox with private processes, filesystem and network."""
+    if not BWRAP:
+        raise RuntimeError("bubblewrap missing; refusing unsandboxed execution")
+    args = [BWRAP, "--unshare-user", "--unshare-pid", "--unshare-ipc",
+            "--unshare-uts", "--unshare-cgroup", "--disable-userns",
+            "--cap-drop", "ALL", "--die-with-parent", "--new-session",
+            "--tmpfs", "/", "--proc", "/proc", "--dev", "/dev",
+            "--size", str(SANDBOX_DISK_BYTES), "--tmpfs", "/tmp",
+            "--unshare-net"]
+    # No host root, /etc, /run, home directories, sockets or credential stores.
+    for path in ("/usr", "/bin", "/sbin", "/lib", "/lib64", "/etc/ld.so.cache"):
+        if os.path.exists(path):
+            args += ["--ro-bind", path, path]
+    return args
+
+
+class SandboxNetwork:
+    """One loopback-only network per target session, pinned by namespace FDs.
+
+    The trusted keeper owns the network; target/client sandboxes create their
+    own restricted user/PID namespaces inside it. No veth, routes or host ports.
+    """
+    def __init__(self):
+        self.proc = None
+        self.fds = ()
+
+    def start(self):
+        import fcntl
+        import select
+        if not callable(getattr(os, "setns", None)):
+            raise RuntimeError("Python os.setns required; refusing host-network fallback")
+        args = _sandbox_base()
+        # Joining workloads need to create child namespaces of the network's
+        # owner. Only this trusted keeper permits that; workloads disable it.
+        args.remove("--disable-userns")
+        rfd, wfd = os.pipe()
+        netfd = None
+        try:
+            self.proc = subprocess.Popen(
+                args + ["--info-fd", str(wfd), "/usr/bin/sleep", "infinity"],
+                pass_fds=(wfd,), env=_sandbox_env(), stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+            os.close(wfd)
+            wfd = None
+            if not select.select([rfd], [], [], 10)[0]:
+                raise RuntimeError("private network setup timed out")
+            data = os.read(rfd, 4096)
+            if not data:
+                raise RuntimeError("private network setup failed")
+            info = json.loads(data)
+            netfd = os.open("/proc/%d/ns/net" % info["child-pid"], os.O_RDONLY)
+            inode = os.fstat(netfd).st_ino
+            if inode != info["net-namespace"] or inode == os.stat("/proc/self/ns/net").st_ino:
+                raise RuntimeError("private network namespace identity mismatch")
+            # NS_GET_USERNS: use the network's actual owner, not the keeper's
+            # final (possibly nested) user namespace. Defined in linux/nsfs.h.
+            userfd = fcntl.ioctl(netfd, 0xb701)
+            self.fds = (userfd, netfd)
+            netfd = None
+        except BaseException:
+            self.close()
+            raise
+        finally:
+            os.close(rfd)
+            if wfd is not None:
+                os.close(wfd)
+            if netfd is not None:
+                os.close(netfd)
+
+    def wrap(self, command):
+        if not self.fds or self.proc is None or self.proc.poll() is not None:
+            raise RuntimeError("private network unavailable; refusing host-network fallback")
+        args = list(command)
+        # All workloads start isolated by default; only this pinned private
+        # namespace may replace their fresh network. Never join host namespaces.
+        args.remove("--unshare-net")
+        return args
+
+    def enter(self, limits):
+        """Child-only preexec: join the private network and close its handles.
+
+        Never switch the multithreaded harness itself. Workloads must not
+        inherit descriptors for the network's privileged owning namespace.
+        """
+        userfd, netfd = self.fds
+        os.setns(userfd, os.CLONE_NEWUSER)
+        os.setns(netfd, os.CLONE_NEWNET)
+        os.close(userfd)
+        os.close(netfd)
+        limits()
+
+    def close(self):
+        try:
+            if self.proc is not None:
+                try:
+                    self.proc.kill()
+                except ProcessLookupError:
+                    pass
+                _, stderr = self.proc.communicate(timeout=10)
+                if stderr:
+                    sys.stderr.write("[sandbox network] %s\n" % stderr.decode(errors="replace").strip())
+                self.proc = None
+        finally:
+            fds, self.fds = self.fds, ()
+            for fd in fds:
+                os.close(fd)
 
 
 def _prune_missing_binds(args):
@@ -2870,8 +3081,7 @@ def _seccomp_filter_bytes(allow=None):
     """Build a classic-BPF seccomp program (array of struct sock_filter) that
     ALLOWS the given syscall numbers (default: the exploit's SECCOMP_ALLOW_X86_64)
     and KILLS the process on anything else. Byte layout is what `bwrap --seccomp
-    FD` expects. Used for BOTH the exploit client (tight TCP-only list) and the
-    supervised server (looser file-I/O + bind/listen/accept list)."""
+    FD` expects. Applied to the standalone exploit client, not the supervisor."""
     import struct
     AUDIT_ARCH_X86_64 = 0xC000003E
     KILL = 0x80000000          # SECCOMP_RET_KILL_PROCESS
@@ -2897,73 +3107,6 @@ def _seccomp_filter_bytes(allow=None):
     return b"".join(struct.pack("<HBBI", *t) for t in ins)
 
 
-# Server-side seccomp allowlist: the SUPERVISED TARGET server is a full C++
-# network server that legitimately reads/writes files (datapack XML, file DB,
-# logs) and listens on a TCP port. So this list is much LOOSER than the
-# exploit's: file I/O (openat/read/write/close/getdents64/lseek/fstat/...),
-# the TCP-server side (socket/bind/listen/accept4/sendto/recvfrom/...), the
-# epoll loop, and timerfd. What it STILL blocks (-> SIGSYS) is the
-# post-exploitation surface: fork/clone/vfork (no spawning), execve-runtime (no
-# shelling out — only bwrap's own final exec needs it), ptrace (no debugging),
-# mount/pivot_root/chroot/chmod/chown/symlink/link/rename/unlink-at-arbitrary-
-# path (no filesystem mutation beyond what the server already does inside its
-# own dir). Combined with the bwrap chroot (host fs read-only except outdir)
-# and a generous RLIMIT_AS, this means an attacker who gets code-exec inside
-# the server CANNOT escalate by spawning or mounting. AND a seccomp SIGSYS from
-# the server is itself an EXPLOIT SUCCESS signal (the attacker's packets made
-# the server call something forbidden) — see LiveServer._scan_crash.
-SECCOMP_SERVER_ALLOW_X86_64 = (
-    # bwrap mechanics
-    59, 61,
-    # memory management
-    9, 10, 11, 12, 25, 26, 27, 28,
-    # signals
-    13, 14, 15, 131,
-    # scheduling / ids / time
-    24, 35, 39, 60, 63, 72, 96, 97, 102, 104, 107, 108, 231,
-    # glibc startup / threads
-    158, 202, 218, 273, 302, 318, 334, 267,
-    # supervisor (gdb / valgrind) mechanics - the SAME filter is inherited by
-    # the server (the inferior), so post-exploit these don't help an attacker
-    # (the bwrap chroot already confines what it could exec); allowing them is
-    # the price of running gdb/valgrind OUTSIDE the filtered process.
-    56, 57, 58,                          # clone fork vfork (gdb `run`, valgrind)
-    101,                                 # ptrace (gdb controls the inferior)
-    109, 135,                            # setpgid personality (gdb+inferior startup)
-    157,                                 # prctl
-    186, 98,                             # gettid getrusage (gdb probes)
-    22, 293,                             # pipe pipe2
-    435, 439,                            # clone3 faccessat2 (modern glibc fork + accessat2)
-    # file I/O the server legitimately does (datapack, file DB, logs)
-    0, 1, 2, 3, 5,                       # read write open close fstat
-    8, 17, 18, 19, 20,                   # lseek pread64 pwrite64 readv writev
-    32, 33, 292,                         # dup dup2 dup3
-    16,                                  # ioctl
-    257, 262, 217,                       # openat newfstatat getdents64
-    21,                                  # access
-    78, 79, 80, 83, 84, 85, 86, 87, 88,  # getdents getcwd chdir mkdir rmdir creat link
-    89, 90, 82, 81,                      # readlink symlink rename symlinkat
-    76, 77, 91, 92, 93, 94, 95,          # truncate ftruncate fchmod fchown lchown...
-    # TCP server side + epoll loop + timers + outbound (resolver/DB)
-    7, 23, 270,                          # poll select pselect6
-    41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
-    51, 52, 53, 54, 55,
-    288,                                 # accept4
-    213, 233, 232, 281,                  # epoll_create epoll_ctl epoll_wait epoll_pwait
-    291,                                 # epoll_create1
-    283, 286,                            # timerfd_create timerfd_settime
-    228, 229, 230,                       # clock_gettime clock_getres clock_nanosleep
-    40, 62,                              # sendfile kill
-    332, 324,                            # statx membarrier
-    99,                                  # set_robust_list (glibc variant)
-)
-# Explicitly-NOT-allowed (-> SIGSYS from the server = containment breach =
-# automatic EXPLOIT SUCCESS, see GDB_CRASH_SIGNALS / VALGRIND_ERROR_MARKERS):
-#   mount(165) umount2(166) pivot_root(155) kexec_load(246) bpf(321)
-#   perf_event_open(298) unshare(272) setns(308) keyctl(250) add_key(248)
-#   request_key(249)  +  anything not in the allowlist above.
-
-
 def _compile_exploit(outdir):
     """Compile every C/C++ source in `outdir` into a single STATIC ELF at the
     fixed path outdir/EXPLOIT_BIN_NAME. Returns (binpath, None) or (None, err)."""
@@ -2976,10 +3119,15 @@ def _compile_exploit(outdir):
     binpath = os.path.join(outdir, EXPLOIT_BIN_NAME)
     cxx = any(s.endswith((".cc", ".cpp", ".cxx")) for s in srcs)
     # Static link so the chroot needs no shared libs / dynamic loader.
-    cmd = [("g++" if cxx else "gcc"), "-static", "-O1", "-g", "-o", binpath] + srcs
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
-    except (OSError, subprocess.SubprocessError) as exc:
+        # Source includes and assembler directives can read files during compile.
+        # Compile under the same filesystem/credential boundary as execution.
+        cmd = _sandbox_base() + ["--bind", outdir, outdir, "--chdir", outdir,
+                                ("g++" if cxx else "gcc"), "-static", "-O1",
+                                "-g", "-o", binpath] + srcs
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=120,
+                           env=_sandbox_env(), preexec_fn=_set_server_rlimits)
+    except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
         return None, "RUN error: compiler failed to launch: %s" % exc
     if r.returncode != 0 or not os.path.isfile(binpath):
         return None, "RUN: COMPILE FAILED\n%s" % ((r.stderr or r.stdout or "")[:RUN_OUT_CAP])
@@ -2999,19 +3147,183 @@ def _set_sandbox_rlimits():
     resource.setrlimit(resource.RLIMIT_FSIZE,
                        (SANDBOX_DISK_BYTES, SANDBOX_DISK_BYTES))
     resource.setrlimit(resource.RLIMIT_NOFILE, (64, 64))
+    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
 
 
-def do_run(outdir, _block=None, timeout=RUN_TIMEOUT):
+def _set_server_rlimits():
+    """Bounds for the target and debugger, without writing host core dumps."""
+    import resource
+    resource.setrlimit(resource.RLIMIT_AS, (SERVER_MEM_BYTES, SERVER_MEM_BYTES))
+    resource.setrlimit(resource.RLIMIT_NOFILE, (4096, 4096))
+    resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+
+
+# ---------------------------------------------------------------------------
+# JOINT memory+process cap for one sandbox run (cgroup v2).
+# RLIMIT_AS caps EACH process individually: the supervised target tree
+# (gdb/valgrind supervisor + server + its threads/children) had NO joint bound
+# - N processes x the per-process limit. RLIMIT_NPROC is NOT the fix here: it
+# is enforced against the harness uid's GLOBAL task count (the sandbox shares
+# this uid), so it either never fires or breaks legitimate forks. cgroup v2
+# gives the real joint limits: memory.max bounds the whole tree's RAM+swap and
+# pids.max its task count. We create a throwaway child cgroup under the
+# operator's delegated subtree (when writable) and the child joins it from its
+# own preexec_fn - before exec, single-threaded - so every descendant lands
+# inside the caps with no migration race. Best-effort: where delegation is
+# unavailable the per-process RLIMITs still apply; nothing runs unlimited.
+# ---------------------------------------------------------------------------
+CGROUP_BASE = os.environ.get(
+    "SECSERVER_CGROUP_BASE",
+    "/sys/fs/cgroup/user.slice/user-%d.slice/user@%d.service"
+    % (os.getuid(), os.getuid()))
+_CGROUP_SEQ = [0]
+
+
+def _make_run_cgroup(tag, mem_bytes, pids_max):
+    """Throwaway cgroup with JOINT memory+pid caps. Returns its path, or None
+    when cgroup v2 delegation is unavailable here (RLIMITs-only fallback)."""
+    path = None
+    for _ in range(100):               # pid+seq: no collision with other runs
+        _CGROUP_SEQ[0] += 1            # (leaked dirs of an older pid must not
+        try:                           # disable capping for this one)
+            path = os.path.join(CGROUP_BASE,
+                                "cc-sec-%s-%d-%d" % (tag, os.getpid(), _CGROUP_SEQ[0]))
+            os.mkdir(path)
+            break
+        except FileExistsError:
+            continue
+        except OSError:
+            return None
+    else:
+        return None
+    for name, val in (("memory.max", str(mem_bytes)),
+                      ("pids.max", str(pids_max))):
+        try:
+            with open(os.path.join(path, name), "w") as fh:
+                fh.write(val)
+        except OSError:
+            pass   # controller not delegated in this subtree; the other still caps
+    return path
+
+
+def _join_run_cgroup(path):
+    """Child-only (preexec_fn time): move THIS process into the run cgroup so
+    everything it execs/forks afterwards is inside the joint caps."""
+    if not path:
+        return
+    try:
+        with open(os.path.join(path, "cgroup.procs"), "w") as fh:
+            fh.write(str(os.getpid()))
+    except OSError as exc:
+        sys.stderr.write("[cgroup] %s: join failed, RLIMITs only for this run: %s\n"
+                         % (path, exc))
+
+
+def _drop_run_cgroup(path):
+    """Kill any straggler task still in the cgroup, then remove the empty dir.
+    The kernel needs a moment to drain a just-exited member, so the rmdir
+    retries briefly: a skipped removal leaks a capped dir into the user slice."""
+    if not path:
+        return
+    try:
+        # O_WRONLY without O_CREAT: on a kernel without cgroup.kill this must
+        # fail, NOT create a stray file that would then block the rmdir.
+        fd = os.open(os.path.join(path, "cgroup.kill"), os.O_WRONLY)
+        try:
+            os.write(fd, b"1")
+        finally:
+            os.close(fd)
+    except OSError:
+        pass
+    for _ in range(20):
+        try:
+            os.rmdir(path)
+            return
+        except FileNotFoundError:
+            return
+        except OSError:
+            time.sleep(0.1)
+
+
+def _limits_with_cgroup(limits, cgroup):
+    """preexec_fn chain: join the joint-cap cgroup FIRST, then apply the
+    per-process RLIMITs."""
+    def _pre():
+        _join_run_cgroup(cgroup)
+        limits()
+    return _pre
+
+
+def _run_capped(cmd, cap, timeout, **popen_kw):
+    """subprocess helper that MERGES stdout+stderr and caps them WHILE
+    RECEIVING: a flooding child can no longer balloon the harness (the old
+    code buffered the entire output and only truncated it afterwards). Keeps
+    the first `cap//2` and the last `cap//2` bytes; the middle is read and
+    discarded so the child never blocks on a full pipe. On `timeout` the child
+    is killed. Returns (returncode, text, timed_out)."""
+    import select
+    half = max(cap // 2, 4096)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, **popen_kw)
+    head = bytearray()
+    tail = bytearray()
+    dropped = 0
+    deadline = time.time() + timeout
+    timed_out = False
+    try:
+        while True:
+            remaining = deadline - time.time()
+            if remaining <= 0:
+                timed_out = True
+                break
+            r, _, _ = select.select([proc.stdout], [], [], min(0.5, remaining))
+            if not r:
+                continue
+            d = os.read(proc.stdout.fileno(), 65536)
+            if not d:
+                break                      # EOF: child closed the pipe
+            keep = min(len(d), half - len(head))
+            if keep:
+                head += d[:keep]
+            rest = d[keep:]
+            if rest:
+                tail += rest
+                if len(tail) > half:
+                    dropped += len(tail) - half
+                    del tail[:len(tail) - half]
+        try:
+            if timed_out:
+                proc.kill()
+            rc = proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            rc = proc.wait()
+    finally:
+        try:
+            proc.stdout.close()
+        except OSError:
+            pass
+    text = bytes(head).decode(errors="replace")
+    if dropped:
+        text += ("\n...[dropped %d bytes of output WHILE RECEIVING (flood "
+                 "cap)]...\n" % dropped)
+    text += bytes(tail).decode(errors="replace")
+    return rc, text, timed_out
+
+
+def do_run(outdir, _block=None, timeout=RUN_TIMEOUT, network=None):
     """Compile the model's C/C++ exploit and RUN the resulting ELF under a hard
     sandbox: bubblewrap chroots it to a READ-ONLY view of the exploit dir (it
     cannot see or touch anything outside that folder) in its own pid/ipc/uts
     namespaces; a seccomp allowlist KILLS any syscall beyond what a TCP client
-    needs; RLIMIT_CPU and a 128 MB RLIMIT_AS cap it. Host network is shared on
-    purpose so it can reach the gdb-server on 127.0.0.1. Fail CLOSED if bwrap is
+    needs; RLIMIT_CPU and a 128 MB RLIMIT_AS cap it. Only the target's private
+    loopback network is reachable. Fail CLOSED if its namespace or bwrap is
     missing - never run the binary unsandboxed."""
     if not BWRAP:
         return ("RUN error: bubblewrap (bwrap) not found - refusing to run the "
                 "exploit unsandboxed. Install bwrap.")
+    if network is None:
+        return "RUN error: private target network required; refusing host-network fallback"
     binpath, err = _compile_exploit(outdir)
     if err:
         return err
@@ -3028,22 +3340,31 @@ def do_run(outdir, _block=None, timeout=RUN_TIMEOUT):
         "--dev", "/dev",
         "--size", str(SANDBOX_DISK_BYTES), "--tmpfs", "/tmp",
         "--unshare-pid", "--unshare-ipc", "--unshare-uts", "--unshare-cgroup",
-        "--die-with-parent", "--chdir", "/",
+        "--unshare-user", "--disable-userns", "--cap-drop", "ALL",
+        "--unshare-net",
+        "--new-session", "--die-with-parent", "--chdir", "/",
         "--seccomp", str(sfd),
         "/" + EXPLOIT_BIN_NAME,
     ]
+    # JOINT cap for the exploit run: the ELF + bwrap's namespace helpers share
+    # one memory.max/pids.max cgroup on top of the per-process RLIMITs, so a
+    # forked or multi-mapping runaway is bounded as a tree, not per process.
+    cg = _make_run_cgroup("exploit", SANDBOX_MEM_BYTES + 64 * 1024 * 1024, 64)
     try:
-        r = subprocess.run(wrapped, capture_output=True, text=True,
-                           timeout=timeout, preexec_fn=_set_sandbox_rlimits,
-                           pass_fds=(sfd,))
-        out = ("--- exploit console (stdout+stderr) ---\n"
-               + (r.stdout or "") + (r.stderr or "")
-               + "\n" + _explain_exploit_exit(r.returncode, binpath, timeout))
-    except subprocess.TimeoutExpired as e:
-        out = ((e.stdout or "") + (e.stderr or "")
-               + "\n[EXPLOIT KILLED: wall-clock budget exhausted after %ds "
-               "(RLIMIT wall). Optimise your client or split the workload; the "
-               "sandbox will not run longer.]" % timeout)
+        rc, out_text, timed_out = _run_capped(
+            network.wrap(wrapped), RUN_OUT_CAP * 4, timeout,
+            stdin=subprocess.DEVNULL,
+            preexec_fn=functools.partial(
+                network.enter, _limits_with_cgroup(_set_sandbox_rlimits, cg)),
+            pass_fds=(sfd,) + network.fds, env=_sandbox_env())
+        if timed_out:
+            out = ("--- exploit console (stdout+stderr) ---\n" + out_text
+                   + "\n[EXPLOIT KILLED: wall-clock budget exhausted after %ds "
+                   "(RLIMIT wall). Optimise your client or split the workload; "
+                   "the sandbox will not run longer.]" % timeout)
+        else:
+            out = ("--- exploit console (stdout+stderr) ---\n" + out_text
+                   + "\n" + _explain_exploit_exit(rc, binpath, timeout))
     except Exception as e:  # noqa
         out = "RUN error: %s" % e
     finally:
@@ -3051,16 +3372,16 @@ def do_run(outdir, _block=None, timeout=RUN_TIMEOUT):
             os.close(sfd)
         except OSError:
             pass
+        _drop_run_cgroup(cg)
     if len(out) > RUN_OUT_CAP:
         out = out[:RUN_OUT_CAP // 2] + "\n...[truncated]...\n" + out[-RUN_OUT_CAP // 2:]
     return out or "[no output]"
 
 
 # Signals that mean the EXPLOIT ITSELF has a bug (vs. the sandbox killing it):
-# a memory-corruption/crash in the LLM's C/C++ code. For these we attach gdb to
-# the saved ELF on the host (the bug is in the model's code, so it reproduces
-# outside the chroot) and append the backtrace so the model can debug its own
-# client. SIGSYS (sandbox kill) and SIGXCPU/SIGKILL (budget) are NOT here -
+# a memory-corruption/crash in the LLM's C/C++ code. Debugging must also run in
+# a sandbox; the diagnostic has no network and may not reproduce the crash.
+# SIGSYS (sandbox kill) and SIGXCPU/SIGKILL (budget) are NOT here -
 # those are enforced stops, not client bugs.
 _CRASH_SIGNALS = {
     11: "SIGSEGV", 6: "SIGABRT", 7: "SIGBUS", 4: "SIGILL",
@@ -3107,35 +3428,29 @@ def _explain_exploit_exit(returncode, binpath, timeout):
                 "(this is the SANDBOX stopping you, NOT a crash in your code. "
                 "Fix the cause above and RUN again.)"
                 % (name, sig, why))
-    # Crash IN the model's code: reproduce under gdb on the host for a bt.
+    # Crash IN the model's code: attempt a sandboxed diagnostic, never host exec.
     name = _CRASH_SIGNALS.get(sig, "signal %d" % sig)
     bt = _exploit_backtrace(binpath)
     return ("[EXPLOIT CRASHED: %s (signal %d) - this is a BUG IN YOUR C/C++ "
-            "CODE, not the sandbox. The harness re-ran your ELF under gdb on "
-            "the host to capture a backtrace; fix the fault and RUN again.]\n"
+            "CODE. The harness attempted a separate sandboxed gdb replay with "
+            "network disabled; it may not reproduce. Fix the fault and RUN again.]\n"
             "--- gdb backtrace ---\n%s"
             % (name, sig, bt))
 
 
 def _exploit_backtrace(binpath):
-    """Run the saved exploit ELF under gdb on the host (no chroot/seccomp - the
-    bug is in the model's code so it reproduces outside the jail; nofork/ptrace
-    concerns as we let gdb own the process), capture the crash, return the bt.
-    Best-effort: bounded wall + only the backtrace + the faulting frame. Returns
-    a short string always."""
+    """Best-effort crash replay inside an isolated, networkless debugger sandbox."""
     if not os.path.isfile(binpath):
         return "(ELF missing - cannot backtrace)"
     gdb = shutil.which("gdb")
     if not gdb:
         return "(gdb not installed - no backtrace available)"
-    cmds = ("set pagination off\n"
-            "set confirm off\n"
-            "run\n"
-            "bt 25\n"
-            "frame\n"
-            "quit\n")
     try:
-        r = subprocess.run([gdb, "-q", "-nx", "-batch",
+        cmd = _sandbox_base() + ["--ro-bind", binpath, "/exploit",
+                            "--chdir", "/tmp", gdb, "-q", "-nx", "-batch",
+                            "-iex", "set auto-load off",
+                            "-ex", "set startup-with-shell off",
+                            "-ex", "set debuginfod enabled off",
                             "-ex", "set pagination off",
                             "-ex", "set confirm off",
                             "-ex", "run",
@@ -3143,11 +3458,15 @@ def _exploit_backtrace(binpath):
                             "-ex", "info registers rip rdi rsi",
                             "-ex", "x/i $rip",
                             "-ex", "quit",
-                            binpath],
+                            "/exploit"]
+        r = subprocess.run(cmd,
                            capture_output=True, text=True, timeout=20,
-                           stdin=subprocess.DEVNULL)
-    except (OSError, subprocess.SubprocessError) as exc:
+                           stdin=subprocess.DEVNULL, env=_sandbox_env(),
+                           preexec_fn=_set_server_rlimits)
+    except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
         return "(gdb failed: %s)" % exc
+    if r.returncode != 0:
+        return "(sandboxed gdb failed: exit %d)\n%s" % (r.returncode, (r.stderr or r.stdout)[-1500:])
     raw = r.stdout or ""
     # Keep only the backtrace + the register/fault line at the end.
     out = []
@@ -3192,8 +3511,8 @@ VALGRIND_ERROR_MARKERS = (
     "Process terminating with default action of signal",
 )
 
-# Containment-breach markers: the supervised server is sandboxed (bwrap chroot
-# + its own seccomp filter) and never touches these in normal operation. Any one
+# Containment-breach markers: the supervised server has a bwrap filesystem and
+# PID namespace (no server-side seccomp filter). Any one
 # of them appearing in its pty output AFTER boot means a remote packet drove it
 # at a forbidden path/signal - per operator policy that is an automatic EXPLOIT
 # SUCCESS (a confirmed containment escape beats a mere crash). Conservative:
@@ -3208,9 +3527,18 @@ CONTAINMENT_BREACH_MARKERS = (
     "/etc/shadow",          # sensitive OS file the server never reads
     "/etc/passwd",
     ".ssh/id_",             # private keys
-    "Operation not permitted",   # a forbidden syscall/path was attempted
     "Permission denied: /",      # trying to write outside outdir
     "Bad system call",           # SIGSYS syslog line from the seccomp kill
+)
+
+# A bare "Operation not permitted" (EPERM) was a FALSE CONFIRMED: it is also
+# what gdb/ptrace/bwrap print on the SAME pty when the SANDBOX itself denies
+# something to the harness side ("ptrace: Operation not permitted"), with no
+# path at all. A real containment breach is the server naming the absolute path
+# it tried to open/write outside its bounds, so require an absolute path
+# anchored to the message ("<path>: Operation not permitted").
+CONTAINMENT_BREACH_RES = (
+    re.compile(r"/[^\s:][^\s]*: Operation not permitted"),
 )
 
 # gdb commands the model may run against the LIVE server: an ALLOWLIST by first
@@ -3226,6 +3554,10 @@ GDB_ALLOWED = {
 # Reject a single '=' (assignment to the inferior); '==', '!=', '>=', '<=' are
 # comparisons and fine.
 _ASSIGN_RE = re.compile(r"(?<![=!<>])=(?!=)")
+# Reject '++'/'--' (side-effecting increment/decrement evaluated against the
+# live inferior, e.g. `print cash++`). '--' also never appears in a legitimate
+# read-only expression or flag of the allowed commands.
+_MUTATE_RE = re.compile(r"\+\+|--")
 
 
 def gdb_cmd_ok(line):
@@ -3237,14 +3569,20 @@ def gdb_cmd_ok(line):
                                    `p memset(p,0,n)` would execute inferior code
                                    and write memory; casts use '(' too, so we
                                    drop both - reads use `p var`, `p s->f`,
-                                   `x/8xb 0xADDR`, `info`, `bt`, ...)."""
+                                   `x/8xb 0xADDR`, `info`, `bt`, ...).
+      - '++' / '--' anywhere      (gdb EVALUATES increment/decrement against the
+                                   LIVE inferior: `print counter++` READS the
+                                   value AND WRITES it back. The old filter only
+                                   blocked '=' and '(' so this passed and let the
+                                   model manufacture the very state change it
+                                   then 'confirmed' as an exploit proof)."""
     line = line.strip()
     if not line or line.startswith("#"):
         return True
     base = re.split(r"[/\s]", line, maxsplit=1)[0].lower()   # 'x/4xw' -> 'x'
     if base not in GDB_ALLOWED:
         return False
-    if "(" in line or _ASSIGN_RE.search(line):
+    if "(" in line or _ASSIGN_RE.search(line) or _MUTATE_RE.search(line):
         return False
     return True
 
@@ -3306,6 +3644,8 @@ class LiveServer:
         self.seed = None
         self._seed_note = ""   # result of the last _apply_seed(), shown at boot
         self.proc = None
+        self.network = SandboxNetwork()
+        self.cgroup = None    # joint memory+pid cgroup of the current boot
         self.mfd = -1
         self.alive = False     # inferior is running (vs stopped/exited)
         self.crashed = False   # a fatal signal / memcheck error was seen = SUCCESS
@@ -3389,7 +3729,7 @@ class LiveServer:
         scan it for a crash (so a fault is caught no matter which call drained
         it - a TCP poke, an interrupt, anything)."""
         import select
-        buf = b""
+        buf = bytearray()
         last = time.time()
         end = time.time() + hard
         while time.time() < end:
@@ -3401,6 +3741,13 @@ class LiveServer:
                     break
                 if d:
                     buf += d
+                    # Bound the buffer WHILE RECEIVING: a chatty or looping
+                    # server must never balloon the harness. Sliding window,
+                    # newest kept - crash/memcheck banners arrive late, so the
+                    # most-recent PTY_OUT_CAP bytes are exactly the ones the
+                    # marker scan below needs.
+                    if len(buf) > PTY_OUT_CAP:
+                        del buf[:len(buf) - PTY_OUT_CAP]
                     last = time.time()
                 else:
                     break
@@ -3449,7 +3796,9 @@ class LiveServer:
         # means a remote packet drove the server at a forbidden path).
         if not self._booting:
             markers = markers + CONTAINMENT_BREACH_MARKERS
-        if any(m in text for m in markers):
+        if any(m in text for m in markers) or (
+                not self._booting and
+                any(rx.search(text) for rx in CONTAINMENT_BREACH_RES)):
             self.crashed = True
             self.alive = False
             if self.mode == "gdb":
@@ -3459,11 +3808,11 @@ class LiveServer:
                     bt = self._drain(idle=0.5, hard=6)  # crashed already latched
                 except OSError:
                     bt = ""
-                self.crash_info = (text + "\n" + bt).strip()
+                self.crash_info = (text + "\n" + bt).strip()[-CRASH_INFO_CAP:]
             else:
                 # Valgrind already printed its own stack trace inline with the
                 # error; the captured text IS the proof (no gdb prompt to query).
-                self.crash_info = text.strip()
+                self.crash_info = text.strip()[-CRASH_INFO_CAP:]
 
     # -- lifecycle ----------------------------------------------------------
     def start(self):
@@ -3478,17 +3827,10 @@ class LiveServer:
         if not os.path.isfile(SERVER_BIN) or not os.path.isdir(STAGED_RUN):
             return ("%s error: server kit missing (%s / %s) - build it first."
                     % (self.mode.upper(), SERVER_BIN, STAGED_RUN))
-        # Private run dir on a distinct port (keep symlinks, e.g. datapack).
-        if os.path.isdir(self.rundir):
-            shutil.rmtree(self.rundir, ignore_errors=True)
-        shutil.copytree(STAGED_RUN, self.rundir, symlinks=True)
-        props = os.path.join(self.rundir, "server-properties.xml")
         try:
-            txt = open(props).read()
-            txt = txt.replace('value="%d"' % SERVER_PORT, 'value="%d"' % GDB_PORT)
-            open(props, "w").write(txt)
+            self._reset_run_state()
         except OSError as exc:
-            return "%s error: cannot set port in server-properties.xml: %s" % (
+            return "%s error: cannot reset private run state: %s" % (
                 self.mode.upper(), exc)
         # Apply any boundary-value DB seed to the staged datapack profile BEFORE
         # boot (no-op when unset). Captured so the model sees it took effect.
@@ -3496,10 +3838,8 @@ class LiveServer:
         binpath = os.path.join(self.rundir, "catchchallenger-server-cli")
         if not os.path.isfile(binpath):
             binpath = SERVER_BIN
-        # The supervisor (gdb or valgrind) + the server run inside bwrap: whole
-        # fs read-only except this exploit's outdir; network shared so the TCP
-        # attack reaches it. (pid namespace is NOT unshared, so gdb's ptrace of
-        # its child / valgrind's /proc pid both work.)
+        # Supervisor and target share a private PID namespace. Only this boot's
+        # state is writable; findings and other exploit artifacts are not mounted.
         if self.mode == "valgrind":
             # Memcheck with no leak/uninit noise: we only care about OOB / bad
             # frees / fatal signals (the markers in VALGRIND_ERROR_MARKERS).
@@ -3509,74 +3849,47 @@ class LiveServer:
                     "--leak-check=no", "--track-origins=no", "--num-callers=20",
                     "--child-silent-after-fork=yes", binpath]
         else:
-            tool = ["gdb", "-q", "-nx", binpath]
-        # NOTE on server-side seccomp: an earlier attempt applied a loose filter
-        # here (--seccomp FD on the bwrap). It breaks gdb: the kernel forbids
-        # PTRACE between two processes that both carry a seccomp filter UNLESS
-        # the tracer has CAP_SYS_ADMIN over the tracee's user ns, and bwrap's
-        # user-ns setup + filter leaves gdb unable to PTRACE_TRACEME its
-        # inferior - the inferior hangs at "Starting program". So we DON'T
-        # filter the supervisor tree. Containment for the supervised server
-        # comes instead from:
-        #   * the bwrap chroot (host fs read-only except outdir) - path escape
-        #     is physically impossible (".." from the root stays at the root);
-        #   * RLIMIT_AS (below) - bounds a runaway/RAM-hungry server;
-        #   * the gdb/valgrind supervisor itself (the inferior can do nothing
-        #     the supervisor doesn't relay); and
-        #   * the harness's CRASH/ABORT/SIGSYS/".."/"Permission denied"/
-        #     "Bad system call" markers (CONTAINMENT_BREACH_MARKERS) which ALL
-        #     latch as an automatic EXPLOIT SUCCESS the moment the server
-        #     misbehaves. See LiveServer._scan_crash.
-        wrapped = [
-            BWRAP,
-            # NARROW filesystem view: bind host / read-only as before BUT mask
-            # the sensitive subtrees (a compromised server could otherwise READ
-            # + exfiltrate ~/.ssh, git credentials, /etc/ssh/host keys, cloud
-            # instance metadata, ... over its client socket). Each --tmpfs
-            # below overlays that path with an EMPTY tmpfs, so the server still
-            # sees a normal-looking / but those subtrees are unreachable. The
-            # bwrap chroot remains the authoritative path jail: ".." from /
-            # stays at /.
-            "--ro-bind", "/", "/",
-            "--tmpfs", "/home",
-            "--tmpfs", "/root",
-            "--tmpfs", "/mnt",
-            "--tmpfs", "/media",
-            "--tmpfs", "/srv",
-            "--tmpfs", "/opt",
-            "--tmpfs", "/var/lib",
-            "--tmpfs", "/var/log",
-            "--tmpfs", "/boot",
-            "--tmpfs", "/etc/ssh",
-            "--dev", "/dev", "--proc", "/proc", "--tmpfs", "/tmp",
-            "--bind", self.outdir, self.outdir,
-            "--die-with-parent", "--chdir", self.rundir,
-            "--setenv", "TMPDIR", self.outdir,
-        ]
-        # The staged datapack is a SYMLINK to an absolute host path under /mnt
-        # (masked above). Resolve + bind its target read-only so the server can
-        # still read the datapack without seeing the rest of /mnt.
-        _dp_link = os.path.join(self.rundir, "datapack")
-        try:
-            _dp_target = os.path.realpath(_dp_link)
-            if os.path.isdir(_dp_target):
-                wrapped += ["--ro-bind", _dp_target, _dp_target]
-        except OSError:
-            pass
+            tool = ["gdb", "-q", "-nx", "-iex", "set auto-load off",
+                    "-ex", "set debuginfod enabled off", binpath]
+        # GDB needs ptrace/fork inside this namespace. No claim of a server-side
+        # seccomp filter: only the standalone exploit client uses that filter.
+        wrapped = _sandbox_base() + [
+            "--bind", self.rundir, self.rundir, "--chdir", self.rundir]
+        # Always bind the original datapack read-only. SEEDDB creates a local
+        # player/ copy with symlinks to the rest of this read-only tree.
+        dp_target = os.path.realpath(os.path.join(STAGED_RUN, "datapack"))
+        wrapped += ["--ro-bind", dp_target, dp_target]
         wrapped += tool
+        try:
+            self.network.start()
+            wrapped = self.network.wrap(wrapped)
+        except Exception as exc:
+            self.network.close()
+            return "%s error: private network setup failed: %s" % (self.mode.upper(), exc)
+        # JOINT cap for the whole boot's process tree (gdb/valgrind supervisor +
+        # server + its threads): memory.max covers the server's own RLIMIT_AS
+        # plus supervisor overhead; pids.max bounds the task count (512 >>
+        # a single-threaded epoll server + its debugger).
+        self.cgroup = _make_run_cgroup(
+            "server", SERVER_MEM_BYTES + 512 * 1024 * 1024, 512)
         import pty
         mfd, sfd = pty.openpty()
-        # Generous RLIMIT_AS so a compromised/RAM-hungry server can't OOM the
-        # host; no CPU cap (the server legitimately runs for the whole exploit).
-        def _server_rlimits():
-            import resource
-            resource.setrlimit(resource.RLIMIT_AS,
-                               (SERVER_MEM_BYTES, SERVER_MEM_BYTES))
-            resource.setrlimit(resource.RLIMIT_NOFILE, (4096, 4096))
-        self.proc = subprocess.Popen(
-            wrapped, stdin=sfd, stdout=sfd, stderr=sfd, close_fds=True,
-            preexec_fn=_server_rlimits)
-        os.close(sfd)
+        try:
+            self.proc = subprocess.Popen(
+                wrapped, stdin=sfd, stdout=sfd, stderr=sfd, close_fds=True,
+                preexec_fn=functools.partial(
+                    self.network.enter,
+                    _limits_with_cgroup(_set_server_rlimits, self.cgroup)),
+                env=_sandbox_env(),
+                pass_fds=self.network.fds)
+        except OSError as exc:
+            os.close(mfd)
+            self.network.close()
+            _drop_run_cgroup(self.cgroup)
+            self.cgroup = None
+            return "%s error: sandbox launch failed: %s" % (self.mode.upper(), exc)
+        finally:
+            os.close(sfd)
         self.mfd = mfd
         self._booting = True
         if self.mode == "gdb":
@@ -3601,18 +3914,15 @@ class LiveServer:
             self._baseline_reply = self._protocol_ping()[1]
         status = "listening" if self.alive else "NOT confirmed listening"
         seed = ("\n" + self._seed_note) if self._seed_note else ""
-        return ("[%s session started (sandboxed): server under %s on "
+        return ("[%s session started (sandboxed, private network): server under %s on "
                 "127.0.0.1:%d (%s)]%s\n%s"
                 % (self.mode, self.mode, GDB_PORT, status, seed, out[-2000:]))
 
     def _capture_pid(self, boot_text=None):
-        """Cache the inferior's (host) pid for /proc-based liveness sampling.
-        bwrap does NOT unshare the pid namespace, so the reported pid is a real
-        host pid we can read under /proc. gdb: ask it. valgrind: parse its own
-        '==PID==' line prefix from the boot output."""
+        """Translate the supervisor's namespace PID for host CPU sampling."""
         if self.mode == "valgrind":
             m = re.search(r"==(\d+)==", boot_text or "")
-            self._pid = int(m.group(1)) if m else None
+            self._pid = self._host_pid(int(m.group(1))) if m else None
             return
         self._w("interrupt")
         out = self._drain(idle=0.4, hard=5)
@@ -3620,8 +3930,49 @@ class LiveServer:
         if not m:
             self._w("info inferiors")
             m = re.search(r"process (\d+)", self._drain(idle=0.4, hard=4))
-        self._pid = int(m.group(1)) if m else None
+        self._pid = self._host_pid(int(m.group(1))) if m else None
         self._continue()
+
+    def _host_pid(self, namespace_pid):
+        """Search only this bwrap's descendants; never confuse a host PID."""
+        pending = [self.proc.pid] if self.proc else []
+        seen = set()
+        while pending:
+            pid = pending.pop()
+            if pid in seen:
+                continue
+            seen.add(pid)
+            try:
+                with open("/proc/%d/status" % pid) as fh:
+                    for line in fh:
+                        if line.startswith("NSpid:"):
+                            ids = line.split()[1:]
+                            if len(ids) > 1 and int(ids[-1]) == namespace_pid:
+                                return pid
+                with open("/proc/%d/task/%d/children" % (pid, pid)) as fh:
+                    pending.extend(int(child) for child in fh.read().split())
+            except (OSError, ValueError) as exc:
+                sys.stderr.write("[sandbox] cannot inspect process %d: %s\n" % (pid, exc))
+        sys.stderr.write("[sandbox] target PID unavailable; CPU sampling disabled\n")
+        return None
+
+    def _reset_run_state(self):
+        """Rebuild from the three trusted boot inputs, never a previous database."""
+        if os.path.islink(self.rundir):
+            raise OSError("private run directory must not be a symlink")
+        if os.path.exists(self.rundir):
+            entries = sorted(os.listdir(self.rundir))
+            sys.stderr.write("[sandbox] resetting %s: %s\n" % (self.rundir, entries))
+            shutil.rmtree(self.rundir)
+        os.makedirs(self.rundir, mode=0o700)
+        shutil.copy2(SERVER_BIN, os.path.join(self.rundir, "catchchallenger-server-cli"))
+        dp = os.path.realpath(os.path.join(STAGED_RUN, "datapack"))
+        if not os.path.isdir(dp):
+            raise OSError("staged datapack is missing")
+        os.symlink(dp, os.path.join(self.rundir, "datapack"))
+        with open(os.path.join(self.rundir, "server-properties.xml"), "w") as fh:
+            fh.write(STAGED_PROPERTIES.format(port=GDB_PORT))
+        self._tail.clear()
 
     def _interrupt(self):
         """Stop the inferior so memory can be read (our own SIGINT - not a
@@ -3672,8 +4023,8 @@ class LiveServer:
         bad = [c for c in cmds if not gdb_cmd_ok(c)]
         if bad:
             return ("GDB refused (read-only inspection ONLY - no inferior "
-                    "writes/calls/flow-control/shell; '(' and '=' are blocked): "
-                    "%s" % "; ".join(bad))
+                    "writes/calls/flow-control/shell; '(', '=', '++' and '--' "
+                    "are blocked): %s" % "; ".join(bad))
         # What gdb prints for an INSPECTION command is not the server acting: an
         # `info functions` listing carries source paths and symbol names, and
         # scanning it for crash/containment markers fabricates a CONFIRMED (a
@@ -3717,30 +4068,32 @@ class LiveServer:
     PROTOCOL_HEADER_LOGIN = b"\x9c\xd6\x49\x8d\x14"
 
     def _protocol_ping(self, timeout=2.0):
-        """Ping the event loop: open a FRESH TCP connection, send the login
-        handshake, wait for a reply. Returns (connected, got_reply). A wedged
-        loop won't process the connection -> no reply."""
-        import socket
-        try:
-            c = socket.create_connection(("127.0.0.1", GDB_PORT), timeout=timeout)
-        except OSError:
-            return (False, False)
-        got = False
-        try:
-            c.sendall(self.PROTOCOL_HEADER_LOGIN)
-            c.settimeout(timeout)
-            try:
-                got = bool(c.recv(4096))
-            except socket.timeout:
-                got = False
-        except OSError:
-            got = False
-        finally:
-            try:
-                c.close()
-            except OSError:
-                pass
-        return (True, got)
+        """Probe inside the private network; harness failures are not target DoS."""
+        script = (
+            "import json, socket, sys\n"
+            "connected = got = False\n"
+            "try:\n"
+            "    with socket.create_connection(('127.0.0.1', int(sys.argv[1])), "
+            "timeout=float(sys.argv[2])) as c:\n"
+            "        connected = True\n"
+            "        c.sendall(bytes.fromhex(sys.argv[3]))\n"
+            "        got = bool(c.recv(4096))\n"
+            "except OSError:\n"
+            "    pass\n"
+            "print(json.dumps([connected, got]))\n")
+        command = self.network.wrap(_sandbox_base() + [
+            "/usr/bin/python3", "-B", "-c", script, str(GDB_PORT), str(timeout),
+            self.PROTOCOL_HEADER_LOGIN.hex()])
+        result = subprocess.run(command, pass_fds=self.network.fds,
+                                env=_sandbox_env(), capture_output=True, text=True,
+                                timeout=2 * timeout + 5,
+                                preexec_fn=functools.partial(self.network.enter, _set_server_rlimits))
+        if result.returncode:
+            raise RuntimeError("private network health probe failed: %s" % result.stderr[-1000:])
+        status = json.loads(result.stdout)
+        if not isinstance(status, list) or len(status) != 2 or any(type(v) is not bool for v in status):
+            raise RuntimeError("invalid private network health probe result")
+        return tuple(status)
 
     def check_responsive(self):
         """Liveness check so the harness NEVER hangs on a wedged server AND so a
@@ -3840,28 +4193,45 @@ class LiveServer:
     def stop(self):
         self._closing = True
         if self.proc is not None:
+            import select
+            pidfd = None
+            if self._pid:
+                try:
+                    # bwrap's outer monitor can exit before the namespace's
+                    # target. Pin its identity and wait for actual termination.
+                    pidfd = os.pidfd_open(self._pid)
+                except ProcessLookupError:
+                    pass
             try:
                 self._w("kill")
                 self._w("quit")
             except OSError:
                 pass
             try:
-                self.proc.kill()
-            except OSError:
-                pass
-            try:
-                # Reap so the killed bwrap+gdb/valgrind+server fully exits and
-                # RELEASES GDB_PORT before the next exploit's start() rebinds it
-                # (the port is fixed; without this wait the rebind can race a
-                # not-yet-dead child and the new server fails to bind/listen).
+                try:
+                    self.proc.kill()
+                except ProcessLookupError:
+                    pass
                 self.proc.wait(timeout=10)
-            except (OSError, subprocess.TimeoutExpired):
-                pass
-            try:
-                os.close(self.mfd)
-            except OSError:
-                pass
+                if pidfd is not None:
+                    poll = select.poll()
+                    poll.register(pidfd, select.POLLIN)
+                    if not poll.poll(10000):
+                        raise RuntimeError("sandbox target did not exit; refusing to reuse its state")
+            finally:
+                if pidfd is not None:
+                    os.close(pidfd)
+                if self.mfd >= 0:
+                    os.close(self.mfd)
+                    self.mfd = -1
             self.proc = None
+        try:
+            self.network.close()
+        finally:
+            # The joint-cap cgroup goes away with the run: kill any straggler
+            # still inside it, then remove the now-empty directory.
+            _drop_run_cgroup(self.cgroup)
+            self.cgroup = None
 
 
 # The live gdb/TCP session for the exploit currently in progress. Held at module
@@ -3943,12 +4313,23 @@ _EXPLOIT_MODEL_SPEC = None
 _EXPLOIT_TOTAL = 0
 
 
+# One native tool carrying the plain-text protocol action (honoured by llama.cpp only).
+EXPLOIT_ACTION_TOOLS = [{"type": "function", "function": {
+    "name": "action",
+    "description": "Send ONE protocol action to the harness, exactly as the TOOL PROTOCOL spells it.",
+    "parameters": {"type": "object", "required": ["text"], "properties": {"text": {
+        "type": "string",
+        "description": "The whole action, e.g. 'READ server/base/Client.cpp:100', 'GREP symbol', "
+                       "'WRITE exploit.c' followed by the file in a ``` block, 'RUN', "
+                       "'VERDICT FALSEPOSITIVE <guard FILE:LINE>'."}}}}}]
+
+
 def _exploit_chat(messages, timeout=None):
     """A chat turn for the exploit loop, routed to the adversarial-validation
     model (_EXPLOIT_MODEL_SPEC) when one is active, else the configured backend."""
     if _EXPLOIT_MODEL_SPEC:
-        return chat_with(_EXPLOIT_MODEL_SPEC, messages, timeout)
-    return chat(messages, timeout)
+        return chat_with(_EXPLOIT_MODEL_SPEC, messages, timeout, EXPLOIT_ACTION_TOOLS)
+    return chat(messages, timeout, EXPLOIT_ACTION_TOOLS)
 
 
 def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
@@ -4076,8 +4457,11 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
     nudged = False          # already nudged once on a premature give-up?
     soft_warned = False     # already demanded the wrap-up verdict at soft cap?
     last_answer = None      # previous reply, to detect verbatim repetition
+    pending_write = None    # WRITE path still waiting for its code block
     compile_runs = 0        # compile+run cycles so far (stall detection)
     stall_warned = False    # already nudged once on a no-progress run-loop?
+    replay_done = False     # harness replayed the exploit on a CLEAN target
+    replay_attempts = 0     # replay tries (a no-source attempt gets one retry)
     step = 0
     while step < EXPLOIT_MAX_STEPS:
         # HARD cap: force-stop this exploit and move on to the next finding,
@@ -4141,14 +4525,18 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
             break
         last_answer = answer
         act = parse_action(answer)
+        # A tool-call-style model sends WRITE <path> alone and waits for a result:
+        # the code block it sends next is that file.
+        if pending_write and (act is None or act[0] == "WRITE"):
+            block = first_codeblock(common.unwrap_tool_call(answer)) or first_codeblock(answer)
+            if block:
+                act = ("WRITE", act[1] if act else pending_write, block)
+        pending_write = None
         # A non-action reply (that is NOT a verbatim repeat) just gets nudged
         # back into the one-action protocol.
         if act is None:
             messages.append({"role": "assistant", "content": answer})
-            messages.append({"role": "user", "content":
-                "No usable action found. Reply with exactly ONE action as plain "
-                "text, keyword FIRST (e.g. READ server/base/Client.cpp) - no "
-                "preamble, no <tool_call> markup."})
+            messages.append({"role": "user", "content": NO_ACTION_NUDGE})
             continue
         kind, arg, block = act
         if kind == "VERDICT":
@@ -4157,15 +4545,95 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
             # auto-confirmed above (we never reach here for those); a bare
             # model-declared CONFIRMED with no live target is speculation.
             if arg == "CONFIRMED":
-                if _model_confirm_is_verifiable(live, used_gdb):
+                evidence_ok = _model_confirm_is_verifiable(live, used_gdb)
+                # A case-(c) "unintended STATE change" CONFIRMED must SURVIVE A
+                # REPLAY FROM A CLEAN STATE: the harness restarts the target
+                # (fresh run dir + fresh FILE_DB from the trusted boot inputs)
+                # and re-RUNS the model's own exploit ELF itself. Without this,
+                # a CONFIRMED can ride on leftover session state or on a
+                # one-off sequence the exploit cannot reproduce. Crash/hang
+                # proofs are self-evident, so they never need a replay.
+                if (evidence_ok and not (live.crashed or live.hung)
+                        and not replay_done and replay_attempts < 2):
+                    replay_attempts += 1
+                    if time.time() >= deadline - 150:
+                        sys.stderr.write(
+                            "%s     [no-replay] %s: case-(c) state proof but "
+                            "<150s budget left to replay it from a clean state\n"
+                            % (_ts(), rel))
+                    else:
+                        sys.stderr.write("%s     [REPLAY] case-(c) CONFIRMED: "
+                                         "restarting the target clean + re-running "
+                                         "the exploit (%s)\n" % (_ts(), rel))
+                        rp = live.restart()
+                        run_to = max(1, min(RUN_TIMEOUT,
+                                            int(deadline - time.time())))
+                        replayed = do_run(outdir, timeout=run_to,
+                                          network=live.network)
+                        replayed += ("\n--- live server status ---\n"
+                                     + live.poll_crash())
+                        if (replayed.startswith("RUN error")
+                                or "COMPILE FAILED" in replayed[:200]):
+                            # Nothing was actually replayed (no exploit source):
+                            # the state the model "saw" was never driven by a
+                            # running exploit at all. Require one; the next
+                            # CONFIRMED attempt triggers the real replay.
+                            transcript.append(
+                                "### CLEAN-STATE REPLAY impossible (%s)"
+                                % replayed[:200])
+                            messages.append({"role": "assistant",
+                                             "content": answer})
+                            messages.append({"role": "user", "content":
+                                "Your CONFIRMED is a case-(c) state proof, but "
+                                "the harness clean-state replay could not run "
+                                "your exploit:\n%s\nWRITE a C/C++ exploit that "
+                                "produces the state change and RUN it; on your "
+                                "next 'VERDICT CONFIRMED' the harness will "
+                                "restart the target clean and replay it for "
+                                "real." % replayed[:RUN_OUT_CAP]})
+                            continue
+                        replay_done = True
+                        used_gdb = False  # only POST-replay inspection counts now
+                        transcript.append("### CLEAN-STATE REPLAY (harness)")
+                        sys.stderr.write("%s     [REPLAY] done -> awaiting "
+                                         "re-verification on the replayed state\n"
+                                         % _ts())
+                        messages.append({"role": "assistant", "content": answer})
+                        messages.append({"role": "user", "content":
+                            "[CLEAN-STATE REPLAY] The harness restarted the "
+                            "target on a fresh run dir + fresh database and "
+                            "re-RAN YOUR own exploit itself. Result:\n%s\nA "
+                            "case-(c) CONFIRMED stands only if the state change "
+                            "reproduces after this replay: inspect the state NOW "
+                            "with GDB (read-only), then re-declare 'VERDICT "
+                            "CONFIRMED <why>' - or 'VERDICT FALSEPOSITIVE' if it "
+                            "did NOT reproduce. Evidence from before the replay "
+                            "no longer counts." % replayed[:RUN_OUT_CAP]})
+                        continue
+                if (evidence_ok and not replay_done
+                        and not (live.crashed or live.hung)):
+                    # case-(c) claim that could not be replayed (budget or the
+                    # two attempts exhausted): unproven, not a proof.
+                    evidence_ok = False
+                if evidence_ok:
                     verdict, reason = arg, block
                 else:
-                    why = ("no live server was running to prove it"
-                           if live is None or not (live.alive or live.crashed
-                                                   or live.hung)
-                           else "no crash, no hang, and it never GDB-inspected "
-                                "the live state (code-reading opinion, not a "
-                                "proof)")
+                    live_present = (live is not None
+                                    and (live.alive or live.crashed
+                                         or live.hung))
+                    if not live_present:
+                        why = "no live server was running to prove it"
+                    elif replay_done:
+                        why = ("no crash, no hang, and no GDB inspection of the "
+                               "live state AFTER the clean-state replay")
+                    elif not used_gdb:
+                        why = ("no crash, no hang, and it never GDB-inspected "
+                               "the live state (code-reading opinion, not a "
+                               "proof)")
+                    else:
+                        why = ("the case-(c) state proof was not replayed from "
+                               "a clean state (budget or replay attempts "
+                               "exhausted)")
                     # NOT a refutation: the model still believes the bug is real,
                     # it just has no proof. UNPROVEN keeps the finding on the
                     # to-fix list instead of declaring the code safe.
@@ -4203,7 +4671,12 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
         elif kind == "GREP":
             result = tool_grep(arg)
         elif kind == "WRITE":
-            result = do_write(outdir, arg, block)
+            if block is None:
+                pending_write = arg
+                result = ("no file content received. Send the FULL content of %s now: "
+                          "one ``` fenced code block, nothing else." % arg)
+            else:
+                result = do_write(outdir, arg, block)
         elif kind == "RUN":
             # Never let a RUN outlive the hard cap: clamp its timeout to the
             # time left (min 1s) so a long probe cannot overrun the budget.
@@ -4211,7 +4684,7 @@ def exploit_one(rel, finding, idx, hard_budget, soft_budget, mode_override=None,
             sys.stderr.write("%s     [RUN] compile+run exploit ELF (step %d, "
                              "%ds left, timeout %ds)\n"
                              % (_ts(), step, remaining, run_to))
-            result = do_run(outdir, timeout=run_to)
+            result = do_run(outdir, timeout=run_to, network=live.network)
             # The exploit just hammered the live server - did it fault it?
             result += "\n\n--- live server status ---\n" + live.poll_crash()
             # Expose the last SERVER_TAIL_LINES of the SUPERVISED SERVER's pty
@@ -5135,6 +5608,12 @@ def _print_help(prog):
         "  # on the command line; append '@host:port' to pin a backend per model.\n"
         "  python3 server.py --model=gemma4:26b@rtx5090:11434 2> progress.log\n"
         "\n"
+        "  # LOCAL llama.cpp with NO Ollama anywhere: start llama-server yourself\n"
+        "  # (llama-server -m model.gguf --alias NAME --port 8080 -c CTX) and pin\n"
+        "  # that alias; keep CC_OLLAMA_CTX equal to the server's -c.\n"
+        "  CC_OLLAMA_API=llamacpp python3 server.py \\\n"
+        "      --model=NAME@127.0.0.1:8080 CC_OLLAMA_CTX=262144 2> progress.log\n"
+        "\n"
         "  # ALL models work TOGETHER (collaborative workgroup): several local\n"
         "  # Ollama models + Claude review each function, discuss, form work\n"
         "  # groups around shared findings. 'auto' picks every installed Ollama\n"
@@ -5162,6 +5641,10 @@ def _print_help(prog):
         "  CC_IA_SETTINGS        JSON file declaring multiple Ollama backends\n"
         "                        (default ./ia-settings.json; see .example).\n"
         "                        When set it overrides OLLAMA_HOST.\n"
+        "  CC_OLLAMA_API         wire API a backend URL speaks: ollama (default)\n"
+        "                        | router (the PHP front controller) | llamacpp\n"
+        "                        (a plain llama.cpp llama-server with no Ollama\n"
+        "                        anywhere; its --alias is the model name)\n"
         "  CC_IA_PANEL           model list, or 'auto' (<35B Ollama set) -> a\n"
         "                        collaborative multi-model team audit (scan phase)\n"
         "  CC_PANEL_ROUNDS       team discussion rounds (default 10)\n"
@@ -5229,50 +5712,190 @@ def _print_help(prog):
 
 # One-function SECURITY prompt for the codecheck-engine scan. server.py is the
 # security auditor (not a general code checker like codecheck.py), so this asks
-# ONLY for EXPLOITABLE, remote-reachable memory-safety bugs, judged via the
+# ONLY for EXPLOITABLE, remote-reachable security bugs, judged via the
 # caller tree (the path untrusted TCP bytes take to the function).
 CODECHECK_SECURITY_SYSTEM = (
     "You are a security auditor of a TCP-reachable C/C++ server. You are shown the "
     "relevant HEADER(s) in full, ONE function to audit, its CALLER tree (who reaches "
     "it - the path untrusted REMOTE bytes take to get here), and ONE thing it calls "
-    "at a time. Audit ONLY the shown function. Report ONLY EXPLOITABLE memory-safety "
-    "bugs reachable from untrusted network input: out-of-bounds read/write, an "
-    "unchecked length/index/size/offset/pointer taken from a caller, integer "
-    "overflow/underflow or signed/unsigned confusion driving a read/write/alloc, "
-    "use-after-free / double-free, or a NULL deref on attacker-controlled input. Use "
-    "the CALLER tree to confirm remote reachability - if untrusted input cannot reach "
-    "the bad value it is NOT a finding.\n"
+    "at a time. Audit ONLY the shown function. Report ONLY defects reachable from "
+    "a game client's TCP input: memory corruption or disclosure, crashes, hangs "
+    "or algorithmic denial of service from bounded input, authentication or "
+    "authorization bypass, item/cash duplication or missing cost/ownership checks, "
+    "world-rule bypass, and persisted player-state corruption. Follow integer "
+    "overflow/underflow, narrowing and signedness through lengths, indices, prices "
+    "and quantities. Check repeated/reordered requests and failure paths for "
+    "partial state changes. Local-map remote actions can be intentional.\n"
+    "OUT OF SCOPE: trusted datapack/config/admin inputs, client-only code, vendor "
+    "code, master/inter-node links, volumetric flooding, and failures requiring "
+    "test-only hardening. A safe rejection/disconnect is not a vulnerability.\n"
     "GUARDS ON THE PATH: before claiming an id/index/length/size is UNVALIDATED, "
-    "check the guards that protect the sink - READ/GREP every caller in the CALLER "
-    "tree, and check what sets any success flag the sink sits behind. A validating "
-    "guard ANYWHERE on the path (has_x(id), a range check, an early return, an 'ok' "
-    "flag a lookup sets false) makes it NOT a finding, even when the audited "
-    "function itself has no check. In your finding, name the callers you checked and "
-    "state that none of them validates it; if you did not check them, do not report "
-    "it.\n"
-    "Be terse. If nothing exploitable, reply "
+    "READ/GREP the concrete caller path and what sets any success flag. A guard "
+    "protects a sink only if it runs before it on the claimed attack path, checks "
+    "the same value/object and sufficient bounds/ownership, and remains valid "
+    "until use. Do not report a missing local check when an upstream guard already "
+    "protects that path. Name the guards you inspected and precisely why the "
+    "proposed input passes them. Missing or truncated caller information is not "
+    "proof of reachability or missing validation: use READ path:start:end to "
+    "inspect it, or reply INCONCLUSIVE: <missing evidence>. The call graph may "
+    "omit virtual/indirect dispatch and include alternative implementations from "
+    "different binaries; verify source and build reachability, never combine "
+    "guards from different implementations into one path.\n"
+    "FALSE-POSITIVE CHECK: give concrete attacker-controlled values or a request "
+    "sequence, trace the actual C++ types and checks, and explain the observable "
+    "security impact. Reject hypothetical inputs the protocol or earlier guards "
+    "cannot admit. Do not claim runtime confirmation from code reading.\n"
+    "Be terse. If the reviewed paths have no exploitable defect, reply "
     "exactly: NO ISSUES. Otherwise one line per finding: "
-    "SEVERITY(low|medium|high|critical) | function:line | the exploitable bug + how "
-    "remote input triggers it.")
+    "SEVERITY(low|medium|high|critical) | file:line | input=<controlled field>; "
+    "path=<TCP handler to sink>; guards=<checked locations and why bypassed>; "
+    "trigger=<concrete values/request sequence>; impact=<observable harm>. "
+    "All five evidence fields are required; no speculative findings.")
 
 
 def codecheck_workers():
-    """How many function reviews run CONCURRENTLY. A review is one LLM turn (an
-    HTTP call or a `claude -p` child), so it is I/O wait, not local CPU: running
-    them one at a time leaves the box idle. Defaults to the machine's core count
-    (detected at run time, so a 2-core VPS and a 32-core workstation both do the
-    right thing); CC_CODECHECK_WORKERS overrides (lower it if a shared backend
-    rate-limits, raise it if the model is remote and cheap)."""
+    """Concurrent model reviews; CC_CODECHECK_WORKERS explicitly overrides.
+
+    llama.cpp defaults to one review: queued HTTP requests on a single inference
+    slot consume the function's tool-turn budget without doing review work.
+    Other backends retain the CPU-count default; clang work is separate.
+    """
     try:
         n = int(os.environ.get("CC_CODECHECK_WORKERS", "0"))
     except ValueError:
         n = 0
     if n <= 0:
-        n = os.cpu_count() or 4
+        n = (1 if not common.USE_CLAUDE and common._ollama_api_kind() == "llamacpp"
+             else os.cpu_count() or 4)
     return max(1, n)
 
 
+class _AuditProgress:
+    """One terminal line; persistent messages clear it before printing."""
+
+    def __init__(self):
+        self.output = sys.stderr
+        self.tty = self.output.isatty()
+        self.lock = threading.RLock()
+        self.stopped = threading.Event()
+        self.thread = None
+        self.started = time.monotonic()
+        self.phase = "Indexing"
+        self.done = self.total = self.findings = self.errors = self.lines = 0
+        self.requests = self.tokens = self.chars = 0
+        self.tokens_known = False
+        self.active = {}
+        self.line_visible = False
+        self.message_open = False
+
+    def __getattr__(self, name):
+        return getattr(self.output, name)
+
+    def write(self, text):
+        with self.lock:
+            if self.line_visible:
+                self.output.write("\r\033[2K")
+                self.line_visible = False
+            if text:
+                self.message_open = not text.endswith("\n")
+            return self.output.write(text)
+
+    def flush(self):
+        self.output.flush()
+
+    def set_phase(self, phase, done=0, total=0):
+        with self.lock:
+            changed = phase != self.phase
+            self.phase, self.done, self.total = phase, done, total
+            if changed and not self.tty:
+                self.output.write("[progress] %s: %d/%d\n" % (phase, done, total))
+
+    def activity(self, event, size=0):
+        with self.lock:
+            key = threading.get_ident()
+            now = time.monotonic()
+            if event == "request":
+                self.requests += 1
+                self.active[key] = {"last": now, "tokens": 0, "output": False}
+            elif event == "end":
+                self.active.pop(key, None)
+            elif key in self.active:
+                state = self.active[key]
+                if event == "output":
+                    self.chars += size
+                    state["last"], state["output"] = now, True
+                elif event == "tokens":
+                    delta = max(0, size - state["tokens"])
+                    self.tokens += delta
+                    state["tokens"] = max(state["tokens"], size)
+                    self.tokens_known = True
+                    if delta:
+                        state["last"], state["output"] = now, True
+
+    def complete(self, finding, error, lines):
+        with self.lock:
+            self.done += 1
+            self.findings += bool(finding)
+            self.errors += bool(error)
+            self.lines += lines
+            if not self.tty and (self.done % 10 == 0 or self.done == self.total):
+                self.output.write("[review] %d/%d funcs, %d with findings, %d incomplete\n"
+                                  % (self.done, self.total, self.findings, self.errors))
+
+    def render(self):
+        with self.lock:
+            if not self.tty or self.message_open:
+                return
+            now = time.monotonic()
+            text = "[%s] %d/%d" % (self.phase, self.done, self.total)
+            if self.phase == "Review":
+                text += " | tok %s" % (self.tokens if self.tokens_known else "?")
+                if self.active:
+                    idle = int(max(now - state["last"] for state in self.active.values()))
+                    label = "idle" if any(s["output"] for s in self.active.values()) else "first token"
+                    text += " | %s %ds" % (label, idle)
+                text += " | lines %d | req %d | findings %d | incomplete %d | chars %d" % (
+                    self.lines, self.requests, self.findings, self.errors, self.chars)
+            text += " | %ds" % (now - self.started)
+            width = max(1, shutil.get_terminal_size().columns - 1)
+            self.output.write("\r\033[2K" + text[:width])
+            self.line_visible = True
+            self.output.flush()
+
+    def _tick(self):
+        while not self.stopped.wait(1):
+            self.render()
+
+    def __enter__(self):
+        if self.tty:
+            sys.stderr = self
+            self.render()
+            self.thread = threading.Thread(target=self._tick, daemon=True)
+            self.thread.start()
+        return self
+
+    def stop(self):
+        if self.stopped.is_set():
+            return
+        self.stopped.set()
+        # Restore stderr before any join: another interrupt during shutdown must
+        # never leave Python's exception reporting attached to the progress UI.
+        if sys.stderr is self:
+            sys.stderr = self.output
+        if self.thread:
+            self.thread.join()
+            self.write("")
+
+    def __exit__(self, *exc):
+        self.stop()
+
+
 def run_codecheck():
+    with _AuditProgress() as progress:
+        return _run_codecheck(progress)
+
+
+def _run_codecheck(progress):
     """SECURITY scan via the multi-IA agentic WORKGROUP engine (agentic.py): each
     function is reviewed independently by every IA (agentic — one callee branch per
     turn, may pull more data); the IAs discuss and form consensus WORKGROUPS around
@@ -5312,6 +5935,8 @@ def run_codecheck():
     if not os.environ.get("CC_CODECHECK_ALL_TUS"):
         codecheck.codetree.set_cdb_only(True)
     idx = codecheck.build_index(_scope)            # excl vendor + build/generated
+    index_errors = ["%s: %s" % (os.path.relpath(path, REPO_ROOT), error)
+                    for path, error in getattr(idx, "errors", [])]
     funcs = codecheck.leaves_first(idx)            # callees before callers
     try:
         _lim = int(os.environ.get("CC_CODECHECK_LIMIT", "0"))
@@ -5319,54 +5944,74 @@ def run_codecheck():
         _lim = 0
     if _lim > 0:
         funcs = funcs[:_lim]
-    # Security review: use the clang static-analyzer / security tidy check-set for
-    # the deterministic algorithmic layer, and skip trivial functions.
+    # Security review keeps short bodies and destructors; neither is inherently safe.
     codecheck.TIDY_CHECKS = codecheck.SECURITY_TIDY_CHECKS
-    funcs = codecheck.audit_targets(funcs)
+    funcs = codecheck.audit_targets(funcs, security=True)
+    if not funcs:
+        index_errors.append("no source functions selected; coverage could not be established")
     sys.stderr.write("[codecheck] %d functions, %d IA(s); agentic per-function "
                      "security review (one branch at a time)\n"
                      % (len(funcs), len(specs)))
     workers = codecheck_workers()
-    codecheck.prewarm_types(funcs, workers=workers)
-    codecheck.prewarm_tidy(funcs, workers=workers)
+    analysis_workers = os.cpu_count() or 4
+    progress.set_phase("Clang types", 0, len(funcs))
+    codecheck.prewarm_types(funcs, workers=analysis_workers,
+                           progress=lambda n, total: progress.set_phase("Clang types", n, total))
+    progress.set_phase("Clang analysis")
+    codecheck.prewarm_tidy(funcs, workers=analysis_workers,
+                          progress=lambda n, total: progress.set_phase("Clang analysis", n, total))
     codecheck.reset_cache_stats()
     by_file = {}
     total = len(funcs)
-    # Review the functions CONCURRENTLY: a review is one LLM turn, i.e. pure I/O
-    # wait (an ollama HTTP call or a `claude -p` child), so the box sits idle at
-    # 1/Nth of its capacity when they run one at a time. `workers` defaults to the
-    # core count. Each review is independent (its own conversation + its own cache
+    # Each review is independent (its own conversation + its own cache
     # entry), so the only shared state is the result slot + the counter.
     results = [None] * total
-    done = [0]
-    nfind = [0]
-    lock = threading.Lock()
+    incomplete = []
+    progress.set_phase("Review", 0, total)
 
     def review_one(i):
+        common.check_cancelled()
         fi = funcs[i]
-        blocks = agentic.audit_function(idx, fi, specs, role="security",
-                                        sysprompt=CODECHECK_SECURITY_SYSTEM)
+        blocks = None
+        common._CHAT_OBSERVER.callback = progress.activity
+        try:
+            blocks = agentic.audit_function(idx, fi, specs, role="security",
+                                            sysprompt=CODECHECK_SECURITY_SYSTEM)
+        finally:
+            common._CHAT_OBSERVER.callback = None
+            body, _ = codecheck.codetree.function_body(fi)
+            progress.complete(bool(blocks), blocks is None, len(body.splitlines()))
         if blocks:
             rel = os.path.relpath(fi.file, REPO_ROOT)
             results[i] = (rel, "## %s (%s:%d)\n%s"
                           % (fi.qual_name, rel, fi.line, "\n\n".join(blocks)))
-        with lock:
-            done[0] += 1
-            if blocks:
-                nfind[0] += 1
-            # Progress: print often enough that a long run does not look hung
-            # (every 10, plus the last). Show the running finding count so the
-            # user sees candidates accruing.
-            if done[0] % 10 == 0 or done[0] == total:
-                sys.stderr.write("  %d/%d funcs, %d with finding(s)\n"
-                                 % (done[0], total, nfind[0]))
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
-        for fut in [pool.submit(review_one, i) for i in range(total)]:
-            try:
-                fut.result()
-            except Exception as exc:   # one bad function must not kill the scan
-                sys.stderr.write("  [review error] %s\n" % exc)
+        try:
+            for i, fut in enumerate([pool.submit(review_one, i) for i in range(total)]):
+                try:
+                    fut.result()
+                except Exception as exc:   # one bad function must not kill the scan
+                    fi = funcs[i]
+                    reason = "%s:%d (%s): %s" % (
+                        os.path.relpath(fi.file, REPO_ROOT), fi.line, fi.qual_name, exc)
+                    incomplete.append(reason)
+                    sys.stderr.write("  [review incomplete] %s\n" % reason)
+        except BaseException:
+            common.request_cancel()
+            pool.shutdown(wait=False, cancel_futures=True)
+            raise
+    coverage_path = os.path.join(OUTPUT_ROOT, "review-coverage.json")
+    with open(coverage_path, "w") as fh:
+        json.dump({"selected": total, "completed": total - len(incomplete),
+                   "incomplete": incomplete, "index_errors": index_errors}, fh, indent=2)
+        fh.write("\n")
+    if incomplete:
+        sys.stderr.write("[codecheck] %d incomplete review(s); see %s\n"
+                          % (len(incomplete), coverage_path))
+    if index_errors:
+        sys.stderr.write("[codecheck] incomplete index: %s; see %s\n"
+                         % ("; ".join(index_errors), coverage_path))
     # Merge in FUNCTION order, not completion order, so the report is identical
     # whatever the thread scheduling was.
     i = 0
@@ -5376,6 +6021,7 @@ def run_codecheck():
             by_file.setdefault(rel, []).append(block)
         i += 1
     sys.stderr.write("[codecheck] %s\n" % codecheck.cache_summary())
+    progress.set_phase("Static sweep")
     # Deterministic static-analyzer findings (whole-file, every function — not just
     # the indexed ones). A file the IA already flagged gets them attached as CONTEXT
     # for the exploit engineer. A file with NO IA finding only becomes a candidate on
@@ -5393,7 +6039,40 @@ def run_codecheck():
                 det = "\n".join("L%d %s [%s]" % (ln, msg, chk)
                                 for ln, chk, msg in analyzer)
                 by_file[rel] = ["## static analysis (%s)\n%s" % (rel, det)]
+    progress.set_phase("Protocol sweep")
+    # CROSS-PATH audit (packet -> validation -> operation -> persistence) in
+    # ONE cross-file turn. The legacy `scan` mode has always run this sweep;
+    # the per-function reviews here structurally cannot see checks MISSING
+    # BETWEEN functions, so the default agentic mode merges the sweep's
+    # findings into FINDINGS too and lets the exploit phase prove them.
+    import io as _io
+    try:
+        sweep_groups, sweep_generic = protocol_sweep(
+            _io.StringIO(), spec=(specs[0] if specs else None))
+    except Exception as exc:
+        sys.stderr.write("    [protocol-sweep error] %s\n" % exc)
+        sweep_groups, sweep_generic = {}, []
+    for rp, flines in sweep_groups.items():
+        by_file.setdefault(rp, []).append("\n".join(flines))
+    if not by_file and sweep_generic:
+        # Cross-path findings with no file attribution: nothing the exploit
+        # phase can attack (no source to read), but the operator must see them.
+        with open(FINDINGS, "w") as fh:
+            for sink in (sys.stdout, fh):
+                print("=" * 70, file=sink)
+                print("FINDINGS: protocol-sweep", file=sink)
+                print("=" * 70, file=sink)
+                print("\n".join(sweep_generic), file=sink)
+                print(file=sink)
+        sys.stderr.write("[codecheck] only cross-path finding lines (no file "
+                         "attribution); written to %s, nothing to prove\n"
+                         % FINDINGS)
+        return 1 if (incomplete or index_errors) else 0
     if not by_file:
+        if incomplete or index_errors:
+            sys.stderr.write("[codecheck] no findings from completed reviews; "
+                             "scan INCOMPLETE\n")
+            return 1
         # A clean security scan is SUCCESS, not a failure — don't fall into
         # run_exploit's "no findings -> exit 1" path with nothing to prove.
         sys.stderr.write("[codecheck] no security findings — nothing to prove\n")
@@ -5407,9 +6086,20 @@ def run_codecheck():
                 print("=" * 70, file=sink)
                 print("\n\n".join(by_file[rel]), file=sink)
                 print(file=sink)
+        if sweep_generic:
+            # Cross-path findings without a citable file: shown for the
+            # operator; the exploit phase skips source-less blocks.
+            for sink in (sys.stdout, fh):
+                print("=" * 70, file=sink)
+                print("FINDINGS: protocol-sweep", file=sink)
+                print("=" * 70, file=sink)
+                print("\n".join(sweep_generic), file=sink)
+                print(file=sink)
     sys.stderr.write("[codecheck] %d file(s) with findings -> exploit phase\n"
                      % len(by_file))
-    return run_exploit()
+    progress.stop()
+    result = run_exploit()
+    return result or (1 if incomplete or index_errors else 0)
 
 
 def main(argv):
@@ -5507,5 +6197,56 @@ def main(argv):
     return 2
 
 
+def _install_backtrace_signals():
+    """Dump worker stacks before unwinding into ThreadPoolExecutor shutdown."""
+    common._CANCEL_REQUESTED = False
+    faulthandler.enable(file=2, all_threads=True)
+    if hasattr(signal, "SIGUSR1"):
+        # C-level handler: this also works when the main thread cannot run a
+        # Python signal callback. File descriptor 2 bypasses sys.stderr wrappers.
+        faulthandler.register(signal.SIGUSR1, file=2, all_threads=True, chain=False)
+    interrupted = False
+
+    def on_interrupt(signum, frame):
+        nonlocal interrupted
+        # Repeated Ctrl+C while writing a dump must not interrupt the diagnostic.
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        first = not interrupted
+        interrupted = True
+        try:
+            header = "\n[interrupt] pid=%d monotonic=%.3f: all Python thread stacks (%s)\n" % (
+                os.getpid(), time.monotonic(), "before shutdown" if first else "shutdown in progress")
+            os.write(2, header.encode())
+            faulthandler.dump_traceback(file=2, all_threads=True)
+            if first:
+                common.request_cancel()
+                os.write(2, b"[interrupt] Shutdown requested. Press Ctrl+C again to force exit.\n")
+            else:
+                os.write(2, b"[interrupt] Forced exit; the current work may be incomplete.\n")
+        finally:
+            if not first:
+                # sys.exit/KeyboardInterrupt still wait for executor workers at
+                # interpreter shutdown. The operator explicitly requested force.
+                os._exit(130)
+            signal.signal(signal.SIGINT, on_interrupt)
+        if first:
+            raise KeyboardInterrupt
+
+    signal.signal(signal.SIGINT, on_interrupt)
+    sys.stderr.write("[diagnostics] pid=%d; Ctrl+C dumps all thread stacks before shutdown"
+                     "; second Ctrl+C forces exit"
+                     "%s\n" % (os.getpid(), "; SIGUSR1 dumps without stopping"
+                                 if hasattr(signal, "SIGUSR1") else ""))
+
+
+def _run_cli(argv):
+    _install_backtrace_signals()
+    try:
+        return main(argv)
+    except KeyboardInterrupt:
+        os.write(2, b"[interrupt] Audit interrupted; completed review caches are retained.\n")
+        return 130
+
+
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    sys.exit(_run_cli(sys.argv))
