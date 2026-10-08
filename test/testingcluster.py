@@ -984,10 +984,10 @@ def _xml_login(port, db_kind, max_players, mirror, mode="direct"):
     db_host = db_host_for(db_kind)
     # Login expects its listen port as <port> (NOT <server-port>).
     # httpDatapackMirror is what the LOGIN server advertises to
-    # clients in the loginGood packet — when set it's the HTTP
-    # mirror they fetch from, when empty the client falls back to
-    # the in-protocol datapack pull served from datapack/ next to
-    # the login binary. Both modes are exercised via MIRROR_VARIANTS.
+    # clients in the loginGood packet: the HTTP mirror the BASE datapack
+    # comes from. The login cannot push it inline (it refuses an empty
+    # mirror), so every variant gives it nginx; MIRROR_VARIANTS only
+    # switches the GAME server between mirror and inline push.
     return f"""<?xml version="1.0"?>
 <configuration>
     <port value="{port}"/>
@@ -1473,8 +1473,7 @@ def _resolve_client_bin():
     return ""
 
 
-def _run_one_client_attempt(login_port, login_name, pass_name, character,
-                            timeout):
+def _run_one_client_attempt(login_port, character, home, timeout):
     """Single client connect attempt. Returns (ok, detail) — same
     semantics as client_connect_via(), see that helper for context."""
     client_bin = _resolve_client_bin()
@@ -1486,13 +1485,18 @@ def _run_one_client_attempt(login_port, login_name, pass_name, character,
         "--host", "127.0.0.1",
         "--port", str(login_port),
         "--autologin",
-        "--login", login_name,
-        "--pass", pass_name,
         "--character", character,
         "--closewhenonmap",
     ]
+    # The client has no --login/--pass: autologin uses the account kept in its
+    # settings, so `home` (shared by the clients of one variant) IS the account,
+    # and never the operator's own client data.
     env = os.environ.copy()
     env["QT_QPA_PLATFORM"] = "offscreen"
+    env["HOME"] = home
+    env["XDG_DATA_HOME"] = os.path.join(home, "share")
+    env["XDG_CONFIG_HOME"] = os.path.join(home, "config")
+    env["XDG_CACHE_HOME"] = os.path.join(home, "cache")
     try:
         p = subprocess.run(cmd, env=env, stdout=subprocess.PIPE,
                            stderr=subprocess.STDOUT, timeout=timeout)
@@ -1514,14 +1518,12 @@ def _run_one_client_attempt(login_port, login_name, pass_name, character,
                    "(last 400 bytes):\n" + out[-400:])
 
 
-def client_connect_via(login_port, login_name, pass_name, character,
-                       label, timeout=60):
+def client_connect_via(login_port, character, home, label, timeout=60):
     """Drive one client connection through a specific login server.
     Returns (ok, detail). Connection chain:
       client → login on `login_port` → master → game server (whichever
       master picks; sticky on character_id)."""
-    return _run_one_client_attempt(login_port, login_name,
-                                   pass_name, character, timeout)
+    return _run_one_client_attempt(login_port, character, home, timeout)
 
 
 # ── per-backend test driver ──────────────────────────────────────────────────
@@ -1646,6 +1648,34 @@ def _gsa_subdir(mirror_label):
             else "server/game-server-alone-push")
 
 
+def check_kicked_connection_closes(label, port):
+    """A server closing a connection must really close it. With io_uring an armed
+    recv_multishot kept the socket alive after close(): no FIN ever reached the
+    peer, which then waited forever, and the kernel socket leaked."""
+    closed = False
+    try:
+        sk = socket.create_connection(("127.0.0.1", port), timeout=5)
+        sk.sendall(bytes([0xA0, 0x00, 0, 0, 0, 0, 0]))    # wrong protocol magic: kicked
+        sk.settimeout(5)
+        try:
+            while sk.recv(4096):
+                pass
+            closed = True                                  # EOF
+        except socket.timeout:
+            closed = False
+        except OSError:
+            closed = True                                  # reset
+        sk.close()
+    except OSError as e:
+        log_fail(label, f"connect/send: {e!r}")
+        return
+    if closed:
+        log_pass(label, "kicked client got EOF")
+    else:
+        log_fail(label, "kicked connection never closed (no FIN within 5s): the "
+                        "server-side socket stays ESTABLISHED after close()")
+
+
 def check_proxy_reused_query_number(tag, base, work_root, db_name, max_players,
                                     mirror_url, spawned_servers):
     """Login in proxy mode forwards client queries to the game server. A client
@@ -1657,7 +1687,7 @@ def check_proxy_reused_query_number(tag, base, work_root, db_name, max_players,
         "loginproxy",
         bin_path(base, "server/login", "catchchallenger-server-login"),
         os.path.join(work_root, "loginproxy"),
-        _xml_login(PORT_LOGIN_PROXY, db_name, max_players, mirror_url, "proxy")).start()
+        _xml_login(PORT_LOGIN_PROXY, db_name, max_players, NGINX_URL_BASE, "proxy")).start()
     spawned_servers.append(login)
     ok, detail = login.wait_ready()
     if not ok:
@@ -1766,14 +1796,14 @@ def _run_cluster_variant(db_name, base, max_players,
             bin_path(base, "server/login", "catchchallenger-server-login"),
             os.path.join(work_root, "login1"),
             _xml_login(PORT_LOGIN_1, db_name, max_players,
-                       mirror_url)).start()
+                       NGINX_URL_BASE)).start()
         spawned_servers.append(login1)
         login2 = ServerProc(
             "login2",
             bin_path(base, "server/login", "catchchallenger-server-login"),
             os.path.join(work_root, "login2"),
             _xml_login(PORT_LOGIN_2, db_name, max_players,
-                       mirror_url)).start()
+                       NGINX_URL_BASE)).start()
         spawned_servers.append(login2)
         for ln in (login1, login2):
             ok, detail = ln.wait_ready()
@@ -1823,11 +1853,11 @@ def _run_cluster_variant(db_name, base, max_players,
 
         # 4) First client autologin via login #1.
         log_info("  client #1 → login server #1")
-        cred = "cluster_pinned_user"
+        client_home = os.path.join(work_root, "client-home")
         char = "Player"
         t_c1 = time.monotonic()
         ok1, det1 = client_connect_via(
-            PORT_LOGIN_1, cred, cred, char, "first-via-login1", timeout=120)
+            PORT_LOGIN_1, char, client_home, "first-via-login1", timeout=120)
         if not ok1:
             log_fail(f"{tag}/client1-via-login1", det1,
                      time.monotonic() - t_c1)
@@ -1850,7 +1880,7 @@ def _run_cluster_variant(db_name, base, max_players,
         log_info("  client #2 → login server #2 (sticky check)")
         t_c2 = time.monotonic()
         ok2, det2 = client_connect_via(
-            PORT_LOGIN_2, cred, cred, char, "second-via-login2", timeout=120)
+            PORT_LOGIN_2, char, client_home, "second-via-login2", timeout=120)
         if not ok2:
             log_fail(f"{tag}/client2-via-login2", det2,
                      time.monotonic() - t_c2)
@@ -1868,6 +1898,8 @@ def _run_cluster_variant(db_name, base, max_players,
         # Login proxy mode is exercised once per backend (it is not the default).
         if db_name not in _proxy_checked:
             _proxy_checked.add(db_name)
+            check_kicked_connection_closes(f"{tag}/login1-kick-closes", PORT_LOGIN_1)
+            check_kicked_connection_closes(f"{tag}/game1-kick-closes", PORT_GAME_1)
             check_proxy_reused_query_number(tag, base, work_root, db_name, max_players,
                                             mirror_url, spawned_servers)
     finally:

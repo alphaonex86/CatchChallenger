@@ -620,6 +620,54 @@ void Client::sendFileContent()
             }
         }
     }
+    //A chain is still draining on this socket: sendRawBlock() queues behind it,
+    //but the sendfile() below writes straight to the fd and so lands the file
+    //bytes in the middle of the chain (the client read file content as packet
+    //headers). Build the packet in memory instead, bounded by the
+    //CATCHCHALLENGER_MAX_PACKET_SIZE check above, and queue it whole.
+    if(async_send_in_progress)
+    {
+        std::vector<char> packet(hdr,hdr+sizeof(hdr));
+        packet.reserve(static_cast<size_t>(bodySize)+1+4);
+        unsigned int fileIndex=0;
+        while(fileIndex<pending.size())
+        {
+            const BaseServerMasterSendDatapack::PendingFile &p=pending[fileIndex];
+            packet.push_back(static_cast<char>(p.name.size()));
+            packet.insert(packet.end(),p.name.begin(),p.name.end());
+            const uint32_t sizeLe=htole32(p.size);
+            packet.insert(packet.end(),reinterpret_cast<const char *>(&sizeLe),
+                          reinterpret_cast<const char *>(&sizeLe)+sizeof(sizeLe));
+            const size_t start=packet.size();
+            packet.resize(start+p.size);
+            size_t got=0;
+            const int fd=::open(p.fullPath.c_str(),O_RDONLY|O_BINARY|O_CLOEXEC);
+            if(fd>=0)
+            {
+                ssize_t r=1;
+                while(got<p.size && r>0)
+                {
+                    r=::read(fd,packet.data()+start+got,p.size-got);
+                    if(r>0)
+                        got+=static_cast<size_t>(r);
+                }
+                ::close(fd);
+            }
+            if(got!=p.size)
+            {
+                errorOutput("sendFileContent: unable to read "+p.fullPath);
+                std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(pending);
+                BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
+                disconnectClient();
+                return;
+            }
+            fileIndex++;
+        }
+        sendRawBlock(packet.data(),static_cast<int>(packet.size()));
+        std::vector<BaseServerMasterSendDatapack::PendingFile>().swap(pending);
+        BaseServerMasterSendDatapack::rawFilesPendingRawSize=0;
+        return;
+    }
     #endif
 
     if(!sendRawBlock(hdr,sizeof(hdr)))

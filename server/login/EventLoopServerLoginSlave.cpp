@@ -128,21 +128,13 @@ EventLoopServerLoginSlave::EventLoopServerLoginSlave() :
     std::string httpDatapackMirror=settings.value("httpDatapackMirror");
     if(httpDatapackMirror.empty())
     {
-        //Empty mirror == "no HTTP mirror; push datapack inline over
-        //the gameplay protocol". The handler at
-        //ClientNetworkReadQuery.cpp packetCode 0xA1 (compiled in
-        //because login isn't a CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-        //binary) reads from datapack_basePath, set by BaseServer2.cpp
-        //to <applicationDirPath>/datapack/, i.e. a `datapack/` dir
-        //next to the login binary. Operators wanting the push path
-        //must therefore stage the datapack at ./datapack/ relative
-        //to catchchallenger-server-login.
-        #ifdef CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION
-        std::cerr << "Need mirror because CATCHCHALLENGERSERVERBLOCKCLIENTTOSERVERPACKETDECOMPRESSION is def, need decompression to datapack list input (abort)" << std::endl;
-        abort();
-        #endif
+        //The login has no 0xA1 datapack-list handler (that one is the game
+        //server's Client::parseQuery, EventLoopClientLoginSlave never reaches
+        //it): every client without the base datapack would be kicked with
+        //"unknown main ident: 161". Only the game server can push inline.
         settings.sync();
-        std::cout << "httpDatapackMirror is empty: clients will pull the datapack inline over the protocol from ./datapack/ next to the login binary" << std::endl;
+        std::cerr << "httpDatapackMirror is empty: the login server cannot send the base datapack itself, set an HTTP mirror (abort)" << std::endl;
+        abort();
     }
     else
     {
