@@ -218,8 +218,7 @@ protected:
         char login[CATCHCHALLENGER_HASH_SIZE];
         char pass[CATCHCHALLENGER_HASH_SIZE];
         //to store the reply to the char, and do another query
-        char * characterOutputData;
-        uint32_t characterOutputDataSize;
+        std::vector<char> characterOutputData;
     };
     struct SelectCharacterParam
     {

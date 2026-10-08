@@ -284,6 +284,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 if(tokenForAuthIndex>=(int32_t)BaseServerLogin::tokenForAuthSize)
                 {
                     loginIsWrong(askLoginParam->query_id,0x02,"No temp auth token found");
+                    delete askLoginParam;
                     return;
                 }
             }
@@ -345,6 +346,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     if(CommonSettingsCommon::commonSettingsCommon.max_character==0 && characterEntryList.empty())
                     {
                         loginIsWrong(askLoginParam->query_id,0x05,"Can't create character and don't have character");
+                        delete askLoginParam;
                         return;
                     }
                 }
@@ -392,18 +394,17 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
 
                 stat=ClientStat::Logged;
 
-                askLoginParam->characterOutputDataSize=send_characterEntryList(characterEntryList,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->query_id);
-                if(askLoginParam->characterOutputDataSize==0)
+                const uint32_t characterOutputDataSize=send_characterEntryList(characterEntryList,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->query_id);
+                if(characterOutputDataSize==0)
                 {
                     std::cerr << "send_characterEntryList(characterEntryList) wrong" << std::endl;
+                    delete askLoginParam;
                     return;
                 }
-
-                askLoginParam->characterOutputData=(char *)malloc(askLoginParam->characterOutputDataSize);
-                memcpy(askLoginParam->characterOutputData,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->characterOutputDataSize);
-                //re use
-                //delete askLoginParam;
-                server_list_return(askLoginParam->query_id,askLoginParam->characterOutputData,askLoginParam->characterOutputDataSize);
+                //copy: server_list_return() rebuilds its reply into tempBigBufferForOutput
+                const std::vector<char> characterOutputData(ProtocolParsingBase::tempBigBufferForOutput,ProtocolParsingBase::tempBigBufferForOutput+characterOutputDataSize);
+                server_list_return(askLoginParam->query_id,characterOutputData.data(),characterOutputData.size());
+                delete askLoginParam;
                 #else
                 account_id_db=GlobalServerData::serverPrivateVariables.db_login->stringtouint32(GlobalServerData::serverPrivateVariables.db_login->value(0),&ok);
                 if(!ok)
@@ -477,8 +478,6 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     #endif
     /// \note No hash because already double hashed before
     AskLoginParam *askLoginParam=new AskLoginParam;
-    askLoginParam->characterOutputData=nullptr;
-    askLoginParam->characterOutputDataSize=0;
     memcpy(askLoginParam->login,rawdata,CATCHCHALLENGER_HASH_SIZE);
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_HASH_SIZE,CATCHCHALLENGER_HASH_SIZE);
     askLoginParam->query_id=query_id;
@@ -730,15 +729,18 @@ void Client::character_list_object()
     if(askLoginParam==NULL)
         abort();
     #endif
-    askLoginParam->characterOutputDataSize=character_list_return(ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->query_id);
-    if(askLoginParam->characterOutputDataSize==0)
+    const uint32_t characterOutputDataSize=character_list_return(ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->query_id);
+    if(characterOutputDataSize==0)
+    {
+        delete askLoginParam;
         return;
-    askLoginParam->characterOutputData=(char *)malloc(askLoginParam->characterOutputDataSize);
-    memcpy(askLoginParam->characterOutputData,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->characterOutputDataSize);
-    //re use
-    //delete askLoginParam;
+    }
+    //kept until server_list_object() sends it with the server list
+    askLoginParam->characterOutputData.assign(ProtocolParsingBase::tempBigBufferForOutput,ProtocolParsingBase::tempBigBufferForOutput+characterOutputDataSize);
     if(server_list())
         paramToPassToCallBack.push(askLoginParam);
+    else
+        delete askLoginParam;
 }
 
 uint32_t Client::send_characterEntryList(const std::vector<CharacterEntry> &characterEntryList,char * data,const uint8_t &query_id)
