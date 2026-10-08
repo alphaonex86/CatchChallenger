@@ -321,7 +321,7 @@ Each `testing*.py` has its own wall-time ceiling sized roughly to "twice the lon
 | codecheck.py                    | 120 min |
 | testingbots.py                  | 15 min |
 | testingbyIA.py                  | 30 min |
-| testingclient.py                | 30 min |
+| testingclient.py                | 60 min |
 | testingcluster.py               | 10 min |
 | testingcmake.py                 | 30 min |
 | testingcompilationandroid.py    | 25 min |

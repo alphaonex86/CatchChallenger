@@ -682,6 +682,51 @@ def start_gateway():
 _gateway_output_dump = []
 
 
+def check_reused_query_number(label):
+    """A client reusing a query number still in flight to the game server made
+    the HARDENED gateway drop that link inside registerOutputQuery() and then
+    forward through the NULL link (SIGSEGV). Only that client may be dropped."""
+    hello = bytes([0xA0, 0x00, 0x9c, 0xd6, 0x49, 0x8d, 0x14])
+    seen = len(_gateway_output_dump)
+    try:
+        sk = socket.create_connection((BACKEND_HOST, GATEWAY_PORT), timeout=10)
+        # one segment: the 1st 0xA0 makes the gateway register qn 0 for its own
+        # header to the game server, the 2nd reuses qn 0 on the forward path
+        sk.sendall(hello + hello)
+        sk.settimeout(5)
+        try:
+            while sk.recv(4096):
+                pass
+        except OSError:
+            pass
+        sk.close()
+    except OSError as e:
+        log_fail(label, f"connect/send on gateway: {e}")
+        return False
+    time.sleep(1.0)
+    if gateway_proc is None or gateway_proc.poll() is not None:
+        rc = None if gateway_proc is None else gateway_proc.returncode
+        log_fail(label, f"gateway DIED (rc={rc}) when a client reused an in-flight query number")
+        return False
+    if not any("registerOutputQuery() conflict" in l for l in _gateway_output_dump[seen:]):
+        log_fail(label, "reused query number did not reach the conflict path (test no longer exercises it)")
+        return False
+    try:
+        sk = socket.create_connection((BACKEND_HOST, GATEWAY_PORT), timeout=10)
+        sk.sendall(hello)
+        sk.settimeout(15)
+        reply = sk.recv(4096)
+        sk.close()
+    except OSError as e:
+        log_fail(label, f"gateway alive but a fresh handshake failed: {e}")
+        return False
+    if not reply:
+        log_fail(label, "gateway alive but a fresh handshake got no reply")
+        return False
+    log_pass(label, "offending client dropped, gateway still serves")
+    return True
+
+
 def _kill(proc):
     if proc is None:
         return
@@ -977,6 +1022,7 @@ def main():
 
     # 3. Execute every (datapack, mc, sc, dest_http, gw_http, minimize).
     pi = 0
+    reused_qn_checked = False
     while pi < len(plan):
         dp, mc, sc, dest_http, gw_http, minimize = plan[pi]
         pi += 1
@@ -1042,6 +1088,9 @@ def main():
             stop_nginx()
             continue
         client_ok = run_client(f"{case}: client→map")
+        if not reused_qn_checked:
+            reused_qn_checked = True
+            check_reused_query_number(f"{case}: reused query number")
         # Stop gateway first so valgrind's report appears in the FAIL
         # context window for THIS case, not the next one.
         stop_gateway(case)
