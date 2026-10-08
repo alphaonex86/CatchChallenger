@@ -54,6 +54,7 @@ never modified — we symlink the staged read-only copy.
 """
 
 import os, sys, socket, struct, subprocess, time, signal, shutil, binascii, glob
+import process_helpers
 
 sys.dont_write_bytecode = True
 
@@ -357,9 +358,11 @@ class Server:
         else:
             cmd = [local_bin]
         self._logf = open(self.log_path, "wb")
+        #own session (killpg on stop) AND dies with the harness: an interrupted
+        #run used to leave the valgrind server running for ever
         self.proc = subprocess.Popen(cmd, cwd=rd, stdout=self._logf,
                                      stderr=subprocess.STDOUT,
-                                     start_new_session=True)
+                                     preexec_fn=process_helpers.setsid_and_pdeathsig)
         # wait for bind (valgrind is 10-50x slower).
         timeout = 180 if self.valgrind else 60
         deadline = time.time() + timeout

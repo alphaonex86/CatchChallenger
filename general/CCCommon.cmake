@@ -289,9 +289,9 @@ option(CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 #   1. Existing `#ifdef CATCHCHALLENGER_HARDENED` invariant blocks
 #      across server/general code → abort() instead of best-effort.
 #   2. parseReplyData/parseMessage/parseQuery returning false in
-#      general/base/ProtocolParsingInput.cpp → abort() with
-#      "error: the protocol parsing was wrong, start under gdb and
-#      catch the backtrace" + packetCode + queryNumber + hex dump.
+#      general/base/ProtocolParsingInput.cpp → errorParsingLayer() with
+#      packetCode + hex dump, peer dropped (no abort: false is also a
+#      legitimate business-error answer).
 option(CATCHCHALLENGER_HARDENED
        "Enable extra defensive checks (abort on internal invariant violations) — off by default; opt-in for tests"
        OFF)

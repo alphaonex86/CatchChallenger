@@ -258,7 +258,7 @@ To enable: pass `-DCATCHCHALLENGER_TESTING_LIMIT_EVENT_RATE=ON` to cmake configu
 
 Production deploys MUST NOT define this. Leaving it OFF (the default) makes it a zero-cost no-op (compiled out, no `clock_gettime` per wait).
 
-## `CATCHCHALLENGER_HARDENED` — testing-only, parse-fail abort
+## `CATCHCHALLENGER_HARDENED` — testing-only invariant aborts
 
 CMake default is **OFF** (production / deploy.sh / Qt Creator leave
 it off — a live server must NOT turn an invariant breach into a
@@ -270,21 +270,13 @@ unconditionally** via `cmake_helpers.py:build_cmake_command()`'s
 The flag does two things across server/general code:
 1. Existing `#ifdef CATCHCHALLENGER_HARDENED` invariant checks
    `abort()` instead of silently disconnecting.
-2. **`parseReplyData()` / `parseMessage()` / `parseQuery()`** (and
-   transitively `parseInputBeforeLogin()`) returning `false` in
-   `general/base/ProtocolParsingInput.cpp` triggers an immediate
-   `abort()` with stderr:
-
-```
-error: the protocol parsing was wrong, start under gdb and catch the backtrace
- — parseReplyData() packetCode=N queryNumber=N size=N data=<hex>
-```
-
-In production this would silently disconnect. In CI that hid bugs
-like the gateway 0xA8/0xAC pos-formula drift that ate
-testinggateway.py's entire wall cap as a generic timeout. With
-HARDENED on, the same bug surfaces as a SIGABRT and the failing
-packet's hex dump.
+2. **`parseReplyData()` / `parseMessage()` / `parseQuery()`** returning
+   `false` in `general/base/ProtocolParsingInput.cpp` is reported through
+   `errorParsingLayer()` with the packet's hex dump
+   (`parseQuery(): return false, need be aborted before, packetCode: N, data: <hex>`)
+   and the peer is dropped. It does NOT abort: `false` is also the
+   legitimate answer to a business error (login 0x04, select 0x02), and an
+   abort there crashed on every server-side refusal.
 
 **When a spawned binary aborts, re-run it under gdb to capture the
 backtrace.** `test/process_helpers.py` ships the helpers; standard
@@ -308,7 +300,7 @@ timing-dependent bugs out of reproducibility, (b) abort() partially
 unwinds the stack before the signal handler lands.
 
 To verify a binary was test-flagged: `strings <bin> | grep
-"protocol parsing was wrong"` matches when HARDENED was ON.
+"need be aborted before"` matches when HARDENED was ON.
 
 ## Per-script wall limit — table-driven, capped per workload
 
