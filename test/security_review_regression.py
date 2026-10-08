@@ -5,6 +5,7 @@ import contextlib
 import functools
 import io
 import json
+import shutil
 import os
 import subprocess
 import sys
@@ -626,6 +627,10 @@ class SecurityReviewTests(unittest.TestCase):
             with self.subTest(answer=answer):
                 self.assertEqual(server.parse_action(answer), expected)
         self.assertIn("VERDICT FALSEPOSITIVE", server.NO_ACTION_NUDGE)
+        quoted = server.no_action_nudge("Analysis.\n```c\nint x;\n```\nLet me check the file DB persistence\n<tool_call>")
+        self.assertIn('You wrote "Let me check the file DB persistence"', quoted)
+        self.assertIn("VERDICT FALSEPOSITIVE", quoted)
+        self.assertEqual(server.no_action_nudge("<tool_call>\n<tool_call>"), server.NO_ACTION_NUDGE)
 
     def test_exploit_read_continues_past_the_cap(self):
         with tempfile.TemporaryDirectory() as root:
@@ -640,7 +645,9 @@ class SecurityReviewTests(unittest.TestCase):
                 self.assertEqual(server.tool_read("big.cpp:50:50").splitlines()[1:], ["50\tline50"])
                 self.assertIn("has 100 lines", server.tool_read("big.cpp:500"))
 
-    def test_exploit_write_takes_code_from_the_next_reply(self):
+    def run_exploit_one(self, replies, **patches):
+        """exploit_one() against a scripted model and a fake live server; returns
+        (verdict, outdir, every message list the model was sent)."""
         class FakeLive:
             def __init__(self, outdir, mode=None):
                 self.alive, self.crashed, self.hung = True, False, False
@@ -649,22 +656,101 @@ class SecurityReviewTests(unittest.TestCase):
                 return "listening"
             def stop(self):
                 pass
-            def poll_crash(self, hard=4):
-                return ""
-        replies = ["Writing it.\n<tool_call>\n<function=WRITE>\nexploit.c\n</parameter>\n</function>\n</tool_call>",
-                   "```c\nint main(){return 0;}\n```",
-                   "VERDICT FALSEPOSITIVE length checked at P.cpp:152 before the copy, cannot overflow",
-                   "VERDICT FALSEPOSITIVE size>=10 is enforced at P.cpp:152 so the copy is bounded"]
-        with tempfile.TemporaryDirectory() as root, \
-                patch.object(server, "OUTPUT_ROOT", root), \
-                patch.object(server, "LiveServer", FakeLive), \
-                patch.object(server, "exploit_reach_context", return_value=""), \
-                patch.object(server, "_exploit_chat", side_effect=replies), \
-                contextlib.redirect_stderr(io.StringIO()):
+        sent = []
+        def chat(messages, timeout=None):
+            sent.append([dict(m) for m in messages])
+            return replies[len(sent) - 1]
+        root = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, root)
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch.object(server, "OUTPUT_ROOT", root))
+            stack.enter_context(patch.object(server, "LiveServer", FakeLive))
+            stack.enter_context(patch.object(server, "exploit_reach_context", return_value=""))
+            stack.enter_context(patch.object(server, "_exploit_chat", side_effect=chat))
+            for name, value in patches.items():
+                stack.enter_context(patch.object(server, name, value))
+            stack.enter_context(contextlib.redirect_stderr(io.StringIO()))
             verdict, _, outdir = server.exploit_one("server/cli/main-unix.cpp", FINDING, 1, 600, 500)
-            with open(os.path.join(outdir, "exploit.c")) as written:
-                self.assertEqual(written.read(), "int main(){return 0;}\n")
+        return verdict, outdir, sent
+
+    REFUTE = ["VERDICT FALSEPOSITIVE length checked at P.cpp:152 before the copy, cannot overflow",
+              "VERDICT FALSEPOSITIVE size>=10 is enforced at P.cpp:152 so the copy is bounded"]
+
+    def test_exploit_write_takes_code_from_the_next_reply(self):
+        verdict, outdir, _ = self.run_exploit_one(
+            ["Writing it.\n<tool_call>\n<function=WRITE>\nexploit.c\n</parameter>\n</function>\n</tool_call>",
+             "```c\nint main(){return 0;}\n```"] + self.REFUTE)
+        with open(os.path.join(outdir, "exploit.c")) as written:
+            self.assertEqual(written.read(), "int main(){return 0;}\n")
         self.assertEqual(verdict, server.VERDICT_REFUTED)
+
+    def test_exploit_compile_failure_shows_only_the_compiler_error(self):
+        failed = "RUN: COMPILE FAILED\nexploit.c:86:5: error: expected declaration or statement at end of input"
+        _, _, sent = self.run_exploit_one(["RUN"] + self.REFUTE,
+                                          do_run=lambda *a, **k: failed)
+        result = sent[1][-1]["content"]
+        self.assertIn("at end of input", result)
+        self.assertIn("WRITE the WHOLE corrected file", result)
+        self.assertNotIn("server console", result)
+
+    def test_exploit_builds_only_the_newest_main_program(self):
+        with tempfile.TemporaryDirectory() as outdir:
+            for name, body in (("exploit.c", "int main(void){return 1;}\n"),
+                               ("util.c", "int helper(void){return 2;}\n")):
+                with open(os.path.join(outdir, name), "w") as source:
+                    source.write(body)
+            os.utime(os.path.join(outdir, "exploit.c"), (1, 1))
+            wrote = server.do_write(outdir, "probe.c", "#include <stdio.h>\nint main(void){return 0;}\n")
+            self.assertIn("exploit.c (also main()) is left out", wrote)
+            def fake_compiler(cmd, **kwargs):
+                open(os.path.join(outdir, server.EXPLOIT_BIN_NAME), "w").close()
+                return SimpleNamespace(returncode=0, stdout="", stderr="")
+            with patch.object(server, "_sandbox_base", return_value=[]), \
+                    patch.object(server.subprocess, "run", side_effect=fake_compiler) as run:
+                binpath, err = server._compile_exploit(outdir)
+            self.assertIsNone(err)
+            built = [os.path.basename(a) for a in run.call_args.args[0] if a.endswith(".c")]
+            self.assertEqual(built, ["probe.c", "util.c"])
+
+    def test_exploit_read_reaches_the_target_datapack_only(self):
+        with tempfile.TemporaryDirectory() as run:
+            os.makedirs(os.path.join(run, "datapack", "monsters"))
+            with open(os.path.join(run, "datapack", "monsters", "7.xml"), "w") as xml:
+                xml.write("<monster id=\"7\"/>\n")
+            with patch.object(server, "STAGED_RUN", run):
+                self.assertIn("7.xml", server.tool_read("datapack/monsters"))
+                self.assertIn('1\t<monster id="7"/>', server.tool_read("datapack/monsters/7.xml"))
+                self.assertIn('<monster id="7"/>', server.tool_read("/x/gdb-run/datapack/monsters/7.xml:1:1"))
+                self.assertIn("not found", server.tool_read("datapack/../../../../etc/passwd"))
+
+    def test_exploit_sandbox_allows_sleep_and_select(self):
+        # glibc: sleep/usleep/nanosleep -> clock_nanosleep(230), select -> pselect6(270)
+        for nr in (7, 23, 230, 270, 271):
+            self.assertIn(nr, server.SECCOMP_ALLOW_X86_64)
+        for nr in (2, 56, 57, 257):   # open, clone, fork, openat stay out
+            self.assertNotIn(nr, server.SECCOMP_ALLOW_X86_64)
+
+    def test_exploit_sigpipe_is_the_server_closing_not_a_crash(self):
+        with patch.object(server, "_exploit_backtrace") as backtrace:
+            for rc in (-13, 128 + 13):
+                text = server._explain_exploit_exit(rc, "/x/exploit", 10)
+                self.assertIn("SIGPIPE", text)
+                self.assertNotIn("BUG IN YOUR", text)
+        backtrace.assert_not_called()
+
+    def test_verdict_index_holds_only_this_run(self):
+        with tempfile.TemporaryDirectory() as root, patch.object(server, "OUTPUT_ROOT", root):
+            server._write_verdict_index("unproven.md", [("a.cpp", "UNPROVEN", "old run", "-")], "h")
+            server._write_verdict_index("unproven.md", [("b.cpp", "UNPROVEN", "this run", "-")], "h")
+            with open(os.path.join(root, "unproven.md")) as index:
+                text = index.read()
+            self.assertIn("b.cpp", text)
+            self.assertNotIn("a.cpp", text)
+            stale = os.path.join(root, "fail.md")
+            open(stale, "w").close()
+            server._drop_stale_verdict_file(root, "fail.md")
+            server._drop_stale_verdict_file(root, "fail.md")
+            self.assertFalse(os.path.exists(stale))
 
     def test_output_template_is_not_a_finding(self):
         for answer in ('Use SEVERITY(HIGH) | handler.cpp:3 | evidence',
