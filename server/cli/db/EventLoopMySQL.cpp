@@ -494,7 +494,11 @@ bool EventLoopMySQL::unixEvent(const uint32_t &events)
         return false;
     }
 
-    if(events & EPOLLIN)
+    //Nothing in flight, yet an idle TLS link still wakes the fd: the blocking
+    //mysql_read_query_result() then waited forever in SSL_read() and froze the
+    //whole event loop (testingcluster). The fd is edge-triggered; the next
+    //result read consumes those bytes.
+    if((events & EPOLLIN) && !queue.empty())
     {
         const int rqr=mysql_read_query_result(conn);
         //mysql_read_query_result: 0 == success, non-zero == server-side
