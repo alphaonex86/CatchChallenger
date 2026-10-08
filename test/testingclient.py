@@ -572,9 +572,26 @@ def report_unknown_client_output(label, output_lines):
     return unknown
 
 
+def hashless_datapack_requests(output_lines):
+    """Lines where the client asked for a datapack part (base/main/sub) WITHOUT
+    sending its cached hash, i.e. it re-checks that part from scratch."""
+    return [line for line in output_lines
+            if re.search(r'^(Hash not same|mainNeedUpdate|subNeedUpdate) .*hashBase\s+""\s*$', line)]
+
+
+def base_datapack_requested_twice(output_lines):
+    """The cached base datapack matched the server hash, then the client asked for
+    it AGAIN without a hash and re-checked/re-downloaded it on every login."""
+    matched = any(line.startswith("Datapack is not empty and get nothing from serveur")
+                  for line in output_lines)
+    return matched and any(line.startswith("Hash not same")
+                           for line in hashless_datapack_requests(output_lines))
+
+
 def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
                success_marker=None, use_offscreen=True,
-               remote_ssh_proc=None, soft_timeout=False):
+               remote_ssh_proc=None, soft_timeout=False, extra_env=None,
+               expect_cached_datapack=False):
     """`remote_ssh_proc`: when this client is talking to a server started
     via remote_build.start_remote_server, pass the SSH proc so a failure
     can be augmented with the server's crash signature (SIGBUS / SIGSEGV
@@ -609,6 +626,8 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
         env["QT_QPA_PLATFORM"] = "offscreen"
     for k, v in diagnostic.runtime_env(DIAG).items():
         env[k] = v
+    if extra_env:
+        env.update(extra_env)
     timeout = diagnostic.scale_timeout(DIAG, timeout)
     wrapper = diagnostic.runtime_wrapper(DIAG)
     if wrapper:
@@ -715,6 +734,14 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
         kind, detail = outcome[0]
         _kill()
         if kind == "pass":
+            if base_datapack_requested_twice(output_lines):
+                log_fail(label, "base datapack requested twice: cached hash matched, then "
+                                "requested again without it")
+                return False
+            if expect_cached_datapack and hashless_datapack_requests(output_lines):
+                log_fail(label, "datapack requested without its cached hash: "
+                                + hashless_datapack_requests(output_lines)[0][:120])
+                return False
             if STRICT_CLIENT_OUTPUT and unknown_output:
                 log_fail(label, f"{len(unknown_output)} client output line(s) not "
                                 "in the whitelist (CC_STRICT_CLIENT_OUTPUT=1)")
@@ -758,6 +785,10 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
 
     rc = proc.wait()
     if rc == 0:
+        if base_datapack_requested_twice(output_lines):
+            log_fail(label, "base datapack requested twice: cached hash matched, then "
+                            "requested again without it")
+            return False
         if STRICT_CLIENT_OUTPUT and unknown_output:
             log_fail(label, f"{len(unknown_output)} client output line(s) not in "
                             "the whitelist (CC_STRICT_CLIENT_OUTPUT=1)")
@@ -768,6 +799,24 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     for line in output_lines[-40:]:
         print(f"  | {line}")
     return False
+
+
+def run_reconnect_cached_datapack(build_dir, bin_name, label, character):
+    """Two logins sharing ONE client data dir (isolated, never the operator's): the
+    second finds the base datapack cached and must not request it again -
+    run_client() fails on that double request."""
+    import tempfile
+    home = tempfile.mkdtemp(prefix="cc-reconnect-", dir=test_config.TMPFS_ROOT)
+    env = {"HOME": home, "XDG_DATA_HOME": os.path.join(home, "share"),
+           "XDG_CONFIG_HOME": os.path.join(home, "config"),
+           "XDG_CACHE_HOME": os.path.join(home, "cache")}
+    args = ["--host", SERVER_HOST, "--port", SERVER_PORT, "--autologin",
+            "--character", character, "--closewhenonmap"]
+    if run_client(build_dir, bin_name, args, label + ": first login", timeout=30,
+                  success_marker="MapVisualiserPlayer::mapDisplayedSlot()", extra_env=env):
+        run_client(build_dir, bin_name, args, label, timeout=30,
+                   success_marker="MapVisualiserPlayer::mapDisplayedSlot()", extra_env=env,
+                   expect_cached_datapack=True)
 
 
 def run_client_benchmark(build_dir, bin_name, args, label, timeout=30,
@@ -3031,6 +3080,8 @@ def main():
                should_run("server start", failed_cases) or
                should_run("qtcpu800x600 connect to server", failed_cases) or
                should_run("qtopengl connect to server", failed_cases) or
+               should_run("qtcpu800x600 reconnect with cached datapack", failed_cases) or
+               should_run("qtopengl reconnect with cached datapack", failed_cases) or
                should_run("benchmark player on map", failed_cases))
     if need_mp:
         if should_run("compile server-filedb", failed_cases):
@@ -3133,6 +3184,13 @@ def main():
                        "qtopengl connect to server",
                        timeout=30,
                        success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+
+        if cpu_ok and should_run("qtcpu800x600 reconnect with cached datapack", failed_cases):
+            run_reconnect_cached_datapack(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
+                                          "qtcpu800x600 reconnect with cached datapack", "PlayerRCCPU")
+        if gl_ok and should_run("qtopengl reconnect with cached datapack", failed_cases):
+            run_reconnect_cached_datapack(CLIENT_GL_BUILD, CLIENT_GL_BIN,
+                                          "qtopengl reconnect with cached datapack", "PlayerRCGL")
 
     # ═══════════════════════════════════════════════════════════════
     # 4b. BENCHMARK — time to player on map

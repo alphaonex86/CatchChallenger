@@ -237,12 +237,14 @@ void BaseWindow::logged(const std::vector<std::vector<CharacterEntry> > &charact
         client->sendDatapackContentBase(std::string(data.constData(),data.size()));
     }
     else
+    {
         if(client==NULL)
         {
             std::cerr << "BaseWindow::logged() client==NULL" << std::endl;
             abort();
         }
-    client->sendDatapackContentBase();
+        client->sendDatapackContentBase();
+    }
     isLogged=true;
     datapackGatewayProgression.clear();
     updateConnectingStatus();
@@ -298,20 +300,16 @@ void BaseWindow::sendDatapackContentMainSub()
         std::cerr << "sendDatapackContentMainSub(): client==nullptr" << std::endl;
         abort();
     }
-    if(settings.contains("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())) &&
-            settings.contains("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())))
-    {
-        const QString strmain=settings.value("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())).toString();
-        const QByteArray &datamain=QByteArray::fromHex(strmain.toUtf8());
-
-        const QString strsub=settings.value("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())).toString();
-        const QByteArray &datasub=QByteArray::fromHex(strsub.toUtf8());
-
-        client->sendDatapackContentMainSub(std::string(datamain.constData(),datamain.size()),
-                std::string(datasub.constData(),datasub.size()));
-    }
-    else
-        client->sendDatapackContentMainSub();
+    //each hash on its own: a maincode with no sub datapack never stores a sub
+    //hash, and requiring both re-checked the whole main datapack on every login
+    QByteArray dataMain;
+    QByteArray dataSub;
+    if(settings.contains("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())))
+        dataMain=QByteArray::fromHex(settings.value("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())).toString().toUtf8());
+    if(settings.contains("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())))
+        dataSub=QByteArray::fromHex(settings.value("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())).toString().toUtf8());
+    client->sendDatapackContentMainSub(std::string(dataMain.constData(),dataMain.size()),
+            std::string(dataSub.constData(),dataSub.size()));
 }
 
 void BaseWindow::have_character_position()

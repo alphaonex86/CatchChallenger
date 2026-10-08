@@ -9,8 +9,11 @@
 "<n> monster(s) extra loaded" into <n> ms/ <n> ms
 "<n> plant(s) extra loaded"
 "<path> loaded into <n>ms"
+"<path>" size: "<n>KB"
 "Player is logged, cash: <n>"
 "PlayerCPU is logged, cash: <n>"
+"PlayerRCCPU is logged, cash: <n>"
+"Problem with the datapack list reply:https:<path> Error transferring https:<path> - server replied with status code <n> with proxy: <n> type <n> (try next)"
 "QtDatapackClientLoader::parseDatapack()"
 "listDatapack(): remove invalid file: <path>"
 "listDatapack(): remove invalid file: README.md"
@@ -63,11 +66,13 @@
 <path> bot id <n> is not found
 Api_client_real::datapackChecksumDoneBase
 Api_client_real::datapackDownloadFinishedBase()
+Api_client_real::getHttpFileBase(): https:<path>
 Api_client_real::sendDatapackContentBase()
 Api_client_real::sendDatapackContentBase() doDifferedChecksumBase
 Api_protocol::addCharacter() pseudo: Player
 Api_protocol::addCharacter() pseudo: PlayerCPU
 Api_protocol::addCharacter() pseudo: PlayerGL
+Api_protocol::addCharacter() pseudo: PlayerRCCPU
 Api_protocol::connectTheExternalSocketInternal()
 Api_protocol::protocol_is_good(), login is empty, normal for login without creation
 Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage<n> set at <path>
@@ -94,7 +99,9 @@ AutoArgs: server="" host="" port=<n> url="" autologin=false character="" closeWh
 AutoArgs: server="" host="<n>.<n>" port=<n> url="" autologin=true character="TestPlayerLive" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=false mainDatapackCodeOverride="" takeScreenshotPath=""
 AutoArgs: server="" host="<n>:<n>::<n>:ff<n>" port=<n> url="" autologin=true character="PlayerCPU" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=false mainDatapackCodeOverride="" takeScreenshotPath=""
 AutoArgs: server="" host="localhost" port=<n> url="" autologin=true character="PlayerCPU" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=false mainDatapackCodeOverride="" takeScreenshotPath=""
+AutoArgs: server="" host="localhost" port=<n> url="" autologin=true character="PlayerRCCPU" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=false mainDatapackCodeOverride="" takeScreenshotPath=""
 AutoSelect character: PlayerGL id=<n>
+AutoSelect character: PlayerRCGL id=<n>
 AutoSelect character: TestPlayerLive id=<n>
 Base: Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote <hash>
 BaseServer::preload_<n>_sync_the_map() unknown bot step type: wild, object_x: <n>, object_y: <n>, map index: <n>, file: <path>
@@ -117,6 +124,8 @@ Compressed file to create:
 Connected to SQLite at <path>
 ConnexionManager::stateChanged(<n>)
 Convertion failed and repported at <path>
+Datapack don't match with server hash, get from mirror
+Datapack is empty, get from mirror into "<path>"
 Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote "<hash>"
 Datapack, base: <path>
 File excluded because don't match the regex (<n>): README.md
@@ -203,11 +212,13 @@ Start split: <hex> and size <n>, cursor: <n>
 Stop character loading for now, then character_selected=false
 This plugin does not support propagateSizeHints()
 Try create account: login: <hash> and pass: <hash>
+Try download: "https:<path>"
 Try stop
 Unable to open the file: <path> "bot" has no map= attribute and no <path> format
 Unable to open: <path> errno: <n>
 Using host libthread_db library "<path>".
 Visibility: view range <n>x<n> tiles around the player (datapack zoom <n>)
+WARNING Api_client_real::datapackChecksumDoneBase(): local Base datapack file list is empty
 WARNING Api_client_real::datapackChecksumDoneMain(): local Main datapack file list is empty
 [CENTER DEBUG] centerOnPlayer=TRUE
 [DOORTEST] PASS came back to the original map <n> by pushing into the return teleport
@@ -317,6 +328,7 @@ have character
 id is not a number or known monster name: child->Name(): monster, file: <path>
 industry point have not the industry attribute: for bot at: <n>,<n>
 info.public_informations.pseudo: Player
+info.public_informations.pseudo: PlayerRCGL
 info.public_informations.pseudo: TestPlayerLive
 informations.xml
 internalPackOutcommingData(): start
@@ -328,6 +340,7 @@ map: <ptr>
 merge the music: <n>ms
 moveStepSlot(): final step dir=<n> from map=<n>(<n>,<n>) -> map=<n>(<n>,<n>)
 newConnection(): new CatchChallenger::QtClient connected by fake socket
+on base:
 on main:
 parseDatapackMainSub took <n>ms to parse <path>
 parseQuestsExtra too big: <n>/
