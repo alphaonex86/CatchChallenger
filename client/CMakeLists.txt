@@ -45,6 +45,18 @@ option(CATCHCHALLENGER_NOAUDIO
        "Disable QtMultimedia audio (Audio.cpp / Audio.hpp dropped)"
        OFF)
 
+# Browser build. The wasm sandbox has no raw sockets, our Qt for WebAssembly
+# is built without pthreads, and QtMultimedia has no audio output there, so
+# force the matching feature set instead of failing deep in the compile.
+# The defines are directory-wide (add_compile_definitions) because the lib
+# fragments included below — and AUTOMOC — must see them too.
+if(EMSCRIPTEN)
+    add_compile_definitions(CATCHCHALLENGER_NO_TCPSOCKET NOTHREADS)
+    set(CATCHCHALLENGER_NOAUDIO ON CACHE BOOL "" FORCE)
+    set(CATCHCHALLENGER_BUILD_QTOPENGL_WEBSOCKETS ON CACHE BOOL "" FORCE)
+    set(CATCHCHALLENGER_BUILD_QTOPENGL_SINGLEPLAYER OFF CACHE BOOL "" FORCE)
+endif()
+
 # Pull SOLO into the libqtcatchchallenger lib build before we add it as a
 # subdirectory — libqtcatchchallenger.cmakefile reads CATCHCHALLENGER_SOLO
 # at configure time and includes SoloDatabaseInit.cpp + Audio.cpp behaviour

@@ -166,6 +166,8 @@ Reference: `android_env()` in `test/testingclient.py`.
 
 * **ESP32** — server (`server/cli`) on ESP32, **no filesystem**: datapack + settings compiled into flash as human-readable C++ const (`server/base/DatapackCppBuffer.hpp`), read in place. Full how-to: `test/ESP32.md`. stage1 = host build `-DCATCHCHALLENGER_DATAPACK_CPP_EMIT=ON` + `--save` → `/mnt/data/perso/tmpfs/datapack-cpp/datapack_cpp.{cpp,hpp}` (settings baked via partial server-properties.xml: `<broadcastName>` non-empty = LAN announce on, max-players 10, `<mapVisibility><minimize>cpu`, maincode `test`). stage2 = host proof, `-DCATCHCHALLENGER_NOXML=ON -DCATCHCHALLENGER_DATAPACK_CPP=ON -DCATCHCHALLENGER_DATAPACK_CPP_DIR=… -DCATCHCHALLENGER_DB_INTERNAL_VARS=ON -DCATCHCHALLENGER_SELECT=ON`; run in an empty dir → assert `commonDatapack size:`+`correctly bind:`+`LAN announce enabled:` (no FS). ESP-IDF (`server/cli/esp32/`, idf.py) + `qemu-system-xtensa` phases self-skip when `$CC_ESP32_PREFIX/esp-idf` / qemu absent. ESP32 reuses the DJGPP no-`timerfd`/`sendfile` path via `CC_TARGET_ESP32`. The two server features (LAN-announce `TimerBroadcastAnnounce`, `GameServerSettings::broadcastName`) are always-on and gated nowhere; the datapack-cpp emit/read are `#ifdef`-gated so other builds are unchanged.
 
+* **WebAssembly** — browser build of `client/` (qtopengl) only (`testingwasm.py`, compile-only: driving it needs a real browser). qtopengl and not qtcpu800x600: its UI follows the window size, so `showMaximized()` fills Qt's `#screen` container and the canvas covers 100% of the page; qtcpu800x600 is a fixed 800x600 layout. Toolchain OUTSIDE the repo at `/mnt/data/perso/progs/wasm-qt/` (`$CC_WASM_PREFIX`): emsdk 4.0.7 + Qt 6.11.1 for WebAssembly in `qt6-wasm/`, rebuilt by `build-qt-wasm.sh`; self-skips when absent. `client/CMakeLists.txt` forces the browser feature set under `if(EMSCRIPTEN)` — `CATCHCHALLENGER_NO_TCPSOCKET` + `NOTHREADS` directory-wide (AUTOMOC must see them), WebSockets ON, single-player OFF, `NOAUDIO` ON. The target is built with `qt_add_executable()`, so Qt's wasm finalizer emits `catchchallenger.html` + `qtloader.js` next to the module by itself. libtiled's `find_package(ZLIB)` needs the emscripten zlib port, so the script runs `embuilder build zlib` first. Deploy input staged at `<tmpfs_build_root>/web/catchchallenger/` (5 files, ~20 MiB uncompressed); the harness NEVER publishes it — `deploy/deploy.sh binaries` (or the standalone `deploy.sh wasm`) rsyncs that directory (`--delete`) to `763:/home/first-world.info/catchchallenger/wasm/`.
+
 ## Diagnostic-tool runs — clang+sanitizer, gcc+valgrind, profile
 
 Three mutually-exclusive modes. All wired into every `testing*.py` and `all.sh` via the `test/diagnostic.py` shared helper (sanitizer/valgrind propagate to remote nodes; profile is local-only).
@@ -332,6 +334,7 @@ Each `testing*.py` has its own wall-time ceiling sized roughly to "twice the lon
 | testingserver.py                | 30 min |
 | testingstats.py                 | 10 min |
 | testingtools.py                 | 15 min |
+| testingwasm.py                  | 10 min |
 | testingwebsocket.py             | 30 min |
 
 Default for any script not listed: 30 min (set by `DEFAULT_PER_TEST_TIMEOUT` in `all.sh`).
