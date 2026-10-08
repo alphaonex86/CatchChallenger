@@ -67,7 +67,7 @@ import sys
 sys.dont_write_bytecode = True
 
 import argparse, atexit, ctypes, faulthandler, glob, json, multiprocessing, os, resource, shutil, signal, socket
-import subprocess, threading, time
+import re, struct, subprocess, threading, time
 
 
 # ── orphan-process safety net ────────────────────────────────────────────────
@@ -260,6 +260,8 @@ NPROC         = str(multiprocessing.cpu_count())
 # Port allocation (no overlap with other testing*.py harnesses).
 PORT_LOGIN_1  = 61930
 PORT_LOGIN_2  = 61931
+PORT_LOGIN_PROXY = 61932
+_proxy_checked = set()
 PORT_MASTER   = 61935
 PORT_GAME_1   = 61940
 PORT_GAME_2   = 61941
@@ -978,7 +980,7 @@ def _xml_master(db_kind, max_players):
 """
 
 
-def _xml_login(port, db_kind, max_players, mirror):
+def _xml_login(port, db_kind, max_players, mirror, mode="direct"):
     db_host = db_host_for(db_kind)
     # Login expects its listen port as <port> (NOT <server-port>).
     # httpDatapackMirror is what the LOGIN server advertises to
@@ -989,6 +991,7 @@ def _xml_login(port, db_kind, max_players, mirror):
     return f"""<?xml version="1.0"?>
 <configuration>
     <port value="{port}"/>
+    <mode value="{mode}"/>
     <server-ip value="127.0.0.1"/>
     <max-players value="{max_players}"/>
     <httpDatapackMirror value="{mirror}"/>
@@ -1328,6 +1331,7 @@ class ServerProc:
             "master": "master.xml",
             "login1": "login.xml",
             "login2": "login.xml",
+            "loginproxy": "login.xml",
             "game1":  "server-properties.xml",
             "game2":  "server-properties.xml",
             "gateway": "gateway.xml",
@@ -1642,6 +1646,88 @@ def _gsa_subdir(mirror_label):
             else "server/game-server-alone-push")
 
 
+def check_proxy_reused_query_number(tag, base, work_root, db_name, max_players,
+                                    mirror_url, spawned_servers):
+    """Login in proxy mode forwards client queries to the game server. A client
+    reusing a query number still in flight there made the HARDENED login drop
+    the link inside registerOutputQuery() and forward through the NULL link."""
+    import _protoharness as H
+    label = f"{tag}/proxy-reused-query-number"
+    login = ServerProc(
+        "loginproxy",
+        bin_path(base, "server/login", "catchchallenger-server-login"),
+        os.path.join(work_root, "loginproxy"),
+        _xml_login(PORT_LOGIN_PROXY, db_name, max_players, mirror_url, "proxy")).start()
+    spawned_servers.append(login)
+    ok, detail = login.wait_ready()
+    if not ok:
+        log_fail(label, f"proxy login start: {detail}")
+        return
+    # own account + character: the qtopengl client ignores --login (logs in as Admin)
+    stamp = "%x" % (int(time.time() * 1000) & 0xFFFFFFF)
+    user, pseudo = ("proxyqn" + stamp).encode(), "Pq" + stamp
+    try:
+        unique_key = int(re.search(r'<uniqueKey value="(\d+)"',
+                                   open(os.path.join(work_root, "game1", "server-properties.xml")).read()).group(1))
+        login_hash, pass_hash = H._creds(user, user)
+        sk = socket.create_connection(("127.0.0.1", PORT_LOGIN_PROXY), timeout=10)
+        conn = H._RawConn(sk)
+        token = conn.query(0xA0, H.PROTOCOL_HEADER_LOGIN, dynamic=False, timeout=10)[1:17]
+        a8 = login_hash + H.blake3(pass_hash + token)
+        logged = conn.query(0xA8, a8, dynamic=False, timeout=10)
+        if logged is not None and logged[0] == 0x07:
+            conn.query(0xA9, H.blake3(login_hash) + pass_hash, dynamic=False, timeout=10)
+            logged = conn.query(0xA8, a8, dynamic=False, timeout=10)
+        if logged is None or logged[0] != 0x01:
+            log_fail(label, f"login via proxy login failed: {logged!r}")
+            return
+        # profile 0, monster group 0, skin 2: the datapack's default player profile
+        added = conn.query(0xAA, bytes([0, 0, len(pseudo)]) + pseudo.encode() + bytes([0, 2]),
+                           dynamic=True, timeout=10)
+        if added is None or len(added) < 5 or added[0] != 0x00:
+            log_fail(label, f"character creation via proxy login failed: {added!r}")
+            return
+        found = (0, struct.unpack("<I", added[1:5])[0])
+        selected = conn.query(0xAC, bytes([found[0]]) + struct.pack("<II", unique_key, found[1]),
+                              dynamic=False, timeout=20)
+        if selected is None:
+            log_fail(label, "no reply to 0xAC select through the proxy")
+            return
+        with open(login.log_path, "rb") as fp:
+            log_base = len(fp.read())
+        # 0x85 useRecipe x2 (client->game server, forwarded as is), SAME queryNumber
+        sk.sendall(bytes([0x85, 9, 0, 0]) * 2)
+        sk.settimeout(5)
+        try:
+            while sk.recv(4096):
+                pass
+        except OSError:
+            pass
+        sk.close()
+    except (OSError, AttributeError, TypeError) as e:
+        log_fail(label, f"raw proxy session: {e!r}")
+        return
+    time.sleep(1.0)
+    if login.proc.poll() is not None:
+        log_fail(label, f"proxy login DIED (rc={login.proc.returncode}) when a client reused an in-flight query number")
+        return
+    with open(login.log_path, "rb") as fp:
+        fp.seek(log_base)
+        if b"registerOutputQuery() conflict" not in fp.read():
+            log_fail(label, "reused query number did not reach the conflict path (test no longer exercises it)")
+            return
+    try:
+        sk = socket.create_connection(("127.0.0.1", PORT_LOGIN_PROXY), timeout=10)
+        reply = H._RawConn(sk).query(0xA0, H.PROTOCOL_HEADER_LOGIN, dynamic=False, timeout=10)
+        sk.close()
+    except OSError as e:
+        reply = None
+    if reply is None:
+        log_fail(label, "proxy login alive but a fresh handshake got no reply")
+        return
+    log_pass(label, "offending client dropped, proxy login still serves")
+
+
 def _run_cluster_variant(db_name, base, max_players,
                          mirror_label, mirror_url,
                          spawned_servers, t_start):
@@ -1779,6 +1865,11 @@ def _run_cluster_variant(db_name, base, max_players,
             log_pass(f"{tag}/client2-via-login2",
                      f"sticky verified ({same}): {det2}",
                      time.monotonic() - t_c2)
+        # Login proxy mode is exercised once per backend (it is not the default).
+        if db_name not in _proxy_checked:
+            _proxy_checked.add(db_name)
+            check_proxy_reused_query_number(tag, base, work_root, db_name, max_players,
+                                            mirror_url, spawned_servers)
     finally:
         # Stop only the servers spawned by THIS variant; leave any
         # outer setup intact for the next variant.
