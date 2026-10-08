@@ -1456,6 +1456,25 @@ CLIENT_BIN_ANY_GLOB = build_paths.build_path(
     "client/qtopengl/build/*/catchchallenger")
 
 
+# Built here when no other script left a qtopengl client in the shared tmpfs:
+# testingclient.py wipes its build dirs when it passes, so every client case
+# here FAILED "client binary missing" right after a green testingclient run.
+CLIENT_OWN_BUILD = build_paths.build_path("client/qtopengl/build/testing-cluster-gl")
+
+
+def ensure_client():
+    """Build the qtopengl client once when none is available (PASS/FAIL logged)."""
+    if _resolve_client_bin():
+        return
+    t = time.monotonic()
+    ok, detail = cmake_configure_and_build("client", CLIENT_OWN_BUILD,
+                                           ["-DCATCHCHALLENGER_HARDENED=ON"])
+    if ok and os.path.isfile(os.path.join(CLIENT_OWN_BUILD, "catchchallenger")):
+        log_pass("client-build", CLIENT_OWN_BUILD, time.monotonic() - t)
+    else:
+        log_fail("client-build", detail, time.monotonic() - t)
+
+
 def _resolve_client_bin():
     """Path of the qtopengl client to drive: the pinned variant when present,
     else the most recently built testing-gl* one, else any other native qtopengl
@@ -1954,6 +1973,8 @@ def main():
         # Each mirror=mirror variant will hit a transferring error
         # and FAIL legitimately.
         log_fail("nginx-start", nginx_detail, time.monotonic() - t_nginx)
+
+    ensure_client()
 
     try:
         for db_name, db_define, db_cli, sql_subdir in BACKENDS:
