@@ -26,13 +26,6 @@
   </data>
  </layer>
  <objectgroup id="5" name="Moving">
-  <object id="40" type="teleport on push" x="48" y="160" width="16" height="16">
-   <properties>
-    <property name="map" value="building-house"/>
-    <property name="x" value="2"/>
-    <property name="y" value="5"/>
-   </properties>
-  </object>
   <object id="42" type="teleport on push" gid="3" x="48" y="160" width="16" height="16">
    <properties>
     <property name="map" value="building-house"/>

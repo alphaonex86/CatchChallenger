@@ -178,6 +178,37 @@ def test_compile(pro_file):
     return True
 
 
+MAP_GENERATOR_DIR = os.path.join(TOOLS_DIR, "map-procedural-generation")
+
+
+def generated_datapacks():
+    """Datapacks of the config that ship the map generator's label."""
+    return [dp for dp in _config.get("paths", {}).get("datapacks", [])
+            if os.path.isdir(os.path.join(dp, "map", "main", "generated"))]
+
+
+def test_map_generator_checkers(failed_cases):
+    """The generator's own validators: its templates (template-check.py) and the
+    'generated' label each datapack ships (check-generated.py). Read only; the
+    hand-broken fixtures of map/main/test/ are never looked at."""
+    checks = [("map generator templates", ["template-check.py"])]
+    for dp in generated_datapacks():
+        checks.append((f"map generator output {os.path.basename(dp.rstrip('/'))}/generated",
+                       ["check-generated.py", dp, "--label", "generated", "--datapack", dp]))
+    for name, args in checks:
+        if not should_run(name, failed_cases):
+            continue
+        r = subprocess.run([sys.executable, "-B"] + args, cwd=MAP_GENERATOR_DIR,
+                           capture_output=True, text=True, timeout=600)
+        lines = (r.stdout + r.stderr).strip().splitlines()
+        summary = lines[-1] if lines else "(no output)"
+        if r.returncode == 0:
+            log_pass(name, summary)
+        else:
+            bad = [l for l in lines if l.startswith(("ERROR", "TOFIX"))][:8]
+            log_fail(name, f"rc={r.returncode}: {summary}" + "".join("\n    " + l for l in bad))
+
+
 def main():
     print(f"\n{C_CYAN}{'='*60}")
     print("  CatchChallenger — Tools Compilation Testing")
@@ -213,7 +244,7 @@ def main():
     # Remote count comes from the same per-node iteration start_remote_builds
     # uses, so disabled/added nodes update the total automatically.
     remote_build_count = count_remote_tests(remote_pro_rels, diag=DIAG)
-    total_expected[0] = len(pro_files) + remote_build_count
+    total_expected[0] = len(pro_files) + remote_build_count + 1 + len(generated_datapacks())
     log_info(f"total expected: {total_expected[0]} ({len(pro_files)} local + {remote_build_count} remote)")
 
     if diagnostic.is_active(DIAG):
@@ -231,6 +262,8 @@ def main():
         if should_run(f"compile {rel}", failed_cases):
             test_compile(pf)
         print()
+
+    test_map_generator_checkers(failed_cases)
 
 # collect remote results
     if failed_cases is None:

@@ -12,11 +12,15 @@ import os
 NOT_A_LABEL = {"tileset"}
 
 
-def find(dest):
-    """(label, path) of the single generated label, or (None, message)."""
+def find(dest, label=None):
+    """(label, path) of the single generated label, or (None, message). `label`
+    picks one in a datapack that holds several (an installed one)."""
     root = os.path.join(dest, "map", "main")
     if not os.path.isdir(root):
         return None, "no " + root
+    if label is not None:
+        path = os.path.join(root, label)
+        return (label, path) if os.path.isdir(path) else (None, "no " + path)
     labels = sorted(name for name in os.listdir(root)
                     if name not in NOT_A_LABEL and
                     os.path.isdir(os.path.join(root, name)))

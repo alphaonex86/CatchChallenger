@@ -10,7 +10,7 @@ Checks what the engine needs and what a player would notice:
   * skins exist in the datapack, tilesets referenced by a map exist,
   * NO franchise wording anywhere in the generated text (original content only).
 
-Usage: check-generated.py [dest-dir] [--datapack <dir>]
+Usage: check-generated.py [dest-dir] [--datapack <dir>] [--label <name>]
 """
 import argparse
 import base64
@@ -248,9 +248,11 @@ def main():
     parser.add_argument("dest", nargs="?", default="dest")
     parser.add_argument("--datapack", default=None,
                         help="datapack root the skins are taken from")
+    parser.add_argument("--label", default=None,
+                        help="map label to check when dest holds several (an installed datapack)")
     arguments = parser.parse_args()
     #the generator resolves its map label from its settings, so read it back off disk
-    label, root = generated_label.find(arguments.dest)
+    label, root = generated_label.find(arguments.dest, arguments.label)
     if label is None:
         print(root)
         return 2
@@ -275,6 +277,13 @@ def main():
         folder = os.path.dirname(path)
         exits = 0
         botCells = {}
+        teleportCells = set()
+        for obj in objects:
+            if obj["type"] in ("door", "teleport on it", "teleport on push"):
+                if (obj["x"], obj["y"]) in teleportCells:
+                    problems.append((path, "two teleports on the cell %s,%s (the engine "
+                                     "logs \"already found teleporter\")" % (obj["x"], obj["y"])))
+                teleportCells.add((obj["x"], obj["y"]))
         for tileset in re.findall(r'<tileset[^>]*source="([^"]*)"',
                                   open(path, encoding="utf-8").read()):
             resolved = os.path.normpath(os.path.join(folder, tileset))
