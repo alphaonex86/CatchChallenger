@@ -960,19 +960,7 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     {
         std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
 
-        //send the network reply
-        removeFromQueryReceived(query_id);
-        uint32_t posOutput=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-        posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-        posOutput+=1;
-
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
-        posOutput+=1;
-
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-
+        removeCharacterReply(query_id,0x02);
         delete removeCharacterParam;
         return;
     }
@@ -991,7 +979,9 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     #endif
     removeCharacterLater_object();
     #elif CATCHCHALLENGER_DB_FILE
+    //the FILE backend has no scheduled delete: refuse instead of leaving the client waiting
     delete removeCharacterParam;
+    removeCharacterReply(query_id,0x02);
     #else
     #error Define what do here
     #endif
@@ -1080,22 +1070,21 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
                   std::to_string(characterId)
                 });
 
-    //send the network reply
-    removeFromQueryReceived(query_id);
-    uint32_t posOutput=0;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
-    posOutput+=1;
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
-    posOutput+=1;
-
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
-    posOutput+=1;
-
-    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    removeCharacterReply(query_id,0x01);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
+}
+
+//0x01 = delete scheduled, 0x02 = refused
+void Client::removeCharacterReply(const uint8_t &query_id, const uint8_t &returnCode)
+{
+    removeFromQueryReceived(query_id);
+    ProtocolParsingBase::tempBigBufferForOutput[0]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+    ProtocolParsingBase::tempBigBufferForOutput[1]=query_id;
+    ProtocolParsingBase::tempBigBufferForOutput[2]=returnCode;
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,3);
 }
 #endif
