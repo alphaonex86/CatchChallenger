@@ -204,6 +204,12 @@ def run(server):
         valid_cases += 1
         if not server.alive():
             return (False, "server died after well-formed 0xAB (owner id)")
+        # FILE_DB has no scheduled delete: it must refuse with 0x02, never stay silent
+        if rep is None or rep[:1] != b"\x02":
+            try: sk.close()
+            except OSError: pass
+            return (False, "FILE_DB 0xAB: expected refusal reply 0x02, got %r "
+                           "(no reply leaves the client waiting forever)" % (rep,))
         if _is_kicked(sk):
             try: sk.close()
             except OSError: pass

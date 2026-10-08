@@ -401,6 +401,7 @@ private:
     static void removeCharacterLater_static(void *object);
     void removeCharacterLater_object();
     void removeCharacterLater_return(const uint8_t &query_id, const uint32_t &characterId);
+    void removeCharacterReply(const uint8_t &query_id, const uint8_t &returnCode);
     #endif
     void selectCharacter(const uint8_t &query_id, const uint32_t &characterId);
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
