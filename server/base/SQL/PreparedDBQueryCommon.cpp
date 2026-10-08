@@ -22,10 +22,10 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         //login and gameserver alone
         PreparedDBQueryCommon::db_query_delete_monster_by_id=PreparedStatementUnit("DELETE FROM `monster` WHERE `id`=%1",database);
         PreparedDBQueryCommon::db_query_insert_monster="INSERT INTO `monster`(`id`,`character`,`place`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`,`buffs`,`skills`,`skills_endurance`) "
-                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,'',UNHEX('%11'),UNHEX('%12'))";
+                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,%7,%8,0,%9,%10,'',UNHEX('%11'),UNHEX('%12'))";
         /*wild catch*/
         PreparedDBQueryCommon::db_query_insert_monster_full=PreparedStatementUnit("INSERT INTO `monster`(`id`,`character`,`place`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`position`,`buffs`,`skills`,`skills_endurance`) "
-                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,0,%7,%8,0,%9,%10,UNHEX('%11'),UNHEX('%12'),UNHEX('%13')",database);
+                                                       "VALUES(%1,%2,%3,%4,%5,%6,0,%7,%8,0,%9,%10,UNHEX('%11'),UNHEX('%12'),UNHEX('%13'))",database);
 
         #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
         PreparedDBQueryCommon::db_query_update_character_item=PreparedStatementUnit("UPDATE `character` SET `item`=UNHEX('%1') WHERE `id`=%2",database);
@@ -56,7 +56,7 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_change_right=PreparedStatementUnit("UPDATE `character` SET `type`=%1 WHERE `id`=%2",database);
         PreparedDBQueryCommon::db_query_delete_monster_buff=PreparedStatementUnit("UPDATE `monster` SET `buffs`='' WHERE `id`=%1",database);
         PreparedDBQueryCommon::db_query_insert_warehouse_monster=PreparedStatementUnit("INSERT INTO `monster`(`id`,`hp`,`monster`,`level`,`xp`,`captured_with`,`gender`,`egg_step`,`character_origin`,`skills`,`skills_endurance`) "
-                                                       "VALUES(%1,%2,%3,%4,0,0,%5,%6,0,%7,UNHEX('%8'),UNHEX('%9')",database);
+                                                       "VALUES(%1,%2,%3,%4,0,%5,%6,0,%7,UNHEX('%8'),UNHEX('%9'))",database);
         PreparedDBQueryCommon::db_query_update_monster_position=PreparedStatementUnit("UPDATE `monster` SET `position`=%1 WHERE `id`=%2",database);
         PreparedDBQueryCommon::db_query_update_monster_position_and_place=PreparedStatementUnit("UPDATE `monster` SET `position`=%1,`place`=%2 WHERE `id`=%3",database);
         PreparedDBQueryCommon::db_query_update_monster_place=PreparedStatementUnit("UPDATE `monster` SET `place`=%1 WHERE `id`=%2",database);
