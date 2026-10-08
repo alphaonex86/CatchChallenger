@@ -405,15 +405,21 @@ def _run_one(modname, name, run, fpath, binary, maincode):
     # H.grant_item(). This only changes command authorization, not the threat
     # model of the handler under test.
     _root = False
+    _ov = None
     try:
         _m = sys.modules.get(getattr(run, "__module__", modname)) \
             or importlib.import_module(modname)
         _root = bool(getattr(_m, "NEEDS_EVERY_BODY_IS_ROOT", False))
+        # A test whose positive branch needs the character to START somewhere
+        # specific (e.g. facing the house2 shop bot) sets START_OVERRIDE =
+        # {"map":..., "x":..., "y":..., "cash":...}; H.Server rewrites the
+        # run-local start profile (source datapack stays read-only).
+        _ov = getattr(_m, "START_OVERRIDE", None)
     except Exception:
         _root = False
     try:
         srv = H.Server(binary, run_dir, maincode=maincode, valgrind=True,
-                       every_body_is_root=_root)
+                       every_body_is_root=_root, start_override=_ov)
     except Exception as e:
         rec["detail"] = "server start failed: %r" % e
         rec["elapsed"] = log_fail(name, rec["detail"])

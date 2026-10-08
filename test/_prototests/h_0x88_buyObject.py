@@ -13,23 +13,23 @@ framing layer (ProtocolParsingInput) delivers exactly 10 data bytes or rejects
 the frame; the three loadLeNN() reads can never run short.
 
 Handler logic traced
-(ClientNetworkReadQuery.cpp:81 -> server/base/ClientEvents/LocalClientHandlerShop.cpp:74
+(ClientNetworkReadQuery.cpp:81 -> server/base/ClientEvents/LocalClientHandlerShop.cpp:91
  Client::buyObject(query_id, objectId, quantity, price)):
 
   1. mapIndex>=65535            -> silent return (no reply, not on a map).
   2. quantity<=0  (quantity is uint32, so this catches quantity==0)
         -> errorOutput("quantity wrong: ...") -> KICK.
-  3. mapAndPosIfMoveInLookingDirectionJumpColision() : look at the cell the
-     player is FACING. If that move is invalid (out of map / colliding wall)
-        -> errorOutput("Can't move at this direction ...") -> KICK.
-  4. The faced cell must hold a SHOP (new_map->shops[(new_x,new_y)]). If not
+  3. facedShop(): look at the cell the player is FACING. If that move is
+     invalid (out of map / colliding wall)
+        -> errorOutput("not shop into this direction") -> KICK.
+  4. The faced cell must hold a SHOP (map->shops[(x,y)]). If not
         -> errorOutput("not shop into this direction") -> KICK.
   5. objectId not sold by this shop          -> 0x7F reply BuyStat_HaveNotQuantity (0x03).
   6. shop price for objectId == 0            -> 0x7F reply BuyStat_HaveNotQuantity (0x03).
   7. realprice > price (client under-paid)   -> 0x7F reply BuyStat_PriceHaveChanged (0x04).
-  8. realprice < price (client over-offered) -> 0x7F reply BuyStat_BetterPrice (0x02)+u32 price.
+  8. realprice < price (client over-offered) -> 0x7F reply BuyStat_BetterPrice (0x02)+u32.
   9. otherwise                               -> BuyStat_Done (0x01).
-     Then THE SECURITY FIX (LocalClientHandlerShop.cpp:164-169):
+     Then THE SECURITY FIX (LocalClientHandlerShop.cpp:174-179):
         const uint64_t totalprice = static_cast<uint64_t>(realprice)*quantity;
         if(cash >= totalprice) removeCash(totalprice); else KICK.
         addObject(objectId, quantity);
@@ -42,45 +42,46 @@ Handler logic traced
 
   Client::errorOutput -> disconnectClient() (server/base/Client.cpp:524). So
   EVERY rejection of buyObject KICKS the offending client; the server stays
-  alive (HARDENED-only here kicks rather than aborts — foundation api_notes).
-  A successful buy (cases 7-9) sends a 0x7F reply and mutates cash+inventory.
+  alive. A successful buy (cases 7-9) sends a 0x7F reply and mutates cash.
 
-REACHABILITY (documented -> reachability_limited=True):
-  buyObject requires the player to be STANDING IN FRONT OF a shop bot (step
-  type="shop"). In the 'test' maincode the only shop is bot id=2 in
-  map/main/test/house2.xml; the character spawns on map 'city' at (15,26)
-  (map/main/test/start.xml) whose bots are all text/sign bots, no shop, and the
-  harness exposes no movement/teleport primitive that can deterministically
-  walk the player to face the house2 shop bot. Therefore the SUCCESS branch
-  (cases 7-9: cash debited, item added, 0x7F BuyStat reply) and the price/
-  insufficient-cash branches that live PAST the shop-presence gate are NOT
-  reachable from a harness session. valid_cases=0; reachability_limited=True.
+REACHABILITY (achieved -> the success branch IS exercised):
+  buyObject requires the player to be standing in front of a shop bot. The
+  server started for this test uses H.Server(start_override=...): the run-local
+  start profile spawns every new character in map 'house2' at cell (0,23),
+  DIRECTLY BELOW the Seller bot whose 'shop' step is at cell (0,22)
+  (map/main/test/house2.xml bot id=2), with 1e9 cash (player/start.xml
+  <cash>). A fresh character's last_direction is look-at-bottom (orientation
+  bottom, DatapackGeneralLoader), i.e. AWAY from the shop: a buy without
+  turning is still rejected at the shop gate (kept as a semantic-invalid
+  case). Looking up with the 0x02 direction message puts the shop cell in the
+  facing slot, and every branch past the gate becomes reachable in-band. The
+  shop's own product list (item ids + prices) is fetched with query 0x87
+  (getShopList, same gate) instead of hard-coding datapack prices.
 
-  Consequently EVERY well-formed 0x88 packet we can send from a reachable
-  on-map session is semantically illegal at the shop-presence gate (step 4) or
-  the quantity gate (step 2), and MUST be answered with a KICK and NO 0x7F
-  reply. We exercise exactly that security contract, INCLUDING the overflow
-  vector quantity=0x80000000: that packet is rejected at the shop gate before
-  it can reach the (now 64-bit-safe) cash check, AND we assert via a separate
-  legit account that NO cash/inventory state leaked. The 64-bit-promotion fix
-  is the defence-in-depth that also blocks the same packet if a shop WERE in
-  front; here we prove the cheater is kicked and the server/other players are
-  unharmed.
+  Enabling fix in _protoharness: MSG_FIXED[0x64] was 2, but the server pushes
+  the online-player count as ONE data byte when max_players<=255
+  (ClientHeavyLoadSelectCharFinal.cpp:503). The off-by-one left a stray 0x01
+  in the stream right after select that mis-framed every later packet, which
+  is why 0x87/0x88 replies used to be invisible from an on-map session.
 
-DB-STATE verification (checks_db_state=True, but limited):
-  H.reload_state reads back the persisted character HEADER (character_id,
-  pseudo, x, y, mapIndex) over the protocol; cash/items are deeper in the HPS
-  block and are NOT decoded by the FOUNDATION. Since the success branch is
-  unreachable here there is no legitimate cash/item mutation to confirm; what we
-  DO assert is the NEGATIVE: a victim account's persisted identity+position is
-  byte-for-byte identical before vs after all the abuse (no phantom mutation),
-  and a fresh full session still handshakes (server usable).
+DB-STATE verification (checks_db_state=True, now FULL):
+  reload_state reads back cash + inventory (cash from the select block,
+  items from the 0x54 snapshot; Api_protocol_loadchar.cpp / message.cpp) plus
+  the persisted identity/position. Every valid branch asserts the EXACT cash
+  delta and item count after disconnect+reload, not just the in-band reply.
 """
 
+import struct
 import time
 import _protoharness as H
 
 NAME = "0x88 buyObject"
+
+# Spawn right below the house2 Seller bot (shop cell (0,22)); 1e9 cash so the
+# legit buys and the BetterPrice branch have headroom, while the overflow buy
+# (realprice * 0x80000000 >= 2^39) still exceeds it -> insufficient-cash KICK.
+CASH_SEED = 1000000000
+START_OVERRIDE = {"map": "house2", "x": 0, "y": 23, "cash": CASH_SEED}
 
 
 def _uniq(prefix):
@@ -152,12 +153,47 @@ def _is_kicked(sess, settle=0.4):
     return False
 
 
+def _facing_shop(server, tag):
+    """Fresh session, spawned below the Seller bot, turned to FACE it."""
+    s = H.Session(server, login=_uniq(tag), passh=_uniq(tag + "p"),
+                  pseudo="Buyer")
+    s.look(1)  # 0x02 [sub 0][dir 1=top]: shop bot cell (0,22) is above (0,23)
+    return s
+
+
+def _shop_products(sess):
+    """Query 0x87 getShopList (same facing gate as 0x88) -> {item_id: price}.
+    Reading the list back from the SERVER is how this test picks item+price
+    pairs: nothing about the datapack shop is hard-coded here."""
+    pa = sess.reply_to(sess.q(0x87), timeout=2.0)
+    if pa is None or len(pa) < 2:
+        return None
+    n = struct.unpack("<H", pa[0:2])[0]
+    prods = {}
+    for i in range(n):
+        o = 2 + i * 10          # [id:u16][price:u32][u32 reserved]
+        if o + 6 > len(pa):
+            return None
+        prods[struct.unpack("<H", pa[o:o+2])[0]] = \
+            struct.unpack("<I", pa[o+2:o+6])[0]
+    return prods
+
+
+def _closed_reload(server, sess, settle=0.5):
+    """Disconnect the session (FILE_DB persists at disconnect) and read the
+    persisted cash/items/position back over the protocol."""
+    lg, pw = sess.login_creds, sess.pass_creds
+    sess.close()
+    time.sleep(settle)
+    return H.reload_state(server, lg, pw)
+
+
 def run(server):
     try:
         # ----------------------------------------------------------------
         # Baseline legit "victim" account whose persisted state must stay
-        # intact through all the abuse. Create it, record its persisted
-        # snapshot, then close it so reload_state can read it back cleanly.
+        # intact through all the abuse (its spawn/cash seed is identical to
+        # every attacker account, so ANY delta is real corruption).
         # ----------------------------------------------------------------
         victim_login = _uniq("vic")
         victim_pass = _uniq("vpw")
@@ -171,64 +207,148 @@ def run(server):
         if not ok:
             return (False, "after victim handshake: %s" % why)
 
+        # The seed itself must have landed: character really spawns below the
+        # shop bot, and really holds the seeded cash, or nothing below proves.
+        if (victim.x, victim.y) != (0, 23) or victim.mapIndex is None:
+            return (False, "start_override spawn failed: pos=(%r,%r) map=%r"
+                    % (victim.x, victim.y, victim.mapIndex))
+        if victim.cash != CASH_SEED:
+            return (False, "start_override cash failed: %r != %d"
+                    % (victim.cash, CASH_SEED))
+
         victim.close()
-        time.sleep(0.35)  # let FILE_DB disconnect-save complete
+        time.sleep(0.5)  # let FILE_DB disconnect-save complete
         checks_db = False
         try:
             before = H.reload_state(server, victim_login, victim_pass)
             if before.get("character_id") is None:
                 return (False, "victim did not persist (no character_id)")
+            if before.get("cash") != CASH_SEED or before.get("items") is None:
+                return (False, "victim persisted state unreadable: %r" % before)
             checks_db = True
         except Exception as e:
             return (False, "reload_state(before) raised: %s" % e)
 
-        def fresh(tag):
-            return H.Session(server, login=_uniq(tag), passh=_uniq(tag + "p"),
-                             pseudo="Cheat")
+        # ----------------------------------------------------------------
+        # VALID cases: the player is FACING the shop (look-up), so every
+        # reply branch past the gate is exercised, and the money/inventory
+        # effect is proven against the PERSISTED state (reload_state).
+        # ----------------------------------------------------------------
+        valid_cases = 0
+        try:
+            s = _facing_shop(server, "v0")
+        except H.HandshakeError as e:
+            return (False, "facing session handshake failed: %s" % e)
+        prods = _shop_products(s)
+        s.close()
+        time.sleep(0.3)
+        if not prods:
+            return (False, "0x87 getShopList while facing the shop bot "
+                    "returned no product list (shop not reachable?)")
+        item_id = min(prods)
+        price = prods[item_id]
+
+        # (1) Buy ONE at the exact shop price -> BuyStat_Done(0x01); after
+        #     disconnect+reload: cash == seed - price, items[item_id] +1.
+        s = _facing_shop(server, "v1")
+        r = s.reply_to(s.q(0x88, _buy_payload(item_id, 1, price)), timeout=1.5)
+        if r is None or len(r) < 1 or r[0] != 0x01:
+            return (False, "exact-price buy did not answer BuyStat_Done: %r" % r)
+        snap = _closed_reload(server, s)
+        if snap.get("cash") != CASH_SEED - price:
+            return (False, "exact buy cash wrong: %r != %d"
+                    % (snap.get("cash"), CASH_SEED - price))
+        base_item = before["items"].get(item_id, 0)
+        if (snap.get("items") or {}).get(item_id) != base_item + 1:
+            return (False, "exact buy added no item: items=%r" % snap.get("items"))
+        valid_cases += 1
+
+        # (2) Over-offer -> BuyStat_BetterPrice(0x02)+u32, but the buy STILL
+        #     completes at the REAL price: cash delta is exactly -price.
+        s = _facing_shop(server, "v2")
+        r = s.reply_to(s.q(0x88, _buy_payload(item_id, 1, price + 1000)),
+                       timeout=1.5)
+        if r is None or len(r) < 5 or r[0] != 0x02:
+            return (False, "over-offer did not answer BuyStat_BetterPrice+u32: %r" % r)
+        if struct.unpack("<I", r[1:5])[0] == 0:
+            return (False, "BetterPrice echoed a zero price: %r" % r)
+        snap = _closed_reload(server, s)
+        if snap.get("cash") != CASH_SEED - price:
+            return (False, "over-offer charged %r, must charge the real price %d"
+                    % (CASH_SEED - snap.get("cash"), price))
+        valid_cases += 1
+
+        # (3) Under-pay -> BuyStat_PriceHaveChanged(0x04) and NO mutation.
+        s = _facing_shop(server, "v3")
+        r = s.reply_to(s.q(0x88, _buy_payload(item_id, 1, price - 1)),
+                       timeout=1.5)
+        if r is None or len(r) < 1 or r[0] != 0x04:
+            return (False, "under-pay did not answer BuyStat_PriceHaveChanged: %r" % r)
+        snap = _closed_reload(server, s)
+        if snap.get("cash") != CASH_SEED or (snap.get("items") or {}).get(item_id, 0) != base_item:
+            return (False, "refused (PriceHaveChanged) buy mutated state: %r" % snap)
+        valid_cases += 1
+
+        # (4) Item the shop does not sell -> BuyStat_HaveNotQuantity(0x03)
+        #     and NO mutation. 0xFFFF can never be a sold product id here.
+        s = _facing_shop(server, "v4")
+        r = s.reply_to(s.q(0x88, _buy_payload(0xFFFF, 1, price)), timeout=1.5)
+        if r is None or len(r) < 1 or r[0] != 0x03:
+            return (False, "unsold item did not answer BuyStat_HaveNotQuantity: %r" % r)
+        snap = _closed_reload(server, s)
+        if snap.get("cash") != CASH_SEED:
+            return (False, "refused (HaveNotQuantity) buy mutated cash: %r" % snap)
+        valid_cases += 1
+
+        # (5) Two consecutive buys in ONE session -> each is charged once:
+        #     items +2 and cash -2*price (no double-credit, no double-charge).
+        s = _facing_shop(server, "v5")
+        r1 = s.reply_to(s.q(0x88, _buy_payload(item_id, 1, price)), timeout=1.5)
+        r2 = s.reply_to(s.q(0x88, _buy_payload(item_id, 1, price)), timeout=1.5)
+        if r1 is None or r2 is None or r1[0] != 0x01 or r2[0] != 0x01:
+            return (False, "double buy did not answer Done twice: %r %r" % (r1, r2))
+        snap = _closed_reload(server, s)
+        if snap.get("cash") != CASH_SEED - 2 * price:
+            return (False, "double buy cash delta wrong: %r" % snap.get("cash"))
+        if (snap.get("items") or {}).get(item_id) != base_item + 2:
+            return (False, "double buy item count wrong: %r" % snap.get("items"))
+        valid_cases += 1
 
         # ----------------------------------------------------------------
-        # SEMANTIC-INVALID well-formed buyObject packets. From a fresh on-map
-        # session (NOT facing any shop) every one of these is illegal and must
-        # KICK with NO 0x7F reply:
-        #   * quantity==0                       -> "quantity wrong" gate (step 2),
-        #                                          BEFORE the shop lookup.
-        #   * valid-looking small buy           -> "not shop into this direction"
-        #                                          gate (step 4): no shop faced.
-        #   * unknown objectId 0xFFFF           -> same shop gate (the unknown-id
-        #                                          branch is past the gate, so it
-        #                                          is kicked at the gate first).
-        #   * quantity==0x80000000 (THE OVERFLOW VECTOR) with realprice-style
-        #     price -> the 32-bit-wrap exploit. It is rejected at the shop gate
-        #     here; the 64-bit-promotion fix is the additional guard that would
-        #     also reject it (insufficient cash) if a shop WERE faced. We assert
-        #     it is kicked and creates no phantom cash/items.
-        #   * quantity==0xFFFFFFFF, price==0xFFFFFFFF -> max values, same gate.
-        # For EACH we assert: (a) the offending client is KICKED (socket closed
-        # by server) and NO 0x7F reply is sent, (b) the SERVER survives
-        # (alive+no crash), (c) no corrupt state (checked at the end with a
-        # separate account). Each uses a FRESH disposable session (kicked).
+        # SEMANTIC-INVALID packets: each must KICK with NO 0x7F reply and
+        # leave NO persisted mutation (checked against the untouched seed):
+        #   * quantity==0                     -> "quantity wrong" gate (step 2).
+        #   * NOT facing the shop (no look)   -> shop gate (steps 3/4).
+        #   * qty=0x80000000 x realprice >= 2^39 > seed cash, while FACING the
+        #     shop with an over-generous price: this reaches the 64-bit-fixed
+        #     cash check and must be KICKED there ("have not the cash"), which
+        #     is exactly the behaviour the uint64 promotion bought. Under the
+        #     old 32-bit multiply this same packet wrapped the total to 0 and
+        #     handed out 2^31 items for free.
         # ----------------------------------------------------------------
         semantic_invalid_cases = 0
-        for object_id, quantity, price, label in (
-                (1, 0, 100,
+        for object_id, quantity, price_arg, facing, label in (
+                (item_id, 0, price, True,
                  "quantity=0 (quantity<=0 gate -> kick before shop lookup)"),
-                (1, 1, 100,
-                 "objectId=1 qty=1 (well-formed buy but NOT facing a shop -> kick)"),
-                (0xFFFF, 1, 1,
-                 "objectId=0xFFFF (unknown item, also not facing a shop -> kick)"),
-                (1, 0x80000000, 2,
-                 "qty=0x80000000 OVERFLOW VECTOR (32-bit wrap exploit; kicked, "
-                 "no free items)"),
-                (1, 0xFFFFFFFF, 0xFFFFFFFF,
-                 "qty=price=0xFFFFFFFF (max-values overflow attempt -> kick)")):
+                (item_id, 1, price, False,
+                 "well-formed buy but NOT facing a shop -> shop-gate kick"),
+                (item_id, 0x80000000, 0xFFFFFFFF, True,
+                 "qty=0x80000000 OVERFLOW VECTOR facing the shop: kicked at the "
+                 "64-bit cash check, no free items"),
+                (item_id, 0xFFFFFFFF, 0xFFFFFFFF, True,
+                 "qty=0xFFFFFFFF max-values: kicked at the cash check")):
             try:
-                s = fresh("cb")
+                if facing:
+                    sx = _facing_shop(server, "cb")
+                else:
+                    sx = H.Session(server, login=_uniq("cb"), passh=_uniq("cbp"),
+                                   pseudo="Cheat")
             except H.HandshakeError as e:
                 return (False, "semantic#%d handshake failed: %s"
                         % (semantic_invalid_cases + 1, e))
             qn = None
             try:
-                qn = s.q(0x88, _buy_payload(object_id, quantity, price))
+                qn = sx.q(0x88, _buy_payload(object_id, quantity, price_arg))
             except OSError:
                 pass  # kicked mid-send is acceptable evidence
             # A rejected buyObject sends NO reply: a 0x7F reply here would mean
@@ -237,7 +357,7 @@ def run(server):
             got_reply = None
             if qn is not None:
                 try:
-                    got_reply = s.reply_to(qn, timeout=0.5)
+                    got_reply = sx.reply_to(qn, timeout=0.5)
                 except OSError:
                     got_reply = None  # socket closed -> kicked, no reply
             if got_reply is not None:
@@ -245,11 +365,18 @@ def run(server):
                         "CONTRACT VIOLATION: %s produced a 0x7F reply %r "
                         "(illegal buy must be refused, never fulfilled)"
                         % (label, got_reply[:8]))
-            kicked = _is_kicked(s)
+            kicked = _is_kicked(sx)
+            creds = (sx.login_creds, sx.pass_creds)
             try:
-                s.close()
+                sx.close()
             except OSError:
                 pass
+            time.sleep(0.5)
+            snap = H.reload_state(server, creds[0], creds[1])
+            if snap.get("cash") != CASH_SEED or snap.get("items") != before["items"]:
+                return (False,
+                        "CONTRACT VIOLATION: %s mutated persisted state: %r"
+                        % (label, snap))
             ok, why = _alive_clean(server)
             if not ok:
                 return (False, "after %s: %s" % (label, why))
@@ -259,14 +386,6 @@ def run(server):
                         "(illegal buyObject must disconnect the cheater)"
                         % label)
             semantic_invalid_cases += 1
-
-        # VALID-case note: a successful buy (player facing a shop, sufficient
-        # cash -> 0x7F BuyStat reply, cash debited + item added) is NOT
-        # deterministically reachable here (no shop is faceable from the spawn
-        # in the test maincode and the harness has no move/teleport primitive).
-        # We exercise the security-relevant refusal+kick for every reachable
-        # well-formed packet instead; reachability_limited=True.
-        valid_cases = 0
 
         # ----------------------------------------------------------------
         # MALFORMED-FRAMING cases. 0x88 is a FIXED-size QUERY: on the wire it is
@@ -282,7 +401,8 @@ def run(server):
         # fixed-size framer waits for the 10th byte; we follow with garbage so
         # the parser can't wedge, and the server must stay alive.
         try:
-            s = fresh("m1")
+            s = H.Session(server, login=_uniq("m1"), passh=_uniq("m1p"),
+                          pseudo="Cheat")
             s.send_raw(bytes([0x88, 0x00]) + (b"\x01" * 9))   # one byte short
             time.sleep(0.15)
             s.send_raw(b"\xFF\xFF\xFF\xFF")                   # garbage trailer
@@ -301,7 +421,8 @@ def run(server):
         # reads 10 data bytes as the packet, leaving 1 stray byte to mis-frame
         # the next packet -> server should reject/kick, never crash.
         try:
-            s = fresh("m2")
+            s = H.Session(server, login=_uniq("m2"), passh=_uniq("m2p"),
+                          pseudo="Cheat")
             s.send_raw(bytes([0x88, 0x00]) + _buy_payload(1, 1, 1) + b"\x00")
             s.drain(timeout=0.3)
             s.close()
@@ -318,7 +439,8 @@ def run(server):
         # the 10 fixed data bytes; we send garbage to complete+trail so there is
         # no wedge, and the server must stay alive.
         try:
-            s = fresh("m3")
+            s = H.Session(server, login=_uniq("m3"), passh=_uniq("m3p"),
+                          pseudo="Cheat")
             s.send_raw(bytes([0x88, 0x00]))                  # code + qnum, no data
             time.sleep(0.15)
             s.send_raw(b"\xAA" * 12)                         # complete then trailer
@@ -339,7 +461,8 @@ def run(server):
         # bytes + a garbage next packet -> the parser must reject/kick and the
         # server must survive.
         try:
-            s = fresh("m4")
+            s = H.Session(server, login=_uniq("m4"), passh=_uniq("m4p"),
+                          pseudo="Cheat")
             s.send_raw(bytes([0x88, 0x00]) + H.u32(10) + _buy_payload(1, 1, 1))
             s.drain(timeout=0.3)
             s.close()
@@ -353,11 +476,12 @@ def run(server):
             return (False, "after bogus-dynamic-length buyObject: %s" % why)
 
         # ----------------------------------------------------------------
-        # NO STATE CORRUPTION: the victim account's persisted identity/position
-        # must be byte-for-byte what it was before any of the abuse, and a
-        # brand-new full session must still reach CharacterSelected. None of the
-        # rejected buyObject attempts (incl. the overflow vector) may have
-        # debited cash, added items, or moved anyone.
+        # NO STATE CORRUPTION: the victim account's persisted identity,
+        # position, cash AND inventory must be byte-for-byte what they were
+        # before any of the abuse, and a brand-new full session must still
+        # reach CharacterSelected. None of the rejected buyObject attempts
+        # (incl. the overflow vector, which this time DID reach the cash
+        # check) may have debited cash, added items, or moved anyone.
         # ----------------------------------------------------------------
         try:
             after = H.reload_state(server, victim_login, victim_pass)
@@ -367,7 +491,7 @@ def run(server):
         if after.get("character_id") != before.get("character_id"):
             return (False, "victim character_id changed: %r -> %r"
                     % (before.get("character_id"), after.get("character_id")))
-        for k in ("x", "y", "mapIndex", "pseudo"):
+        for k in ("x", "y", "mapIndex", "pseudo", "cash", "items"):
             if after.get(k) != before.get(k):
                 return (False,
                         "victim state corrupted: %s %r -> %r"
@@ -386,17 +510,20 @@ def run(server):
             return (False, "post-abuse liveness: %s" % why)
 
         detail = (
-            "valid=%d (buy-success branch unreachable: needs the player facing a "
-            "shop bot; only shop is house2 bot#2, not faceable from the city "
-            "spawn, harness has no move primitive) semantic_invalid=%d (all "
-            "kicked, no 0x7F reply: qty=0 gate, not-facing-shop gate, unknown "
-            "id, OVERFLOW qty=0x80000000, max-values) malformed=%d db_checked=%s "
-            "victim_persisted=%s (server stayed alive+clean; no cash/item/"
-            "position corruption; cash/items not decodable by reload_state so "
-            "the negative no-corruption check uses identity+position)"
+            "valid=%d (facing the house2 shop bot via spawn-under-bot + "
+            "look-up: exact-price Done with cash -price and item +1, "
+            "BetterPrice over-offer charged at the real price, PriceHaveChanged "
+            "no-mutation, HaveNotQuantity on unsold id, double-buy charged "
+            "exactly 2x) all cash/items proven by disconnect+reload "
+            "(cash from select block, items from 0x54) semantic_invalid=%d "
+            "(all kicked, no 0x7F reply, zero persisted mutation: qty=0 gate, "
+            "not-facing shop gate, OVERFLOW qty=0x80000000 kicked at the "
+            "64-bit cash check, max-values) malformed=%d db_checked=%s "
+            "victim_persisted=%s (server stayed alive+clean; shop products "
+            "came from 0x87 so no datapack price is hard-coded)"
             % (valid_cases, semantic_invalid_cases, malformed_cases,
                checks_db, (before.get("x"), before.get("y"),
-                           before.get("mapIndex")))
+                           before.get("mapIndex"), before.get("cash")))
         )
         return (True, detail)
 

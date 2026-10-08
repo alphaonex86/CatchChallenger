@@ -82,6 +82,10 @@ _DEFAULT_SKIN_ID = 2
 
 # packetFixedSize tables (general/base/ProtocolParsingGeneral.cpp).
 # 254 (0xFE) = dynamic (4-byte LE length follows); 255 (0xFF) = blocked/unknown.
+# NOTE 0x64 (online-player count push, server->client only): the server sends
+# ONE data byte when max_players<=255 (our server-properties: 200), see
+# server/base/ClientLoad/ClientHeavyLoadSelectCharFinal.cpp:503. (The C++
+# packetFixedSize[0x64]=2 is the input-side/DDOS value, not this direction.)
 MSG_FIXED = {
     0x2:2,0x3:254,0x4:1,0x5:254,0x6:254,0x7:0,0x8:1,0x9:3,0xa:254,0xb:0,0xc:0,
     0xd:2,0xe:1,0xf:254,0x10:254,0x11:2,0x12:254,0x13:6,0x14:254,0x15:0,0x16:0,
@@ -89,7 +93,7 @@ MSG_FIXED = {
     0x3f:2,0x40:254,0x44:254,0x45:254,0x46:254,0x47:254,0x48:254,0x4d:4,0x50:254,
     0x51:0,0x52:254,0x53:254,0x54:254,0x55:254,0x56:254,0x57:254,0x58:254,0x59:0,
     0x5a:0,0x5b:0,0x5c:254,0x5d:254,0x5e:0,0x5f:254,0x60:254,0x61:254,0x62:254,
-    0x63:254,0x64:2,0x65:0,0x66:254,0x67:254,0x68:254,0x69:254,0x6a:0,0x6b:254,
+    0x63:254,0x64:1,0x65:0,0x66:254,0x67:254,0x68:254,0x69:254,0x6a:0,0x6b:254,
     0x6c:1,0x75:8,0x76:254,0x77:254,0x78:254,0x7f:254,0x80:254,0x81:254,0x82:254,
     0x83:254,0x84:0,0x85:2,0x86:2,0x87:0,0x88:10,0x89:10,0x8a:2,0x8b:12,0x8c:12,
     0x92:254,0x93:16,0xa0:5,0xa1:254,0xa8:64,0xa9:64,0xaa:254,0xab:5,0xac:9,
@@ -309,13 +313,23 @@ class Server:
                server-properties.xml there so the server resolves its datapack
                relative to argv[0] (=the copy) and writes its database/ here.
     valgrind : run the server under valgrind --leak-check=full.
+    start_override : None, or {"map": name, "x": cell_x, "y": cell_y,
+               "cash": int}. Rewrites the START PROFILE so every auto-created
+               character spawns on that map cell with that cash: <map file x y>
+               lives in map/main/<maincode>/start.xml, <cash> in player/start.
+               xml. The source datapack stays read-only: the whole-dir symlink
+               becomes a shallow mirror whose only real WRITABLE parts are a
+               copy of player/ and of map/main/<maincode>/ (pattern of security
+               /server.py SEEDDB). Also drops the datapack-cache.bin link so
+               the server re-reads the edited XML instead of the stale cache.
     """
     def __init__(self, binary, run_dir, maincode="test", valgrind=False,
-                 every_body_is_root=False):
+                 every_body_is_root=False, start_override=None):
         self.binary_src = binary
         self.run_dir = run_dir
         self.maincode = maincode
         self.valgrind = valgrind
+        self.start_override = start_override
         # When True the server treats every connected player as root, which
         # unlocks the in-game admin chat commands (e.g. "/give"). Tests that need
         # to grant an owned item to reach a handler's positive branch enable this
@@ -345,6 +359,8 @@ class Server:
         if os.path.islink(link) or os.path.exists(link):
             os.remove(link)
         os.symlink(dp, link)
+        if self.start_override:
+            self._apply_start_override()
         # server-properties.xml (maincode inside <content>, port + auto-create).
         with open(os.path.join(rd, "server-properties.xml"), "w") as f:
             f.write(_SERVER_PROPERTIES.format(
@@ -384,6 +400,73 @@ class Server:
                 return f.read()[-n:]
         except FileNotFoundError:
             return ""
+
+    def _apply_start_override(self):
+        """Turn the read-only datapack symlink into a shallow mirror whose only
+        WRITABLE parts are player/ (cash profile) and map/main/<maincode>/
+        (spawn profile), then rewrite them per self.start_override. Everything
+        else (skins, items, maps, ...) stays a symlink into the source tree."""
+        import xml.etree.ElementTree as ET
+        ov = self.start_override
+        link = os.path.join(self.run_dir, "datapack")
+        target = os.path.realpath(link)
+        os.remove(link)
+        os.makedirs(link)
+        self._mirror_tree(target, link, self.maincode)
+        if ov.get("map"):
+            p = os.path.join(link, "map", "main", self.maincode, "start.xml")
+            tree = ET.parse(p)
+            start = tree.getroot().find("start")
+            m = start.find("map")
+            if m is None:
+                m = ET.SubElement(start, "map")
+            m.set("file", ov["map"])
+            m.set("x", str(ov["x"]))
+            m.set("y", str(ov["y"]))
+            tree.write(p)
+        if ov.get("cash") is not None:
+            p = os.path.join(link, "player", "start.xml")
+            tree = ET.parse(p)
+            start = tree.getroot().find("start")
+            c = start.find("cash")
+            if c is None:
+                c = ET.SubElement(start, "cash")
+            c.set("value", str(ov["cash"]))
+            tree.write(p)
+
+    @staticmethod
+    def _mirror_tree(src, dst, mc):
+        """dst mirrors src; the only real directories are player/ (copy) and,
+        recursively, 'map' -> 'main' -> <mc>/ where only start.xml is a real
+        (editable) copy. Everything else is a symlink into the source tree.
+        datapack-cache.bin is dropped so the server rebuilds it from the EDITED
+        xml instead of the stale pre-edit cache."""
+        for name in sorted(os.listdir(src)):
+            if name == "datapack-cache.bin":
+                continue
+            s = os.path.join(src, name)
+            d = os.path.join(dst, name)
+            if name == "player":
+                shutil.copytree(s, d)
+            elif name == "map":
+                os.makedirs(d)
+                Server._mirror_tree(s, d, mc)
+            elif name == "main":
+                os.makedirs(d)
+                for e in sorted(os.listdir(s)):
+                    if e == mc:
+                        sub = os.path.join(d, mc)
+                        os.makedirs(sub)
+                        for f in sorted(os.listdir(os.path.join(s, e))):
+                            if f != "start.xml":
+                                os.symlink(os.path.join(s, e, f),
+                                           os.path.join(sub, f))
+                        shutil.copy2(os.path.join(s, e, "start.xml"),
+                                     os.path.join(sub, "start.xml"))
+                    else:
+                        os.symlink(os.path.join(s, e), os.path.join(d, e))
+            else:
+                os.symlink(s, d)
 
     def alive(self):
         """True if the process is running AND still accepting TCP."""
@@ -990,6 +1073,10 @@ class Session:
         self.y = None
         self.mapIndex = None
         self.character_id = None
+        self.cash = None
+        self.warehouse_cash = None
+        self.direction = None     # last directionAndPlayerType & 0x0F (1..4 look)
+        self.items = {}           # item id -> qty, kept from 0x54/0x55/0x56
         self.login_creds = login if login is not None else \
             ("u%x%x" % (int(time.time()) & 0xFFFFFFFF, _PSEUDO_SEQ[0]+1)).encode()
         self.pass_creds = passh if passh is not None else (b"p_" + self.login_creds)
@@ -1108,6 +1195,7 @@ class Session:
             self._recv_into_buf(0.25)
             ev = self._parse_stream()
             self._auto_ack(ev)
+            self._track_inventory(ev)
             for kind, code, qn, payload in ev:
                 if kind == "reply" and qn == want_qn:
                     return payload
@@ -1154,6 +1242,7 @@ class Session:
             self._recv_into_buf(0.2)
             ev = self._parse_stream()
             self._auto_ack(ev)
+            self._track_inventory(ev)
             # record what arrived (best-effort: re-serialise is lossy, so we
             # just track that something happened by re-reading the socket)
             if len(self._buf) == before and not ev:
@@ -1275,6 +1364,8 @@ class Session:
                 nonlocal pos; v = struct.unpack("<H", d[pos:pos+2])[0]; pos += 2; return v
             def rd_u32():
                 nonlocal pos; v = struct.unpack("<I", d[pos:pos+4])[0]; pos += 4; return v
+            def rd_u64():
+                nonlocal pos; v = struct.unpack("<Q", d[pos:pos+8])[0]; pos += 8; return v
             def rd_str():
                 nonlocal pos; n = d[pos]; pos += 1; v = d[pos:pos+n]; pos += n; return v
             rd_u16()                 # max_players
@@ -1299,13 +1390,72 @@ class Session:
             self.mapIndex = rd_u16()
             self.x = rd_u8()
             self.y = rd_u8()
+            # ...and the fields the shop/economy handlers mutate, at the exact
+            # offsets of parseCharacterBlockCharacter (Api_protocol_loadchar.cpp):
+            self.direction = rd_u8() & 0x0F   # directionAndPlayerType
+            pos += (2 + 1 + 1 + 1) * 2        # rescue + unvalidated_rescue points
+            rd_str()                 # pseudo
+            rd_u8()                  # skin
+            rd_u8()                  # allow_create_clan
+            rd_u32()                 # clan
+            rd_u8()                  # clan_leader
+            self.cash = rd_u64()
+            self.warehouse_cash = rd_u64()
         except Exception:
             pass  # best-effort; leave None on any surprise
+
+    def _track_inventory(self, events):
+        """Keep self.items live from the server's inventory messages:
+        0x54 = full snapshot, 0x55 = add, 0x56 = remove (the very messages a
+        successful buy/sell/trade pushes; body = [count:u16]{id:u16,qty:u32}*)."""
+        for kind, code, qn, p in events:
+            if kind != "message" or code not in (0x54, 0x55, 0x56):
+                continue
+            got = _inventory_from_msg(p)
+            if code == 0x54:
+                self.items = got
+            elif code == 0x55:
+                for it, qty in got.items():
+                    self.items[it] = self.items.get(it, 0) + qty
+            else:
+                for it, qty in got.items():
+                    self.items[it] = max(self.items.get(it, 0) - qty, 0)
+
+    def look(self, direction, settle=0.3):
+        """Turn to face one way: MESSAGE 0x02 [sub-command 0][dir], dir in
+        1..4 = top/right/bottom/left (5..8 MOVE instead). The server KICKS a
+        client whose action repeats the last direction (MapBasicMove.cpp:71
+        'Previous action is same direction'), so a repeat is refused locally
+        instead of silently suicide-ing the session."""
+        if direction == self.direction:
+            raise ValueError("look(%d) repeats the last direction -> the server "
+                             "would kick this session" % direction)
+        self.m(0x02, bytes([0, direction]))
+        self.direction = direction
+        self.drain(timeout=settle)
 
 
 # ---------------------------------------------------------------------------
 # DB-state verification
 # ---------------------------------------------------------------------------
+def _inventory_from_msg(p):
+    """Decode the body shared by 0x54/0x55/0x56: [count:u16]{id:u16,qty:u32}*.
+    Duplicate ids ADD (client behaviour, Api_protocol_message.cpp case 0x54)."""
+    items = {}
+    try:
+        n = struct.unpack("<H", p[0:2])[0]
+        i = 0
+        while i < n and 2 + (i + 1) * 6 <= len(p):
+            o = 2 + i * 6
+            it = struct.unpack("<H", p[o:o+2])[0]
+            qty = struct.unpack("<I", p[o+2:o+6])[0]
+            items[it] = items.get(it, 0) + qty
+            i += 1
+    except Exception:
+        pass
+    return items
+
+
 def reload_state(server, login, passh):
     """Reconnect with the given credentials and return a snapshot of the
     persisted character read back over the protocol.
@@ -1317,21 +1467,19 @@ def reload_state(server, login, passh):
     carries the persisted spawn position (x,y,mapIndex).
 
     Returns a dict:
-        {character_id, pseudo, x, y, mapIndex}
-    Documented limitation: cash / items / monsters are encoded deeper in the
-    select-block (and in the HPS files database/common/characters/<hexpseudo>
-    and database/common/accounts/<id>); the FOUNDATION reads back the reliably
-    framed header (id/pseudo/position). A handler test that mutates cash/items
-    should ALSO assert via the in-band reply of the handler it exercises (the
-    server echoes the new value), with reload_state used for position/identity
-    persistence. The raw HPS files are present under
-    <run_dir>/database/common/ for a test that wants to byte-diff them.
+        {character_id, pseudo, x, y, mapIndex, cash, warehouse_cash, items}
+    cash comes from the select block (parseCharacterBlockCharacter), items from
+    the 0x54 inventory snapshot the server pushes right after it (compression
+    is 'none' on this connection, so it is readable). Monsters are still not
+    decoded. The raw HPS files are present under <run_dir>/database/common/
+    for a test that wants to byte-diff them.
     """
     if isinstance(login, str): login = login.encode()
     if isinstance(passh, str): passh = passh.encode()
     loginHash, passHash = _creds(login, passh)
     snap = {"character_id": None, "pseudo": None, "x": None, "y": None,
-            "mapIndex": None}
+            "mapIndex": None, "cash": None, "warehouse_cash": None,
+            "items": None}
     sk = socket.create_connection(("127.0.0.1", server.port), timeout=5)
     sk.settimeout(0.4)
     try:
@@ -1359,8 +1507,21 @@ def reload_state(server, login, passh):
         if pa is not None and len(pa) > 1 and pa[0] == 0x01:
             tmp = Session.__new__(Session)
             tmp.x = tmp.y = tmp.mapIndex = None
+            tmp.cash = tmp.warehouse_cash = tmp.direction = None
             Session._parse_select_block(tmp, pa[1:])
             snap["x"], snap["y"], snap["mapIndex"] = tmp.x, tmp.y, tmp.mapIndex
+            snap["cash"] = tmp.cash
+            snap["warehouse_cash"] = tmp.warehouse_cash
+            # 0x54 inventory snapshot: either it already passed while waiting
+            # for the select reply, or it is still to come -> collect both.
+            items = sess.inventory
+            deadline = time.time() + 0.8
+            while items is None and time.time() < deadline:
+                sess._recv(0.2)
+                for kind, c, q, pl in sess._parse():
+                    if kind == "message" and c == 0x54:
+                        items = _inventory_from_msg(pl)
+            snap["items"] = items
         return snap
     finally:
         try: sk.close()
@@ -1500,6 +1661,7 @@ class _RawConn:
         self.buf = bytearray()
         self.out_qmap = {}
         self.qn = 0
+        self.inventory = None   # last 0x54 snapshot seen while waiting a reply
 
     def query(self, code, payload, dynamic, timeout=3.0):
         qn = self.qn; self.qn = (self.qn + 1) % 16
@@ -1512,12 +1674,18 @@ class _RawConn:
         deadline = time.time() + timeout
         while time.time() < deadline:
             self._recv(0.25)
-            for kind, c, q, pl in self._parse():
+            evs = self._parse()
+            want = None
+            for kind, c, q, pl in evs:
                 if kind == "query" and c in _QUERY_REPLY_TO_US and q is not None:
                     try: self.sock.sendall(bytes([0x7F, q]))
                     except OSError: pass
-                if kind == "reply" and q == qn:
-                    return pl
+                if kind == "message" and c == 0x54:
+                    self.inventory = _inventory_from_msg(pl)
+                if kind == "reply" and q == qn and want is None:
+                    want = pl          # return only AFTER the whole batch was
+            if want is not None:       # consumed (else a 0x54 sharing the last
+                return want            # batch would be dropped with it)
         return None
 
     def _recv(self, t):
