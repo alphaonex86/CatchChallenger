@@ -335,6 +335,14 @@ bool EventLoopClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uin
             if(Q_LIKELY(linkToGameServer))
             {
                 linkToGameServer->registerOutputQuery(queryNumber,mainCodeType);
+                #ifdef CATCHCHALLENGER_HARDENED
+                //a reused query number makes registerOutputQuery() drop the link
+                if(linkToGameServer==NULL)
+                {
+                    parseNetworkReadError("linkToGameServer==NULL after registerOutputQuery() main ident: "+std::to_string(mainCodeType));
+                    return false;
+                }
+                #endif
                 const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[mainCodeType];
                 if(fixedSize!=0xFE)
                 {
