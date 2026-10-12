@@ -14,13 +14,15 @@ using namespace CatchChallenger;
 void BaseServer::preload_4_sync_randomBlock()
 {
     //don't use BaseServerLogin::fpRandomFile to prevent lost entropy
-    GlobalServerData::serverPrivateVariables.randomData.resize(CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE);
+    //a fresh vector: exact capacity, also when it replaces a bigger one from the cache
+    std::vector<char> randomData(CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE);
     int index=0;
     while(index<CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
     {
-        GlobalServerData::serverPrivateVariables.randomData[index]=uint8_t(rand()%256);
+        randomData[index]=uint8_t(rand()%256);
         index++;
     }
+    GlobalServerData::serverPrivateVariables.randomData.swap(randomData);
 }
 
 void BaseServer::preload_5_sync_the_events()

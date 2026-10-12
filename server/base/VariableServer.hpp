@@ -46,7 +46,12 @@
 
 //put for map, add for local thread
 //put this size into the options
+#if defined(CC_TARGET_ESP32) || defined(__i486__)
+//small-RAM targets: the ring repeats sooner, a few KB of heap back
+#define CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE 128
+#else
 #define CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE 4096
+#endif
 #define CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE 255 // not 256 to don't add 00 into size header
 #define CATCHCHALLENGER_SERVER_MIN_RANDOM_LIST_SIZE 32
 

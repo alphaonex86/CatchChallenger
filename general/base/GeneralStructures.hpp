@@ -1434,7 +1434,7 @@ public:
     uint32_t egg_step;///< step to hatch, 0 to no egg and never hatch
     uint32_t xp_for_max_level;///< xp to be level 100
     uint32_t give_xp;
-    std::vector<uint32_t> level_to_xp;//first is xp to level 1
+    uint16_t level_to_xp_index;//into CommonDatapack::levelToXp, monsters with the same curve share it
     catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
     std::vector<Evolution> evolutions;
     #ifdef CATCHCHALLENGER_CLIENT
@@ -1449,7 +1449,7 @@ public:
     void serialize(B& buf) const {
         buf
             #ifndef CATCHCHALLENGER_CLASS_MASTER
-            << type << catch_rate << egg_step << xp_for_max_level << give_xp << level_to_xp << learnByItem << evolutions
+            << type << catch_rate << egg_step << xp_for_max_level << give_xp << level_to_xp_index << learnByItem << evolutions
             #ifdef CATCHCHALLENGER_CLIENT
             << powerVar
             #endif
@@ -1461,7 +1461,7 @@ public:
     void parse(B& buf) {
         buf
             #ifndef CATCHCHALLENGER_CLASS_MASTER
-            >> type >> catch_rate >> egg_step >> xp_for_max_level >> give_xp >> level_to_xp >> learnByItem >> evolutions
+            >> type >> catch_rate >> egg_step >> xp_for_max_level >> give_xp >> level_to_xp_index >> learnByItem >> evolutions
             #ifdef CATCHCHALLENGER_CLIENT
             >> powerVar
             #endif

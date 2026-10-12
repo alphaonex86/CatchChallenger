@@ -96,16 +96,15 @@ void CommonDatapackServerSpec::applyMonstersRate()
         std::cerr << "CommonSettingsServer::commonSettingsServer.rates_xp can't be null, are you connected to game server to have the rates?" << std::endl;
         abort();
     }
+    /*prevent double call, double call on client, not solved for now:
+     * Client open to lan 1 call, client connect on this server: 2 call */
+    if(!CommonDatapack::commonDatapack.levelToXp.empty())
+    {
+        std::cerr << "CommonDatapackServerSpec::applyMonstersRate() drop dual call" << std::endl;
+        return;
+    }
     for(const std::pair<const CATCHCHALLENGER_TYPE_MONSTER, Monster>& n : CommonDatapack::commonDatapack.monsters) {
         CatchChallenger::Monster &monster=CommonDatapack::commonDatapack.monsters.at(n.first);
-
-        /*prevent double call, double call on client, not solved for now:
-         * Client open to lan 1 call, client connect on this server: 2 call */
-        if(!monster.level_to_xp.empty())
-        {
-            std::cerr << "CommonDatapackServerSpec::applyMonstersRate() drop dual call" << std::endl;
-            return;
-        }
 
         const uint32_t &oldXP=monster.give_xp;
         monster.give_xp*=CommonSettingsServer::commonSettingsServer.rates_xp;
@@ -116,7 +115,7 @@ void CommonDatapackServerSpec::applyMonstersRate()
             abort();
         }
         monster.powerVar*=static_cast<double>(CommonSettingsServer::commonSettingsServer.rates_xp_pow)/1000;
-        monster.level_to_xp.clear();
+        std::vector<uint32_t> curve;
         int index=0;
         while(index<CATCHCHALLENGER_MONSTER_LEVEL_MAX)
         {
@@ -126,9 +125,10 @@ void CommonDatapackServerSpec::applyMonstersRate()
             uint64_t tempXp=xp_for_this_level*xp_for_max_level/max_xp;
             if(tempXp<1)
                 tempXp=1;
-            monster.level_to_xp.push_back(static_cast<uint32_t>(tempXp));
+            curve.push_back(static_cast<uint32_t>(tempXp));
             index++;
         }
+        monster.level_to_xp_index=CommonDatapack::commonDatapack.indexOfLevelToXp(curve);
     }
 }
 #endif
@@ -164,10 +164,9 @@ void CommonDatapackServerSpec::unload()
     serverProfileList.clear();
     CommonDatapack::commonDatapack.unload();
 
-    for(const std::pair<const CATCHCHALLENGER_TYPE_MONSTER, Monster>& n : CommonDatapack::commonDatapack.monsters) {
-        CatchChallenger::Monster &monster=CommonDatapack::commonDatapack.monsters.at(n.first);
-        monster.level_to_xp.clear();
-    }
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    CommonDatapack::commonDatapack.levelToXp.clear();
+    #endif
 
     parsingSpec=false;
     isParsedSpec=false;

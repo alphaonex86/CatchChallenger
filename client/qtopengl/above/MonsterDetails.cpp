@@ -282,7 +282,7 @@ void MonsterDetails::setVar(const CatchChallenger::PlayerMonster &monster)
         catchPixmap=catchPixmap.scaled(48,48);
         monsterDetailsCatched->setPixmap(catchPixmap);
     }
-    const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
+    const uint32_t &maxXp=CatchChallenger::CommonDatapack::commonDatapack.get_levelToXp(monsterGeneralInfo).at(monster.level-1);
     monsterDetailsLevel->setHtml(QString::number(monster.level));
 
     hp_bar->setMaximum(stat.hp);

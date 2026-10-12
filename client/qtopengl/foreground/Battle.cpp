@@ -603,7 +603,7 @@ bool Battle::check_monsters()
             error(QStringLiteral("the hp %1 is greater than max hp for the level %2").arg(stat.hp).arg(monster.level).toStdString());
             return false;
         }
-        if(monster.remaining_xp>monsterDef.level_to_xp.at(monster.level-1))
+        if(monster.remaining_xp>CatchChallenger::CommonDatapack::commonDatapack.get_levelToXp(monsterDef).at(monster.level-1))
         {
             error(QStringLiteral("the hp %1 is greater than max hp for the level %2").arg(monster.remaining_xp).arg(monster.level).toStdString());
             return false;
@@ -992,9 +992,9 @@ void Battle::init_current_monster_display(CatchChallenger::PlayerMonster *fightM
         progressBarFightBottomHP->setMaximum(fightStat.hp);
         progressBarFightBottomHP->setValue(fightMonster->hp);
         const CatchChallenger::Monster &monsterGenericInfo=CatchChallenger::CommonDatapack::commonDatapack.get_monster(fightMonster->monster);
-        if(fightMonster->level>=1 && static_cast<size_t>(fightMonster->level)<=monsterGenericInfo.level_to_xp.size())
+        if(fightMonster->level>=1 && static_cast<size_t>(fightMonster->level)<=CatchChallenger::CommonDatapack::commonDatapack.get_levelToXp(monsterGenericInfo).size())
         {
-            progressBarFightBottomExp->setMaximum(monsterGenericInfo.level_to_xp.at(fightMonster->level-1));
+            progressBarFightBottomExp->setMaximum(CatchChallenger::CommonDatapack::commonDatapack.get_levelToXp(monsterGenericInfo).at(fightMonster->level-1));
             progressBarFightBottomExp->setValue(fightMonster->remaining_xp);
         }
         //do the buff, todo the remake
@@ -1244,9 +1244,9 @@ void Battle::updateCurrentMonsterStatsDisplay()
     progressBarFightBottomHP->setValue(monster->hp);
     //XP progression toward the next level
     const CatchChallenger::Monster &monsterDef=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster->monster);
-    if(monster->level>=1 && static_cast<size_t>(monster->level)<=monsterDef.level_to_xp.size())
+    if(monster->level>=1 && static_cast<size_t>(monster->level)<=CatchChallenger::CommonDatapack::commonDatapack.get_levelToXp(monsterDef).size())
     {
-        progressBarFightBottomExp->setMaximum(monsterDef.level_to_xp.at(monster->level-1));
+        progressBarFightBottomExp->setMaximum(CatchChallenger::CommonDatapack::commonDatapack.get_levelToXp(monsterDef).at(monster->level-1));
         progressBarFightBottomExp->setValue(monster->remaining_xp);
     }
 }
@@ -1681,7 +1681,7 @@ void Battle::updateCurrentMonsterInformationXp()
     progressBarFightBottomExp->repaint();
     labelFightBottomLevel->setText(tr("Level %1").arg(monster->level));
     const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(monster->monster);
-    uint32_t maxXp=monsterInformations.level_to_xp.at(monster->level-1);
+    uint32_t maxXp=CatchChallenger::CommonDatapack::commonDatapack.get_levelToXp(monsterInformations).at(monster->level-1);
     progressBarFightBottomExp->setMaximum(maxXp);
 }
 
@@ -2554,7 +2554,7 @@ void Battle::displayExperienceGain()
         }
         else
             qDebug() << QStringLiteral("The hp at level change is untouched: %1/%2 for the old level %3").arg(progressBarFightBottomHP->value()).arg(progressBarFightBottomHP->maximum()).arg(currentMonsterLevel);
-        progressBarFightBottomExp->setMaximum(CommonDatapack::commonDatapack.monsters.at(currentMonster->monster).level_to_xp.at(currentMonsterLevel-1));
+        progressBarFightBottomExp->setMaximum(CatchChallenger::CommonDatapack::commonDatapack.get_levelToXp(CommonDatapack::commonDatapack.monsters.at(currentMonster->monster)).at(currentMonsterLevel-1));
         progressBarFightBottomExp->setValue(progressBarFightBottomExp->maximum());
         progressBarFightBottomExp->repaint();
         #ifdef CATCHCHALLENGER_HARDENED
