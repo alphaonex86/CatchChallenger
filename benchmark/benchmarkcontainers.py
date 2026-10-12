@@ -2,9 +2,10 @@
 """benchmarkcontainers.py -- std::vector vs std::list vs std::deque on real data.
 
 Builds benchmark/benchmarkcontainers/ (benchmark_containers) and runs it
-RUN_REPEATS times on a datapack read with the production loader: the datapack
-file list, the items, the monsters, and the small per-player FIFO the server
-Client keeps (std::queue = std::deque by default). Per dataset and container:
+RUN_REPEATS times on a datapack read with the production loader: the files a
+server of its BIGGEST maincode serves (base + that maincode), that maincode's
+maps, the items, the monsters, and the small per-player FIFO the server Client
+keeps (std::queue = std::deque by default). Per dataset and container:
 build time, read-only scan rate, heap bytes and heap blocks of one built
 container; per FIFO depth: ops/s, allocations per op and what an EMPTY
 container already holds. The median of the runs is printed as a table.
@@ -14,7 +15,9 @@ container already holds. The median of the runs is printed as a table.
 Without --datapack it measures the default datapack and records the per-node
 history like every benchmark. With --datapack the numbers are printed only:
 nothing about that datapack (path, name, numbers) is written anywhere.
-Host only for now (no fleet/T2100/ESP32 dispatch yet).
+Runs on the host and ON every detected ESP32 board (its own libstdc++ and heap:
+files + items generated into flash by the host, plus the FIFO). No fleet/T2100
+dispatch yet.
 """
 import argparse
 import os
@@ -43,6 +46,9 @@ except Exception:
 SRC_DIR = os.path.join(bh.REPO_ROOT, "benchmark", "benchmarkcontainers")
 BUILD_DIR = os.path.join(BUILD_ROOT, "benchmark", NAME)
 BIN = os.path.join(BUILD_DIR, "benchmark_containers")
+ESP32_PROJECT = os.path.join(SRC_DIR, "esp32")
+ESP32_EMIT_MAX_FILES = 4000     # the firmware keeps what its heap holds
+ESP32_READ_SECS = 180
 CONTAINERS = ("vector", "vector_reserved", "list", "deque")
 FIFO_CONTAINERS = ("vector", "list", "deque")
 
@@ -80,14 +86,7 @@ def run_once(datapack, window_ms):
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=RUN_TIMEOUT)
     except subprocess.TimeoutExpired:
         return None, f"timeout after {RUN_TIMEOUT}s"
-    values = {}
-    for line in proc.stdout.decode(errors="replace").splitlines():
-        if line.startswith("BENCH ") and "=" in line:
-            key, value = line[6:].split("=", 1)
-            try:
-                values[key] = float(value)
-            except ValueError:
-                pass
+    values = parse_bench(proc.stdout.decode(errors="replace"))
     if proc.returncode != 0 or values.get("done") != 1.0:
         return None, f"rc={proc.returncode}, no 'BENCH done' line:\n" + proc.stderr.decode(errors="replace")[-2000:]
     return values, None
@@ -100,6 +99,19 @@ def metric_block(samples, suffix):
             "unit": unit, "better": better}
 
 
+def parse_bench(text):
+    values = {}
+    for line in text.splitlines():
+        line = line.strip()
+        if line.startswith("BENCH ") and "=" in line:
+            key, value = line[6:].split("=", 1)
+            try:
+                values[key] = float(value)
+            except ValueError:
+                pass
+    return values
+
+
 def print_tables(median):
     def fmt(value):
         if value is None:
@@ -109,7 +121,12 @@ def print_tables(median):
         if value >= 1e4:
             return f"{value / 1e3:.1f}k"
         return f"{value:.3g}"
-    for dataset in ("files", "items", "monsters"):
+    if "maincode_maps" in median:
+        print(f"\nbiggest maincode: {int(median['maincode_maps'])} maps "
+              f"({int(median.get('maps_failed', 0))} failed to load)")
+    for dataset in ("files", "maps", "items", "monsters"):
+        if f"{dataset}.elements" not in median:
+            continue
         print(f"\n{dataset}: {int(median.get(dataset + '.elements', 0))} elements "
               f"of {int(median.get(dataset + '.sizeof_elem', 0))} B")
         columns = ("build_ns_per_elem", "scan_elems_per_s", "heap_bytes", "heap_blocks")
@@ -129,6 +146,33 @@ def print_tables(median):
             print(f"  {container:16s}" + "".join(f"{fmt(v):>20s}" for v in row))
 
 
+def measure_esp32(node, datapack, external):
+    """One ESP32 board: emit the datasets, build + flash + read. -> (values, error)."""
+    import benchmark_esp32 as esp
+    if node["tty"] is None:
+        return None, "SKIP:" + node["skip_reason"]
+    data_dir = os.path.join(BUILD_DIR, "esp32-data")
+    os.makedirs(data_dir, exist_ok=True)
+    data_cpp = os.path.join(data_dir, "containers_data.cpp")
+    rc, sout, serr, _ = bh.run_capture([BIN, "--datapack", datapack, "--emit-esp32", data_cpp,
+                                        str(ESP32_EMIT_MAX_FILES)], timeout=RUN_TIMEOUT)
+    if rc != 0:
+        return None, "FAIL:emit failed: " + serr[-500:]
+    os.environ["CC_CONTAINERS_DATA_CPP"] = data_cpp
+    status, detail, text = esp.run_ondevice_benchmark(
+        ESP32_PROJECT, os.path.join(esp.ESP32_PREFIX, "build-containers"),
+        read_secs=ESP32_READ_SECS, verbose=False, target=node["target"], serial=node["tty"])
+    if external:
+        os.remove(data_cpp)   # it holds that datapack's file names
+    if status != "PASS":
+        return None, "SKIP:" + detail
+    values = parse_bench(text)
+    if values.get("done") != 1.0:
+        tail = "\n".join(line for line in text.splitlines() if line.strip())[-1500:]
+        return None, "FAIL:no 'BENCH done' line; console tail:\n" + tail
+    return values, None
+
+
 def main():
     pre = argparse.ArgumentParser(add_help=False)
     pre.add_argument("--datapack", default=None)
@@ -146,7 +190,9 @@ def main():
     if not build():
         return 2
 
-    progress = bh.Progress(RUN_REPEATS, NAME)
+    import benchmark_esp32 as esp
+    esp32_nodes = esp.benchmark_nodes(verbose=False)
+    progress = bh.Progress(RUN_REPEATS + len(esp32_nodes), NAME)
     batch_id = hr.new_batch_id()
     started_utc = hr.iso_now()
     runs = []
@@ -162,7 +208,22 @@ def main():
 
     keys = sorted(set(k for run in runs for k in run))
     median = {k: bh.stats_of([run.get(k) for run in runs])[0] for k in keys}
+    print(f"\n==== local ({bh.host_arch()})")
     print_tables(median)
+
+    boards = {}
+    for node in esp32_nodes:
+        values, err = measure_esp32(node, datapack, external)
+        if values is None:
+            status, reason = err.split(":", 1)
+            progress.emit("rusage", "no", node["label"], status, reason.splitlines()[0][:120])
+            bh.print_node_error(NAME, node["label"], status, reason)
+            continue
+        progress.emit("rusage", "no", node["label"], "PASS")
+        boards[node["label"]] = (node, values)
+        print(f"\n==== {node['label']} (on the board, files cut to "
+              f"{int(values.get('files.elements', 0))}/{int(values.get('files.available', 0))} by its heap)")
+        print_tables(values)
 
     if external:
         print("\n(--datapack given: numbers printed only, nothing recorded)")
@@ -188,6 +249,27 @@ def main():
                    comment=args.comment)
     if out is not None:
         bh.chatter(f"[history] {out}")
+    for label, (node, values) in boards.items():
+        pr = hr.PlatformRecord(NAME, batch_id, label, runner=None, arch_hint=node.get("arch"))
+        pr.platform.update(esp.esp32_platform_fields(node["target"]))
+        block = {}
+        slices = {}
+        for key, value in values.items():
+            parts = key.split(".")
+            if len(parts) == 3 and parts[2] in UNITS:
+                unit, better = UNITS[parts[2]]
+                metric = {"value": value, "median": value, "stddev": 0.0, "samples": [value],
+                          "unit": unit, "better": better}
+                block[key] = metric
+                slices.setdefault(f"{parts[0]}-{parts[1]}", {})[parts[2]] = metric
+        pr.add_result("rusage", block, status="PASS")
+        for slice_label, slice_block in sorted(slices.items()):
+            pr.add_subbenchmark("rusage", slice_label, slice_block)
+        out = pr.write(commit=bh.git_sha(), started_utc=started_utc, ended_utc=hr.iso_now(),
+                       compile_flags=["-Os", "-DCC_TARGET_ESP32"], simd_tier="generic",
+                       harness_version=hr.harness_version(), comment=args.comment)
+        if out is not None:
+            bh.chatter(f"[history] {out}")
     import history_series
     history_series.main()
     bh.regenerate_charts(NAME)
