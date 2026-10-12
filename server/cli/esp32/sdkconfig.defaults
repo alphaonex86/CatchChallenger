@@ -86,6 +86,13 @@ CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM=6
 CONFIG_ESP_WIFI_AMPDU_RX_ENABLED=n
 CONFIG_ESP_WIFI_AMPDU_TX_ENABLED=n
 
+# Copy each received frame into a heap pbuf of its own size and free the WiFi RX
+# buffer at once. Without it the 8 RX buffers stay held by data queued on sockets
+# the single-threaded loop is not reading while it blocks in a client's write();
+# that client's ACK then cannot be received: the loop and the whole RX path
+# deadlock (measured on the C6 with 2-8 bots on the map, board off the network).
+CONFIG_LWIP_L2_TO_L3_COPY=y
+
 # Custom partition table (big factory app partition for the in-flash datapack).
 CONFIG_PARTITION_TABLE_CUSTOM=y
 CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
