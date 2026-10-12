@@ -77,6 +77,9 @@ bool EventLoopGenericServer::tryListenInternal(const char* const ip,const char* 
                     << ", rp->ai_addr: " << rp->ai_addr
                     << ", rp->ai_addrlen: " << rp->ai_addrlen
                     << std::endl;
+            // e.g. an IPv6 address on a kernel without IPv6: try the next one
+            bindFailed++;
+            rp = rp->ai_next;
             continue;
         }
 
