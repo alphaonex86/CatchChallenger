@@ -419,7 +419,9 @@ void BaseServer::setSettings(const GameServerSettings &settings)
 
     loadAndFixSettings();
 
-    #ifdef CATCHCHALLENGER_CACHE_HPS
+    //a datapack-cpp build has no save mode (main-unix.cpp): keeps hps::to_stream's
+    //64KB stack frame out of the ESP32 firmware
+    #if defined(CATCHCHALLENGER_CACHE_HPS) && !defined(CATCHCHALLENGER_DATAPACK_CPP)
     if(out_file!=nullptr)
     {
         hps::to_stream(GlobalServerData::serverSettings, *out_file);
@@ -446,6 +448,7 @@ void BaseServer::setSettings(const GameServerSettings &settings)
 #ifdef CATCHCHALLENGER_CACHE_HPS
 void BaseServer::setNormalSettings(const NormalServerSettings &normalServerSettings)
 {
+    #ifndef CATCHCHALLENGER_DATAPACK_CPP
     if(out_file!=nullptr)
     {
         hps::to_stream(normalServerSettings.proxy, *out_file);
@@ -456,6 +459,9 @@ void BaseServer::setNormalSettings(const NormalServerSettings &normalServerSetti
         // longer carries an SSL/cleartext preamble byte); skip it in
         // the HPS cache stream.
     }
+    #else
+    (void)normalServerSettings;
+    #endif
 }
 #endif
 

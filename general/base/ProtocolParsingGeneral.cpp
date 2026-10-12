@@ -294,7 +294,11 @@ ssize_t ProtocolParsingBase::writeFileToSocket(int file_fd,off_t *offset,size_t 
     //
     //Server base stays plain C++ here — no QFile / no Qt I/O — so this
     //path also works for any future no-Qt non-Linux build.
+    #ifdef CC_TARGET_ESP32
+    char buf[4*1024];//the whole ESP32 task stack is 80KB
+    #else
     char buf[64*1024];
+    #endif
     const size_t chunk=(len<sizeof(buf))?len:sizeof(buf);
     if(::lseek(file_fd,*offset,SEEK_SET)==static_cast<off_t>(-1))
         return -1;

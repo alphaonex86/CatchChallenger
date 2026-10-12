@@ -635,6 +635,7 @@ void BaseServer::preload_industries_return()
     #endif
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
+    #ifndef CATCHCHALLENGER_DATAPACK_CPP
     if(out_file!=nullptr)
     {
         //save map content to cache
@@ -694,6 +695,7 @@ void BaseServer::preload_industries_return()
         ::exit(0);
         return;
     }
+    #endif
     if(serialBuffer!=nullptr)
         delete serialBuffer;
     if(in_file!=nullptr)
