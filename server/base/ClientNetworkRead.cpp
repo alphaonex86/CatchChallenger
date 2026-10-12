@@ -32,24 +32,24 @@ void Client::doDDOSReset()
 
 void Client::sendNewEvent(char * const data, const uint32_t &size)
 {
-    if(queryIdPool.empty())
+    if(queryIdPoolSize==0)
     {
         errorOutput("Sorry, no free query number to send this query of sendNewEvent");
         return;
     }
 
     //send the network reply
-    data[0x01]=queryIdPool.back();
-    registerOutputQuery(queryIdPool.back(),0xE2);
+    data[0x01]=queryIdPool[queryIdPoolSize-1];
+    registerOutputQuery(queryIdPool[queryIdPoolSize-1],0xE2);
 
     sendRawBlock(data,size);
 
-    queryIdPool.pop_back();
+    queryIdPoolSize--;
 }
 
 void Client::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const uint8_t &x, const uint8_t &y, const Orientation &orientation)
 {
-    if(queryIdPool.empty())
+    if(queryIdPoolSize==0)
     {
         errorOutput("Sorry, no free query number to send this query of teleportation");
         return;
@@ -63,9 +63,9 @@ void Client::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const uint8_
 
     //send the network reply
     ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xE1;
-    ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryIdPool.back();
-    registerOutputQuery(queryIdPool.back(),0xE1);
-    queryIdPool.pop_back();
+    ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryIdPool[queryIdPoolSize-1];
+    registerOutputQuery(queryIdPool[queryIdPoolSize-1],0xE1);
+    queryIdPoolSize--;
 
     {const uint32_t _tmp_le=(htole32(/*map:*/2+1+1+1));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1,&_tmp_le,sizeof(_tmp_le));}//set the dynamic size
     {const uint16_t _tmp_le=(htole16(mapIndex));memcpy(ProtocolParsingBase::tempBigBufferForOutput+1+1+4,&_tmp_le,sizeof(_tmp_le));}
@@ -79,28 +79,28 @@ void Client::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const uint8_
 
 void Client::sendTradeRequest(char * const data,const uint32_t &size)
 {
-    if(queryIdPool.empty())
+    if(queryIdPoolSize==0)
     {
         errorOutput("Sorry, no free query number to send this query of trade");
         return;
     }
-    data[1]=queryIdPool.back();
-    registerOutputQuery(queryIdPool.back(),0xE0);
+    data[1]=queryIdPool[queryIdPoolSize-1];
+    registerOutputQuery(queryIdPool[queryIdPoolSize-1],0xE0);
     sendRawBlock(data,size);
-    queryIdPool.pop_back();
+    queryIdPoolSize--;
 }
 
 void Client::sendBattleRequest(char * const data, const uint32_t &size)
 {
-    if(queryIdPool.empty())
+    if(queryIdPoolSize==0)
     {
         errorOutput("Sorry, no free query number to send this query of trade");
         return;
     }
-    data[1]=queryIdPool.back();
-    registerOutputQuery(queryIdPool.back(),0xDF);
+    data[1]=queryIdPool[queryIdPoolSize-1];
+    registerOutputQuery(queryIdPool[queryIdPoolSize-1],0xDF);
     sendRawBlock(data,size);
-    queryIdPool.pop_back();
+    queryIdPoolSize--;
 }
 
 bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
@@ -376,7 +376,7 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
                             #endif
                             )
 {
-    queryIdPool.push_back(queryNumber);
+    queryIdPoolPush(queryNumber);
     if(stopIt)
         return false;
     if(stat==ClientStat::None)
