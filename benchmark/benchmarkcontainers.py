@@ -42,6 +42,9 @@ WINDOW_MS = 200
 # for what is not windowed: loading the data, one full build per cell for its heap.
 HOST_DATASETS = 4               # files, maps, items, monsters
 EMBEDDED_DATASETS = 2           # files, items
+# key -> value cells: files (flat, std_flat_map, unordered_map, map) + 3 x 5 by id
+HOST_LOOKUP_WINDOWS = 4 + 3 * 5
+EMBEDDED_LOOKUP_WINDOWS = 3 + 4  # no <flat_map> there: files 3, items 4
 HOST_MARGIN_S = 300             # datapack + maps parse
 EMBEDDED_MARGIN_S = 180         # data setup + one full build per cell on a 50 MHz 486
 EMIT_TIMEOUT = 600
@@ -63,10 +66,11 @@ CONTAINERS = ("vector", "vector_reserved", "list", "deque")
 FIFO_CONTAINERS = ("vector", "list", "deque")
 
 
-def budget_s(datasets, window_ms):
-    """Seconds of measurement of one run: a build and a scan window per dataset
-    and container, one window per FIFO depth (1, 16) and container."""
-    windows = datasets * len(CONTAINERS) * 2 + 2 * len(FIFO_CONTAINERS)
+def budget_s(datasets, lookup_windows, window_ms):
+    """Seconds of measurement of one run: a build, a scan and a random-access
+    window per dataset and container, one per lookup structure, one per FIFO
+    depth (1, 16) and container."""
+    windows = datasets * len(CONTAINERS) * 3 + lookup_windows + 2 * len(FIFO_CONTAINERS)
     return windows * window_ms / 1000.0
 
 # metric suffix -> (unit, better)
@@ -79,7 +83,20 @@ UNITS = {
     "ops_per_s":         ("1/s", "higher"),
     "allocs_per_op":     ("allocs", "lower"),
     "empty_heap_bytes":  ("B", "lower"),
+    "random_ns":         ("ns", "lower"),
+    "lookup_ns":         ("ns", "lower"),
 }
+LOOKUPS = ("dense_vector", "flat", "std_flat_map", "unordered_map", "map")
+
+
+def check_values(values):
+    """None, or why a run's output is unusable."""
+    if values.get("done") != 1.0:
+        return "no 'BENCH done' line"
+    missed = [k for k in values if k.endswith(".lookup_missed")]
+    if missed:
+        return "lookups of existing keys missed: " + ", ".join(missed)
+    return None
 
 
 def build():
@@ -98,15 +115,16 @@ def build():
 
 def run_once(datapack, window_ms):
     """One run -> ({key: value}, error)."""
-    timeout = budget_s(HOST_DATASETS, window_ms) + HOST_MARGIN_S
+    timeout = budget_s(HOST_DATASETS, HOST_LOOKUP_WINDOWS, window_ms) + HOST_MARGIN_S
     try:
         proc = subprocess.run([BIN, "--datapack", datapack, "--ms", str(window_ms)],
                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
     except subprocess.TimeoutExpired:
         return None, f"timeout after {timeout:.0f}s"
     values = parse_bench(proc.stdout.decode(errors="replace"))
-    if proc.returncode != 0 or values.get("done") != 1.0:
-        return None, f"rc={proc.returncode}, no 'BENCH done' line:\n" + proc.stderr.decode(errors="replace")[-2000:]
+    problem = check_values(values)
+    if proc.returncode != 0 or problem is not None:
+        return None, f"rc={proc.returncode}, {problem}:\n" + proc.stderr.decode(errors="replace")[-2000:]
     return values, None
 
 
@@ -147,7 +165,7 @@ def print_tables(median):
             continue
         print(f"\n{dataset}: {int(median.get(dataset + '.elements', 0))} elements "
               f"of {int(median.get(dataset + '.sizeof_elem', 0))} B")
-        columns = ("build_ns_per_elem", "scan_elems_per_s", "heap_bytes", "heap_blocks")
+        columns = ("build_ns_per_elem", "scan_elems_per_s", "random_ns", "heap_bytes", "heap_blocks")
         print(f"  {'container':16s}" + "".join(f"{c:>20s}" for c in columns) + f"{'scan vs vector':>16s}")
         base = median.get(f"{dataset}.vector_reserved.scan_elems_per_s")
         for container in CONTAINERS:
@@ -155,6 +173,14 @@ def print_tables(median):
             scan = median.get(f"{dataset}.{container}.scan_elems_per_s")
             ratio = f"{scan / base:.2f}x" if scan and base else "-"
             print(f"  {container:16s}" + "".join(f"{fmt(v):>20s}" for v in row) + f"{ratio:>16s}")
+        if any(f"{dataset}.{lookup}.lookup_ns" in median for lookup in LOOKUPS):
+            print(f"  lookup by key (random, read-only):")
+            columns = ("lookup_ns", "heap_bytes", "heap_blocks")
+            print(f"  {'structure':16s}" + "".join(f"{c:>20s}" for c in columns))
+            for lookup in LOOKUPS:
+                if f"{dataset}.{lookup}.lookup_ns" in median:
+                    row = [median.get(f"{dataset}.{lookup}.{c}") for c in columns]
+                    print(f"  {lookup:16s}" + "".join(f"{fmt(v):>20s}" for v in row))
     for depth in (1, 16):
         print(f"\nfifo depth {depth} (the server Client's per-player queues):")
         columns = ("ops_per_s", "allocs_per_op", "empty_heap_bytes")
@@ -196,7 +222,7 @@ def measure_t2100(datapack, external, window_ms):
         return None, "SKIP:push: " + detail
     rc, sout, serr = t2100.ssh(f"cd {t2100.T2100_NODE['work_dir']} && sleep {T2100_GATE_S} && cat /proc/loadavg"
                                f" && ./{EMBEDDED_BIN} --ms {window_ms}",
-                               timeout=T2100_GATE_S + budget_s(EMBEDDED_DATASETS, window_ms) + EMBEDDED_MARGIN_S)
+                               timeout=T2100_GATE_S + budget_s(EMBEDDED_DATASETS, EMBEDDED_LOOKUP_WINDOWS, window_ms) + EMBEDDED_MARGIN_S)
     if rc != 0:
         return None, f"FAIL:rc={rc}: {(serr or sout)[-1500:]}"
     lines = sout.splitlines()
@@ -207,8 +233,9 @@ def measure_t2100(datapack, external, window_ms):
     if load >= 1.0:
         return None, f"SKIP:load={load}"
     values = parse_bench(sout)
-    if values.get("done") != 1.0:
-        return None, "FAIL:no 'BENCH done' line:\n" + sout[-1500:]
+    problem = check_values(values)
+    if problem is not None:
+        return None, f"FAIL:{problem}:\n" + sout[-1500:]
     return values, None
 
 
@@ -223,15 +250,16 @@ def measure_esp32(node, datapack, external, window_ms):
     os.environ["CC_CONTAINERS_DATA_CPP"] = data_cpp
     status, detail, text = esp.run_ondevice_benchmark(
         ESP32_PROJECT, os.path.join(esp.ESP32_PREFIX, "build-containers"),
-        read_secs=ESP32_BOOT_S + budget_s(EMBEDDED_DATASETS, window_ms) + EMBEDDED_MARGIN_S, verbose=False, target=node["target"], serial=node["tty"])
+        read_secs=ESP32_BOOT_S + budget_s(EMBEDDED_DATASETS, EMBEDDED_LOOKUP_WINDOWS, window_ms) + EMBEDDED_MARGIN_S, verbose=False, target=node["target"], serial=node["tty"])
     if external:
         os.remove(data_cpp)   # it holds that datapack's file names
     if status != "PASS":
         return None, "SKIP:" + detail
     values = parse_bench(text)
-    if values.get("done") != 1.0:
+    problem = check_values(values)
+    if problem is not None:
         tail = "\n".join(line for line in text.splitlines() if line.strip())[-1500:]
-        return None, "FAIL:no 'BENCH done' line; console tail:\n" + tail
+        return None, f"FAIL:{problem}; console tail:\n" + tail
     return values, None
 
 

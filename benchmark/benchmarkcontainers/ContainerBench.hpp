@@ -15,11 +15,20 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <algorithm>
 #include <deque>
+#include <iterator>
 #include <list>
+#include <map>
 #include <new>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
+#if __cplusplus >= 202302L && __has_include(<flat_map>)
+#include <flat_map>
+#define CC_BENCH_HAS_STD_FLAT_MAP
+#endif
 
 #ifdef CC_TARGET_ESP32
 #include "esp_heap_caps.h"
@@ -115,6 +124,24 @@ static uint64_t g_windowNs=200000000;
 // after a whole dataset pass (a pass of a big dataset on a 486 is seconds).
 static const size_t CHECK_BUILD=64;
 static const size_t CHECK_SCAN=1024;
+static const size_t CHECK_RANDOM=64;
+// random accesses: a fixed pseudo-random sequence, the same on every node
+static const size_t RANDOM_COUNT=4096;
+
+static std::vector<uint32_t> randomPositions(const size_t &range)
+{
+    std::vector<uint32_t> positions;
+    positions.reserve(RANDOM_COUNT);
+    uint32_t state=2463534242u;//xorshift32
+    while(positions.size()<RANDOM_COUNT)
+    {
+        state^=state<<13;
+        state^=state>>17;
+        state^=state<<5;
+        positions.push_back(static_cast<uint32_t>(state%range));
+    }
+    return positions;
+}
 static volatile uint64_t g_sink=0;
 
 static void print(const std::string &key,const double &value)
@@ -139,6 +166,7 @@ struct ItemEntry
 
 static uint64_t weight(const FileEntry &entry) { return entry.size+entry.path.size(); }
 static uint64_t weight(const ItemEntry &item) { return item.price; }
+static uint64_t weight(const uint32_t &value) { return value; }
 
 // vector_reserved: what a deserialiser does, it knows the count and reserves it
 template <class T>
@@ -147,6 +175,19 @@ template <class T>
 static void reserveIfAsked(std::list<T> &,const size_t &,const bool &) {}
 template <class T>
 static void reserveIfAsked(std::deque<T> &,const size_t &,const bool &) {}
+
+// access by position, as the server indexes its lists (map list by mapIndex...)
+template <class T>
+static const T &atPosition(const std::vector<T> &container,const uint32_t &position) { return container[position]; }
+template <class T>
+static const T &atPosition(const std::deque<T> &container,const uint32_t &position) { return container[position]; }
+template <class T>
+static const T &atPosition(const std::list<T> &container,const uint32_t &position)
+{
+    typename std::list<T>::const_iterator it=container.cbegin();
+    std::advance(it,position);
+    return *it;
+}
 
 template <class Container,class T>
 static void fillContainer(Container &container,const std::vector<T> &source,const bool &reserve)
@@ -167,7 +208,7 @@ static void printCpu(const std::string &prefix,const uint64_t &cpuStart,const ui
     print(prefix+"cpu_percent",wallUs==0?0.0:100.0*static_cast<double>(cpuUs()-cpuStart)/static_cast<double>(wallUs));
 }
 
-// build, heap of one built container, read-only scan
+// build, heap of one built container, read-only scan, read-only random access
 template <class Container,class T>
 static void measureDataset(const std::string &name,const std::string &containerName,const std::vector<T> &source,const bool &reserve)
 {
@@ -239,7 +280,209 @@ static void measureDataset(const std::string &name,const std::string &containerN
     }
     const uint64_t scanNs=nowNs()-start;
     print(prefix+"scan_elems_per_s",static_cast<double>(scanned)*1e9/static_cast<double>(scanNs));
+
+    //read-only random access by position: how the server reaches loaded data
+    const std::vector<uint32_t> positions=randomPositions(container.size());
+    uint64_t accesses=0;
+    size_t next=0;
+    start=nowNs();
+    while(nowNs()-start<g_windowNs)
+    {
+        uint64_t sum=0;
+        size_t chunk=0;
+        while(chunk<CHECK_RANDOM)
+        {
+            sum+=weight(atPosition(container,positions[next]));
+            next=(next+1)%RANDOM_COUNT;
+            chunk++;
+        }
+        g_sink+=sum;
+        barrier(&container);
+        accesses+=CHECK_RANDOM;
+    }
+    print(prefix+"random_ns",static_cast<double>(nowNs()-start)/static_cast<double>(accesses));
     printCpu(prefix,cpuStart,wallStart);
+}
+
+// ---- lookup by key of the loaded datapack (items by id, files by path...) --
+// The containers a key -> value structure can be, each built from (key, value)
+// pairs sorted by key, read through find() -> pointer or null.
+template <class K,class V>
+struct FlatLookup//sorted keys + values, binary search: what std::flat_map does
+{
+    std::vector<K> keys;
+    std::vector<V> values;
+    void build(const std::vector<std::pair<K,V> > &source)
+    {
+        keys.reserve(source.size());
+        values.reserve(source.size());
+        size_t index=0;
+        while(index<source.size())
+        {
+            keys.push_back(source[index].first);
+            values.push_back(source[index].second);
+            index++;
+        }
+    }
+    const V *find(const K &key) const
+    {
+        typename std::vector<K>::const_iterator it=std::lower_bound(keys.cbegin(),keys.cend(),key);
+        if(it==keys.cend() || *it!=key)
+            return nullptr;
+        return &values[static_cast<size_t>(it-keys.cbegin())];
+    }
+};
+template <class K,class V>
+struct HashLookup
+{
+    std::unordered_map<K,V> map;
+    void build(const std::vector<std::pair<K,V> > &source)
+    {
+        size_t index=0;
+        while(index<source.size())
+        {
+            map.insert(source[index]);
+            index++;
+        }
+    }
+    const V *find(const K &key) const
+    {
+        typename std::unordered_map<K,V>::const_iterator it=map.find(key);
+        return it==map.cend()?nullptr:&it->second;
+    }
+};
+template <class K,class V>
+struct TreeLookup
+{
+    std::map<K,V> map;
+    void build(const std::vector<std::pair<K,V> > &source)
+    {
+        size_t index=0;
+        while(index<source.size())
+        {
+            map.insert(source[index]);
+            index++;
+        }
+    }
+    const V *find(const K &key) const
+    {
+        typename std::map<K,V>::const_iterator it=map.find(key);
+        return it==map.cend()?nullptr:&it->second;
+    }
+};
+template <class V>
+struct DenseLookup//a vector indexed by the id itself, holes included
+{
+    std::vector<V> values;
+    void build(const std::vector<std::pair<uint16_t,V> > &source)
+    {
+        if(!source.empty())
+            values.resize(static_cast<size_t>(source.back().first)+1);
+        size_t index=0;
+        while(index<source.size())
+        {
+            values[source[index].first]=source[index].second;
+            index++;
+        }
+    }
+    const V *find(const uint16_t &key) const
+    {
+        return key<values.size()?&values[key]:nullptr;
+    }
+};
+#ifdef CC_BENCH_HAS_STD_FLAT_MAP
+template <class K,class V>
+struct StdFlatLookup
+{
+    std::flat_map<K,V> map;
+    void build(const std::vector<std::pair<K,V> > &source)
+    {
+        std::vector<K> keys;
+        std::vector<V> values;
+        size_t index=0;
+        while(index<source.size())
+        {
+            keys.push_back(source[index].first);
+            values.push_back(source[index].second);
+            index++;
+        }
+        map=std::flat_map<K,V>(std::sorted_unique,std::move(keys),std::move(values));
+    }
+    const V *find(const K &key) const
+    {
+        typename std::flat_map<K,V>::const_iterator it=map.find(key);
+        return it==map.cend()?nullptr:&it->second;
+    }
+};
+#endif
+
+// heap of the built structure, then random lookups of keys that exist
+template <class Lookup,class K,class V>
+static void measureLookup(const std::string &name,const std::string &lookupName,const std::vector<std::pair<K,V> > &source)
+{
+    const std::string prefix=name+"."+lookupName+".";
+    const uint64_t cpuStart=cpuUs();
+    const uint64_t wallStart=nowNs();
+    const std::vector<uint32_t> positions=randomPositions(source.size());
+
+    const uint64_t bytesBefore=g_liveBytes;
+    const uint64_t blocksBefore=g_liveBlocks;
+    Lookup lookup;
+    lookup.build(source);
+    barrier(&lookup);
+    const double heapBytes=static_cast<double>(g_liveBytes-bytesBefore);
+    const double heapBlocks=static_cast<double>(g_liveBlocks-blocksBefore);
+    print(prefix+"heap_bytes",heapBytes);
+    print(prefix+"heap_blocks",heapBlocks);
+
+    uint64_t lookups=0;
+    uint64_t missed=0;
+    size_t next=0;
+    const uint64_t start=nowNs();
+    while(nowNs()-start<g_windowNs)
+    {
+        uint64_t sum=0;
+        size_t chunk=0;
+        while(chunk<CHECK_RANDOM)
+        {
+            const V *value=lookup.find(source[positions[next]].first);
+            if(value!=nullptr)
+                sum+=weight(*value);
+            else
+                missed++;
+            next=(next+1)%RANDOM_COUNT;
+            chunk++;
+        }
+        g_sink+=sum;
+        barrier(&lookup);
+        lookups+=CHECK_RANDOM;
+    }
+    print(prefix+"lookup_ns",static_cast<double>(nowNs()-start)/static_cast<double>(lookups));
+    if(missed>0)
+        print(prefix+"lookup_missed",static_cast<double>(missed));//every key exists: a miss is a bug
+    printCpu(prefix,cpuStart,wallStart);
+}
+
+// `source` sorted by key. Integer ids also get the dense vector indexed by id.
+template <class K,class V>
+static void measureLookups(const std::string &name,const std::vector<std::pair<K,V> > &source)
+{
+    if(source.empty())
+        return;
+    measureLookup<FlatLookup<K,V> >(name,"flat",source);
+    #ifdef CC_BENCH_HAS_STD_FLAT_MAP
+    measureLookup<StdFlatLookup<K,V> >(name,"std_flat_map",source);
+    #endif
+    measureLookup<HashLookup<K,V> >(name,"unordered_map",source);
+    measureLookup<TreeLookup<K,V> >(name,"map",source);
+}
+template <class V>
+static void measureLookupsById(const std::string &name,const std::vector<std::pair<uint16_t,V> > &source)
+{
+    if(source.empty())
+        return;
+    measureLookup<DenseLookup<V> >(name,"dense_vector",source);
+    measureLookups(name,source);
 }
 
 template <class T>
