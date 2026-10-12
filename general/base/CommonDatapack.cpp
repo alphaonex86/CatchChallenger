@@ -164,6 +164,9 @@ void CommonDatapack::parseMonsters()
     else
         monsterRateApplied=true;
     #endif
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    levelToXp.clear();
+    #endif
     monsters=FightLoader::loadMonster(tempNameToMonsterId,datapackPath+DATAPACK_BASE_PATH_MONSTERS,monsterSkills
                                       #ifndef CATCHCHALLENGER_CLASS_MASTER
                                       ,types,items
@@ -240,6 +243,9 @@ void CommonDatapack::unload()
     #endif // CATCHCHALLENGER_CLASS_MASTER
     reputation.clear();
     monsters.clear();
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    levelToXp.clear();
+    #endif
     monsterSkills.clear();
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     monsterBuffs.clear();
@@ -342,6 +348,21 @@ const LayersOptions &CommonDatapack::get_layersOptions() const { return layersOp
 const std::vector<Event> &CommonDatapack::get_events() const { return events; }
 const bool &CommonDatapack::get_monsterRateApplied() const { return monsterRateApplied; }
 void CommonDatapack::set_monsterRateApplied(const bool &v) { monsterRateApplied=v; }
+const std::vector<uint32_t> &CommonDatapack::get_levelToXp(const Monster &monster) const { return levelToXp.at(monster.level_to_xp_index); }
+
+//the curve's index, the same curve is stored once whatever the number of monsters using it
+uint16_t CommonDatapack::indexOfLevelToXp(const std::vector<uint32_t> &curve)
+{
+    size_t index=0;
+    while(index<levelToXp.size())
+    {
+        if(levelToXp.at(index)==curve)
+            return static_cast<uint16_t>(index);
+        index++;
+    }
+    levelToXp.push_back(curve);
+    return static_cast<uint16_t>(levelToXp.size()-1);
+}
 
 //temp
 const std::vector<MonstersCollision> &CommonDatapack::get_monstersCollision() const { return monstersCollision; }

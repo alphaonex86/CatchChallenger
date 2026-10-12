@@ -54,6 +54,7 @@ public:
 protected:
     #endif
     std::vector<Type> types;
+    std::vector<std::vector<uint32_t> > levelToXp;//xp to pass each level, one entry per distinct curve
     #endif
     std::vector<Reputation> reputation;//Player_private_and_public_informations, catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_REPUTATION,PlayerReputation> reputation;
     catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> monsters;
@@ -121,6 +122,9 @@ public:
     //events
     const std::vector<Event> &get_events() const;
     const bool &get_monsterRateApplied() const;
+    //levelToXp, first is the xp to pass the level 1
+    const std::vector<uint32_t> &get_levelToXp(const Monster &monster) const;
+    uint16_t indexOfLevelToXp(const std::vector<uint32_t> &curve);
     void set_monsterRateApplied(const bool &v);
 
     //temp
@@ -196,6 +200,7 @@ public:
         buf << events;
         buf << monstersCollision;
         buf << monsterRateApplied;
+        buf << levelToXp;
         #endif
         buf << reputation;
         buf << monsters;
@@ -226,6 +231,7 @@ public:
         buf >> events;
         buf >> monstersCollision;
         buf >> monsterRateApplied;
+        buf >> levelToXp;
         #endif
         buf >> reputation;
         buf >> monsters;

@@ -246,12 +246,12 @@ void BotTargetList::updateFightStats()
 
                 }
                 const CatchChallenger::Monster &monsterGeneralInfo=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster.monster);
-                if(monster.level>=monsterGeneralInfo.level_to_xp.size())
+                if(monster.level>=CatchChallenger::CommonDatapack::commonDatapack.get_levelToXp(monsterGeneralInfo).size())
                 {
-                    std::cerr << "monster.level>=monsterGeneralInfo.level_to_xp.size()" << std::endl;
+                    std::cerr << "monster.level>=CommonDatapack::commonDatapack.get_levelToXp(monsterGeneralInfo).size()" << std::endl;
                     BOT_ABORT();
                 }
-                const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
+                const uint32_t &maxXp=CatchChallenger::CommonDatapack::commonDatapack.get_levelToXp(monsterGeneralInfo).at(monster.level-1);
                 item->setText(tr("%1, level: %2\nHP: %3/%4, XP: %5/%6\n%7")
                         .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).name))
                         .arg(monster.level)

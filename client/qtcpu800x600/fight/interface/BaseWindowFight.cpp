@@ -111,7 +111,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
         ui->monsterDetailsGender->setPixmap(QPixmap());
         ui->monsterDetailsGender->setToolTip(QString());
     }
-    const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
+    const uint32_t &maxXp=CommonDatapack::commonDatapack.get_levelToXp(monsterGeneralInfo).at(monster.level-1);
     ui->monsterDetailsLevel->setText(tr("Level %1").arg(monster.level));
     #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
     if(monster.hp>(stat.hp/2))
@@ -227,7 +227,7 @@ bool BaseWindow::check_monsters()
             error(QStringLiteral("the hp %1 is greater than max hp for the level %2").arg(stat.hp).arg(monster.level).toStdString());
             return false;
         }
-        if(monster.remaining_xp>monsterDef.level_to_xp.at(monster.level-1))
+        if(monster.remaining_xp>CommonDatapack::commonDatapack.get_levelToXp(monsterDef).at(monster.level-1))
         {
             error(QStringLiteral("the hp %1 is greater than max hp for the level %2").arg(monster.remaining_xp).arg(monster.level).toStdString());
             return false;
@@ -599,7 +599,7 @@ void BaseWindow::init_current_monster_display(PlayerMonster *fightMonster)
         ui->progressBarFightBottomHP->repaint();
         ui->labelFightBottomHP->setText(QStringLiteral("%1/%2").arg(fightMonster->hp).arg(fightStat.hp));
         const Monster &monsterGenericInfo=CatchChallenger::CommonDatapack::commonDatapack.get_monster(fightMonster->monster);
-        int level_to_xp=monsterGenericInfo.level_to_xp.at(fightMonster->level-1);
+        int level_to_xp=CommonDatapack::commonDatapack.get_levelToXp(monsterGenericInfo).at(fightMonster->level-1);
         ui->progressBarFightBottomExp->setMaximum(level_to_xp);
         ui->progressBarFightBottomExp->setValue(fightMonster->remaining_xp);
         ui->progressBarFightBottomExp->repaint();
@@ -790,7 +790,7 @@ void BaseWindow::updateCurrentMonsterInformationXp()
     ui->progressBarFightBottomExp->repaint();
     ui->labelFightBottomLevel->setText(tr("Level %1").arg(monster->level));
     const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monster(monster->monster);
-    uint32_t maxXp=monsterInformations.level_to_xp.at(monster->level-1);
+    uint32_t maxXp=CommonDatapack::commonDatapack.get_levelToXp(monsterInformations).at(monster->level-1);
     ui->progressBarFightBottomExp->setMaximum(maxXp);
 }
 
@@ -1598,7 +1598,7 @@ void BaseWindow::displayExperienceGain()
         }
         else
             qDebug() << QStringLiteral("The hp at level change is untouched: %1/%2 for the old level %3").arg(ui->progressBarFightBottomHP->value()).arg(ui->progressBarFightBottomHP->maximum()).arg(currentMonsterLevel);
-        ui->progressBarFightBottomExp->setMaximum(CommonDatapack::commonDatapack.get_monster(currentMonster->monster).level_to_xp.at(currentMonsterLevel-1));
+        ui->progressBarFightBottomExp->setMaximum(CommonDatapack::commonDatapack.get_levelToXp(CommonDatapack::commonDatapack.get_monster(currentMonster->monster)).at(currentMonsterLevel-1));
         ui->progressBarFightBottomExp->setValue(ui->progressBarFightBottomExp->maximum());
         ui->progressBarFightBottomExp->repaint();
         #ifdef CATCHCHALLENGER_HARDENED

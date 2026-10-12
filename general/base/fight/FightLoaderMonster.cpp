@@ -599,6 +599,7 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
                             abort();
                         }
                         #endif
+                        std::vector<uint32_t> curve;
                         int index=0;
                         while(index<CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                         {
@@ -609,21 +610,22 @@ catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::
                             if(tempXp<1)
                                 tempXp=1;
                             /*#ifdef CATCHCHALLENGER_HARDENED
-                            if(id==7 && monster.level_to_xp.size()==20)
+                            if(id==7 && curve.size()==20)
                                 std::cout << "Example level to xp: " << tempXp << std::endl;
                             #endif*/
-                            monster.level_to_xp.push_back(static_cast<uint32_t>(tempXp));
+                            curve.push_back(static_cast<uint32_t>(tempXp));
                             index++;
                         }
+                        monster.level_to_xp_index=CommonDatapack::commonDatapack.indexOfLevelToXp(curve);
                         #ifdef DEBUG_MESSAGE_MONSTER_XP_LOAD
                         index=0;
                         while(index<CATCHCHALLENGER_MONSTER_LEVEL_MAX)
                         {
                             int give_xp=(monster.give_xp*(index+1))/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                            std::cerr << "monster: " << id << ", xp " << index+1 << " for the level: " << monster.level_to_xp.at(index) << ", monster for this level: " << monster.level_to_xp.at(index)/give_xp << std::endl;
+                            std::cerr << "monster: " << id << ", xp " << index+1 << " for the level: " << curve.at(index) << ", monster for this level: " << curve.at(index)/give_xp << std::endl;
                             index++;
                         }
-                        std::cerr << "monster.level_to_xp.size(): " << monster.level_to_xp.size() << std::endl;
+                        std::cerr << "curve.size(): " << curve.size() << std::endl;
                         #endif
 
                         #ifdef CATCHCHALLENGER_SOLO

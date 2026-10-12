@@ -69,6 +69,10 @@ void BaseServer::preload_1_the_data()
         const uint64_t &now = msFrom1970();
 
         *serialBuffer >> GlobalServerData::serverPrivateVariables.randomData;
+        //a cache written by a build with another ring size (the ESP32 flash data comes from
+        //the host stage1): the ring code indexes up to this build's size, regenerate it
+        if(GlobalServerData::serverPrivateVariables.randomData.size()!=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE)
+            preload_4_sync_randomBlock();
         std::cout << "randomData size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
         *serialBuffer >> GlobalServerData::serverPrivateVariables.events;
         std::cout << "events size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();

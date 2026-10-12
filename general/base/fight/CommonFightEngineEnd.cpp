@@ -274,6 +274,7 @@ bool CommonFightEngine::giveXP(int xp)
     bool haveChangeOfLevel=false;
     PlayerMonster * monster=getCurrentMonster();
     const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monster(monster->monster);
+    const std::vector<uint32_t> &levelToXp=CommonDatapack::commonDatapack.get_levelToXp(monsterInformations);
     uint32_t remaining_xp=monster->remaining_xp;
     uint8_t level=monster->level;
     if(level>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
@@ -281,14 +282,14 @@ bool CommonFightEngine::giveXP(int xp)
         remaining_xp=0;
         xp=0;
     }
-    while((remaining_xp+xp)>=monsterInformations.level_to_xp.at(level-1))
+    while((remaining_xp+xp)>=levelToXp.at(level-1))
     {
         #ifdef CATCHCHALLENGER_DEBUG_FIGHT
-        messageFightEngine("Level up because: ("+std::to_string(remaining_xp)+"+"+std::to_string(xp)+")>=monsterInformations.level_to_xp.at("+std::to_string(level)+"-1): "+std::to_string(monsterInformations.level_to_xp.at(level-1))+"");
+        messageFightEngine("Level up because: ("+std::to_string(remaining_xp)+"+"+std::to_string(xp)+")>=levelToXp.at("+std::to_string(level)+"-1): "+std::to_string(levelToXp.at(level-1))+"");
         #endif
         const uint32_t &old_max_hp=getStat(monsterInformations,level).hp;
         const uint32_t &new_max_hp=getStat(monsterInformations,level+1).hp;
-        xp-=monsterInformations.level_to_xp.at(level-1)-remaining_xp;
+        xp-=levelToXp.at(level-1)-remaining_xp;
         remaining_xp=0;
         level++;
         levelUp(level,getCurrentSelectedMonsterNumber());
@@ -310,7 +311,7 @@ bool CommonFightEngine::giveXP(int xp)
         monster->level=level;
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT
     else
-        messageFightEngine("Not level up: ("+std::to_string(remaining_xp)+")<monsterInformations.level_to_xp.at("+std::to_string(level)+"-1): "+std::to_string(monsterInformations.level_to_xp.at(level-1))+"");
+        messageFightEngine("Not level up: ("+std::to_string(remaining_xp)+")<levelToXp.at("+std::to_string(level)+"-1): "+std::to_string(levelToXp.at(level-1))+"");
     #endif
 
     return haveChangeOfLevel;

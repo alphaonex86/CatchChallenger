@@ -145,14 +145,14 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
         playerMonster.remaining_xp=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(6),&ok);
         if(ok)
         {
-            if(playerMonster.level>monster.level_to_xp.size())
+            if(playerMonster.level>CommonDatapack::commonDatapack.get_levelToXp(monster).size())
             {
-                std::cerr << "monster level: "+std::to_string(playerMonster.level)+" greater than loaded level "+std::to_string(monster.level_to_xp.size()) << std::endl;
+                std::cerr << "monster level: "+std::to_string(playerMonster.level)+" greater than loaded level "+std::to_string(CommonDatapack::commonDatapack.get_levelToXp(monster).size()) << std::endl;
                 ok=false;
             }
-            else if(playerMonster.remaining_xp>monster.level_to_xp.at(playerMonster.level-1))
+            else if(playerMonster.remaining_xp>CommonDatapack::commonDatapack.get_levelToXp(monster).at(playerMonster.level-1))
             {
-                std::cerr << "monster xp: "+std::to_string(playerMonster.remaining_xp)+" greater than "+std::to_string(monster.level_to_xp.at(playerMonster.level-1))+", truncated" << std::endl;
+                std::cerr << "monster xp: "+std::to_string(playerMonster.remaining_xp)+" greater than "+std::to_string(CommonDatapack::commonDatapack.get_levelToXp(monster).at(playerMonster.level-1))+", truncated" << std::endl;
                 playerMonster.remaining_xp=0;
             }
         }
@@ -476,14 +476,20 @@ void Client::generateRandomNumber()
 
     //randomData is a ring: the client queues every byte in order and getOneSeed() reads
     //them back from randomIndex, so the block must continue exactly where the last one ended
+    //(wraps more than once when the ring is smaller than a block, e.g. 128B on ESP32)
     const char * const randomData=GlobalServerData::serverPrivateVariables.randomData.data();
-    const uint32_t start=(randomIndex+randomSize)%CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE;
-    uint32_t beforeWrap=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE-start;
-    if(beforeWrap>CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE)
-        beforeWrap=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
-    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,randomData+start,beforeWrap);
-    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput+beforeWrap,randomData,CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE-beforeWrap);
-    posOutput+=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
+    uint32_t ringPos=(randomIndex+randomSize)%CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE;
+    uint32_t remaining=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
+    while(remaining>0)
+    {
+        uint32_t chunk=CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE-ringPos;
+        if(chunk>remaining)
+            chunk=remaining;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,randomData+ringPos,chunk);
+        posOutput+=chunk;
+        remaining-=chunk;
+        ringPos=0;
+    }
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     randomSize+=CATCHCHALLENGER_SERVER_RANDOM_LIST_SIZE;
 }
