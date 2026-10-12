@@ -1,0 +1,198 @@
+#!/usr/bin/env python3
+"""benchmarkcontainers.py -- std::vector vs std::list vs std::deque on real data.
+
+Builds benchmark/benchmarkcontainers/ (benchmark_containers) and runs it
+RUN_REPEATS times on a datapack read with the production loader: the datapack
+file list, the items, the monsters, and the small per-player FIFO the server
+Client keeps (std::queue = std::deque by default). Per dataset and container:
+build time, read-only scan rate, heap bytes and heap blocks of one built
+container; per FIFO depth: ops/s, allocations per op and what an EMPTY
+container already holds. The median of the runs is printed as a table.
+
+  python3 benchmarkcontainers.py [--datapack DIR] [--ms WINDOW] [--comment ...]
+
+Without --datapack it measures the default datapack and records the per-node
+history like every benchmark. With --datapack the numbers are printed only:
+nothing about that datapack (path, name, numbers) is written anywhere.
+Host only for now (no fleet/T2100/ESP32 dispatch yet).
+"""
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test"))
+
+import benchmark_helpers as bh
+import benchmark_microbench as bmicro
+import history_recorder as hr
+
+NAME = "benchmarkcontainers"
+DEFAULT_DATAPACK = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
+RUN_REPEATS = 3
+WINDOW_MS = 200
+RUN_TIMEOUT = 900
+
+try:
+    import test_config
+    BUILD_ROOT = test_config.TMPFS_BUILD_ROOT
+except Exception:
+    BUILD_ROOT = "/tmp/cc-build"
+SRC_DIR = os.path.join(bh.REPO_ROOT, "benchmark", "benchmarkcontainers")
+BUILD_DIR = os.path.join(BUILD_ROOT, "benchmark", NAME)
+BIN = os.path.join(BUILD_DIR, "benchmark_containers")
+CONTAINERS = ("vector", "vector_reserved", "list", "deque")
+FIFO_CONTAINERS = ("vector", "list", "deque")
+
+# metric suffix -> (unit, better)
+UNITS = {
+    "build_ns_per_elem": ("ns", "lower"),
+    "scan_elems_per_s":  ("1/s", "higher"),
+    "heap_bytes":        ("B", "lower"),
+    "heap_blocks":       ("blocks", "lower"),
+    "cpu_percent":       ("%", "lower"),
+    "ops_per_s":         ("1/s", "higher"),
+    "allocs_per_op":     ("allocs", "lower"),
+    "empty_heap_bytes":  ("B", "lower"),
+}
+
+
+def build():
+    cfg = ["cmake", "-S", SRC_DIR, "-B", BUILD_DIR, "-DCMAKE_BUILD_TYPE=Release"]
+    if shutil.which("ninja"):
+        cfg += ["-G", "Ninja"]
+    bh.drop_stale_cmake_cache(BUILD_DIR, SRC_DIR)
+    for stage, cmd in (("cmake configure", cfg),
+                       ("cmake build", ["cmake", "--build", BUILD_DIR, "-j", str(os.cpu_count() or 1)])):
+        rc, sout, serr, _ = bh.run_capture(cmd, timeout=1800)
+        if rc != 0:
+            bh.print_local_build_error(NAME, stage, sout, serr)
+            return False
+    return os.path.isfile(BIN)
+
+
+def run_once(datapack, window_ms):
+    """One run -> ({key: value}, error)."""
+    try:
+        proc = subprocess.run([BIN, "--datapack", datapack, "--ms", str(window_ms)],
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=RUN_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        return None, f"timeout after {RUN_TIMEOUT}s"
+    values = {}
+    for line in proc.stdout.decode(errors="replace").splitlines():
+        if line.startswith("BENCH ") and "=" in line:
+            key, value = line[6:].split("=", 1)
+            try:
+                values[key] = float(value)
+            except ValueError:
+                pass
+    if proc.returncode != 0 or values.get("done") != 1.0:
+        return None, f"rc={proc.returncode}, no 'BENCH done' line:\n" + proc.stderr.decode(errors="replace")[-2000:]
+    return values, None
+
+
+def metric_block(samples, suffix):
+    median, stddev = bh.stats_of(samples)
+    unit, better = UNITS[suffix]
+    return {"value": median, "median": median, "stddev": stddev, "samples": samples,
+            "unit": unit, "better": better}
+
+
+def print_tables(median):
+    def fmt(value):
+        if value is None:
+            return "-"
+        if value >= 1e6:
+            return f"{value / 1e6:.1f}M"
+        if value >= 1e4:
+            return f"{value / 1e3:.1f}k"
+        return f"{value:.3g}"
+    for dataset in ("files", "items", "monsters"):
+        print(f"\n{dataset}: {int(median.get(dataset + '.elements', 0))} elements "
+              f"of {int(median.get(dataset + '.sizeof_elem', 0))} B")
+        columns = ("build_ns_per_elem", "scan_elems_per_s", "heap_bytes", "heap_blocks")
+        print(f"  {'container':16s}" + "".join(f"{c:>20s}" for c in columns) + f"{'scan vs vector':>16s}")
+        base = median.get(f"{dataset}.vector_reserved.scan_elems_per_s")
+        for container in CONTAINERS:
+            row = [median.get(f"{dataset}.{container}.{c}") for c in columns]
+            scan = median.get(f"{dataset}.{container}.scan_elems_per_s")
+            ratio = f"{scan / base:.2f}x" if scan and base else "-"
+            print(f"  {container:16s}" + "".join(f"{fmt(v):>20s}" for v in row) + f"{ratio:>16s}")
+    for depth in (1, 16):
+        print(f"\nfifo depth {depth} (the server Client's per-player queues):")
+        columns = ("ops_per_s", "allocs_per_op", "empty_heap_bytes")
+        print(f"  {'container':16s}" + "".join(f"{c:>20s}" for c in columns))
+        for container in FIFO_CONTAINERS:
+            row = [median.get(f"fifo{depth}.{container}.{c}") for c in columns]
+            print(f"  {container:16s}" + "".join(f"{fmt(v):>20s}" for v in row))
+
+
+def main():
+    pre = argparse.ArgumentParser(add_help=False)
+    pre.add_argument("--datapack", default=None)
+    pre.add_argument("--ms", type=int, default=WINDOW_MS)
+    own, rest = pre.parse_known_args()
+    args = bh.parse_bench_args(rest)
+    external = own.datapack is not None
+    datapack = os.path.abspath(own.datapack) if external else DEFAULT_DATAPACK
+    if not os.path.isdir(datapack):
+        print("datapack directory not found" + ("" if external else f": {datapack}"))
+        return 2
+    if bh.acquire_singleton_lock(NAME) is None:
+        return 3
+    bmicro.ensure_missing()
+    if not build():
+        return 2
+
+    progress = bh.Progress(RUN_REPEATS, NAME)
+    batch_id = hr.new_batch_id()
+    started_utc = hr.iso_now()
+    runs = []
+    while len(runs) < RUN_REPEATS:
+        values, err = run_once(datapack, own.ms)
+        if values is None:
+            progress.emit("rusage", "no", "local", "FAIL", err.splitlines()[0][:120])
+            bh.print_node_error(NAME, "local", "FAIL", err)
+            return 1
+        runs.append(values)
+        progress.emit("rusage", "no", "local", "PASS")
+    ended_utc = hr.iso_now()
+
+    keys = sorted(set(k for run in runs for k in run))
+    median = {k: bh.stats_of([run.get(k) for run in runs])[0] for k in keys}
+    print_tables(median)
+
+    if external:
+        print("\n(--datapack given: numbers printed only, nothing recorded)")
+        return 0
+
+    metrics = {}
+    slices = {}
+    for key in keys:
+        parts = key.split(".")
+        if len(parts) == 3 and parts[2] in UNITS:
+            block = metric_block([run.get(key) for run in runs], parts[2])
+            metrics[key] = block
+            slices.setdefault(f"{parts[0]}-{parts[1]}", {})[parts[2]] = block
+    pr = hr.PlatformRecord(NAME, batch_id, "local", runner=hr.local_runner,
+                           arch_hint=bh.host_arch()).collect(cc_binary_path=BUILD_DIR,
+                                                             datapack_path=datapack)
+    pr.add_result("rusage", metrics, status="PASS")
+    for label, block in sorted(slices.items()):
+        pr.add_subbenchmark("rusage", label, block)
+    out = pr.write(commit=bh.git_sha(), started_utc=started_utc, ended_utc=ended_utc,
+                   compile_flags=["-O2", "-DCATCHCHALLENGER_CLIENT", "-DCATCHCHALLENGER_DB_FILE"],
+                   simd_tier="generic", harness_version=hr.harness_version(),
+                   comment=args.comment)
+    if out is not None:
+        bh.chatter(f"[history] {out}")
+    import history_series
+    history_series.main()
+    bh.regenerate_charts(NAME)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

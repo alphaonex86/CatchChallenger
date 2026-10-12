@@ -983,6 +983,13 @@ players). History before that date is not comparable. Benchmark builds now count
   workspace exists to *measure* prod code from outside; it doesn't
   ship.
 
+## `benchmarkcontainers.py` -- std::vector / list / deque on real datapack data
+
+Decision tool, not in `all.sh`, host only. Production loader reads the datapack (file list, items,
+monsters) + the Client's per-player FIFO pattern; prints build ns/elem, read-only scan rate, heap
+bytes/blocks, FIFO ops/s and empty-container heap. `--datapack DIR` measures another datapack and
+records NOTHING (no path, no name, no number); without it the default datapack's run is recorded.
+
 ## `benchmarkmapmanager2.py` -- two-stage, per-node generated replay
 
 Measures the THREE `mapVisibility/minimize` strategies on the same machine, in
