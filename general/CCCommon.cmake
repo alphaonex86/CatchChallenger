@@ -142,8 +142,12 @@ endif()
 # Common compile flags shared by every executable. catchchallenger_common_flags
 # is an INTERFACE library — link it into your exec to inherit the flags.
 add_library(catchchallenger_common_flags INTERFACE)
+# A libc built without SSP (e.g. a small uClibc-ng) has no __stack_chk_guard.
+option(CATCHCHALLENGER_NO_STACK_PROTECTOR "libc without stack-protector support" OFF)
+if(NOT CATCHCHALLENGER_NO_STACK_PROTECTOR)
+    target_compile_options(catchchallenger_common_flags INTERFACE -fstack-protector-all)
+endif()
 target_compile_options(catchchallenger_common_flags INTERFACE
-    -fstack-protector-all
     -fno-exceptions
     -Wall
     -Wextra
