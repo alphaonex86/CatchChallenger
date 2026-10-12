@@ -1,6 +1,8 @@
 #ifndef CATCHCHALLENGER_VARIABLESERVER_H
 #define CATCHCHALLENGER_VARIABLESERVER_H
 
+#include "../../general/base/GeneralVariable.hpp"
+
 /*
 #define DEBUG_MESSAGE_CLIENT_SQL
 #define DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
@@ -46,8 +48,8 @@
 
 //put for map, add for local thread
 //put this size into the options
-#if defined(CC_TARGET_ESP32) || defined(__i486__)
-//small-RAM targets: the ring repeats sooner, a few KB of heap back
+#ifdef CATCHCHALLENGER_LOWRAM
+//the ring repeats sooner, a few KB of heap back
 #define CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE 128
 #else
 #define CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE 4096

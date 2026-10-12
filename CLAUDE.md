@@ -178,6 +178,7 @@ DB: CATCHCHALLENGER_DB_MYSQL/POSTGRESQL/SQLITE/FILE/BLACKHOLE
 Server mode: CATCHCHALLENGER_CLASS_ALLINONESERVER/ONLYGAMESERVER/LOGIN/MASTER/GATEWAY
 EventLoop: CATCHCHALLENGER_SERVER
 Cache: CATCHCHALLENGER_CACHE_HPS, CATCHCHALLENGER_NOXML
+Profile: CATCHCHALLENGER_LOWRAM (auto on ESP32/i486, <8 MB RAM) picks the lower-RAM option where RAM and speed trade off; other builds pick the fastest (measure with benchmark/benchmarkcontainers, on the target arch)
 
 # Source-control rhythm
 
