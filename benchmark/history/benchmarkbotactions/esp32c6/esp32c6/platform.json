@@ -1,0 +1,1 @@
+{"arch":"riscv32","arch_emulated":false,"compiler":"riscv32-esp-elf-gcc","cpu_cores":1,"cpu_mhz":160.0,"cpu_model":"Espressif ESP32-C6 (RISC-V single-core HP)","disk_kind":"flash","libc":"newlib","net_card":"ESP32-C6 WiFi 6 (802.11ax)","net_link":"wifi","ram_type":"SRAM 512KiB HP + 16KiB LP (no DRAM)","virt_kind":"bare-metal","virt_type":"none"}

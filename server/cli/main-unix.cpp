@@ -142,6 +142,9 @@ void signal_callback_handler(int signum){
         printf("Caught signal SIGPIPE %d\n",signum);
 }
 
+#if defined(CATCHCHALLENGER_BENCHMARK) && defined(CC_TARGET_ESP32)
+#include "esp_heap_caps.h"
+#endif
 #ifdef CATCHCHALLENGER_BENCHMARK
 //Benchmark-only counters. Compiled out of production builds entirely
 //(no counters, no per-event clock read, no handler, zero cost), see
@@ -203,6 +206,11 @@ static void bench_dump_all()
     bench_write_kv("BENCH loop_busy_ticks",bench_loop.busy_ticks);
     bench_write_kv("BENCH loop_ticks_per_us",tpu);
     bench_write_kv("BENCH packets_in",bench_packets_in);
+    #ifdef CC_TARGET_ESP32
+    //the board's memory: free heap now and its lowest point since boot
+    bench_write_kv("BENCH heap_free",heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    bench_write_kv("BENCH heap_min",heap_caps_get_minimum_free_size(MALLOC_CAP_8BIT));
+    #endif
     int i=0;
     while(i<BENCH_LAT_BUCKETS)
     {

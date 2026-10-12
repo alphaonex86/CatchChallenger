@@ -92,6 +92,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test"))
 
 import benchmark_helpers as bh
+import benchmark_microbench as bmicro
 import history_recorder as hr
 import benchmark_remote as br
 
@@ -1367,15 +1368,21 @@ def _run_once_on_exec(exec_node, bots, server_pid):
 
 
 def cell_run(bin_path, host, port, bots, iface, server_pid=None,
-             exec_node=None, datapack=None):
+             exec_node=None, datapack=None, wait_ready_s=0):
     """RUN_REPEATS passes (drop first as warmup). Returns
     (per-metric {name -> (median, stddev)}, None) for one (bots) cell, or
     (None, reason) on failure so the caller can surface WHY it failed.
 
     `exec_node` runs the client on that node next to the server (every remote
-    row); None runs it locally against a local server (the host row)."""
+    row); None runs it locally against a local server (the host row).
+    `wait_ready_s` > 0 (a board over WiFi): before each pass, wait up to that
+    long for the server to accept a TCP connection again -- right after the
+    previous pass's clients leave, the board's link can be briefly gone (the
+    host's ARP entry FAILS) and the next pass's connects would all fail."""
     samples = []
     for i in range(RUN_REPEATS):
+        if wait_ready_s > 0 and not _wait_port(host, port, wait_ready_s):
+            return None, f"{host}:{port} not reachable for {wait_ready_s} s before pass {i}"
         if exec_node is not None:
             s, err = _run_once_on_exec(exec_node, bots, server_pid)
         else:
@@ -1802,24 +1809,220 @@ def _botactions_remote_body(exec_node, compile_node, label, runnable,
         # (cumulative over every slice: the dump happens once, at exit). Never
         # report req/s without its tail -- a throughput win that inflates p99 is
         # a tick-stability regression on the constrained targets.
-        srv_flat = {}
         rc_log, srv_text, _e = br.ssh_run(
             eu, eh, ep, f"cat {shlex.quote(ewd + '/server.log')} 2>/dev/null",
             timeout=60)
-        if rc_log == 0 and srv_text:
-            packets = _bench_packets_in_from_text(srv_text)
-            if packets is not None:
-                srv_flat["bench_packets_in"] = (packets, 0.0)
-            for name, value in _bench_latency_from_text(srv_text).items():
-                srv_flat[name] = (value, 0.0)
-            for name, block in bh.parse_loop_selfprobe(srv_text).items():
-                srv_flat[name] = (block["value"], 0.0)
-        if srv_flat:
-            per_tool[label]["server-bench"] = {
-                "status": "PASS", "metrics": _flat_to_metric_block(srv_flat)}
-        else:
-            print(_color(bh.C_YELLOW, f"[server-bench] {label}: no BENCH dump in "
-                                      f"server.log (killed before it could dump?)"))
+        _record_server_bench(label, srv_text if rc_log == 0 else "", per_tool)
+
+
+def _record_server_bench(label, server_log, per_tool):
+    """The server's own work + latency tail from the BENCH dump it writes on
+    exit (cumulative over every slice of the node's load run)."""
+    srv_flat = {}
+    packets = _bench_packets_in_from_text(server_log)
+    if packets is not None:
+        srv_flat["bench_packets_in"] = (packets, 0.0)
+    for name, value in _bench_latency_from_text(server_log).items():
+        srv_flat[name] = (value, 0.0)
+    for name, block in bh.parse_loop_selfprobe(server_log).items():
+        srv_flat[name] = (block["value"], 0.0)
+    # ESP32 benchmark firmware: free heap at the last dump and its low point
+    for key in ("heap_free", "heap_min"):
+        found = re.findall(r"BENCH %s=(\d+)" % key, server_log)
+        if found:
+            srv_flat[key + "_kb"] = (int(found[-1]) // 1024, 0.0)
+    if srv_flat:
+        per_tool[label]["server-bench"] = {
+            "status": "PASS", "metrics": _flat_to_metric_block(srv_flat)}
+    else:
+        print(_color(bh.C_YELLOW, f"[server-bench] {label}: no BENCH dump in "
+                                  f"server.log (killed before it could dump?)"))
+
+
+# Toshiba T2100 (i486 laptop over SLIP, comparison-only, see benchmark_t2100.py):
+# no perf. Measured 2026-10-11: with 30 bots the client outlasts its 480 s run
+# (24/30 seated, 0 survivors, 13.8 req/s), so the crowd stops at 8.
+T2100_PROFILERS = ["rusage", "binary-size"]
+T2100_BOT_COUNTS = [2, 8]
+T2100_READY_TIMEOUT = 300   # clientlatency measured datapack load + bind = 52 s
+
+
+def measure_t2100(progress, per_tool, per_subbench):
+    """Cross-build the server and bot-bench here, push both with the datapack
+    over the SLIP link, and run the client on the laptop against its own
+    server, like every remote row. Comparison-only: the caller keeps this
+    label out of the decision record."""
+    import benchmark_t2100 as t2100
+    label = t2100.T2100_NODE["label"]
+    ex = t2100.exec_node()
+    per_tool[label], per_subbench[label] = {}, {}
+    cells = {"rusage": len(T2100_BOT_COUNTS), "binary-size": 1}
+
+    def finish(status, reason):
+        bh.print_node_error("benchmarkbotactions", label, status, reason)
+        for prof in T2100_PROFILERS:
+            if prof not in per_tool[label]:
+                for _ in range(cells[prof]):
+                    progress.emit(prof, "no", label, status=status, extra=reason[:80])
+                per_tool[label][prof] = {"status": status, "metrics": {}}
+
+    srv, err = t2100.cross_build("server/cli", "build-botactions-server", SRV_BIN_NAME,
+                                 dict(SERVER_RAM_DB_DEFS))
+    bot = None
+    if srv is not None:
+        bot, err = t2100.cross_build("tools/bot-bench", "build-botbench", BOT_BIN_NAME,
+                                     {"CATCHCHALLENGER_BENCHMARK": "ON"})
+    if bot is None:
+        return finish("SKIP", "cross-build: " + err)
+    per_tool[label]["binary-size"] = {"status": "PASS", "metrics": _flat_to_metric_block(
+        {"binary_size_bytes": (os.path.getsize(bot), 0.0)})}
+    progress.emit("binary-size", "no", label, status="PASS")
+
+    maincode = _detect_maincode(DATAPACK_PATH)
+    props = os.path.join(t2100.T2100_PREFIX, "server-properties.xml")
+    with open(props, "w") as f:
+        f.write(br._server_properties_xml(maincode, SERVER_PORT))
+    ok, detail = t2100.push([srv, bot, props])
+    if ok:
+        ok, detail = t2100.push_datapack(DATAPACK_PATH, maincode)
+    if not ok:
+        return finish("SKIP", detail)
+    pid, reason = t2100.start_server(SRV_BIN_NAME)
+    if pid is None:
+        return finish("SKIP", f"server start failed: {reason}")
+    try:
+        if not t2100.wait_bound(SERVER_PORT, T2100_READY_TIMEOUT):
+            _, tail, _ = t2100.ssh(f"tail -c 1500 {ex['work_dir']}/server.log")
+            return finish("SKIP", f"server did not bind in {T2100_READY_TIMEOUT} s:\n{tail}")
+        flat, status = {}, "PASS"
+        for bots in T2100_BOT_COUNTS:
+            cell, cell_err = cell_run(None, "127.0.0.1", SERVER_PORT, bots, iface=None,
+                                      server_pid=int(pid), exec_node=ex)
+            if cell is None:
+                status = "FAIL"
+                bh.print_node_error("benchmarkbotactions", label, "FAIL", cell_err)
+                progress.emit("rusage", "no", label, status="FAIL",
+                              extra=f"bots={bots}: {cell_err[:60]}")
+                continue
+            flat.update({f"b{bots}_{name}": value for name, value in cell.items()})
+            per_subbench[label].setdefault("rusage", {})[f"{bots}-bots"] = _flat_to_metric_block(cell)
+            progress.emit("rusage", "no", label, status="PASS", extra=f"bots={bots}")
+        per_tool[label]["rusage"] = {"status": status,
+                                     "metrics": _flat_to_metric_block(flat) if status == "PASS" else {}}
+    finally:
+        t2100.stop_server(pid)
+    _, server_log, _ = t2100.ssh(f"cat {ex['work_dir']}/server.log", timeout=120)
+    _record_server_bench(label, server_log, per_tool)
+
+
+# ESP32 boards (comparison-only, benchmark_esp32.BOARDS): the load client runs
+# on the HOST over WiFi -- the board cannot host it, and its bandwidth is not
+# what limits it (benchmark/CLAUDE.md). The server side comes from the board:
+# the benchmark firmware dumps the BenchProbe event-loop counters to the
+# console every 60 s, and loop_busy_pct is the server's CPU%. Same crowd as the
+# T2100 so the constrained nodes line up.
+ESP32_BOT_COUNTS = T2100_BOT_COUNTS
+ESP32_GAME_PORT = 42498
+ESP32_DUMP_WAIT_S = 75     # the probe dumps every 60 s
+
+
+def measure_esp32(node, bin_path, progress, per_tool, per_subbench):
+    """Flash the board's benchmark server firmware, run the cells from the host
+    against it, and record the client metrics plus the board's own probe."""
+    import threading
+    import benchmark_esp32 as esp
+    label = node["label"]
+    per_tool[label], per_subbench[label] = {}, {}
+
+    def skip(reason):
+        bh.print_node_error("benchmarkbotactions", label, "SKIP", reason)
+        for _ in ESP32_BOT_COUNTS:
+            progress.emit("rusage", "no", label, status="SKIP", extra=reason[:80])
+        per_tool[label]["rusage"] = {"status": "SKIP", "metrics": {}}
+
+    if node["tty"] is None:
+        return skip(node["skip_reason"])
+    tc_ok, tc_detail = esp.toolchain_status()
+    if not tc_ok:
+        return skip("esp-idf absent: " + tc_detail)
+    conf = esp.load_config()
+    ip_key = "STATIC_IP" if node["target"] == "esp32" else node["target"].upper() + "_STATIC_IP"
+    host = conf.get(ip_key)
+    if not host:
+        return skip(f"no address for {label}: add {ip_key} to {esp.CONF_PATH}")
+    ok, detail = esp.stage1_emit(verbose=False, benchmark=True)
+    if ok:
+        ok, detail = esp.build_firmware(conf, verbose=False, target=node["target"], benchmark=True)
+    if ok:
+        ok, detail = esp.flash(node["tty"], verbose=False, target=node["target"], benchmark=True)
+    if not ok:
+        return skip(detail)
+    # The console is read for the whole run, without a reset pulse: the probe
+    # dump lands there.
+    chunks = []
+    stop = threading.Event()
+    reader = threading.Thread(target=esp.read_native,
+                              args=(esp.bypath_of(node["tty"]), 3600),
+                              kwargs={"stop": stop, "sink": chunks})
+    reader.start()
+    try:
+        deadline = time.monotonic() + 90
+        bound = False
+        while not bound and time.monotonic() < deadline:
+            bound = _port_open(host, ESP32_GAME_PORT)
+            if not bound:
+                time.sleep(2)
+        if not bound:
+            return skip(f"{host}:{ESP32_GAME_PORT} never answered after the flash")
+        flat, status = {}, "PASS"
+        for bots in ESP32_BOT_COUNTS:
+            cell, cell_err = cell_run(bin_path, host, ESP32_GAME_PORT, bots, iface=None,
+                                      datapack=esp.STAGE_DATAPACK, wait_ready_s=60)
+            if cell is None:
+                status = "FAIL"
+                bh.print_node_error("benchmarkbotactions", label, "FAIL", cell_err)
+                progress.emit("rusage", "no", label, status="FAIL",
+                              extra=f"bots={bots}: {cell_err[:60]}")
+                continue
+            flat.update({f"b{bots}_{name}": value for name, value in cell.items()})
+            per_subbench[label].setdefault("rusage", {})[f"{bots}-bots"] = _flat_to_metric_block(cell)
+            progress.emit("rusage", "no", label, status="PASS", extra=f"bots={bots}")
+        per_tool[label]["rusage"] = {"status": status,
+                                     "metrics": _flat_to_metric_block(flat) if status == "PASS" else {}}
+        # the first dump after the load covers all of it (cumulative counters)
+        mark = len(chunks)
+        wait_end = time.monotonic() + ESP32_DUMP_WAIT_S
+        while "BENCH loop_wall_us" not in "".join(chunks[mark:]) and time.monotonic() < wait_end:
+            time.sleep(1)
+    finally:
+        stop.set()
+        reader.join()
+    console = "".join(chunks)
+    if per_tool[label]["rusage"]["status"] != "PASS" or "BENCH loop_wall_us" not in console:
+        # what the board said: a panic, a reboot, a WiFi drop explains a failed cell
+        keep = [line for line in re.sub(r"\x1b\[[0-9;]*m", "", console).splitlines()
+                if line.strip() and "wifi:" not in line]
+        bh.print_node_error("benchmarkbotactions", label, "INFO",
+                            "board console (last 40 lines):\n" + "\n".join(keep[-40:]))
+    _record_server_bench(label, console, per_tool)
+
+
+def _wait_port(host, port, secs):
+    deadline = time.monotonic() + secs
+    while time.monotonic() < deadline:
+        if _port_open(host, port):
+            return True
+        time.sleep(1)
+    return False
+
+
+def _port_open(host, port):
+    import socket
+    try:
+        socket.create_connection((host, port), timeout=2).close()
+        return True
+    except OSError:
+        return False
 
 
 def main():
@@ -1827,6 +2030,7 @@ def main():
     bh.set_node_filter(args.node)
     if bh.acquire_singleton_lock("benchmarkbotactions") is None:
         return 3
+    bmicro.ensure_missing()   # before any build or measurement, once this run owns its lock
     br.set_benchmark_label("benchmarkbotactions")
     # Network benchmark: binds a fixed server port + drives the NIC/loopback,
     # so it must run serially against every other network benchmark (waits
@@ -1902,6 +2106,11 @@ def _run_with_server(bin_path, server_proc, comment,
     local_node = [{"label": "local", "arch": arch}] if bh.node_allowed("local", arch) else []
     nodes = local_node + bh.benchmark_exec_nodes()
     all_profilers = ["rusage", "binary-size", "perf-stat"]
+    import benchmark_t2100 as t2100
+    t2100_nodes = [t2100.T2100_NODE] if bh.node_allowed(t2100.T2100_NODE["label"],
+                                                        t2100.T2100_NODE["arch"]) else []
+    import benchmark_esp32
+    esp32_nodes = benchmark_esp32.benchmark_nodes()
 
     # Pre-resolve per-node profiler availability against the persisted
     # benchmark_disabled_tools list + a live probe.
@@ -1931,6 +2140,8 @@ def _run_with_server(bin_path, server_proc, comment,
 
     total = sum(len(node_profilers[node["label"]]) + max(len(BOT_COUNTS) - 1, 0)
                 for node in nodes)
+    total += len(t2100_nodes) * (len(T2100_BOT_COUNTS) + 1)
+    total += len(esp32_nodes) * len(ESP32_BOT_COUNTS)
     progress = bh.Progress(total, "benchmarkbotactions")
     deadline = bh.FleetDeadline()
 
@@ -2104,6 +2315,11 @@ def _run_with_server(bin_path, server_proc, comment,
             per_subbench.setdefault(label, {})["server-compression"] = comp_slices
 
     # Cross-platform candidate record.
+    for node in t2100_nodes:
+        measure_t2100(progress, per_tool, per_subbench)
+    for node in esp32_nodes:
+        measure_esp32(node, bin_path, progress, per_tool, per_subbench)
+
     sha = bh.git_sha()
     ended_utc = hr.iso_now()
     rec = {
@@ -2153,11 +2369,13 @@ def _run_with_server(bin_path, server_proc, comment,
             print(_color(bh.C_GREEN, f"[champion] promoted -> {ch_p}"))
 
     # Per-platform history.
-    for node in nodes:
+    for node in nodes + t2100_nodes:
         if node["label"] not in per_tool:
             continue
         if node["label"] == "local":
             runner = hr.local_runner
+        elif node.get("t2100"):
+            runner = t2100.runner
         else:
             runner = hr.make_ssh_runner(node.get("ssh_host"),
                                         node.get("ssh_user"),
@@ -2174,6 +2392,8 @@ def _run_with_server(bin_path, server_proc, comment,
                                    datapack_path=dp_path,
                                    sensor_baseline=(sensor_pre
                                        if node["label"] == "local" else None))
+        if node.get("t2100"):
+            pr.platform.update(t2100.platform_fields())
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
         # Per-workload sub-benchmark slices (cpu_percent + wall_s + ...).
@@ -2182,10 +2402,31 @@ def _run_with_server(bin_path, server_proc, comment,
                 pr.add_subbenchmark(tool, slabel, smetrics)
         out_p = pr.write(commit=sha, started_utc=started_utc,
                          ended_utc=ended_utc,
-                         compile_flags=compile_flags
-                             + list(br.exec_node_flag_defs(node).values()),
+                         compile_flags=(t2100.COMPILE_FLAGS if node.get("t2100")
+                             else compile_flags
+                             + list(br.exec_node_flag_defs(node).values())),
                          simd_tier="generic",
                          harness_version=hr.harness_version(),
+                         comment=comment)
+        if out_p is not None:
+            bh.chatter(_color(bh.C_CYAN, f"[history] {out_p}"))
+
+    # ESP32 boards: no shell, so collect() cannot run -- the board's fixed
+    # spec, reached over WiFi. (pr.write records nothing when all is SKIP.)
+    for node in esp32_nodes:
+        import benchmark_esp32 as esp
+        pr = hr.PlatformRecord("benchmarkbotactions", batch_id, node["label"],
+                               runner=None, arch_hint=node.get("arch"))
+        pr.platform.update(esp.esp32_platform_fields(node["target"]))
+        pr.platform.update({"net_link": "wifi", "net_link_detail": None})
+        for tool, blk in per_tool.get(node["label"], {}).items():
+            pr.add_result(tool, blk["metrics"], status=blk["status"])
+        for tool, slices in per_subbench.get(node["label"], {}).items():
+            for slabel, smetrics in slices.items():
+                pr.add_subbenchmark(tool, slabel, smetrics)
+        out_p = pr.write(commit=sha, started_utc=started_utc, ended_utc=ended_utc,
+                         compile_flags=["-Os", "-DCATCHCHALLENGER_BENCHMARK", "-DCC_TARGET_ESP32"],
+                         simd_tier="generic", harness_version=hr.harness_version(),
                          comment=comment)
         if out_p is not None:
             bh.chatter(_color(bh.C_CYAN, f"[history] {out_p}"))

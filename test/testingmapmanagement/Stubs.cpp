@@ -17,6 +17,7 @@ _ServerSettings GlobalServerData::serverSettings{};
 
 Client::Client() :
     mapIndex(0),
+    sentBytes(0),
     pingQueryCounter(0),
     player_id_(0),
     x_(0),
@@ -31,9 +32,14 @@ Client::Client() :
 
 bool Client::sendRawBlock(const char * const data, const unsigned int &size)
 {
+    sentBytes += size;
+#ifndef CATCHCHALLENGER_BENCHMARK
     CapturedBlock b;
     b.bytes.assign(data, data + size);
     sentBlocks.push_back(std::move(b));
+#else
+    (void)data;
+#endif
     return true;
 }
 

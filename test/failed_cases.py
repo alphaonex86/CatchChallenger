@@ -163,6 +163,30 @@ def save(script_name, failures):
             raise
 
 
+def forget(script_name):
+    """Drop `script_name`'s entry so its next run executes every test again
+    (after a change its cached "all passed" no longer proves anything).
+    Other scripts' entries are kept; same lock + atomic replace as save()."""
+    with _Locked():
+        data = _read_unlocked()
+        if script_name not in data:
+            return
+        del data[script_name]
+        path = test_config.FAILED_JSON
+        fd, tmp = tempfile.mkstemp(prefix=".failed.", suffix=".tmp",
+                                   dir=os.path.dirname(path) or ".")
+        try:
+            with os.fdopen(fd, "w") as f:
+                json.dump(data, f, indent=2)
+            os.replace(tmp, path)
+        except Exception:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise
+
+
 def make_detail(detail="", *, cmd=None, host=None,
                 compile_output=None, run_output=None):
     """Build a detail dict with only the populated fields.

@@ -1,0 +1,8 @@
+# Partition table for the MapVisibilityAlgorithm benchmark ESP32 firmware.
+# No filesystem, no in-flash datapack — just NVS + the (small) app. The default
+# single-factory layout fits comfortably in a 2 MiB flash, so the image runs on
+# cheap 2 MiB ESP32s as well as 4 MiB devkits.
+# Name,     Type, SubType,  Offset,   Size
+nvs,        data, nvs,      0x9000,   0x6000
+phy_init,   data, phy,      0xf000,   0x1000
+factory,    app,  factory,  0x10000,  0x190000

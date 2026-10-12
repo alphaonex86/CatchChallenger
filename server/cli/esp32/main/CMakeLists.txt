@@ -78,7 +78,7 @@ idf_component_register(
                  "${CATCHCHALLENGER_DATAPACK_CPP_DIR}"
     # esp_timer: BenchProbe.hpp wall clock (only used when the firmware is
     # built with CATCHCHALLENGER_BENCHMARK; harmless otherwise)
-    REQUIRES esp_wifi esp_netif esp_event nvs_flash lwip esp_timer
+    REQUIRES esp_wifi esp_netif esp_event nvs_flash lwip esp_timer esp_pm
 )
 
 # The CLI's int main() becomes catchchallenger_cli_main() (app_main calls it).
@@ -109,6 +109,13 @@ target_compile_definitions(${COMPONENT_LIB} PRIVATE
     CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     CC_TARGET_ESP32
 )
+# Benchmark firmware (benchmarkbotactions, -DCATCHCHALLENGER_BENCHMARK=ON at
+# configure): BenchProbe dumps the event-loop busy/wall counters to the console
+# every 60 s, and the DDoS filter (derived from it, VariableServer.hpp) is off
+# so a saturating load client is not kicked. Never set for the shipped image.
+if(CATCHCHALLENGER_BENCHMARK)
+    target_compile_definitions(${COMPONENT_LIB} PRIVATE CATCHCHALLENGER_BENCHMARK)
+endif()
 # Shared flags: -Os, the -Werror relaxations, XXH_INLINE_ALL, ZSTD_DISABLE_ASM.
 cc_esp32_common_component_flags(${COMPONENT_LIB})
 

@@ -64,6 +64,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test"))
 
 import benchmark_helpers as bh
+import benchmark_microbench as bmicro
 import history_recorder as hr
 import benchmark_remote as br
 
@@ -127,14 +128,28 @@ BOT_COUNTS = [(4, "small"), (16, "medium"), (50, "large")]
 # decision (a WiFi node must not be the sole signal -- benchmark/CLAUDE.md).
 # Nothing in remote_nodes.json is touched (operator-owned); the node is injected
 # programmatically. Override the IP/port with CC_ESP32_HOST / CC_ESP32_PORT.
-ESP32_NODE = {
-    "label": "esp32",
-    "arch":  "xtensa-lx6",
-    "host":  os.environ.get("CC_ESP32_HOST", "192.168.158.160"),
-    "port":  int(os.environ.get("CC_ESP32_PORT", "42498")),  # its own game port
-    "net_link": "wifi",
-    "network_only": True,     # marker: skip the whole ssh/build/bring-up path
-}
+def esp32_nodes():
+    """One network-only node per ESP32 board benchmark_esp32 knows (classic
+    ESP32, ESP32-C6, ...), at the address cc-esp32.conf gives it (STATIC_IP for
+    the classic board, <TARGET>_STATIC_IP for the others; CC_ESP32_HOST still
+    overrides the classic one). Skipped when --node excludes it."""
+    import benchmark_esp32 as esp
+    conf = esp.load_config()
+    nodes = []
+    for target, board in esp.BOARDS.items():
+        label = esp.board_label(target)
+        if bh.node_allowed(label, board["arch"]):
+            if target == "esp32":
+                host = os.environ.get("CC_ESP32_HOST") or conf.get("STATIC_IP", "192.168.158.160")
+            else:
+                host = conf.get(target.upper() + "_STATIC_IP")
+            nodes.append({"label": label, "arch": board["arch"], "target": target,
+                          "host": host,
+                          "port": int(os.environ.get("CC_ESP32_PORT", "42498")),  # its own game port
+                          "net_link": "wifi",
+                          "network_only": True})  # marker: skip the ssh/build/bring-up path
+    return nodes
+
 
 # The ESP32 runs at its REAL RAM CEILING, not the fleet's full 4/16/50: a
 # no-PSRAM ESP32 (~290 KiB heap) physically cannot seat 50 concurrent WiFi
@@ -837,39 +852,18 @@ def measure_remote_server(ready, bot_bin, per_subbench, per_headline):
 
 # ---- ESP32 (network-only): no ssh/build/flash, measure the running board ---
 
-def esp32_platform_fields():
-    """Synthesized platform metadata for the ESP32 history JSON. The board has
-    no shell, so PlatformRecord.collect() (which shells out via a runner) cannot
-    run -- we fill the fields directly. Values are the fixed ESP32 spec; ram is
-    left null (the schema is int MB and 520 KiB SRAM would record a misleading
-    '1 MB' -- the precise figure lives in ram_type)."""
-    return {
-        "arch":        "xtensa-lx6",
-        "cpu_model":   "Espressif ESP32 (Xtensa LX6 dual-core)",
-        "cpu_cores":   2,
-        "cpu_mhz":     240.0,
-        "cpu_flags":   None,
-        "cpu_cache":   [],
-        "ram_total_mb": None,
-        "ram_type":    "SRAM ~520KiB (no DRAM)",
-        "disk_root":   None,
-        "disk_kind":   "flash",          # datapack baked in SPI flash, fileless
-        "net_card":    "ESP32 WiFi (802.11 b/g/n)",
-        "net_link":    "wifi",
-        "net_link_detail": None,
-        "wifi_ssid":   None,             # not host-observable
-        "wifi_standard": "wifi-4 (802.11n)",
-        "wifi_band":   "2.4GHz",
-        "wifi_link_mbps": None,
-        "eth_link_mbps": None,
-        "virt_kind":   "bare-metal",
-        "virt_type":   "none",
-        "arch_emulated": False,
-        "host_arch":   None,
-        "kernel":      None,             # ESP-IDF/FreeRTOS firmware, no OS kernel
-        "libc":        "newlib",
-        "compiler":    "xtensa-esp32-elf-gcc",
-    }
+def esp32_platform_fields(target):
+    """Synthesized platform metadata for an ESP32 history JSON (the board has
+    no shell, so PlatformRecord.collect() cannot run): the board's fixed spec
+    from benchmark_esp32, reached over WiFi here. The C6's link standard is
+    the AP's choice and not host-observable, so it stays unknown."""
+    import benchmark_esp32 as esp
+    fields = esp.esp32_platform_fields(target)
+    fields.update({"net_link": "wifi", "net_link_detail": None,
+                   "wifi_ssid": None,             # not host-observable
+                   "wifi_standard": "wifi-4 (802.11n)" if target == "esp32" else None,
+                   "wifi_band": "2.4GHz"})
+    return fields
 
 
 def stage_bot_datapack(src_datapack):
@@ -1051,7 +1045,9 @@ def measure_esp32(node, bot_bin, per_subbench, per_headline, per_netfamily):
     # fatal -- log and continue.
     mok, mdetail = ensure_esp32_mirror()
     print(_c(bh.C_CYAN if mok else bh.C_YELLOW, f"[esp32] mirror: {mdetail}"))
-    online_host, detail = esp.ensure_online(flash_if_needed=True, verbose=True)
+    # the benchmark image, like every benchmark server: no DDoS filter
+    online_host, detail = esp.ensure_online(flash_if_needed=True, verbose=True,
+                                            target=node["target"], benchmark=True)
     if online_host is None:
         bh.print_node_error(BENCH, label, "SKIP",
             f"ESP32 not available: {detail}. boot-to-bind + free-heap + "
@@ -1116,6 +1112,14 @@ def measure_esp32(node, bot_bin, per_subbench, per_headline, per_netfamily):
         print(_c(bh.C_YELLOW, "[esp32] no bot binary built; connect-level probe only"))
 
     # ---- FALLBACK: black-box CONNECT-level probe ---------------------------
+    return connect_level_probe(label, host, port, per_subbench, per_headline,
+                               per_netfamily)
+
+
+def connect_level_probe(label, host, port, per_subbench, per_headline, per_netfamily):
+    """Black-box CONNECT-level probe of a server driven from this host (ESP32,
+    T2100): TCP connect latency per background-hold level, then the concurrent
+    connection capacity. Returns (status, reason)."""
     # Latency slices FIRST (clean), each after a short settle so the previous
     # slice's TIME_WAIT churn on the ESP32's tiny socket pool has drained.
     slices = {}
@@ -1137,7 +1141,7 @@ def measure_esp32(node, bot_bin, per_subbench, per_headline, per_netfamily):
         s["max_concurrent"] = {"value": cap, "unit": "conns", "better": "higher"}
     if not any(s.get("connect_p50_ms") for s in slices.values()):
         bh.print_node_error(BENCH, label, "SKIP",
-            "no successful TCP connect to the ESP32 (server up but not accepting?)")
+            f"no successful TCP connect to {host}:{port} (server up but not accepting?)")
         return "SKIP", "no-connect"
     per_subbench[label] = {"latency": slices}
     # headline from the "medium" (hold-4) slice, falling back to any slice.
@@ -1154,11 +1158,70 @@ def measure_esp32(node, bot_bin, per_subbench, per_headline, per_netfamily):
     return "PASS", None
 
 
+# ---- Toshiba T2100 (i486 laptop over SLIP, see benchmark_t2100.py) -------
+# The server is cross-built here and started on the laptop; the probe runs from
+# this host like the ESP32's (a bot beside the server would steal its only
+# 50 MHz CPU). SLIP => comparison-only, same as the ESP32.
+T2100_READY_TIMEOUT = 300   # measured: datapack load + bind = 52 s
+
+
+def _wait_settled(host, port, timeout=120):
+    """True once 3 connects in a row take < 1 s: right after bind the server
+    is still busy and connects time out, which is not the latency we want."""
+    fast = 0
+    deadline = time.monotonic() + timeout
+    while fast < 3 and time.monotonic() < deadline:
+        t = time.monotonic()
+        fast = fast + 1 if _port_reachable(host, port, timeout=1.0) and time.monotonic() - t < 1.0 else 0
+        time.sleep(0.5)
+    return fast >= 3
+
+
+def measure_t2100(node, per_subbench, per_headline, per_netfamily):
+    """Build, push and start the server on the T2100, run the connect-level
+    probe against it, stop it. Returns (status, reason)."""
+    import benchmark_t2100 as t2100
+    label = node["label"]
+    srv, err = t2100.cross_build("server/cli", "build-server", SRV_BIN_NAME, SERVER_DEFS)
+    if srv is None:
+        bh.print_node_error(BENCH, label, "SKIP", f"cross build failed: {err}")
+        return "SKIP", "cross-build-failed"
+    props = os.path.join(t2100.T2100_PREFIX, "server-properties.xml")
+    maincode = _detect_maincode(DATAPACK_PATH)
+    with open(props, "w") as f:
+        f.write(server_properties_xml(maincode, SERVER_PORT))
+    ok, detail = t2100.push([srv, props])
+    if ok:
+        ok, detail = t2100.push_datapack(DATAPACK_PATH, maincode)
+    if not ok:
+        bh.print_node_error(BENCH, label, "SKIP", detail)
+        return "SKIP", "push-failed"
+    ex = t2100.exec_node()
+    srv_pid, reason = t2100.start_server(SRV_BIN_NAME)
+    if srv_pid is None:
+        bh.print_node_error(BENCH, label, "SKIP", f"server start failed: {reason}")
+        return "SKIP", "server-start"
+    try:
+        if not t2100.wait_bound(node["port"], T2100_READY_TIMEOUT):
+            _, tail, _ = t2100.ssh(f"tail -c 1500 {ex['work_dir']}/server.log")
+            bh.print_node_error(BENCH, label, "SKIP",
+                                f"server did not bind in {T2100_READY_TIMEOUT} s:\n{tail}")
+            return "SKIP", "server-bind"
+        if not _wait_settled(node["host"], node["port"]):
+            bh.print_node_error(BENCH, label, "SKIP", "server bound but connects stay slow")
+            return "SKIP", "server-unsettled"
+        return connect_level_probe(label, node["host"], node["port"],
+                                   per_subbench, per_headline, per_netfamily)
+    finally:
+        t2100.stop_server(srv_pid)
+
+
 # ---- main ----------------------------------------------------------------
 
 def main():
     args = bh.parse_bench_args()
     bh.set_node_filter(args.node)
+    bmicro.ensure_missing()   # before any build or measurement
     comment = args.comment
 
     if os.path.isdir(BOT_RUN_TMP):
@@ -1178,8 +1241,11 @@ def main():
     # ESP32 comparison node, injected without touching remote_nodes.json. Target
     # it with --node esp32 (or --node xtensa-lx6); skipped when a
     # --node filter excludes it.
-    if bh.node_allowed(ESP32_NODE["label"], ESP32_NODE["arch"]):
-        nodes.append(ESP32_NODE)
+    nodes += esp32_nodes()
+    import benchmark_t2100 as t2100
+    if bh.node_allowed(t2100.T2100_NODE["label"], t2100.T2100_NODE["arch"]):
+        nodes.append(dict(t2100.T2100_NODE, network_only=True, net_link="slip",
+                          host=t2100.T2100_NODE["ssh_host"], port=SERVER_PORT))
 
     # The measuring bot is needed by every map-level (non-network_only) node AND
     # by the ESP32 node, which now ATTEMPTS map-level first (pre-seeded datapack
@@ -1187,7 +1253,7 @@ def main():
     # Build the bot when any node will try the bot at all: any non-network_only
     # node, or an ESP32 (network_only) node in this batch.
     has_maplevel = any(not n.get("network_only") for n in nodes)
-    has_esp32    = any(n.get("network_only") for n in nodes)
+    has_esp32    = any(n.get("network_only") and not n.get("t2100") for n in nodes)
     bot_bin = build_bot_local() if (has_maplevel or has_esp32) else None
 
     # progress total: one "latency" cell per node.
@@ -1300,14 +1366,17 @@ def main():
             progress.emit("latency", "no", label, status=st,
                           extra=("" if st == "PASS" else (reason or "skip")[:80]))
 
-    # ---- ESP32 (network-only): no bring-up, just measure the running board -
+    # ---- ESP32 / T2100 (network-only): probed from this host ---------------
     for node in [n for n in nodes if n.get("network_only")]:
         label = node["label"]
         if _over_cap():
             progress.emit("latency", "no", label, status="SKIP", extra="batch-maxtime")
             continue
-        st, reason = measure_esp32(node, bot_bin, per_subbench, per_headline,
-                                   per_netfamily)
+        if node.get("t2100"):
+            st, reason = measure_t2100(node, per_subbench, per_headline, per_netfamily)
+        else:
+            st, reason = measure_esp32(node, bot_bin, per_subbench, per_headline,
+                                       per_netfamily)
         progress.emit("latency", "no", label, status=st,
                       extra=("" if st == "PASS" else (reason or "skip")[:80]))
 
@@ -1350,11 +1419,18 @@ def main():
         label = node["label"]
         if label not in per_subbench:
             continue
-        if node.get("network_only"):
+        if node.get("t2100"):
+            pr = hr.PlatformRecord(BENCH, batch_id, label, runner=t2100.runner,
+                                   arch_hint=node.get("arch")).collect(
+                                       cc_binary_path=node["work_dir"],
+                                       datapack_path=node["work_dir"] + "/datapack",
+                                       sensor_baseline=None)
+            pr.platform.update(t2100.platform_fields())
+        elif node.get("network_only"):
             # No shell on the board -> collect() can't run; synthesize fields.
             pr = hr.PlatformRecord(BENCH, batch_id, label, runner=None,
                                    arch_hint=node.get("arch"))
-            pr.platform.update(esp32_platform_fields())
+            pr.platform.update(esp32_platform_fields(node["target"]))
         elif label == "local":
             pr = hr.PlatformRecord(BENCH, batch_id, label, runner=hr.local_runner,
                                    arch_hint=node.get("arch")).collect(
@@ -1378,7 +1454,9 @@ def main():
         for slabel, smetrics in per_subbench[label].get("latency", {}).items():
             pr.add_subbenchmark("latency", slabel, smetrics)
         out_p = pr.write(commit=sha, started_utc=started_utc, ended_utc=ended_utc,
-                         compile_flags=compile_flags, simd_tier="generic",
+                         compile_flags=(t2100.COMPILE_FLAGS + ["-DCATCHCHALLENGER_BENCHMARK"]
+                                        if node.get("t2100") else compile_flags),
+                         simd_tier="generic",
                          net_family=per_netfamily.get(label),
                          harness_version=hr.harness_version(), comment=comment)
         if out_p is not None:

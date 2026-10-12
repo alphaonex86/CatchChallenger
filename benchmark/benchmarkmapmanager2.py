@@ -65,8 +65,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test"))
 
 import benchmark_helpers as bh
+import benchmark_microbench as bmicro
 import benchmark_remote as br
 import history_recorder as hr
+import benchmarkmapmanager as bmm
 
 REPO_ROOT  = bh.REPO_ROOT
 BENCH_DIR  = os.path.dirname(os.path.abspath(__file__))
@@ -115,6 +117,15 @@ WORKLOAD_DIR = os.path.join(BUILD_DIR, "workload")
 # stage 1 ever touches it: the measured binary carries its world compiled in,
 # so no exec node needs a datapack at all.
 DATAPACK_PATH = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
+# The map set is FROZEN: the datapack's generated world keeps growing, and a
+# fleet measured on different worlds cannot be compared (the tick walks every
+# map). This is the datapack commit that held the 647 maps every node was
+# measured on; its map/ tree is exported once, out of the repo and the datapack.
+WORLD_COMMIT = "14b4aab"
+WORLD_EXPECTED_MAPS = 647
+FROZEN_WORLD_DIR = os.path.join(os.path.expanduser("~"), ".local", "share",
+                                "CatchChallenger", "benchmark-mapmanager2",
+                                "world-" + WORLD_COMMIT)
 # Where a node's generated workload is parked on its compile node (out of the
 # rsync'd source tree, which is mirrored with --delete).
 REMOTE_WORKLOAD_SUBDIR = "bench-workloads"
@@ -175,8 +186,7 @@ DEFAULT_RAM_MB  = 64
 # a constant for the same reason -- the per-player cost measured on Linux says
 # nothing about a board whose whole world lives in flash.
 ESP32_RAM_KB        = 300
-ESP32_PLAYERS       = 60
-ESP32_REPLAY_BYTES  = 32 * 1024     # flash, not RAM
+ESP32_REPLAY_BYTES  = 100 * 1024    # flash, not RAM
 # Byte budget for the replay table baked into stage 2. It decides how long the
 # replay runs before it loops: too small and the run is mostly resets (every
 # reset is a tick where the whole world jumps home, and enough of them poison
@@ -386,9 +396,12 @@ def node_replay_bytes(node):
 
 def node_max_players(node):
     """How many players this node's RAM allows. Stage 1 clamps it further to
-    what the world itself can hold at 253 players per map."""
-    if isinstance(node, dict) and node.get("esp32"):
-        return ESP32_PLAYERS
+    what the world itself can hold at 253 players per map. The T2100 and the
+    ESP32 generate the largest count benchmarkmapmanager measures and replay
+    the first N of them per cell (the ESP32 reports the counts that do not fit
+    in its RAM as skipped), so their cells match benchmarkmapmanager's."""
+    if isinstance(node, dict) and (node.get("esp32") or node.get("t2100")):
+        return max(bmm.PLAYER_COUNTS)
     ram = node_ram_mb(node)
     usable = ram * RAM_FRACTION - BASE_RSS_MB
     if usable <= 0:
@@ -397,6 +410,38 @@ def node_max_players(node):
     if n > MAX_PLAYERS: n = MAX_PLAYERS
     if n < MIN_PLAYERS: n = MIN_PLAYERS
     return n
+
+
+def ensure_frozen_world():
+    """Export map/ of WORLD_COMMIT from the datapack's git history into
+    FROZEN_WORLD_DIR (read-only use of the datapack). Returns an error string
+    or None."""
+    marker = os.path.join(FROZEN_WORLD_DIR, ".complete")
+    if os.path.isfile(marker):
+        return None
+    tmp = FROZEN_WORLD_DIR + ".tmp"
+    if os.path.isdir(tmp):
+        shutil.rmtree(tmp)
+    os.makedirs(tmp)
+    archive = subprocess.run(["git", "-C", DATAPACK_PATH, "archive", WORLD_COMMIT, "map"],
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if archive.returncode != 0:
+        return "git archive failed: " + archive.stderr.decode(errors="replace")[-400:]
+    untar = subprocess.run(["tar", "-x", "-C", tmp], input=archive.stdout,
+                           stderr=subprocess.PIPE)
+    if untar.returncode != 0:
+        return "tar failed: " + untar.stderr.decode(errors="replace")[-400:]
+    count = 0
+    for _root, _dirs, names in os.walk(os.path.join(tmp, "map", "main", "generated")):
+        count += len([n for n in names if n.endswith(".tmx")])
+    if count != WORLD_EXPECTED_MAPS:
+        return f"frozen world has {count} maps, expected {WORLD_EXPECTED_MAPS}"
+    if os.path.isdir(FROZEN_WORLD_DIR):
+        shutil.rmtree(FROZEN_WORLD_DIR)
+    os.rename(tmp, FROZEN_WORLD_DIR)
+    with open(marker, "w") as handle:
+        handle.write(WORLD_COMMIT + "\n")
+    return None
 
 
 def build_stage1():
@@ -437,7 +482,8 @@ def generate_workload(stage1_bin, node):
     label = node["label"] if isinstance(node, dict) else node
     os.makedirs(WORKLOAD_DIR, exist_ok=True)
     out = os.path.join(WORKLOAD_DIR, f"workload-{label}.cpp")
-    cmd = [stage1_bin, "--datapack", DATAPACK_PATH, "--node", label,
+    cmd = [stage1_bin, "--datapack", DATAPACK_PATH,
+           "--world", FROZEN_WORLD_DIR, "--node", label,
            "--max-players", str(node_max_players(node)),
            "--replay-bytes", str(node_replay_bytes(node)), "--out", out]
     rc, sout, serr, _ = bh.run_capture(cmd, timeout=900)
@@ -572,6 +618,8 @@ def _bench_to_cell(bench, cell):
             # Measured by the binary itself (getrusage over the timed window),
             # so no extra run per slice just to wrap it in /usr/bin/time.
             cell[(p, pre + "cpu_percent")]    = fields.get(pre + "cpu_percent")
+            # ESP32 only: heap the cell needed (Linux records RSS per process)
+            cell[(p, pre + "heap_used_kb")]   = fields.get(pre + "heap_used_kb")
             cell[(p, pre + "median_tick_ns")] = fields.get(pre + "median_tick_ns")
             cell[(p, pre + "p95_tick_ns")]    = fields.get(pre + "p95_tick_ns")
             # Bytes PER TICK, not the run's total: the total is proportional to
@@ -932,7 +980,7 @@ def aggregate_metrics(per_cell):
     return out
 
 
-def _runtime_cmd_string(profiler="rusage", small_players=None):
+def _runtime_cmd_string(profiler="rusage", small_players=None, players_list=None):
     """Build the bench binary's argv as a single shell-quoted string for
     use on the exec node. The binary lives in the exec node's work_dir
     after push_binary_to_exec; we invoke it as ./BIN_NAME so cwd is the
@@ -951,6 +999,9 @@ def _runtime_cmd_string(profiler="rusage", small_players=None):
     # biggest workload to be comparable, and the big one would run for hours.
     if profiler == "callgrind" and small_players:
         parts += ["--players", str(small_players)]
+    if players_list:
+        for n in players_list:
+            parts += ["--players", str(n)]
     return " ".join(parts)
 
 
@@ -1115,6 +1166,111 @@ def run_fleet_serially(remote_specs, progress, per_tool, all_metrics):
                               progress, per_tool, all_metrics)
 
 
+# Toshiba T2100 (i486, comparison-only, see benchmark_t2100.py): no perf, no valgrind.
+T2100_PROFILERS = ["rusage", "binary-size"]
+# It runs every count benchmarkmapmanager runs, not 3 cells: same derivation
+# as RUN_TIMEOUT over its own budget wall.
+T2100_RUN_TIMEOUT = int((MAP_BENCH_MS / 1000.0) * len(bmm.PLAYER_COUNTS)
+                        * (1 + len(EXTRA_ALGOS)) * 3) + 120
+
+
+def measure_t2100(stage1_bin, progress, per_tool, all_metrics):
+    """Generate the laptop's own workload (its 8 MB decide the population),
+    cross-build stage 2 here with it, push it over the SLIP link and run it
+    with the fleet's rusage + binary-size profilers. Comparison-only: the
+    caller keeps this label out of the decision record."""
+    import benchmark_t2100 as t2100
+    ex = t2100.exec_node()
+    out = {}
+    workload, info = generate_workload(stage1_bin, ex)
+    if workload is None:
+        msg = f"SKIP:stage1-generate-failed: {info}"
+    else:
+        bin_path, err = t2100.cross_build("benchmark/benchmarkmapmanager2/stage2",
+                                          "build-mapmanager2", BIN_NAME,
+                                          {"CC_WORKLOAD_CPP": workload})
+        if bin_path is None:
+            msg = "SKIP:cross-build: " + err
+        else:
+            ok, detail = t2100.push([bin_path])
+            if not ok:
+                msg = "SKIP:push-failed: " + detail
+            else:
+                msg = "ok"
+                out["rusage"] = br.remote_time_v(
+                    ex, f"cd {ex['work_dir']} && "
+                    f"{_runtime_cmd_string('rusage', players_list=bmm.PLAYER_COUNTS)}",
+                    timeout=T2100_RUN_TIMEOUT)
+                out["binary-size"] = os.path.getsize(bin_path)
+    _record_remote_result(ex["label"], T2100_PROFILERS, out, msg,
+                          progress, per_tool, all_metrics)
+
+
+# ESP32 boards (comparison-only, the same nodes as benchmarkmapmanager's, see
+# benchmark_esp32.BOARDS): the firmware in benchmarkmapmanager2/esp32 carries
+# the workload in flash and replays it on the board, so it needs no
+# filesystem. Counts that do not fit in RAM come back as skipped.
+ESP32_PROFILERS = ["rusage", "binary-size"]
+ESP32_FW_PROJECT_REL = os.path.join("benchmark", "benchmarkmapmanager2", "esp32")
+
+
+def measure_esp32(stage1_bin, node, progress, per_tool, all_metrics):
+    """Generate the board's workload, build + flash the firmware with it, read
+    the BENCH lines from the serial port and record them the fleet's way.
+    Self-skips (never FAILs) when the toolchain, the board or the build is
+    missing: an unmeasured board is unknown, not a regression."""
+    import benchmark_esp32 as esp
+    label = node["label"]
+    out = {}
+    workload, info = (None, None)
+    if node["tty"] is not None:
+        workload, info = generate_workload(stage1_bin, node)
+    if node["tty"] is None:
+        msg = "SKIP:" + node["skip_reason"]
+    elif workload is None:
+        msg = f"SKIP:stage1-generate-failed: {info}"
+    else:
+        os.environ["CC_WORKLOAD_CPP"] = workload
+        # The firmware cannot take arguments: its counts and budget are compiled
+        # in from here, so they never drift from benchmarkmapmanager's.
+        with open(os.path.join(os.path.dirname(workload), "esp32_bench_config.h"), "w") as handle:
+            handle.write("#define CC_BENCH_PLAYERS_LIST "
+                         + ", ".join(str(n) for n in bmm.PLAYER_COUNTS) + "\n"
+                         f'#define CC_BENCH_MS "{MAP_BENCH_MS}"\n')
+        cells = len(bmm.PLAYER_COUNTS) * (1 + len(EXTRA_ALGOS))
+        status, reason, text = esp.run_ondevice_benchmark(
+            os.path.join(REPO_ROOT, ESP32_FW_PROJECT_REL),
+            os.path.join(esp.ESP32_PREFIX, "build-mapmanager2"),
+            read_secs=cells * MAP_BENCH_MS // 1000 + 90, verbose=True,
+            target=node["target"], serial=node["tty"])
+        measured = [p for p, f in parse_bench_lines(text).items() if "ticks" in f]
+        tried = re.findall(r"^BENCH_TRY players=(\d+)", text, re.M)
+        if tried and int(tried[-1]) not in measured:
+            # Built without exceptions: an allocation the heap check let through
+            # aborts, and the panic handler halts the board right there.
+            print(_color(bh.C_YELLOW,
+                  f"[esp32] the board stopped while running players={tried[-1]} "
+                  f"(out of memory past the heap check?): the counts after it "
+                  f"are missing from this run"))
+        if status != "PASS":
+            msg = "SKIP:" + reason
+        elif not measured:
+            # Only skip_oom/skip_error lines: the board ran but measured
+            # nothing, so there is no data to record (not a PASS).
+            skips = [l for l in text.splitlines() if l.startswith("BENCH ")]
+            msg = "SKIP:no player count fit or ran on the board: " + \
+                  (" | ".join(skips[:3]) or "no BENCH line in the serial output")
+        else:
+            msg = "ok"
+            out["rusage"] = {"rc": 0, "stdout": text}
+            try:
+                out["binary-size"] = os.path.getsize(reason)   # the app image
+            except (OSError, TypeError) as e:
+                print(f"[esp32] firmware size unreadable: {e}")
+    _record_remote_result(label, ESP32_PROFILERS, out, msg,
+                          progress, per_tool, all_metrics)
+
+
 def _record_remote_result(label, runnable, out, msg,
                           progress, per_tool, all_metrics):
     """Parse one exec node's run_profiler_fleet result (out, msg) into
@@ -1242,6 +1398,7 @@ def main():
     bh.set_node_filter(args.node)
     if bh.acquire_singleton_lock("benchmarkmapmanager2") is None:
         return 3
+    bmicro.ensure_missing()   # before any build or measurement, once this run owns its lock
     br.set_benchmark_label("benchmarkmapmanager2")
     if NETWORK_EXCLUSIVE:
         if bh.acquire_network_lock("benchmarkmapmanager2") is None:
@@ -1250,11 +1407,12 @@ def main():
     maxtime = args.maxtime
     # The world is not optional: without the datapack there is no workload, and
     # inventing a synthetic one would silently measure something else.
-    world_dir = os.path.join(DATAPACK_PATH, "map", "main", "generated")
-    if not os.path.isdir(world_dir):
+    world_error = ensure_frozen_world()
+    world_dir = os.path.join(FROZEN_WORLD_DIR, "map", "main", "generated")
+    if world_error or not os.path.isdir(world_dir):
         bh.print_local_build_error(
             "benchmarkmapmanager2", "datapack check", "",
-            f"the generated map set is missing: {world_dir}\n"
+            f"the frozen map set is unavailable: {world_dir} {world_error or ''}\n"
             f"This benchmark's workload IS that map set, loaded with the "
             f"production Map_loader. Point DATAPACK_PATH at a datapack that "
             f"has map/main/generated/, or generate it with "
@@ -1340,6 +1498,9 @@ def main():
     # serialises a node and its sibling on the shared host (per-host lock).
     nodes = local_node + bh.expand_bitness_variants(bh.benchmark_exec_nodes())
     all_profilers = ["rusage", "binary-size", "perf-stat", "callgrind"]
+    import benchmark_t2100 as t2100
+    t2100_nodes = [t2100.T2100_NODE] if bh.node_allowed(t2100.T2100_NODE["label"],
+                                                        t2100.T2100_NODE["arch"]) else []
 
     # Pre-resolve per-node profiler availability. profilers_runnable_on()
     # honours benchmark_disabled_tools (persisted skips) and probes the
@@ -1353,6 +1514,10 @@ def main():
         node_skips[node["label"]]     = skips
 
     total = sum(len(node_profilers[node["label"]]) for node in nodes)
+    total += len(t2100_nodes) * len(T2100_PROFILERS)
+    import benchmark_esp32
+    esp32_nodes = benchmark_esp32.benchmark_nodes()
+    total += len(esp32_nodes) * len(ESP32_PROFILERS)
     progress = bh.Progress(total, "benchmarkmapmanager2")
     deadline = bh.FleetDeadline()
 
@@ -1502,6 +1667,14 @@ def main():
               f"could share a build anyway)"))
         run_fleet_serially(remote_specs, progress, per_tool, all_metrics)
 
+    for node in t2100_nodes:
+        per_tool[node["label"]] = {}
+        measure_t2100(stage1_bin, progress, per_tool, all_metrics)
+
+    for node in esp32_nodes:
+        per_tool[node["label"]] = {}
+        measure_esp32(stage1_bin, node, progress, per_tool, all_metrics)
+
     sha = bh.git_sha()
 
     # Cross-platform candidate record — metrics from every node that
@@ -1532,11 +1705,13 @@ def main():
 
     # Per-platform history -- one JSON per (benchmark, run, platform).
     # Per benchmark/CLAUDE.md the file is append-only; never overwritten.
-    for node in nodes:
+    for node in nodes + t2100_nodes:
         if node["label"] not in per_tool:
             continue
         if node["label"] == "local":
             runner = hr.local_runner
+        elif node.get("t2100"):
+            runner = t2100.runner
         else:
             runner = hr.make_ssh_runner(node.get("ssh_host"),
                                         node.get("ssh_user"),
@@ -1553,6 +1728,8 @@ def main():
                                    cc_binary_path=cc_path,
                                    sensor_baseline=(sensor_pre
                                        if node["label"] == "local" else None))
+        if node.get("t2100"):
+            pr.platform.update(t2100.platform_fields())
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
         for tool, slices in per_subbench.get(node["label"], {}).items():
@@ -1560,10 +1737,28 @@ def main():
                 pr.add_subbenchmark(tool, slabel, smetrics)
         out_p = pr.write(commit=sha, started_utc=started_utc,
                          ended_utc=ended_utc,
-                         compile_flags=compile_flags
-                             + list(br.exec_node_flag_defs(node).values()),
+                         compile_flags=(compile_flags + t2100.TARGET_FLAGS if node.get("t2100")
+                             else compile_flags
+                             + list(br.exec_node_flag_defs(node).values())),
                          simd_tier="generic",
                          bitness=node.get("bitness"),
+                         harness_version=hr.harness_version(),
+                         comment=comment)
+        if out_p is not None:
+            bh.chatter(_color(bh.C_CYAN, f"[history] {out_p}"))
+
+    # The ESP32 has no shell, so collect() cannot run: synthesize its platform
+    # fields. (pr.write records nothing when every result is a SKIP.)
+    for node in esp32_nodes:
+        import benchmark_esp32 as esp
+        pr = hr.PlatformRecord("benchmarkmapmanager2", batch_id, node["label"],
+                               runner=None, arch_hint=node.get("arch"))
+        pr.platform.update(esp.esp32_platform_fields(node["target"]))
+        for tool, blk in per_tool[node["label"]].items():
+            pr.add_result(tool, blk["metrics"], status=blk["status"])
+        out_p = pr.write(commit=sha, started_utc=started_utc, ended_utc=ended_utc,
+                         compile_flags=["-Os", "-DCATCHCHALLENGER_NOXML", "-DCC_TARGET_ESP32"],
+                         simd_tier="generic",
                          harness_version=hr.harness_version(),
                          comment=comment)
         if out_p is not None:

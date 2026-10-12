@@ -406,7 +406,7 @@ static void link_borders(std::vector<LoadedMap*> &out)
     }
 }
 
-static bool load_world(const std::string &datapack, const std::string &map_subdir,
+static bool load_world(const std::string &datapack, const std::string &world_root, const std::string &map_subdir,
                        std::vector<LoadedMap*> &out, unsigned int &failed,
                        unsigned int &typed, std::string &error)
 {
@@ -420,7 +420,7 @@ static bool load_world(const std::string &datapack, const std::string &map_subdi
     std::cout.setstate(std::ios_base::badbit);
     std::cerr.setstate(std::ios_base::badbit);
     CommonDatapack::commonDatapack.parseDatapack(datapack);
-    const std::string map_path = datapack + map_subdir;
+    const std::string map_path = world_root + map_subdir;
     std::vector<std::string> files = FacilityLibGeneral::listFolder(map_path);
     if(files.empty())
     {
@@ -938,6 +938,8 @@ static void usage()
                  "  --max-players N   ceiling for this node, from its RAM. Clamped to\n"
                  "                    65530 (16-bit connected-player index) and to what\n"
                  "                    the world can hold at " "253" " players per map.\n"
+                 "  --world DIR       root holding map/main/generated (a frozen copy);\n"
+                 "                    default: the datapack itself\n"
                  "  --out FILE.cpp    where to write the generated workload\n"
                  "  --node LABEL      stamped into the file for provenance\n"
                  "  --replay-bytes N  byte budget for the replay table (default 1 MiB).\n"
@@ -949,7 +951,7 @@ static void usage()
 
 int main(int argc, char **argv)
 {
-    std::string datapack, out_path, node_label = "unknown";
+    std::string datapack, world_root, out_path, node_label = "unknown";
     uint32_t max_players = 0;
     uint32_t replay_bytes = 1u << 20;
 
@@ -958,6 +960,7 @@ int main(int argc, char **argv)
     {
         const std::string a = argv[i];
         if(a == "--datapack" && i + 1 < argc)          { datapack = argv[++i]; }
+        else if(a == "--world" && i + 1 < argc)        { world_root = argv[++i]; }
         else if(a == "--out" && i + 1 < argc)          { out_path = argv[++i]; }
         else if(a == "--node" && i + 1 < argc)         { node_label = argv[++i]; }
         else if(a == "--max-players" && i + 1 < argc)  { max_players = (uint32_t)std::strtoul(argv[++i], NULL, 10); }
@@ -973,11 +976,15 @@ int main(int argc, char **argv)
     }
     if(datapack.at(datapack.size() - 1) != '/')
         datapack += '/';
+    if(world_root.empty())
+        world_root = datapack;
+    else if(world_root.at(world_root.size() - 1) != '/')
+        world_root += '/';
 
     std::vector<LoadedMap*> loaded;
     unsigned int failed = 0, typed = 0;
     std::string error;
-    if(!load_world(datapack, WORLD_MAP_SUBDIR, loaded, failed, typed, error))
+    if(!load_world(datapack, world_root, WORLD_MAP_SUBDIR, loaded, failed, typed, error))
     {
         std::cerr.clear();
         std::cerr << "stage1: cannot load the world: " << error << std::endl;

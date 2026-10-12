@@ -59,7 +59,11 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#ifdef CC_TARGET_ESP32
+#include "../../esp32_probe.hpp"
+#else
 #include <sys/resource.h>
+#endif
 
 using namespace CatchChallenger;
 namespace W = CCBenchWorkload;
@@ -125,7 +129,11 @@ struct World
         size_t i = 0;
         while(i < players.size()) { delete players[i].client; i++; }
         players.clear();
-        MapVisibilityAlgorithm::flat_map_list.clear();
+        // Release the capacity too, not just the elements: every cell (one per
+        // player count and strategy) must start from the same heap, or the
+        // first one pays for the ~90 KB map list the others inherit -- on the
+        // ESP32 that skews heap_used_kb and starves the next counts.
+        std::vector<MapVisibilityAlgorithm>().swap(MapVisibilityAlgorithm::flat_map_list);
         cl.clear();
         ClientList::list = NULL;
     }
@@ -159,8 +167,13 @@ struct World
         uint32_t i = 0;
         while(i < player_count)
         {
-            ClientWithMap *c = new ClientWithMap();
-            Player p;
+            // Owned by `players` from the start (reserved, so the push does not
+            // reallocate): ~World frees every client it holds.
+            Player added;
+            added.client = new ClientWithMap();
+            players.push_back(added);
+            Player &p = players.back();
+            ClientWithMap *c = p.client;
             p.map    = W::SPAWN_MAP[i];
             p.facing = W::SPAWN_FACING[i];
             c->setX(W::SPAWN_X[i]);
@@ -173,10 +186,8 @@ struct World
             c->public_and_private_informations.public_informations.pseudo = pseudo;
             c->public_and_private_informations.public_informations.type   = Player_type_normal;
             c->public_and_private_informations.public_informations.skinId = (uint8_t)(i & 0xff);
-            p.client = c;
             p.gid    = cl.add(c);
             p.slot   = map_at(p.map).insertOnMap(p.gid);
-            players.push_back(p);
             i++;
         }
     }
@@ -233,9 +244,8 @@ struct World
         while(i < players.size())
         {
             ClientWithMap *c = players[i].client;
-            size_t b = 0;
-            while(b < c->sentBlocks.size()) { total += c->sentBlocks[b].bytes.size(); b++; }
-            c->sentBlocks.clear();
+            total += c->sentBytes;
+            c->sentBytes = 0;
             i++;
         }
         return total;
@@ -417,16 +427,24 @@ static void replay_tick(World &w, uint32_t tick_in_cycle, uint32_t &next_mig)
 // wrap it in /usr/bin/time.
 static double cpu_seconds()
 {
+#ifdef CC_TARGET_ESP32
+    // No getrusage on the board: busy (non-idle) time of this task's core.
+    return (double)ccEsp32BusyUs() / 1000000.0;
+#else
     struct rusage ru;
     if(getrusage(RUSAGE_SELF, &ru) != 0)
         return 0.0;
     return (double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec / 1000000.0
          + (double)ru.ru_stime.tv_sec + (double)ru.ru_stime.tv_usec / 1000000.0;
+#endif
 }
 
 static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms,
                         uint8_t algo, const char *prefix, std::string &out)
 {
+#ifdef CC_TARGET_ESP32
+    CcEsp32Sample heapProbe = ccEsp32ProbeStart();
+#endif
     World w;
     w.algo = algo;
     w.build(players);
@@ -444,6 +462,9 @@ static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms
     const std::chrono::steady_clock::time_point warm1 = std::chrono::steady_clock::now();
     const uint64_t warm_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(warm1 - warm0).count();
     const uint64_t bytes_warm = w.totalBytesAndClear();
+#ifdef CC_TARGET_ESP32
+    ccEsp32ProbeHeap(heapProbe);
+#endif
 
     std::vector<uint64_t> samples;      samples.reserve(ticks ? ticks : 4096);
     std::vector<uint64_t> prep_samples; prep_samples.reserve(ticks ? ticks : 4096);
@@ -488,6 +509,9 @@ static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms
             const std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
             samples.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count());
             prep_samples.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(t0 - p0).count());
+#ifdef CC_TARGET_ESP32
+            ccEsp32ProbeHeap(heapProbe);
+#endif
             sampled_changed += w.countChanged(snap);
             sampled_slots   += w.players.size();
             bytes_total += w.totalBytesAndClear();
@@ -532,6 +556,9 @@ static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms
             const std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
             samples.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count());
             prep_samples.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(t0 - p0).count());
+#ifdef CC_TARGET_ESP32
+            ccEsp32ProbeHeap(heapProbe);
+#endif
             sampled_changed += w.countChanged(snap);
             sampled_slots   += w.players.size();
             bytes_total += w.totalBytesAndClear();
@@ -581,6 +608,15 @@ static int run_scenario(uint32_t players, unsigned int ticks, uint64_t budget_ms
      * in one invocation -- the fleet runner sends ONE command per cell and
      * would otherwise never see more than one strategy. */
     std::ostringstream line;
+#ifdef CC_TARGET_ESP32
+    // The heap the cell needed (world + players + loop); RSS on Linux is per
+    // process and recorded outside the binary.
+    double cellCpuPercent = 0.0;
+    long heapUsedKb = -1;
+    ccEsp32ProbeStop(heapProbe, cellCpuPercent, heapUsedKb);
+    if(heapUsedKb >= 0)
+        line << " " << prefix << "heap_used_kb=" << heapUsedKb;
+#endif
     if(prefix[0] == '\0')
         line << " view_range=" << (unsigned int)MapVisibilityAlgorithm::view_x
              << " players=" << players
@@ -653,7 +689,25 @@ static void usage()
               << std::endl;
 }
 
+// On the ESP32 app_main() is the entry and calls this once per player count
+// with a synthesized argv; everywhere else it is the process main(). Built
+// without exceptions there, so app_main checks the heap BEFORE a count with
+// these two (the map list is one contiguous block).
+#ifdef CC_TARGET_ESP32
+size_t cc_replay_world_bytes()
+{
+    return (size_t)W::MAPS * sizeof(MapVisibilityAlgorithm);
+}
+
+uint32_t cc_replay_max_players()
+{
+    return W::PLAYERS;
+}
+
+int cc_replay_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 {
     // The production MapVisibilityAlgorithm.cpp writes to std::cerr
     // unconditionally; redirecting is a no-op on the algorithm but stops pipe

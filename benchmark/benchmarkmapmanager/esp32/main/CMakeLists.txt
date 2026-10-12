@@ -78,14 +78,8 @@ target_compile_definitions(${COMPONENT_LIB} PRIVATE
 # Shared flags: -Os, the -Werror relaxations, XXH_INLINE_ALL, ZSTD_DISABLE_ASM.
 cc_esp32_common_component_flags(${COMPONENT_LIB})
 
-# Specific to THIS firmware: C++ exceptions + RTTI stay ON (sdkconfig enables
-# them globally too) so app_main can catch std::bad_alloc per scenario and SKIP
-# the OOM player counts instead of aborting the whole sweep. The server
-# firmware deliberately builds -fno-exceptions/-fno-rtti instead.
-target_compile_options(${COMPONENT_LIB} PRIVATE
-    $<$<COMPILE_LANGUAGE:CXX>:-fexceptions>
-    $<$<COMPILE_LANGUAGE:CXX>:-frtti>
-)
+# No exceptions, no RTTI (CatchChallenger uses neither; sdkconfig.defaults
+# turns both off, like the server firmware): app_main checks the heap first.
 
 # format: main.cpp's snprintf("p%u", id) where id is uint32_t == 'long unsigned
 # int' on xtensa (host-fine '%u'). Warning on the native build; only downgraded

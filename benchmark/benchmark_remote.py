@@ -1752,9 +1752,11 @@ def _remote_have_tool_cached(exec_node, tool):
         eu = exec_node["user"]
         eh = exec_node["host"]
         ep = exec_node.get("port", 22)
+        # 60 s: a login alone takes ~9 s on a 486, and a timed-out probe
+        # silently drops every rusage field of the node.
         rc, sout, _ = ssh_run(eu, eh, ep,
                                f"command -v {shlex.quote(tool)} >/dev/null 2>&1 "
-                               f"&& echo Y || echo N", timeout=10)
+                               f"&& echo Y || echo N", timeout=60)
         _remote_time_v_cache[key] = (rc == 0 and sout.strip() == "Y")
     return _remote_time_v_cache[key]
 

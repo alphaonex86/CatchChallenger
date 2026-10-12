@@ -1,0 +1,3 @@
+# ESP32-C6 (RISC-V, applied after sdkconfig.defaults): 160 MHz is its maximum,
+# the 240 MHz line there is ESP32-only.
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_160=y
