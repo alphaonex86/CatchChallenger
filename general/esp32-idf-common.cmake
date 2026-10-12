@@ -10,16 +10,16 @@
 # trap: a refactor that moves a source has to be mirrored in every copy or one
 # firmware silently stops compiling the right TUs. Everything that legitimately
 # differs stays in the caller: the per-project source sets, the defines, the
-# ESP-IDF REQUIRES, and -f{no-}exceptions / -f{no-}rtti (the server builds
-# without them, the benchmark needs them to catch std::bad_alloc per scenario).
+# ESP-IDF REQUIRES, and -fno-exceptions / -fno-rtti (C++-only flags, set per
+# project).
 #
 # Provides:
 #   CC_ESP32_GENERAL_SRCS         general/base/*.cpp, NOXML-filtered
 #   CC_ESP32_ZSTD_SRCS            the vendored zstd subset (needs ZSTD_DISABLE_ASM)
 #   CC_ESP32_VENDOR_SRCS          blake3 + xxhash + zlib + zstd
 #   CC_ESP32_VENDOR_INCLUDE_DIRS  include dirs for the vendored libs
-#   cc_esp32_common_component_flags(<target>)   -Os + -Werror relaxations
-#                                               + XXH_INLINE_ALL + ZSTD_DISABLE_ASM
+#   cc_esp32_common_component_flags(<target>)   -Os + -Werror relaxations + frame
+#                                               guard + XXH_INLINE_ALL + ZSTD_DISABLE_ASM
 #
 # The caller must set CC_REPO (absolute repo root) BEFORE including this.
 
@@ -100,6 +100,10 @@ set(CC_ESP32_VENDOR_INCLUDE_DIRS
 macro(cc_esp32_common_component_flags _cc_target)
     # -Os: flash is the binding constraint on these boards.
     target_compile_options(${_cc_target} PRIVATE -Os)
+
+    # A whole ESP32 task stack is 80 KB: a 64 KB hps::Stream*Buffer in one frame
+    # overflowed it at runtime. Fail the build instead (largest legit frame: ~5 KB).
+    target_compile_options(${_cc_target} PRIVATE -Werror=frame-larger-than=8192)
 
     # ESP-IDF forces -Werror=all (the host CatchChallenger build does not),
     # which turns long-standing, host-tolerated warnings in SHARED code into
