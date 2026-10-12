@@ -1034,10 +1034,8 @@ GENERATED PER EXECUTION NODE AND PER DATAPACK.
 * **T2100 and ESP32 run the SAME player counts as `benchmarkmapmanager`** (5..300): they generate 300 players and replay the first N per cell. The ESP32 firmware (`benchmarkmapmanager2/esp32/`, workload in flash via `CC_WORKLOAD_CPP`, counts + budget compiled in from the harness) is built like every CatchChallenger target WITHOUT exceptions or RTTI (both ESP32 benchmark firmwares): a heap pre-check prints `skip_oom`, `BENCH_TRY` precedes each count and a panic halts, so an OOM past the check shows as a BENCH_TRY with no BENCH line.
 * **Toshiba T2100** = i486 DX2 50 MHz, Linux 3.16, SLIP over RS232 115200 baud (its latency numbers measure the serial line). its real MHz and cache steps come from the microbench below; never trust its `/proc/cpuinfo`.
 * **Microbench on every node** (`benchmark_microbench.py`, SpeedSys-style MHz + cache-step probe): `bh.Progress` measures, BEFORE the run, each node whose result is missing, older than 24 h or from another `microbench/main.cpp`; same 60 s + load < 1 gate. Fills `cpu_mhz`/`cpu_cache` (noted under `microbench`) only where /proc has none, so the tracked platform.json does not churn; full results stay in `~/.local/share/CatchChallenger/benchmark-microbench/`. The recorder only reads the cache.
-* **Open (2026-10-11): the ESP32-C6 server stops serving after ~20 s of bots ON THE MAP**
-  (botactions): event loop stops iterating, board off the network, no panic, heap ~100 KB
-  free. Connect-only load (clientlatency) is fine. Needs a JTAG backtrace of task `main`
-  (OpenOCD over the C6's USB fails with LIBUSB_ERROR_ACCESS: udev permission for 303a:1001).
+* **Fixed 2026-10-11: the ESP32 server deadlocked with bots on the map** (loop blocked in a client's
+  `write()`, WiFi RX buffers held by unread sockets, board off the network): `CONFIG_LWIP_L2_TO_L3_COPY=y`.
 * **A pinned ESP32 port held by another process is reported, never flashed or probed** (neighbouring ports are an ONU, an OLT and a power relay): set `CC_ESP32_SERIAL=/dev/ttyUSBn`.
 * **Oracles**: `replay_mismatch` != 0 is a FAIL (stage 2's state after a cycle
   must equal what stage 1 computed, which also proves no vector walked into a
