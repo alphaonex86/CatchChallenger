@@ -2,12 +2,7 @@
 #define CATCHCHALLENGER_GENERALVARIABLE_H
 
 #include "CatchChallenger_Hash.hpp"
-
-// Small-RAM profile (< 8 MB: ESP32, i486): the lower-RAM choice where RAM and
-// speed trade off (benchmark/benchmarkcontainers). -DCATCHCHALLENGER_LOWRAM forces it.
-#if !defined(CATCHCHALLENGER_LOWRAM) && (defined(CC_TARGET_ESP32) || defined(__i486__))
-#define CATCHCHALLENGER_LOWRAM
-#endif
+#include "GeneralType.hpp"//CATCHCHALLENGER_LOWRAM
 
 // CATCHCHALLENGER_HARDENED was force-#define'd here unless
 // CATCHCHALLENGER_RELEASE was set, which made every non-release

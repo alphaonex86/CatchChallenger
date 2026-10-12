@@ -150,7 +150,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                     #endif
                     uint8_t cacheversion=0;
                     serialBuffer >> cacheversion;//to discard buggy cache later
-                    if(cacheversion!=2)
+                    if(cacheversion!=3)
                     {
                         ::unlink(cachepath.c_str());
                     }
@@ -209,7 +209,8 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                 std::ofstream out_file(cachepath+".tmp", std::ofstream::binary);
                 if(out_file.good() && out_file.is_open())
                 {
-                    uint8_t cacheversion=2;//to discard buggy cache later
+                    //3: shared level_to_xp curves, datapack maps unordered on every non-LOWRAM build
+                    uint8_t cacheversion=3;//to discard buggy cache later
                     hps::to_stream(cacheversion, out_file);
                     hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack, out_file);
                     hps::to_stream(visualCategories, out_file);

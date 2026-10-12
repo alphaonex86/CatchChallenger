@@ -85,6 +85,9 @@ NEEDS_GENERATED_INPUT = {
     # datapack (never checked in, see its header), so -DCC_WORKLOAD_CPP is
     # required and a bare configure is a FATAL_ERROR by design.
     "benchmark/benchmarkmapmanager2/stage2": "benchmark/benchmarkmapmanager2.py",
+    # the embedded suite compiles IN the datasets the host emits from a datapack
+    # (-DCC_CONTAINERS_DATA_CPP), for the i486 laptop
+    "benchmark/benchmarkcontainers/embedded": "benchmark/benchmarkcontainers.py",
 }
 
 
