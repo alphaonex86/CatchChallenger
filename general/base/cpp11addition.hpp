@@ -11,6 +11,7 @@
 #include <cstdint>
 
 #include "lib.h"
+#include "GeneralType.hpp"
 
 #if ! defined(Q_LIKELY)
     #if defined(__GNUC__)
@@ -150,13 +151,19 @@ std::vector<T> unordered_map_keys_vector(const std::unordered_map<T,U> &unordere
     return keyList;
 }
 
-#if __cplusplus >= 202302L && __has_include(<flat_map>)
-#include <flat_map>
-template <class K, class V, class Compare, class KeyContainer, class MappedContainer>
-std::vector<K> unordered_map_keys_vector(const std::flat_map<K,V,Compare,KeyContainer,MappedContainer> &flat_map_var)
+#ifdef CATCHCHALLENGER_LOWRAM
+template <class K, class V>
+std::vector<K> unordered_map_keys_vector(const CatchChallenger::FlatMap<K,V> &flat_map_var)
 {
-    const KeyContainer &keys = flat_map_var.keys();
-    return std::vector<K>(keys.begin(), keys.end());
+    std::vector<K> keyList;
+    keyList.reserve(flat_map_var.size());
+    typename CatchChallenger::FlatMap<K,V>::const_iterator it=flat_map_var.cbegin();
+    while(it!=flat_map_var.cend())
+    {
+        keyList.push_back(it->first);
+        ++it;
+    }
+    return keyList;
 }
 #endif
 

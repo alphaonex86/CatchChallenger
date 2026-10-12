@@ -3,22 +3,22 @@
 
 #include <stdint.h>
 
-// datapack-cpp (ESP32): the generated flash data layout depends on the map/set
-// type, because HPS serializes std::flat_map (keys[] then values[]) and
-// std::unordered_map (size + interleaved pairs) with DIFFERENT byte layouts.
-// stage1 emits on the host (g++ with <flat_map>) while stage2/ESP32 compiles
-// with xtensa gcc (no <flat_map> yet) — picking different types would make the
-// emitted data unreadable. Force unordered_* for the whole datapack-cpp
-// pipeline (emit + read) so the layout is toolchain-independent. Normal builds
-// are unaffected (still std::flat_map on C++23).
-#if __cplusplus >= 202302L && __has_include(<flat_map>) \
-    && !defined(CATCHCHALLENGER_DATAPACK_CPP) && !defined(CATCHCHALLENGER_DATAPACK_CPP_EMIT)
-#include <flat_map>
-#include <flat_set>
+// Small-RAM profile (< 8 MB: ESP32, i486): the lower-RAM choice where RAM and
+// speed trade off, the fastest one elsewhere (benchmark/benchmarkcontainers,
+// measured on the target archs). -DCATCHCHALLENGER_LOWRAM forces it.
+#if !defined(CATCHCHALLENGER_LOWRAM) && (defined(CC_TARGET_ESP32) || defined(__i486__))
+#define CATCHCHALLENGER_LOWRAM
+#endif
+
+// The datapack's key -> value structures, reached at random for every player
+// action: one sorted array on LOWRAM (~1/3 of the heap), a hash table elsewhere
+// (the fastest lookups). Both serialize to the same bytes (FlatMap.hpp).
+#ifdef CATCHCHALLENGER_LOWRAM
+#include "FlatMap.hpp"
 template<typename K, typename V>
-using catchchallenger_datapack_map = std::flat_map<K, V>;
+using catchchallenger_datapack_map = CatchChallenger::FlatMap<K, V>;
 template<typename K>
-using catchchallenger_datapack_set = std::flat_set<K>;
+using catchchallenger_datapack_set = CatchChallenger::FlatSet<K>;
 #else
 #include <unordered_map>
 #include <unordered_set>
