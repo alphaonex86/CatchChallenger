@@ -545,12 +545,15 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
     #ifdef CATCHCHALLENGER_DB_FILE
     {
-        std::ostringstream out_file;
-        hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
-        hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
-        hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
-        hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
-        const std::string _s=out_file.str();
+        //one string buffer (1KB of stack), not a 64KB hps::StreamOutputBuffer per value:
+        //several of those in one frame overflow an ESP32 task stack
+        std::string _s;
+        hps::StringOutputBuffer out(_s);
+        out << GlobalServerData::serverPrivateVariables.maxClanId;
+        out << GlobalServerData::serverPrivateVariables.maxAccountId;
+        out << GlobalServerData::serverPrivateVariables.maxCharacterId;
+        out << GlobalServerData::serverPrivateVariables.maxCity;
+        out.flush();
         #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
         CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
         #else
@@ -673,8 +676,8 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                     return;
                 }
                 const std::vector<uint8_t> &_dacc=CatchChallenger::dbInternalVarsStore.at(_kacc);
-                std::istringstream in_file(std::string(reinterpret_cast<const char *>(_dacc.data()),_dacc.size()));
-                hps::StreamInputBuffer s(in_file);
+                const std::string in_file(reinterpret_cast<const char *>(_dacc.data()),_dacc.size());
+                hps::StringInputBuffer s(in_file);
                 #else
                 std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ifstream::binary);
                 if(!in_file.good() || !in_file.is_open())
@@ -699,9 +702,12 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             characterEntryList.push_back(newChar);
 
             {
-                std::ostringstream out_file;
-                hps::to_stream(characterEntryList, out_file);
-                const std::string _s=out_file.str();
+                //one string buffer (1KB of stack), not a 64KB hps::StreamOutputBuffer per value:
+                //several of those in one frame overflow an ESP32 task stack
+                std::string _s;
+                hps::StringOutputBuffer out(_s);
+                out << characterEntryList;
+                out.flush();
                 #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
                 CatchChallenger::dbInternalVarsStore[std::string("database/common/accounts/")+std::to_string(account_id_db)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
                 #else

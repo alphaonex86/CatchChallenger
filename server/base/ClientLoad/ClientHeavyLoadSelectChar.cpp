@@ -389,10 +389,10 @@ void Client::selectClan_return()
         if(CatchChallenger::dbInternalVarsStore.count(_kclan)>0)
         {
             const std::vector<uint8_t> &_dclan=CatchChallenger::dbInternalVarsStore.at(_kclan);
-            std::istringstream clan_file(std::string(reinterpret_cast<const char *>(_dclan.data()),_dclan.size()));
+            const std::string clan_file(reinterpret_cast<const char *>(_dclan.data()),_dclan.size());
             std::string clanName;
             uint64_t cash=0;
-            hps::StreamInputBuffer cs(clan_file);
+            hps::StringInputBuffer cs(clan_file);
             cs >> clanName;
             cs >> cash;
             haveClanInfo(public_and_private_informations.clan,clanName,cash);

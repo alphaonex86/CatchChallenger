@@ -49,6 +49,19 @@ class BaseClassSwitch;
 namespace CatchChallenger {
 
 //herit from EventLoop into server/cli/ClientMapManagementEpoll.hpp ... for eatch implementation, then this code here is free of unix/Qt structre
+//The character records live in memory with DB_INTERNAL_VARS (fileless ESP32):
+//string buffers there, 1KB of stack where hps::Stream*Buffer puts 64KB -- more
+//than an ESP32 task has left at the end of the character-select call chain.
+#if defined(CATCHCHALLENGER_DB_FILE) && defined(CATCHCHALLENGER_CACHE_HPS)
+#ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+typedef hps::StringOutputBuffer CcDbOutputBuffer;
+typedef hps::StringInputBuffer CcDbInputBuffer;
+#else
+typedef hps::StreamOutputBuffer CcDbOutputBuffer;
+typedef hps::StreamInputBuffer CcDbInputBuffer;
+#endif
+#endif
+
 class Client : public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement, public ClientBase
 {
 public:
@@ -67,10 +80,10 @@ public:
 public:
     #ifdef CATCHCHALLENGER_DB_FILE
     #ifdef CATCHCHALLENGER_CACHE_HPS
-    void serialize(hps::StreamOutputBuffer& buf) const;
-    void parse(hps::StreamInputBuffer& buf);
-    void serializeServerPart(hps::StreamOutputBuffer& buf) const;
-    void parseServerPart(hps::StreamInputBuffer& buf);
+    void serialize(CcDbOutputBuffer& buf) const;
+    void parse(CcDbInputBuffer& buf);
+    void serializeServerPart(CcDbOutputBuffer& buf) const;
+    void parseServerPart(CcDbInputBuffer& buf);
     void saveCharacterFiles() const;
     bool loadCharacterServerFile();
     #endif

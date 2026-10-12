@@ -159,9 +159,9 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             return;
         }
         const std::vector<uint8_t> &_dacc=CatchChallenger::dbInternalVarsStore.at(_kacc);
-        std::istringstream in_file(std::string(reinterpret_cast<const char *>(_dacc.data()),_dacc.size()));
+        const std::string in_file(reinterpret_cast<const char *>(_dacc.data()),_dacc.size());
         {
-            hps::StreamInputBuffer s(in_file);
+            hps::StringInputBuffer s(in_file);
             s >> characterEntryList;
         }
         #else
@@ -619,8 +619,8 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             return;
         }
         const std::vector<uint8_t> &_dchar=CatchChallenger::dbInternalVarsStore.at(_kchar);
-        std::istringstream in_file(std::string(reinterpret_cast<const char *>(_dchar.data()),_dchar.size()));
-        hps::StreamInputBuffer s(in_file);
+        const std::string in_data(reinterpret_cast<const char *>(_dchar.data()),_dchar.size());
+        hps::StringInputBuffer s(in_data);
         s >> *this;
         #else
         std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/characters/")+hexa), std::ifstream::binary);
@@ -672,10 +672,10 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             if(CatchChallenger::dbInternalVarsStore.count(_kclan)>0)
             {
                 const std::vector<uint8_t> &_dclan=CatchChallenger::dbInternalVarsStore.at(_kclan);
-                std::istringstream clan_file(std::string(reinterpret_cast<const char *>(_dclan.data()),_dclan.size()));
+                const std::string clan_file(reinterpret_cast<const char *>(_dclan.data()),_dclan.size());
                 std::string clanName;
                 uint64_t cash=0;
-                hps::StreamInputBuffer cs(clan_file);
+                hps::StringInputBuffer cs(clan_file);
                 cs >> clanName;
                 cs >> cash;
                 haveClanInfo(public_and_private_informations.clan,clanName,cash);

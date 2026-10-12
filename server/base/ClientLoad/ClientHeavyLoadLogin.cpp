@@ -197,8 +197,8 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 return;
             }
             const std::vector<uint8_t> &_dlogin=CatchChallenger::dbInternalVarsStore.at(_klogin);
-            std::istringstream in_file(std::string(reinterpret_cast<const char *>(_dlogin.data()),_dlogin.size()));
-            hps::StreamInputBuffer s(in_file);
+            const std::string in_file(reinterpret_cast<const char *>(_dlogin.data()),_dlogin.size());
+            hps::StringInputBuffer s(in_file);
             #else
             std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)), std::ifstream::binary);
             if(!in_file.good() || !in_file.is_open())
@@ -330,8 +330,8 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                         return;
                     }
                     const std::vector<uint8_t> &_dacc=CatchChallenger::dbInternalVarsStore.at(_kacc);
-                    std::istringstream in_file(std::string(reinterpret_cast<const char *>(_dacc.data()),_dacc.size()));
-                    hps::StreamInputBuffer s(in_file);
+                    const std::string in_file(reinterpret_cast<const char *>(_dacc.data()),_dacc.size());
+                    hps::StringInputBuffer s(in_file);
                     #else
                     std::ifstream in_file(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/common/accounts/")+std::to_string(account_id_db)), std::ifstream::binary);
                     if(!in_file.good() || !in_file.is_open())
@@ -612,12 +612,15 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
         {
-            std::ostringstream out_file;
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
-            const std::string _s=out_file.str();
+            //one string buffer (1KB of stack), not a 64KB hps::StreamOutputBuffer per value:
+            //several of those in one frame overflow an ESP32 task stack
+            std::string _s;
+            hps::StringOutputBuffer out(_s);
+            out << GlobalServerData::serverPrivateVariables.maxClanId;
+            out << GlobalServerData::serverPrivateVariables.maxAccountId;
+            out << GlobalServerData::serverPrivateVariables.maxCharacterId;
+            out << GlobalServerData::serverPrivateVariables.maxCity;
+            out.flush();
             #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
             CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
             #else
@@ -627,7 +630,10 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         }
         {
             {
-                std::ostringstream out_file;
+                //one string buffer (1KB of stack), not a 64KB hps::StreamOutputBuffer per value:
+                //several of those in one frame overflow an ESP32 task stack
+                std::string _s;
+                hps::StringOutputBuffer out(_s);
                 std::vector<char> secretTokenBinary;
                 secretTokenBinary.resize(CATCHCHALLENGER_HASH_SIZE);
                 memcpy(secretTokenBinary.data(),askLoginParam->pass,CATCHCHALLENGER_HASH_SIZE);
@@ -636,9 +642,9 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                     std::cerr << "convertion to binary for pass failed for: database/login/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE) << " " << secretTokenBinary.size() << "!=" << CATCHCHALLENGER_HASH_SIZE << std::endl;
                     abort();
                 }
-                hps::to_stream(secretTokenBinary, out_file);
-                hps::to_stream(account_id_db, out_file);
-                const std::string _s=out_file.str();
+                out << secretTokenBinary;
+                out << account_id_db;
+                out.flush();
                 #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
                 CatchChallenger::dbInternalVarsStore[std::string("database/login/")+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_HASH_SIZE)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
                 #else
@@ -651,10 +657,13 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                 #endif
             }
             {
-                std::ostringstream out_file;
+                //one string buffer (1KB of stack), not a 64KB hps::StreamOutputBuffer per value:
+                //several of those in one frame overflow an ESP32 task stack
+                std::string _s;
+                hps::StringOutputBuffer out(_s);
                 std::vector<CharacterEntry> characterEntryList;
-                hps::to_stream(characterEntryList, out_file);
-                const std::string _s=out_file.str();
+                out << characterEntryList;
+                out.flush();
                 #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
                 CatchChallenger::dbInternalVarsStore[std::string("database/common/accounts/")+std::to_string(account_id_db)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
                 #else
