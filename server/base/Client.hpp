@@ -8,6 +8,8 @@
 #include "../../general/base/fight/CommonFightEngine.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "DdosBuffer.hpp"
+#include "VectorFifo.hpp"
+#include "../../general/base/GeneralVariable.hpp"
 #include <unordered_map>
 #include <vector>
 #include <queue>
@@ -197,7 +199,11 @@ protected:
     uint64_t lastdaillygift;//datalocallity with ClientStat stat
 
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    #ifdef CATCHCHALLENGER_LOWRAM
+    VectorFifo<CatchChallenger::DatabaseBaseCallBack *> callbackRegistred;
+    #else
     std::queue<CatchChallenger::DatabaseBaseCallBack *> callbackRegistred;
+    #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
     #endif
@@ -294,7 +300,13 @@ private:
     DatapackStatus datapackStatus;
 
     int32_t last_sended_connected_players;//it's th last number of connected player send
+    //LOWRAM: no heap while empty (a std::deque holds ~550 B per queue per
+    //preallocated client slot), else the fastest one (benchmarkcontainers)
+    #ifdef CATCHCHALLENGER_LOWRAM
+    VectorFifo<void *> paramToPassToCallBack;
+    #else
     std::queue<void *> paramToPassToCallBack;
+    #endif
     #ifdef CATCHCHALLENGER_HARDENED
     std::queue<std::string > paramToPassToCallBackType;
     #endif
@@ -308,7 +320,11 @@ private:
     DdosBuffer<uint8_t,3> otherPacketKick;
     #endif
     uint8_t profileIndex;
+    #ifdef CATCHCHALLENGER_LOWRAM
+    VectorFifo<PlayerOnMap> lastTeleportation;
+    #else
     std::queue<PlayerOnMap> lastTeleportation;
+    #endif
     //free query numbers, used as a stack (dynamic, non-sense when the client is not connected, never stored to database)
     //fixed array: no heap block per preallocated client slot
     uint8_t queryIdPool[CATCHCHALLENGER_MAXPROTOCOLQUERY];
