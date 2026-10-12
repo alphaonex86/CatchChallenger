@@ -62,12 +62,12 @@ Client::Client(const uint16_t &index_connected_player) :
     #ifdef CATCHCHALLENGER_HARDENED
     ClientBase::public_and_private_informations_solo=&public_and_private_informations;
     #endif
-    queryIdPool.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
+    queryIdPoolSize=0;
     {
         uint8_t index=0;
         while(index<CATCHCHALLENGER_MAXPROTOCOLQUERY)
         {
-            queryIdPool.push_back(index);
+            queryIdPoolPush(index);
             index++;
         }
     }
@@ -80,6 +80,18 @@ Client::Client(const uint16_t &index_connected_player) :
     CatchChallenger::gui_stats::players_logged_total.fetch_add(1, std::memory_order_relaxed);
     CatchChallenger::gui_stats::push_event("connected", std::string());
 #endif
+}
+
+void Client::queryIdPoolPush(const uint8_t &queryNumber)
+{
+    //a reply is only accepted for a registered query, so this never overflows
+    if(queryIdPoolSize>=CATCHCHALLENGER_MAXPROTOCOLQUERY)
+    {
+        std::cerr << "Client::queryIdPoolPush() pool already full, drop query number " << std::to_string(queryNumber) << std::endl;
+        return;
+    }
+    queryIdPool[queryIdPoolSize]=queryNumber;
+    queryIdPoolSize++;
 }
 
 void Client::setToDefault()
@@ -184,7 +196,7 @@ void Client::setToDefault()
     #endif
     while(!lastTeleportation.empty())
         lastTeleportation.pop();
-    queryIdPool.clear();
+    queryIdPoolSize=0;
     botFight.first=65535;
     botFight.second=255;
     attackReturn.clear();
@@ -894,7 +906,7 @@ void Client::breakNeedMoreData()
 //Client::sendPing() can be call by another function using the buffer like MapVisibilityAlgorithm::purgeBuffer(), then use their own
 void Client::sendPing()
 {
-    if(queryIdPool.empty())
+    if(queryIdPoolSize==0)
     {
         errorOutput("Sorry, no free query number to send this query of teleportation");
         return;
@@ -906,17 +918,17 @@ void Client::sendPing()
     //send the network reply
     char buffer[2];//Client::sendPing() can be call by another function using the buffer like MapVisibilityAlgorithm::purgeBuffer(), then use their own
     buffer[0x00]=0xE3;
-    buffer[0x01]=queryIdPool.back();
-    registerOutputQuery(queryIdPool.back(),0xE3);
+    buffer[0x01]=queryIdPool[queryIdPoolSize-1];
+    registerOutputQuery(queryIdPool[queryIdPoolSize-1],0xE3);
 
     sendRawBlock(buffer,sizeof(buffer));
 
-    queryIdPool.pop_back();
+    queryIdPoolSize--;
 }
 
 size_t Client::sendPing(char * output)
 {
-    if(queryIdPool.empty())
+    if(queryIdPoolSize==0)
     {
         errorOutput("Sorry, no free query number to send this query of teleportation");
         return 0;
@@ -927,10 +939,10 @@ size_t Client::sendPing(char * output)
 
     //send the network reply
     output[0x00]=0xE3;
-    output[0x01]=queryIdPool.back();
-    registerOutputQuery(queryIdPool.back(),0xE3);
+    output[0x01]=queryIdPool[queryIdPoolSize-1];
+    registerOutputQuery(queryIdPool[queryIdPoolSize-1],0xE3);
 
-    queryIdPool.pop_back();
+    queryIdPoolSize--;
     return 2;
 }
 
@@ -1038,9 +1050,9 @@ void Client::parse(CcDbInputBuffer& buf) {
     buf >> randomIndex >> randomSize >> number_of_character;
     buf >> questsDrop >> connectedSince >> profileIndex;
     //queryIdPool is runtime-only, initialize full pool
-    queryIdPool.clear();
+    queryIdPoolSize=0;
     for(uint8_t i=0;i<CATCHCHALLENGER_MAXPROTOCOLQUERY;i++)
-        queryIdPool.push_back(i);
+        queryIdPoolPush(i);
     //botFight and isInCityCapture are runtime-only and not serialised
 
     uint8_t value=0;

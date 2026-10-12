@@ -24,10 +24,10 @@ void Client::characterIsRightSendData()
 
     stat=ClientStat::CharacterSelected;
 
-    if(queryIdPool.empty())
+    if(queryIdPoolSize==0)
         std::cerr << "warning: queryIdPool is empty at CharacterSelected, no free query number" << std::endl;
-    else if(queryIdPool.size()<CATCHCHALLENGER_MAXPROTOCOLQUERY)
-        std::cerr << "warning: queryIdPool has only " << queryIdPool.size() << "/" << CATCHCHALLENGER_MAXPROTOCOLQUERY << " free query numbers at CharacterSelected" << std::endl;
+    else if(queryIdPoolSize<CATCHCHALLENGER_MAXPROTOCOLQUERY)
+        std::cerr << "warning: queryIdPool has only " << std::to_string(queryIdPoolSize) << "/" << CATCHCHALLENGER_MAXPROTOCOLQUERY << " free query numbers at CharacterSelected" << std::endl;
 
     ClientList::list->insert_characterSelected(*this);
     if(public_and_private_informations.clan!=0)

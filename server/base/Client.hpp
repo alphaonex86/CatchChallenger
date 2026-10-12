@@ -309,7 +309,11 @@ private:
     #endif
     uint8_t profileIndex;
     std::queue<PlayerOnMap> lastTeleportation;
-    std::vector<uint8_t> queryIdPool;//dynamic, non-sense when the client is not connected, then never store to database
+    //free query numbers, used as a stack (dynamic, non-sense when the client is not connected, never stored to database)
+    //fixed array: no heap block per preallocated client slot
+    uint8_t queryIdPool[CATCHCHALLENGER_MAXPROTOCOLQUERY];
+    uint8_t queryIdPoolSize;
+    void queryIdPoolPush(const uint8_t &queryNumber);
 
     PLAYER_INDEX_FOR_CONNECTED otherPlayerBattle;//65535 is not in battle
     bool battleIsValidated;
