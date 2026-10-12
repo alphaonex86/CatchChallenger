@@ -985,8 +985,9 @@ players). History before that date is not comparable. Benchmark builds now count
 
 ## `benchmarkcontainers.py` -- std::vector / list / deque on real datapack data
 
-Decision tool for CATCHCHALLENGER_LOWRAM choices, not in `all.sh`. Host + every detected ESP32 board
-(own libstdc++/heap at -Os; files + items emitted into flash). Production loader reads the datapack's
+Decision tool for CATCHCHALLENGER_LOWRAM choices, not in `all.sh`. Host + every detected ESP32 board +
+the T2100: those run `EmbeddedSuite.hpp` with the files + items datasets emitted by the host as C++ arrays
+(flash / a cross-built `embedded/` binary, files cut to the free RAM). Production loader reads the datapack's
 BIGGEST maincode (files served + its maps), items, monsters + the Client's per-player FIFO; prints
 build ns/elem, scan rate, real heap bytes/blocks, FIFO ops/s and empty-container heap. `--datapack DIR`
 measures another datapack and records NOTHING (no path, no name, no number).

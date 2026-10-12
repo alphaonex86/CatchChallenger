@@ -15,9 +15,10 @@ container already holds. The median of the runs is printed as a table.
 Without --datapack it measures the default datapack and records the per-node
 history like every benchmark. With --datapack the numbers are printed only:
 nothing about that datapack (path, name, numbers) is written anywhere.
-Runs on the host and ON every detected ESP32 board (its own libstdc++ and heap:
-files + items generated into flash by the host, plus the FIFO). No fleet/T2100
-dispatch yet.
+Runs on the host, ON every detected ESP32 board and on the T2100 i486 laptop:
+those cannot load the datapack, so the host emits the files + items datasets as
+C++ arrays compiled into the firmware / a small cross-built binary
+(benchmarkcontainers/embedded), which also runs the FIFO pattern. No fleet yet.
 """
 import argparse
 import os
@@ -47,7 +48,9 @@ SRC_DIR = os.path.join(bh.REPO_ROOT, "benchmark", "benchmarkcontainers")
 BUILD_DIR = os.path.join(BUILD_ROOT, "benchmark", NAME)
 BIN = os.path.join(BUILD_DIR, "benchmark_containers")
 ESP32_PROJECT = os.path.join(SRC_DIR, "esp32")
-ESP32_EMIT_MAX_FILES = 4000     # the firmware keeps what its heap holds
+EMBEDDED_EMIT_MAX_FILES = 4000  # the ESP32 / i486 binary keeps what its memory holds
+EMBEDDED_BIN = "benchmark_containers_embedded"
+T2100_RUN_TIMEOUT = 900         # 60 s gate + ~25 fixed windows on a 50 MHz 486
 ESP32_READ_SECS = 180
 CONTAINERS = ("vector", "vector_reserved", "list", "deque")
 FIFO_CONTAINERS = ("vector", "list", "deque")
@@ -146,18 +149,61 @@ def print_tables(median):
             print(f"  {container:16s}" + "".join(f"{fmt(v):>20s}" for v in row))
 
 
+def emit_data(datapack):
+    """The files + items datasets as C++ arrays, for the targets that cannot load
+    the datapack. -> (path, error)"""
+    data_dir = os.path.join(BUILD_DIR, "embedded-data")
+    os.makedirs(data_dir, exist_ok=True)
+    data_cpp = os.path.join(data_dir, "containers_data.cpp")
+    rc, sout, serr, _ = bh.run_capture([BIN, "--datapack", datapack, "--emit-esp32", data_cpp,
+                                        str(EMBEDDED_EMIT_MAX_FILES)], timeout=RUN_TIMEOUT)
+    if rc != 0:
+        return None, "emit failed: " + serr[-500:]
+    return data_cpp, None
+
+
+def measure_t2100(datapack, external, window_ms):
+    """The i486 laptop: cross-build the embedded suite with the data compiled in,
+    push it over the SLIP link, run it behind the 60 s + load < 1 gate.
+    -> (values, error)"""
+    import benchmark_t2100 as t2100
+    data_cpp, err = emit_data(datapack)
+    if data_cpp is None:
+        return None, "FAIL:" + err
+    bin_path, err = t2100.cross_build("benchmark/benchmarkcontainers/embedded", "build-containers",
+                                      EMBEDDED_BIN, {"CC_CONTAINERS_DATA_CPP": data_cpp})
+    if external:
+        os.remove(data_cpp)   # it holds that datapack's file names
+    if bin_path is None:
+        return None, "SKIP:cross-build: " + err
+    ok, detail = t2100.push([bin_path])
+    if not ok:
+        return None, "SKIP:push: " + detail
+    rc, sout, serr = t2100.ssh(f"cd {t2100.T2100_NODE['work_dir']} && sleep 60 && cat /proc/loadavg"
+                               f" && ./{EMBEDDED_BIN} --ms {window_ms}", timeout=T2100_RUN_TIMEOUT)
+    if rc != 0:
+        return None, f"FAIL:rc={rc}: {(serr or sout)[-1500:]}"
+    lines = sout.splitlines()
+    try:
+        load = float(lines[0].split()[0])
+    except (IndexError, ValueError):
+        return None, "FAIL:no /proc/loadavg line: " + sout[:300]
+    if load >= 1.0:
+        return None, f"SKIP:load={load}"
+    values = parse_bench(sout)
+    if values.get("done") != 1.0:
+        return None, "FAIL:no 'BENCH done' line:\n" + sout[-1500:]
+    return values, None
+
+
 def measure_esp32(node, datapack, external):
     """One ESP32 board: emit the datasets, build + flash + read. -> (values, error)."""
     import benchmark_esp32 as esp
     if node["tty"] is None:
         return None, "SKIP:" + node["skip_reason"]
-    data_dir = os.path.join(BUILD_DIR, "esp32-data")
-    os.makedirs(data_dir, exist_ok=True)
-    data_cpp = os.path.join(data_dir, "containers_data.cpp")
-    rc, sout, serr, _ = bh.run_capture([BIN, "--datapack", datapack, "--emit-esp32", data_cpp,
-                                        str(ESP32_EMIT_MAX_FILES)], timeout=RUN_TIMEOUT)
-    if rc != 0:
-        return None, "FAIL:emit failed: " + serr[-500:]
+    data_cpp, err = emit_data(datapack)
+    if data_cpp is None:
+        return None, "FAIL:" + err
     os.environ["CC_CONTAINERS_DATA_CPP"] = data_cpp
     status, detail, text = esp.run_ondevice_benchmark(
         ESP32_PROJECT, os.path.join(esp.ESP32_PREFIX, "build-containers"),
@@ -191,8 +237,10 @@ def main():
         return 2
 
     import benchmark_esp32 as esp
+    import benchmark_t2100 as t2100
     esp32_nodes = esp.benchmark_nodes(verbose=False)
-    progress = bh.Progress(RUN_REPEATS + len(esp32_nodes), NAME)
+    with_t2100 = bh.node_allowed(t2100.T2100_NODE["label"], t2100.T2100_NODE["arch"])
+    progress = bh.Progress(RUN_REPEATS + len(esp32_nodes) + (1 if with_t2100 else 0), NAME)
     batch_id = hr.new_batch_id()
     started_utc = hr.iso_now()
     runs = []
@@ -225,6 +273,21 @@ def main():
               f"{int(values.get('files.elements', 0))}/{int(values.get('files.available', 0))} by its heap)")
         print_tables(values)
 
+    t2100_values = None
+    if with_t2100:
+        label = t2100.T2100_NODE["label"]
+        t2100_values, err = measure_t2100(datapack, external, own.ms)
+        if t2100_values is None:
+            status, reason = err.split(":", 1)
+            progress.emit("rusage", "no", label, status, reason.splitlines()[0][:120])
+            bh.print_node_error(NAME, label, status, reason)
+        else:
+            progress.emit("rusage", "no", label, "PASS")
+            print(f"\n==== {label} (i486, files cut to {int(t2100_values.get('files.elements', 0))}/"
+                  f"{int(t2100_values.get('files.available', 0))} by its "
+                  f"{int(t2100_values.get('mem_available_kb', 0))} KiB available)")
+            print_tables(t2100_values)
+
     if external:
         print("\n(--datapack given: numbers printed only, nothing recorded)")
         return 0
@@ -249,9 +312,18 @@ def main():
                    comment=args.comment)
     if out is not None:
         bh.chatter(f"[history] {out}")
-    for label, (node, values) in boards.items():
-        pr = hr.PlatformRecord(NAME, batch_id, label, runner=None, arch_hint=node.get("arch"))
-        pr.platform.update(esp.esp32_platform_fields(node["target"]))
+    targets = [(label, node, values) for label, (node, values) in boards.items()]
+    if t2100_values is not None:
+        targets.append((t2100.T2100_NODE["label"], t2100.T2100_NODE, t2100_values))
+    for label, node, values in targets:
+        if node.get("t2100"):
+            pr = hr.PlatformRecord(NAME, batch_id, label, runner=t2100.runner,
+                                   arch_hint=node.get("arch")).collect(
+                                       cc_binary_path=node["work_dir"], datapack_path=node["work_dir"])
+            pr.platform.update(t2100.platform_fields())
+        else:
+            pr = hr.PlatformRecord(NAME, batch_id, label, runner=None, arch_hint=node.get("arch"))
+            pr.platform.update(esp.esp32_platform_fields(node["target"]))
         block = {}
         slices = {}
         for key, value in values.items():
@@ -266,7 +338,8 @@ def main():
         for slice_label, slice_block in sorted(slices.items()):
             pr.add_subbenchmark("rusage", slice_label, slice_block)
         out = pr.write(commit=bh.git_sha(), started_utc=started_utc, ended_utc=hr.iso_now(),
-                       compile_flags=["-Os", "-DCC_TARGET_ESP32"], simd_tier="generic",
+                       compile_flags=(t2100.COMPILE_FLAGS if node.get("t2100")
+                                      else ["-Os", "-DCC_TARGET_ESP32"]), simd_tier="generic",
                        harness_version=hr.harness_version(), comment=args.comment)
         if out is not None:
             bh.chatter(f"[history] {out}")
