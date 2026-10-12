@@ -464,8 +464,10 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
             else
             {
                 const std::vector<uint8_t> &_d=CatchChallenger::dbInternalVarsStore.at(std::string("database/server/server"));
-                std::istringstream in_file(std::string(reinterpret_cast<const char *>(_d.data()),_d.size()));
-                hps::StreamInputBuffer s(in_file);
+                //string buffers: hps::Stream*Buffer puts 64KB on the stack, more than
+                //an ESP32 task has (an ESP32-C6 overflowed its 80KB right here)
+                const std::string in_data(reinterpret_cast<const char *>(_d.data()),_d.size());
+                hps::StringInputBuffer s(in_data);
                 s >> GlobalServerData::serverPrivateVariables.maxClanId;
                 s >> GlobalServerData::serverPrivateVariables.maxAccountId;
                 s >> GlobalServerData::serverPrivateVariables.maxCharacterId;
@@ -491,12 +493,17 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
             #endif
         }
         {
-            std::ostringstream out_file;
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
-            const std::string _s=out_file.str();
+            //one string buffer (1KB of stack) instead of a 64KB hps::StreamOutputBuffer
+            //per value: four of those inlined overflowed an ESP32-C6's 80KB task stack
+            std::string _s;
+            {
+                hps::StringOutputBuffer out(_s);
+                out << GlobalServerData::serverPrivateVariables.maxClanId;
+                out << GlobalServerData::serverPrivateVariables.maxAccountId;
+                out << GlobalServerData::serverPrivateVariables.maxCharacterId;
+                out << GlobalServerData::serverPrivateVariables.maxCity;
+                out.flush();
+            }
             #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
             CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
             #else

@@ -941,7 +941,7 @@ uint8_t Client::pingCountInProgress() const
 
 #ifdef CATCHCHALLENGER_DB_FILE
 #ifdef CATCHCHALLENGER_CACHE_HPS
-void Client::serialize(hps::StreamOutputBuffer& buf) const {
+void Client::serialize(CcDbOutputBuffer& buf) const {
     /// \warning use dictionary
     /// This is the non-map-linked part of the character, stored in
     /// database/common/characters/{pseudo_hex}. Map-linked data (mapData, quests)
@@ -991,7 +991,7 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     buf << map_id << x << y << (uint8_t)last_direction;
 }
 
-void Client::parse(hps::StreamInputBuffer& buf) {
+void Client::parse(CcDbInputBuffer& buf) {
     /// \warning use dictionary
 
     uint32_t temp_character_id=character_id_db;
@@ -1147,7 +1147,7 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     }
 }
 
-void Client::serializeServerPart(hps::StreamOutputBuffer& buf) const {
+void Client::serializeServerPart(CcDbOutputBuffer& buf) const {
     //Per-map data (Player_private_and_public_informations_Map) and quests.
     //Keys of mapData are internal mapIndex at runtime; convert to db_id on disk.
     const std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> &mapData=public_and_private_informations.mapData;
@@ -1167,7 +1167,7 @@ void Client::serializeServerPart(hps::StreamOutputBuffer& buf) const {
     buf << public_and_private_informations.quests;
 }
 
-void Client::parseServerPart(hps::StreamInputBuffer& buf) {
+void Client::parseServerPart(CcDbInputBuffer& buf) {
     std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> &mapData=public_and_private_informations.mapData;
     mapData.clear();
     size_t mapDataCount=0;
@@ -1206,9 +1206,18 @@ void Client::saveCharacterFiles() const {
         //Compose in memory (both DB modes), then persist: RAM store for
         //DB_INTERNAL_VARS, else whole-file write (routed through io_uring when
         //the server installed the ring writer, blocking fopen otherwise).
+#ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        std::string _s;
+        {
+            hps::StringOutputBuffer out(_s);
+            serialize(out);
+            out.flush();
+        }
+#else
         std::ostringstream out_file;
         hps::to_stream(*this, out_file);
         const std::string _s=out_file.str();
+#endif
 #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
         CatchChallenger::dbInternalVarsStore[std::string("database/common/characters/")+hexa]=
             std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),
@@ -1222,11 +1231,20 @@ void Client::saveCharacterFiles() const {
 #endif
     }
     {
+#ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
+        std::string _s;
+        {
+            hps::StringOutputBuffer s(_s);
+            serializeServerPart(s);
+            s.flush();
+        }
+#else
         std::ostringstream out_file;
         hps::StreamOutputBuffer s(out_file);
         serializeServerPart(s);
         s.flush();
         const std::string _s=out_file.str();
+#endif
 #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
         CatchChallenger::dbInternalVarsStore[std::string("database/server/characters/")+hexa]=
             std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),
@@ -1258,8 +1276,8 @@ bool Client::loadCharacterServerFile() {
     //empty-file check on the disk path below).
     if(_d.empty())
         return false;
-    std::istringstream in_file(std::string(reinterpret_cast<const char *>(_d.data()),_d.size()));
-    hps::StreamInputBuffer s(in_file);
+    const std::string in_data(reinterpret_cast<const char *>(_d.data()),_d.size());
+    hps::StringInputBuffer s(in_data);
     parseServerPart(s);
     return true;
 #else

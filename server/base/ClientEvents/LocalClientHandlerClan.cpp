@@ -440,9 +440,9 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
                 {
                     if(_it->first.size()>_kpre.size() && _it->first.compare(0,_kpre.size(),_kpre)==0)
                     {
-                        std::istringstream f(std::string(reinterpret_cast<const char *>(_it->second.data()),_it->second.size()));
+                        const std::string f(reinterpret_cast<const char *>(_it->second.data()),_it->second.size());
                         std::string existingName;
-                        hps::StreamInputBuffer sb(f);
+                        hps::StringInputBuffer sb(f);
                         sb >> existingName;
                         if(existingName==text) { duplicateFound=true; break; }
                     }
@@ -525,38 +525,50 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
         // Save clan
         #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
         {
-            std::ostringstream clan_out;
-            hps::to_stream(text, clan_out);
-            hps::to_stream((uint64_t)0, clan_out);
-            const std::string _s=clan_out.str();
+            //one string buffer (1KB of stack), not a 64KB hps::StreamOutputBuffer per value:
+            //several of those in one frame overflow an ESP32 task stack
+            std::string _s;
+            hps::StringOutputBuffer out(_s);
+            out << text;
+            out << (uint64_t)0;
+            out.flush();
             CatchChallenger::dbInternalVarsStore[std::string("database/server/clans/")+std::to_string(clanId)]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
         }
         {
-            std::ostringstream srv_file;
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, srv_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, srv_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, srv_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, srv_file);
-            const std::string _s=srv_file.str();
+            //one string buffer (1KB of stack), not a 64KB hps::StreamOutputBuffer per value:
+            //several of those in one frame overflow an ESP32 task stack
+            std::string _s;
+            hps::StringOutputBuffer out(_s);
+            out << GlobalServerData::serverPrivateVariables.maxClanId;
+            out << GlobalServerData::serverPrivateVariables.maxAccountId;
+            out << GlobalServerData::serverPrivateVariables.maxCharacterId;
+            out << GlobalServerData::serverPrivateVariables.maxCity;
+            out.flush();
             CatchChallenger::dbInternalVarsStore[std::string("database/server/server")]=std::vector<uint8_t>(reinterpret_cast<const uint8_t *>(_s.data()),reinterpret_cast<const uint8_t *>(_s.data())+_s.size());
         }
         #else
         // Save clan to disk (best-effort, as before: failure is ignored)
         {
-            std::ostringstream clan_out;
-            hps::to_stream(text, clan_out);
-            hps::to_stream((uint64_t)0, clan_out);
-            const std::string _s=clan_out.str();
+            //one string buffer (1KB of stack), not a 64KB hps::StreamOutputBuffer per value:
+            //several of those in one frame overflow an ESP32 task stack
+            std::string _s;
+            hps::StringOutputBuffer out(_s);
+            out << text;
+            out << (uint64_t)0;
+            out.flush();
             FacilityLibGeneral::writeWholeFile(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/clans/")+std::to_string(clanId)),_s.data(),_s.size());
         }
         // Persist updated maxClanId to database/server
         {
-            std::ostringstream srv_file;
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, srv_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, srv_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, srv_file);
-            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, srv_file);
-            const std::string _s=srv_file.str();
+            //one string buffer (1KB of stack), not a 64KB hps::StreamOutputBuffer per value:
+            //several of those in one frame overflow an ESP32 task stack
+            std::string _s;
+            hps::StringOutputBuffer out(_s);
+            out << GlobalServerData::serverPrivateVariables.maxClanId;
+            out << GlobalServerData::serverPrivateVariables.maxAccountId;
+            out << GlobalServerData::serverPrivateVariables.maxCharacterId;
+            out << GlobalServerData::serverPrivateVariables.maxCity;
+            out.flush();
             FacilityLibGeneral::writeWholeFile(CATCHCHALLENGER_DB_FILE_PATH(std::string("database/server/server")),_s.data(),_s.size());
         }
         #endif
