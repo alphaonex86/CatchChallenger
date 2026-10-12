@@ -37,7 +37,14 @@ NAME = "benchmarkcontainers"
 DEFAULT_DATAPACK = "/home/user/Desktop/CatchChallenger/CatchChallenger-datapack"
 RUN_REPEATS = 3
 WINDOW_MS = 200
-RUN_TIMEOUT = 900
+# Fixed time: every cell is one WINDOW_MS window (a pass is cut mid-way when the
+# window ends), so each timeout is the run's budget (windows x window) + a margin
+# for what is not windowed: loading the data, one full build per cell for its heap.
+HOST_DATASETS = 4               # files, maps, items, monsters
+EMBEDDED_DATASETS = 2           # files, items
+HOST_MARGIN_S = 300             # datapack + maps parse
+EMBEDDED_MARGIN_S = 180         # data setup + one full build per cell on a 50 MHz 486
+EMIT_TIMEOUT = 600
 
 try:
     import test_config
@@ -50,10 +57,17 @@ BIN = os.path.join(BUILD_DIR, "benchmark_containers")
 ESP32_PROJECT = os.path.join(SRC_DIR, "esp32")
 EMBEDDED_EMIT_MAX_FILES = 4000  # the ESP32 / i486 binary keeps what its memory holds
 EMBEDDED_BIN = "benchmark_containers_embedded"
-T2100_RUN_TIMEOUT = 900         # 60 s gate + ~25 fixed windows on a 50 MHz 486
-ESP32_READ_SECS = 180
+T2100_GATE_S = 60
+ESP32_BOOT_S = 10               # USB re-enumeration wait in the firmware
 CONTAINERS = ("vector", "vector_reserved", "list", "deque")
 FIFO_CONTAINERS = ("vector", "list", "deque")
+
+
+def budget_s(datasets, window_ms):
+    """Seconds of measurement of one run: a build and a scan window per dataset
+    and container, one window per FIFO depth (1, 16) and container."""
+    windows = datasets * len(CONTAINERS) * 2 + 2 * len(FIFO_CONTAINERS)
+    return windows * window_ms / 1000.0
 
 # metric suffix -> (unit, better)
 UNITS = {
@@ -84,11 +98,12 @@ def build():
 
 def run_once(datapack, window_ms):
     """One run -> ({key: value}, error)."""
+    timeout = budget_s(HOST_DATASETS, window_ms) + HOST_MARGIN_S
     try:
         proc = subprocess.run([BIN, "--datapack", datapack, "--ms", str(window_ms)],
-                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=RUN_TIMEOUT)
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout)
     except subprocess.TimeoutExpired:
-        return None, f"timeout after {RUN_TIMEOUT}s"
+        return None, f"timeout after {timeout:.0f}s"
     values = parse_bench(proc.stdout.decode(errors="replace"))
     if proc.returncode != 0 or values.get("done") != 1.0:
         return None, f"rc={proc.returncode}, no 'BENCH done' line:\n" + proc.stderr.decode(errors="replace")[-2000:]
@@ -156,7 +171,7 @@ def emit_data(datapack):
     os.makedirs(data_dir, exist_ok=True)
     data_cpp = os.path.join(data_dir, "containers_data.cpp")
     rc, sout, serr, _ = bh.run_capture([BIN, "--datapack", datapack, "--emit-esp32", data_cpp,
-                                        str(EMBEDDED_EMIT_MAX_FILES)], timeout=RUN_TIMEOUT)
+                                        str(EMBEDDED_EMIT_MAX_FILES)], timeout=EMIT_TIMEOUT)
     if rc != 0:
         return None, "emit failed: " + serr[-500:]
     return data_cpp, None
@@ -179,8 +194,9 @@ def measure_t2100(datapack, external, window_ms):
     ok, detail = t2100.push([bin_path])
     if not ok:
         return None, "SKIP:push: " + detail
-    rc, sout, serr = t2100.ssh(f"cd {t2100.T2100_NODE['work_dir']} && sleep 60 && cat /proc/loadavg"
-                               f" && ./{EMBEDDED_BIN} --ms {window_ms}", timeout=T2100_RUN_TIMEOUT)
+    rc, sout, serr = t2100.ssh(f"cd {t2100.T2100_NODE['work_dir']} && sleep {T2100_GATE_S} && cat /proc/loadavg"
+                               f" && ./{EMBEDDED_BIN} --ms {window_ms}",
+                               timeout=T2100_GATE_S + budget_s(EMBEDDED_DATASETS, window_ms) + EMBEDDED_MARGIN_S)
     if rc != 0:
         return None, f"FAIL:rc={rc}: {(serr or sout)[-1500:]}"
     lines = sout.splitlines()
@@ -196,7 +212,7 @@ def measure_t2100(datapack, external, window_ms):
     return values, None
 
 
-def measure_esp32(node, datapack, external):
+def measure_esp32(node, datapack, external, window_ms):
     """One ESP32 board: emit the datasets, build + flash + read. -> (values, error)."""
     import benchmark_esp32 as esp
     if node["tty"] is None:
@@ -207,7 +223,7 @@ def measure_esp32(node, datapack, external):
     os.environ["CC_CONTAINERS_DATA_CPP"] = data_cpp
     status, detail, text = esp.run_ondevice_benchmark(
         ESP32_PROJECT, os.path.join(esp.ESP32_PREFIX, "build-containers"),
-        read_secs=ESP32_READ_SECS, verbose=False, target=node["target"], serial=node["tty"])
+        read_secs=ESP32_BOOT_S + budget_s(EMBEDDED_DATASETS, window_ms) + EMBEDDED_MARGIN_S, verbose=False, target=node["target"], serial=node["tty"])
     if external:
         os.remove(data_cpp)   # it holds that datapack's file names
     if status != "PASS":
@@ -261,7 +277,7 @@ def main():
 
     boards = {}
     for node in esp32_nodes:
-        values, err = measure_esp32(node, datapack, external)
+        values, err = measure_esp32(node, datapack, external, own.ms)
         if values is None:
             status, reason = err.split(":", 1)
             progress.emit("rusage", "no", node["label"], status, reason.splitlines()[0][:120])

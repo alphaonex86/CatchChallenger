@@ -110,6 +110,11 @@ static uint64_t cpuUs()
 }
 
 static uint64_t g_windowNs=200000000;
+// Fixed TIME, not fixed iterations: the clock is read every CHECK_* elements
+// inside a pass, so a slow node stops after its window plus one chunk, never
+// after a whole dataset pass (a pass of a big dataset on a 486 is seconds).
+static const size_t CHECK_BUILD=64;
+static const size_t CHECK_SCAN=1024;
 static volatile uint64_t g_sink=0;
 
 static void print(const std::string &key,const double &value)
@@ -170,17 +175,27 @@ static void measureDataset(const std::string &name,const std::string &containerN
     const uint64_t cpuStart=cpuUs();
     const uint64_t wallStart=nowNs();
 
-    uint64_t builds=0;
+    //build: construct by push_back (the destruction of each container included)
+    uint64_t pushed=0;
     uint64_t start=nowNs();
     while(nowNs()-start<g_windowNs)
     {
         Container container;
-        fillContainer(container,source,reserve);
+        reserveIfAsked(container,source.size(),reserve);
+        size_t index=0;
+        while(index<source.size())
+        {
+            container.push_back(source[index]);
+            index++;
+            if(index%CHECK_BUILD==0 && nowNs()-start>=g_windowNs)
+                break;
+        }
+        barrier(&container);
         g_sink+=container.size();
-        builds++;
+        pushed+=index;
     }
     const uint64_t buildNs=nowNs()-start;
-    print(prefix+"build_ns_per_elem",static_cast<double>(buildNs)/static_cast<double>(builds*source.size()));
+    print(prefix+"build_ns_per_elem",static_cast<double>(buildNs)/static_cast<double>(pushed));
 
     const uint64_t bytesBefore=g_liveBytes;
     const uint64_t blocksBefore=g_liveBlocks;
@@ -196,16 +211,31 @@ static void measureDataset(const std::string &name,const std::string &containerN
     start=nowNs();
     while(nowNs()-start<g_windowNs)
     {
+        //counted chunks: no per-element test in the inner loop (it stays
+        //vectorisable), one clock read per CHECK_SCAN elements
         uint64_t sum=0;
+        size_t inPass=0;
+        const size_t size=container.size();
         typename Container::const_iterator it=container.cbegin();
-        while(it!=container.cend())
+        while(inPass<size)
         {
-            sum+=weight(*it);
-            ++it;
+            size_t chunk=size-inPass;
+            if(chunk>CHECK_SCAN)
+                chunk=CHECK_SCAN;
+            inPass+=chunk;
+            while(chunk>0)
+            {
+                sum+=weight(*it);
+                ++it;
+                chunk--;
+            }
+            //the end of a pass is checked by the outer loop: one clock read per pass at most
+            if(inPass<size && nowNs()-start>=g_windowNs)
+                break;
         }
         g_sink+=sum;
         barrier(&container);
-        scanned+=container.size();
+        scanned+=inPass;
     }
     const uint64_t scanNs=nowNs()-start;
     print(prefix+"scan_elems_per_s",static_cast<double>(scanned)*1e9/static_cast<double>(scanNs));
