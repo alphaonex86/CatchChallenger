@@ -15,6 +15,7 @@ extern const size_t cc_files_count;
 extern const uint32_t cc_items_price[];
 extern const uint8_t cc_items_consume[];
 extern const size_t cc_items_count;
+extern const uint16_t cc_items_id[];
 
 // `freeBytes`: the memory the run may use. The files dataset is cut to what it
 // holds: per element its FileEntry + the path block + a list node, three copies
@@ -33,6 +34,7 @@ static void runEmbeddedSuite(const size_t &freeBytes)
     if(count>cc_files_count)
         count=cc_files_count;
     print("files.available",static_cast<double>(cc_files_count));
+    std::vector<std::pair<std::string,uint32_t> > filesByPath;
     {
         std::vector<FileEntry> files;
         files.reserve(count);
@@ -46,7 +48,16 @@ static void runEmbeddedSuite(const size_t &freeBytes)
             index++;
         }
         measureAll("files",files);
+        index=0;
+        while(index<files.size())
+        {
+            filesByPath.push_back(std::pair<std::string,uint32_t>(files[index].path,files[index].size));
+            index++;
+        }
     }
+    measureLookups("files",filesByPath);
+    filesByPath.clear();
+    filesByPath.shrink_to_fit();
     {
         std::vector<ItemEntry> items;
         items.reserve(cc_items_count);
@@ -60,6 +71,14 @@ static void runEmbeddedSuite(const size_t &freeBytes)
             index++;
         }
         measureAll("items",items);
+        std::vector<std::pair<uint16_t,ItemEntry> > itemsById;
+        index=0;
+        while(index<items.size())
+        {
+            itemsById.push_back(std::pair<uint16_t,ItemEntry>(cc_items_id[index],items[index]));
+            index++;
+        }
+        measureLookupsById("items",itemsById);
     }
     measureFifos();
     print("done",1);

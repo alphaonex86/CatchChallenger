@@ -7,8 +7,10 @@
 cmake_minimum_required(VERSION 3.20)
 project(benchmark_containers LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# C++23 when the compiler has it, like the production builds: the datapack maps
+# are std::flat_map there (general/base/GeneralType.hpp), else std::unordered_map.
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CC_REPO_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)

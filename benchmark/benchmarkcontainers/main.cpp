@@ -90,7 +90,7 @@ static std::string cppString(const std::string &text)
 }
 
 static bool emitEsp32(const std::string &path,const std::vector<FileEntry> &files,const size_t &maxFiles,
-                      const std::vector<ItemEntry> &items)
+                      const std::vector<std::pair<uint16_t,ItemEntry> > &items)
 {
     std::ofstream out(path.c_str());
     if(!out.is_open())
@@ -104,6 +104,7 @@ static bool emitEsp32(const std::string &path,const std::vector<FileEntry> &file
         << "extern const char * const cc_files_path[]; extern const uint32_t cc_files_size[];\n"
         << "extern const size_t cc_files_count; extern const uint32_t cc_items_price[];\n"
         << "extern const uint8_t cc_items_consume[]; extern const size_t cc_items_count;\n"
+        << "extern const uint16_t cc_items_id[];\n"
         << "const size_t cc_files_count=" << fileCount << ";\n"
         << "const char * const cc_files_path[]={\n";
     size_t index=0;
@@ -119,18 +120,25 @@ static bool emitEsp32(const std::string &path,const std::vector<FileEntry> &file
         out << files.at(index).size << ",\n";
         index++;
     }
-    out << "0};\nconst size_t cc_items_count=" << items.size() << ";\nconst uint32_t cc_items_price[]={\n";
+    out << "0};\nconst size_t cc_items_count=" << items.size() << ";\nconst uint16_t cc_items_id[]={\n";
     index=0;
     while(index<items.size())
     {
-        out << items.at(index).price << ",\n";
+        out << items.at(index).first << ",\n";
+        index++;
+    }
+    out << "0};\nconst uint32_t cc_items_price[]={\n";
+    index=0;
+    while(index<items.size())
+    {
+        out << items.at(index).second.price << ",\n";
         index++;
     }
     out << "0};\nconst uint8_t cc_items_consume[]={\n";
     index=0;
     while(index<items.size())
     {
-        out << (items.at(index).consumeAtUse?1:0) << ",\n";
+        out << (items.at(index).second.consumeAtUse?1:0) << ",\n";
         index++;
     }
     out << "0};\n";
@@ -218,7 +226,7 @@ int main(int argc,char *argv[])
     std::cerr.setstate(std::ios_base::badbit);
     //items and monsters, then the maps (tryLoadMap aborts without parseDatapack first)
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapack);
-    std::vector<ItemEntry> items;
+    std::vector<std::pair<uint16_t,ItemEntry> > itemsById;
     {
         uint32_t id=0;
         while(id<=CatchChallenger::CommonDatapack::commonDatapack.get_itemMaxId())
@@ -229,7 +237,7 @@ int main(int argc,char *argv[])
                 ItemEntry entry;
                 entry.price=item.price;
                 entry.consumeAtUse=item.consumeAtUse;
-                items.push_back(entry);
+                itemsById.push_back(std::pair<uint16_t,ItemEntry>(static_cast<uint16_t>(id),entry));
             }
             id++;
         }
@@ -237,16 +245,17 @@ int main(int argc,char *argv[])
     std::cout.clear();
     std::cerr.clear();
     if(!emitPath.empty())
-        return emitEsp32(emitPath,files,emitMaxFiles,items)?0:1;
+        return emitEsp32(emitPath,files,emitMaxFiles,itemsById)?0:1;
     std::cout.setstate(std::ios_base::badbit);
     std::cerr.setstate(std::ios_base::badbit);
-    std::vector<CatchChallenger::Monster> monsters;
+    std::vector<std::pair<uint16_t,CatchChallenger::Monster> > monstersById;
     {
         uint32_t id=0;
         while(id<=CatchChallenger::CommonDatapack::commonDatapack.get_monstersMaxId())
         {
             if(CatchChallenger::CommonDatapack::commonDatapack.has_monster(static_cast<CATCHCHALLENGER_TYPE_MONSTER>(id)))
-                monsters.push_back(CatchChallenger::CommonDatapack::commonDatapack.get_monster(static_cast<CATCHCHALLENGER_TYPE_MONSTER>(id)));
+                monstersById.push_back(std::pair<uint16_t,CatchChallenger::Monster>(static_cast<uint16_t>(id),
+                    CatchChallenger::CommonDatapack::commonDatapack.get_monster(static_cast<CATCHCHALLENGER_TYPE_MONSTER>(id))));
             id++;
         }
     }
@@ -280,10 +289,53 @@ int main(int argc,char *argv[])
     print("maincode_maps",static_cast<double>(maincodeMaps));
     print("maps_failed",static_cast<double>(mapsFailed));
 
+    //sequences: the loaded lists, then the same data as key -> value structures
     measureAll("files",files);
     measureAll("maps",maps);
-    measureAll("items",items);
-    measureAll("monsters",monsters);
+    {
+        std::vector<ItemEntry> items;
+        size_t itemIndex=0;
+        while(itemIndex<itemsById.size())
+        {
+            items.push_back(itemsById[itemIndex].second);
+            itemIndex++;
+        }
+        measureAll("items",items);
+    }
+    {
+        std::vector<CatchChallenger::Monster> monsters;
+        size_t monsterIndex=0;
+        while(monsterIndex<monstersById.size())
+        {
+            monsters.push_back(monstersById[monsterIndex].second);
+            monsterIndex++;
+        }
+        measureAll("monsters",monsters);
+    }
+    {
+        std::vector<std::pair<std::string,uint32_t> > filesByPath;//sorted: the list is sorted
+        size_t fileIndex=0;
+        while(fileIndex<files.size())
+        {
+            filesByPath.push_back(std::pair<std::string,uint32_t>(files[fileIndex].path,files[fileIndex].size));
+            fileIndex++;
+        }
+        measureLookups("files",filesByPath);
+    }
+    {
+        std::vector<std::pair<uint16_t,CatchChallenger::Map_to_send> > mapsByIndex;
+        size_t mapIndex=0;
+        while(mapIndex<maps.size())
+        {
+            mapsByIndex.push_back(std::pair<uint16_t,CatchChallenger::Map_to_send>(static_cast<uint16_t>(mapIndex),maps[mapIndex]));
+            mapIndex++;
+        }
+        maps.clear();
+        maps.shrink_to_fit();
+        measureLookupsById("maps",mapsByIndex);
+    }
+    measureLookupsById("items",itemsById);
+    measureLookupsById("monsters",monstersById);
     measureFifos();
     print("done",1);
     return 0;
