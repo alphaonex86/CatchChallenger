@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <utility>
@@ -133,18 +134,53 @@ public:
         return items.begin()+static_cast<std::ptrdiff_t>(index);
     }
 
-    // hps: bulk load from (key, value) pairs in any order, the last duplicate wins
+    // hps: bulk load from (key, value) pairs in any order, the last duplicate wins.
+    // Sorted through (key, index) pairs: std::sort is instantiated once per KEY type
+    // (a few) instead of once per (key, value) type (~20, ~4 KB of code each), which
+    // matters where the code lives in RAM (i486). A cache written by a FlatMap is
+    // already sorted and skips the sort.
     void assignUnsorted(std::vector<std::pair<K,V> > &pairs)
     {
-        std::stable_sort(pairs.begin(),pairs.end(),KeyLess());
         std::vector<value_type> sorted;
         sorted.reserve(pairs.size());
-        size_t index=0;
-        while(index<pairs.size())
+        bool alreadySorted=true;
+        size_t index=1;
+        while(index<pairs.size() && alreadySorted)
         {
-            if(index+1>=pairs.size() || pairs[index+1].first!=pairs[index].first)
-                sorted.emplace_back(std::move(pairs[index].first),std::move(pairs[index].second));
+            if(!(pairs[index-1].first<pairs[index].first))
+                alreadySorted=false;
             index++;
+        }
+        if(alreadySorted)
+        {
+            index=0;
+            while(index<pairs.size())
+            {
+                sorted.emplace_back(std::move(pairs[index].first),std::move(pairs[index].second));
+                index++;
+            }
+        }
+        else
+        {
+            std::vector<std::pair<K,uint32_t> > order;
+            order.reserve(pairs.size());
+            index=0;
+            while(index<pairs.size())
+            {
+                order.push_back(std::pair<K,uint32_t>(pairs[index].first,static_cast<uint32_t>(index)));
+                index++;
+            }
+            std::sort(order.begin(),order.end());//ties ordered by index: the last duplicate comes last
+            index=0;
+            while(index<order.size())
+            {
+                if(index+1>=order.size() || order[index+1].first!=order[index].first)
+                {
+                    std::pair<K,V> &pair=pairs[order[index].second];
+                    sorted.emplace_back(std::move(pair.first),std::move(pair.second));
+                }
+                index++;
+            }
         }
         items.swap(sorted);
     }
@@ -152,11 +188,6 @@ private:
     // pair<const K,V> cannot be assigned, so a vector of it cannot shift in place:
     // appending in key order (the loaders' case) is O(1), anything else rebuilds.
     std::vector<value_type> items;
-
-    struct KeyLess
-    {
-        bool operator()(const std::pair<K,V> &a,const std::pair<K,V> &b) const { return a.first<b.first; }
-    };
 
     size_t lowerBound(const K &key) const
     {
