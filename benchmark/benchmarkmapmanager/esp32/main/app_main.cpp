@@ -13,9 +13,11 @@
 // contiguous free block. The harness allocates per-player state (Client +
 // captured-block vectors), so the big player counts (200/300, often 100) will
 // not fit. Each scenario is therefore guarded: we pre-check TOTAL free heap
-// against a per-player estimate, and ALSO wrap run_scenario() in try/catch so a
-// mid-run std::bad_alloc prints `BENCH players=N status=skip_oom` and continues
-// to the NEXT count without crashing or rebooting. A small-RAM board thus still
+// against a per-player estimate and print `BENCH players=N status=skip_oom`
+// for a count that cannot fit. Built WITHOUT exceptions (CatchChallenger uses
+// none), so an allocation the estimate let through aborts: `BENCH_TRY` precedes
+// every count run and the panic handler HALTS (no reboot loop), so that shows
+// as the last BENCH_TRY without its BENCH line. A small-RAM board thus still
 // reports the counts it CAN do (likely 5/10/20/50).
 //
 // After the sweep app_main idles forever (vTaskDelay) — it never reboots
@@ -23,11 +25,11 @@
 
 #include <cstdio>
 #include <cstdint>
-#include <new>
 #include <vector>
 #include <iostream>
 #include <fcntl.h>
 #include <unistd.h>
+#include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_heap_caps.h"
@@ -90,8 +92,7 @@ static const unsigned int  BENCH_PLAYERS[]   = {5, 10, 20, 50, 100, 200, 300};
 // Rough per-player heap cost: each player is a heap-allocated ClientWithMap plus
 // its captured-block + sendedStatus vectors and the harness's owned[] / map_*
 // slots. ~700 B measured-ish; round UP to 1 KiB and require 2x headroom so the
-// transient peak (insert+remove churn, vector growth) doesn't OOM mid-run. This
-// is only the cheap PRE-skip; the try/catch below is the real safety net.
+// transient peak (insert+remove churn, vector growth) doesn't OOM mid-run.
 static const size_t PER_PLAYER_BYTES = 1024;
 static const size_t SCENARIO_HEAP_HEADROOM = 24 * 1024;  // base bench + slack
 
@@ -99,6 +100,11 @@ static const char *TAG = "bench-mapmgr";
 
 extern "C" void app_main(void)
 {
+#if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
+    // A native-USB board re-enumerates on every reset: give the host time to
+    // reopen the port, or the first BENCH lines go nowhere.
+    vTaskDelay(pdMS_TO_TICKS(5000));
+#endif
     // Silence the std::cerr debug volume the production MapVisibilityAlgorithm.cpp
     // emits unconditionally under CATCHCHALLENGER_TESTING. On native this is done
     // in main() (compiled out here), so do it here: over UART the spam would both
@@ -124,8 +130,7 @@ extern "C" void app_main(void)
         // The per-player state is many SMALL scattered allocations (a
         // ClientWithMap + its vectors per player), so the limiting resource is
         // TOTAL free heap, not the single largest contiguous block — compare
-        // against free_size. The try/catch below is the backstop for the rarer
-        // contiguous-block failure (e.g. a big sample vector growing).
+        // against free_size.
         size_t need = SCENARIO_HEAP_HEADROOM + (size_t)players * PER_PLAYER_BYTES * 2;
         size_t freesz = heap_caps_get_free_size(MALLOC_CAP_8BIT);
         if(freesz < need)
@@ -137,25 +142,12 @@ extern "C" void app_main(void)
         }
         else
         {
-            // Real safety net: a mid-run allocation failure (estimate too
-            // optimistic) is caught here, reported, and the sweep continues.
-            try
-            {
-                run_scenario(players, 0 /*ticks: fixed-time*/, BENCH_SEED,
-                             BENCH_INSREM_PCT, BENCH_MOVE_PCT,
-                             (uint64_t)BENCH_MS,
-                             0 /*lag_pct: healthy link*/, 1 /*lag_rounds*/);
-            }
-            catch(const std::bad_alloc &)
-            {
-                printf("BENCH players=%u status=skip_oom (bad_alloc mid-run) "
-                       "largest_block=%u\n", players,
-                       (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
-            }
-            catch(...)
-            {
-                printf("BENCH players=%u status=skip_error\n", players);
-            }
+            printf("BENCH_TRY players=%u free_heap=%u\n", players, (unsigned)freesz);
+            fflush(stdout);
+            run_scenario(players, 0 /*ticks: fixed-time*/, BENCH_SEED,
+                         BENCH_INSREM_PCT, BENCH_MOVE_PCT,
+                         (uint64_t)BENCH_MS,
+                         0 /*lag_pct: healthy link*/, 1 /*lag_rounds*/);
         }
         // Yield between scenarios so the IDLE task can reclaim and the watchdog
         // stays fed during the next (potentially multi-second) fixed-time run.

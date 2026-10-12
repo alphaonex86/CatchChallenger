@@ -145,6 +145,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test"))
 
 import benchmark_helpers as bh
+import benchmark_microbench as bmicro
 import benchmark_remote as br
 import history_recorder as hr
 
@@ -195,9 +196,9 @@ BOT_PASS  = "bench"
 # DB_INTERNAL_VARS implies DB_FILE in server/cli/CMakeLists.txt; both are
 # passed explicitly so the configure line is self-describing.
 #
-# CATCHCHALLENGER_BENCHMARK is deliberately OFF, so the two measured binaries
-# are the ones that actually ship -- and because its loop probe does not mean
-# the same thing on the two backends.
+# CATCHCHALLENGER_BENCHMARK is ON (SERVER_DEFS below, the why is there): like
+# every benchmark server, no DDoS filter. Its loop probe still does not mean
+# the same thing on the two backends, so it is never quoted as an A/B result.
 #
 # CC_BENCH_LOOP_IN/OUT bracket main-unix.cpp:888..1201, i.e. everything AFTER
 # EventLoop::wait() returns. On epoll that window contains
@@ -1435,6 +1436,7 @@ def _history_metrics(per):
 def main():
     own, args = parse_args()
     bh.set_node_filter(args.node)
+    bmicro.ensure_missing()   # before any build or measurement
     br.set_benchmark_label(BENCH)
 
     if args.profile:

@@ -164,7 +164,13 @@ public:
     // Captured packets, per-client. Cleared by the test driver between
     // ticks so each call to min_CPU / min_balanced can be diffed.
     struct CapturedBlock { std::vector<char> bytes; };
+    // Content of every block sent: what the tests assert on. Benchmark builds
+    // (CATCHCHALLENGER_BENCHMARK) leave it empty -- a copy is one malloc per
+    // packet inside the measured window, about half the tick at 300 players,
+    // and production writes to its output buffer without allocating.
     std::vector<CapturedBlock> sentBlocks;
+    // Bytes sent since the last reset, in every build.
+    uint64_t sentBytes;
 
     // ping bookkeeping (the test driver bumps ping_in_progress_ to
     // simulate buffer saturation; production has this in

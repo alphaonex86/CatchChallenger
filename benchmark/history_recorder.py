@@ -1497,6 +1497,28 @@ class PlatformRecord:
         self._sensor_baseline = sensor_baseline(self.runner)
         return self
 
+    def _add_microbench(self):
+        """Fill cpu_mhz / cpu_cache from the benchmark_microbench cache
+        (measured before the run) where /proc left them unknown -- a 486
+        reports neither -- and record what was filled under `microbench`.
+        Where /proc did answer, nothing is added: platform.json is git-tracked
+        and a measured value jitters a little on every daily re-measure, so it
+        would rewrite the file for nothing. The full results of every node stay
+        in the local cache (benchmark_microbench.CACHE_DIR)."""
+        import benchmark_microbench as mb
+        got = mb.fields_for_label(self.node_label, measure=False)
+        if not got:
+            return
+        filled = {}
+        if not self.platform.get("cpu_mhz"):
+            self.platform["cpu_mhz"] = got["cpu_mhz_measured"]
+            filled["mhz"] = got["cpu_mhz_measured"]
+        if not self.platform.get("cpu_cache"):
+            self.platform["cpu_cache"] = got["cpu_cache_measured"]
+            filled["cache_kb"] = got["microbench"]["cache_kb"]
+        if filled:
+            self.platform["microbench"] = filled
+
     def collect(self, cc_binary_path=None, datapack_path=None,
                 sensor_baseline=None):
         """Best-effort fill of every platform field. Never raises.
@@ -1530,6 +1552,7 @@ class PlatformRecord:
         self.platform["cpu_cache"] = collect_cpu_cache(self.runner)
         if self.platform["arch"] is None and cpu["arch"]:
             self.platform["arch"] = cpu["arch"]
+        self._add_microbench()
         ram = collect_ram(self.runner)
         self.platform["ram_total_mb"] = ram["ram_total_mb"]
         self.platform["ram_type"]     = ram["ram_type"]

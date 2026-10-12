@@ -32,4 +32,13 @@ menu "CatchChallenger server"
         help
             Gateway applied only when CATCHCHALLENGER_STATIC_IP is non-empty.
 
+    config CATCHCHALLENGER_IDLE_CPU_FREQ_MHZ
+        int "Idle CPU frequency in MHz (0 = always full speed)"
+        default 0
+        help
+            Low-power build (needs PM_ENABLE, see sdkconfig.lowpower): the CPU
+            drops to this frequency while idle and the WiFi modem sleeps
+            between beacons. While the radio works the CPU still runs at
+            80 MHz or more: the WiFi needs the PLL clock.
+
 endmenu

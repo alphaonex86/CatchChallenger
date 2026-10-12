@@ -25,6 +25,7 @@ benchmark/results/benchmarkserversave/<arch>/. If a champion.json
 exists, applies the KEEP/DISCARD/ESCALATE matrix.
 """
 import os
+import re
 import shlex
 import sys
 import shutil
@@ -35,6 +36,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test"))
 
 import benchmark_helpers as bh
+import benchmark_microbench as bmicro
 import history_recorder as hr
 import benchmark_remote as br
 
@@ -67,6 +69,9 @@ RUN_DIR     = os.path.join(TMPFS_ROOT, "cc-bench-serversave")
 BIN_NAME    = "catchchallenger-server-cli"
 
 RUN_REPEATS  = 5         # 1 warmup + 4 measured (warmup excluded from median)
+# This benchmark's own port (the HPS cache carries it): `save` binds nothing,
+# but a warm boot does, and 61920/61921 belong to botactions/clientlatency.
+SERVERSAVE_PORT = 61923
 RUN_TIMEOUT  = 600
 BUILD_TIMEOUT = 1800
 
@@ -94,7 +99,10 @@ def build():
            # player/character persistence; the datapack-cache path this
            # benchmark measures is independent of the DB backend.)
            "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
-           "-DCATCHCHALLENGER_CACHE_HPS=ON"]
+           "-DCATCHCHALLENGER_CACHE_HPS=ON",
+           # every benchmark server: no DDoS filter, and the server times its
+           # own phases (BENCH load_xml_us / cache_load_us / cache_serialize_us)
+           "-DCATCHCHALLENGER_BENCHMARK=ON"]
     if shutil.which("ninja"):
         cfg += ["-G", "Ninja"]
     cfg += bh.cmake_accel_defs()
@@ -147,12 +155,12 @@ def setup_run_dir(bin_path):
         f.write(
             '<?xml version="1.0"?>\n'
             '<configuration>\n'
-            '    <server-port value="61920"/>\n'
+            f'    <server-port value="{SERVERSAVE_PORT}"/>\n'
             '    <automatic_account_creation value="true"/>\n'
             '    <max-players value="200"/>\n'
             '    <httpDatapackMirror value=""/>\n'
             '    <master>\n'
-            '        <external-server-port value="61920"/>\n'
+            f'        <external-server-port value="{SERVERSAVE_PORT}"/>\n'
             '    </master>\n'
             '    <content>\n'
             f'        <mainDatapackCode value="{maincode}"/>\n'
@@ -190,6 +198,26 @@ def cleanup_save_artifacts():
         except FileNotFoundError: pass
 
 
+PHASE_KEYS = ("load_xml_us", "cache_load_us", "cache_serialize_us", "cache_serialize_bytes")
+
+
+def phase_metrics(texts):
+    """CatchChallenger's own work, timed by the benchmark build itself (no
+    process start, no disk): {name: (median, stddev)} over the BENCH lines of
+    each run's output. load_xml_us exists only where the datapack is parsed."""
+    out = {}
+    for key in PHASE_KEYS:
+        values = []
+        for text in texts:
+            found = re.findall(r"BENCH %s=(\d+)" % key, text or "")
+            if found:
+                values.append(int(found[-1]))
+        med, std = bh.stats_of(values)
+        if med is not None:
+            out[key] = (med, std)
+    return out
+
+
 def cell_run(bin_path_in_runfir, profiler):
     """Run one (profiler) cell. Returns (flat_metric_dict, skip_reason).
     On success: (metrics, None). On skip: (None, 'SKIP:reason').
@@ -204,6 +232,7 @@ def cell_run(bin_path_in_runfir, profiler):
         cleanup_save_artifacts()
         bh.measure_time_v(cmd, timeout=RUN_TIMEOUT, cwd=RUN_DIR)
         wall_samples, rss_samples, user_samples, sys_samples = [], [], [], []
+        outputs = []
         cache_size = None
         for _ in range(RUN_REPEATS - 1):
             cleanup_save_artifacts()
@@ -213,6 +242,7 @@ def cell_run(bin_path_in_runfir, profiler):
             if t["max_rss_kb"] is not None: rss_samples.append(t["max_rss_kb"])
             if t["user_s"]    is not None: user_samples.append(t["user_s"])
             if t["sys_s"]     is not None: sys_samples.append(t["sys_s"])
+            outputs.append(t["stdout"])
             cache_dir = os.path.dirname(bin_path_in_runfir)
             for name in ("datapack-cache.bin.tmp", "datapack-cache.bin"):
                 p = os.path.join(cache_dir, name)
@@ -226,6 +256,7 @@ def cell_run(bin_path_in_runfir, profiler):
                 metrics[name] = (med, std)
         if cache_size is not None:
             metrics["cache_bytes"] = (cache_size, 0.0)
+        metrics.update(phase_metrics(outputs))
         # cpu_percent per CLAUDE.md "CPU% per sub-benchmark". This binary
         # is single-shot save (no workload axis), so we derive one
         # aggregate value from the (user+sys)/wall medians across the
@@ -270,6 +301,7 @@ def _flat_to_metric_block(flat):
     out = {}
     for name, (med, std) in flat.items():
         unit = "s" if name.endswith("_s") else \
+               "us" if name.endswith("_us") else \
                "kb" if name.endswith("_kb") else \
                "bytes" if name.endswith("_bytes") or name == "cache_bytes" else \
                "%" if name == "cpu_percent" else \
@@ -283,6 +315,7 @@ def to_record_metrics(flat):
     out = {}
     for name, (med, std) in flat.items():
         unit = "s" if name.endswith("_s") else \
+               "us" if name.endswith("_us") else \
                "kb" if name.endswith("_kb") else \
                "bytes" if name.endswith("_bytes") or name == "cache_bytes" else \
                "%" if name == "cpu_percent" else \
@@ -373,13 +406,13 @@ def _serversave_remote_body(node, exec_node, compile_node, label,
     # Detect maincode from the local datapack (same logic as setup_run_dir).
     maincode = _detect_maincode(DATAPACK_PATH)
     ewd = exec_node["work_dir"]
-    br.write_server_properties_on_exec(exec_node, maincode, port=61921,
+    br.write_server_properties_on_exec(exec_node, maincode, port=SERVERSAVE_PORT,
                                        run_subdir=ewd)
 
     cmake_defs = {"CMAKE_BUILD_TYPE": "Release",
                   "CMAKE_CXX_FLAGS_RELEASE": "-O2 -DNDEBUG",  # -O2, not Release -O3
                   "CATCHCHALLENGER_DB_INTERNAL_VARS": "ON",  # RAM DB (tmpfs); implies DB_FILE
-                  "CATCHCHALLENGER_CACHE_HPS": "ON"}
+                  "CATCHCHALLENGER_CACHE_HPS": "ON", "CATCHCHALLENGER_BENCHMARK": "ON"}
     # runtime_cmd: wipe the cache file before each `save` so every invocation
     # does the full parse. The binary and datapack are both in work_dir.
     runtime_cmd = (f"rm -f {shlex.quote(ewd)}/datapack-cache.bin.tmp "
@@ -441,9 +474,10 @@ def _serversave_remote_body(node, exec_node, compile_node, label,
                 cell["wall_s"] = res["wall_s"]
             if res.get("max_rss_kb") is not None:
                 cell["max_rss_kb"] = res["max_rss_kb"]
+            flat = {k: (v, 0.0) for k, v in cell.items()}
+            flat.update(phase_metrics([res.get("stdout")]))
             per_tool[label][prof] = {"status": "PASS",
-                                     "metrics": _flat_to_metric_block(
-                                         {k: (v, 0.0) for k, v in cell.items()})}
+                                     "metrics": _flat_to_metric_block(flat)}
         elif prof in ("perf-stat", "callgrind", "binary-size"):
             per_tool[label][prof] = {"status": "PASS",
                                      "metrics": _flat_to_metric_block(
@@ -455,11 +489,140 @@ def _serversave_remote_body(node, exec_node, compile_node, label,
         progress.emit(prof, "no", label, status="PASS")
 
 
+# Toshiba T2100 (i486 laptop over SLIP, comparison-only, see benchmark_t2100.py):
+# no perf, no valgrind.
+T2100_PROFILERS = ["rusage", "binary-size"]
+T2100_SERVER_DEFS = {"CMAKE_CXX_FLAGS_RELEASE": "-O2 -DNDEBUG",
+                     "CATCHCHALLENGER_DB_INTERNAL_VARS": "ON",
+                     "CATCHCHALLENGER_CACHE_HPS": "ON", "CATCHCHALLENGER_BENCHMARK": "ON"}
+
+
+def _t2100_save_rusage(t2100):
+    """RUN_REPEATS `save` runs on the laptop, the first dropped as warmup, the
+    way the local row measures. Returns (flat metrics, None) or (None, error)."""
+    ex = t2100.exec_node()
+    wd = shlex.quote(ex["work_dir"])
+    cmd = f"cd {wd} && rm -f datapack-cache.bin.tmp datapack-cache.bin && ./{BIN_NAME} save"
+    samples = {"wall_s": [], "user_s": [], "sys_s": [], "max_rss_kb": []}
+    outputs = []
+    for i in range(RUN_REPEATS):
+        t = br.remote_time_v(ex, cmd, timeout=RUN_TIMEOUT)
+        if t["rc"] != 0:
+            return None, f"save failed: {t['error']}"
+        if i > 0:
+            outputs.append(t.get("stdout"))
+            for name, values in samples.items():
+                if t[name] is not None:
+                    values.append(t[name])
+    metrics = {}
+    for name, values in samples.items():
+        med, std = bh.stats_of(values)
+        if med is not None:
+            metrics[name] = (med, std)
+    pct = [min(100.0, (u + s) / w * 100.0)
+           for u, s, w in zip(samples["user_s"], samples["sys_s"], samples["wall_s"]) if w]
+    med, std = bh.stats_of(pct)
+    if med is not None:
+        metrics["cpu_percent"] = (med, std)
+    rc, sout, _ = t2100.ssh(f"cd {wd} && for f in datapack-cache.bin.tmp datapack-cache.bin; "
+                            f"do [ -f $f ] && wc -c < $f && break; done")
+    if rc == 0 and sout.strip().isdigit():
+        metrics["cache_bytes"] = (int(sout.strip()), 0.0)
+    metrics.update(phase_metrics(outputs))
+    return metrics, None
+
+
+def measure_t2100(progress, per_tool):
+    """Cross-build the server here, push it with the datapack over the SLIP
+    link, and time `save` on the laptop. Comparison-only: the caller keeps
+    this label out of the decision record."""
+    import benchmark_t2100 as t2100
+    label = t2100.T2100_NODE["label"]
+    cells, status = {}, "SKIP"
+    srv, error = t2100.cross_build("server/cli", "build-serversave", BIN_NAME, T2100_SERVER_DEFS)
+    if srv is None:
+        error = "cross-build: " + error
+    else:
+        maincode = _detect_maincode(DATAPACK_PATH)
+        props = os.path.join(t2100.T2100_PREFIX, "server-properties.xml")
+        with open(props, "w") as f:
+            f.write(br._server_properties_xml(maincode, SERVERSAVE_PORT))
+        ok, error = t2100.push([srv, props])
+        if ok:
+            ok, error = t2100.push_datapack(DATAPACK_PATH, maincode)
+        if ok:
+            cells["binary-size"] = {"binary_size_bytes": (os.path.getsize(srv), 0.0)}
+            rusage, error = _t2100_save_rusage(t2100)
+            if rusage:
+                cells["rusage"] = rusage
+            status = "FAIL"
+    if error:
+        bh.print_node_error("benchmarkserversave", label, status, error)
+    for prof in T2100_PROFILERS:
+        if prof in cells:
+            progress.emit(prof, "no", label, status="PASS")
+            per_tool[label][prof] = {"status": "PASS", "metrics": _flat_to_metric_block(cells[prof])}
+        else:
+            progress.emit(prof, "no", label, status=status, extra=error[:80])
+            per_tool[label][prof] = {"status": status, "metrics": {}}
+
+
+# ESP32 boards (comparison-only, benchmark_esp32.BOARDS): no `save` and no
+# filesystem, but the same benchmark build times the same work at every boot --
+# loading the cache from flash (cache_load_us) and serialising it into memory
+# (cache_serialize_us). One boot = one sample.
+ESP32_BOOTS = RUN_REPEATS - 1
+
+
+def measure_esp32(node, progress, per_tool):
+    import benchmark_esp32 as esp
+    label = node["label"]
+    per_tool[label] = {}
+
+    def finish(status, reason, metrics=None):
+        if status != "PASS":
+            bh.print_node_error("benchmarkserversave", label, status, reason)
+        progress.emit("rusage", "no", label, status=status, extra=(reason or "")[:80])
+        per_tool[label]["rusage"] = {"status": status,
+                                     "metrics": _flat_to_metric_block(metrics or {})}
+
+    if node["tty"] is None:
+        return finish("SKIP", node["skip_reason"])
+    tc_ok, tc_detail = esp.toolchain_status()
+    if not tc_ok:
+        return finish("SKIP", "esp-idf absent: " + tc_detail)
+    conf = esp.load_config()
+    ok, detail = esp.stage1_emit(verbose=False, benchmark=True)
+    if ok:
+        ok, detail = esp.build_firmware(conf, verbose=False, target=node["target"], benchmark=True)
+    if ok:
+        ok, detail = esp.flash(node["tty"], verbose=False, target=node["target"], benchmark=True)
+    if not ok:
+        return finish("SKIP", detail)
+    marker = "BENCH cache_serialize_bytes"
+    boots = []
+    native = esp.BOARDS[node["target"]]["native_usb"]
+    while len(boots) < ESP32_BOOTS:
+        if boots and native:
+            esp._run_idf(["esptool.py", "--port", node["tty"], "--after", "hard_reset", "run"],
+                         timeout=60)
+        if native:
+            text = esp.read_native(esp.bypath_of(node["tty"]), 60, until=marker)
+        else:
+            text = esp.read_with_reset(node["tty"], secs=60, until=marker)
+        if marker not in text:
+            return finish("FAIL", f"boot {len(boots)} printed no {marker}; console tail:\n"
+                                  + text[-1500:])
+        boots.append(text)
+    finish("PASS", None, phase_metrics(boots))
+
+
 def main():
     args = bh.parse_bench_args()
     bh.set_node_filter(args.node)
     if bh.acquire_singleton_lock("benchmarkserversave") is None:
         return 3
+    bmicro.ensure_missing()   # before any build or measurement, once this run owns its lock
     br.set_benchmark_label("benchmarkserversave")
     if NETWORK_EXCLUSIVE:
         if bh.acquire_network_lock("benchmarkserversave") is None:
@@ -485,7 +648,7 @@ def main():
                 if rc_dp != 0:
                     return False, f"datapack-rsync: {msg_dp[:80]}"
             br.write_server_properties_on_exec(runtime_node, maincode,
-                                               port=61921,
+                                               port=SERVERSAVE_PORT,
                                                run_subdir=runtime_node["work_dir"])
             return True, "ok"
 
@@ -496,7 +659,7 @@ def main():
             "cmake_defs": {"CMAKE_BUILD_TYPE": "Release",
                            "CMAKE_CXX_FLAGS_RELEASE": "-O2 -DNDEBUG",
                            "CATCHCHALLENGER_DB_INTERNAL_VARS": "ON",  # RAM DB; implies DB_FILE
-                           "CATCHCHALLENGER_CACHE_HPS": "ON"},
+                           "CATCHCHALLENGER_CACHE_HPS": "ON", "CATCHCHALLENGER_BENCHMARK": "ON"},
             "runtime_cmd": (f"rm -f datapack-cache.bin.tmp datapack-cache.bin "
                             f"&& ./{BIN_NAME} save"),
             "stage_fn": _stage_serversave,
@@ -512,6 +675,9 @@ def main():
     # node that opted into benchmark_dual_bitness. Same-CPU 32-vs-64 compare.
     nodes = local_node + bh.expand_bitness_variants(bh.benchmark_exec_nodes())
     all_profilers = ["rusage", "binary-size", "perf-stat", "callgrind"]
+    import benchmark_t2100 as t2100
+    t2100_nodes = [t2100.T2100_NODE] if bh.node_allowed(t2100.T2100_NODE["label"],
+                                                        t2100.T2100_NODE["arch"]) else []
 
     # Pre-resolve per-node profiler availability against the persisted
     # benchmark_disabled_tools list + a live runtime probe. Missing tools
@@ -524,6 +690,10 @@ def main():
         node_skips[node["label"]]     = skips
 
     total = sum(len(node_profilers[node["label"]]) for node in nodes)
+    total += len(t2100_nodes) * len(T2100_PROFILERS)
+    import benchmark_esp32
+    esp32_nodes = benchmark_esp32.benchmark_nodes()
+    total += len(esp32_nodes)
     progress = bh.Progress(total, "benchmarkserversave")
     deadline = bh.FleetDeadline()
 
@@ -535,7 +705,8 @@ def main():
     sensor_pre  = hr.sensor_baseline(hr.local_runner)
     compile_flags = ["-O2", "-DCMAKE_BUILD_TYPE=Release",
                      "-DCATCHCHALLENGER_DB_INTERNAL_VARS=ON",
-                     "-DCATCHCHALLENGER_CACHE_HPS=ON"]
+                     "-DCATCHCHALLENGER_CACHE_HPS=ON",
+                     "-DCATCHCHALLENGER_BENCHMARK=ON"]
 
     flat_local = {}
     per_tool   = {}    # node_label -> { tool -> {status, metrics} }
@@ -585,6 +756,12 @@ def main():
             per_tool[label][prof] = {"status": "PASS",
                                      "metrics": _flat_to_metric_block(cell)}
 
+    for node in t2100_nodes:
+        per_tool[node["label"]] = {}
+        measure_t2100(progress, per_tool)
+    for node in esp32_nodes:
+        measure_esp32(node, progress, per_tool)
+
     sha = bh.git_sha()
 
     ended_utc = hr.iso_now()
@@ -624,11 +801,13 @@ def main():
     # history records below + champion.json on promotion.
 
     # Per-platform history -- one JSON per (benchmark, run, platform).
-    for node in nodes:
+    for node in nodes + t2100_nodes:
         if node["label"] not in per_tool:
             continue
         if node["label"] == "local":
             runner = hr.local_runner
+        elif node.get("t2100"):
+            runner = t2100.runner
         else:
             runner = hr.make_ssh_runner(node.get("ssh_host"),
                                         node.get("ssh_user"),
@@ -645,6 +824,8 @@ def main():
                                    datapack_path=dp_path,
                                    sensor_baseline=(sensor_pre
                                        if node["label"] == "local" else None))
+        if node.get("t2100"):
+            pr.platform.update(t2100.platform_fields())
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
             # Single-workload benchmark -> emit one "default" slice
@@ -652,18 +833,37 @@ def main():
             # field is present in the JSON.
             if tool == "rusage" and blk["status"] == "PASS":
                 slice_keys = ("cpu_percent", "wall_s", "user_s", "sys_s",
-                              "max_rss_kb", "cache_bytes")
+                              "max_rss_kb", "cache_bytes") + PHASE_KEYS
                 slice_metrics = {k: blk["metrics"][k]
                                  for k in slice_keys if k in blk["metrics"]}
                 if slice_metrics:
                     pr.add_subbenchmark(tool, "default", slice_metrics)
         out_p = pr.write(commit=sha, started_utc=started_utc,
                          ended_utc=ended_utc,
-                         compile_flags=compile_flags
-                             + list(br.exec_node_flag_defs(node).values()),
+                         compile_flags=(compile_flags + t2100.TARGET_FLAGS if node.get("t2100")
+                             else compile_flags
+                             + list(br.exec_node_flag_defs(node).values())),
                          simd_tier="generic",
                          bitness=node.get("bitness"),
                          harness_version=hr.harness_version(),
+                         comment=comment)
+        if out_p is not None:
+            bh.chatter(_color(bh.C_CYAN, f"[history] {out_p}"))
+
+    # ESP32 boards: no shell, so collect() cannot run -- the board's fixed
+    # spec. (pr.write records nothing when all is SKIP.)
+    for node in esp32_nodes:
+        import benchmark_esp32 as esp
+        pr = hr.PlatformRecord("benchmarkserversave", batch_id, node["label"],
+                               runner=None, arch_hint=node.get("arch"))
+        pr.platform.update(esp.esp32_platform_fields(node["target"]))
+        for tool, blk in per_tool.get(node["label"], {}).items():
+            pr.add_result(tool, blk["metrics"], status=blk["status"])
+            if blk["status"] == "PASS":
+                pr.add_subbenchmark(tool, "default", blk["metrics"])
+        out_p = pr.write(commit=sha, started_utc=started_utc, ended_utc=ended_utc,
+                         compile_flags=["-Os", "-DCATCHCHALLENGER_BENCHMARK", "-DCC_TARGET_ESP32"],
+                         simd_tier="generic", harness_version=hr.harness_version(),
                          comment=comment)
         if out_p is not None:
             bh.chatter(_color(bh.C_CYAN, f"[history] {out_p}"))

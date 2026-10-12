@@ -1,0 +1,5 @@
+# ESP32-C6 (RISC-V, applied after sdkconfig.defaults by ESP-IDF when the target
+# is esp32c6): 160 MHz is its maximum, and the board talks over its native
+# USB-Serial/JTAG port, so the console (the BENCH lines) goes there.
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_160=y
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y

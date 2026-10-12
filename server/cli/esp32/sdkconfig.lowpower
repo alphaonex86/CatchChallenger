@@ -1,0 +1,4 @@
+# Low-power variant, added after sdkconfig.defaults: full CPU speed while
+# working, 20 MHz while idle (dynamic frequency scaling + WiFi modem sleep).
+CONFIG_PM_ENABLE=y
+CONFIG_CATCHCHALLENGER_IDLE_CPU_FREQ_MHZ=20

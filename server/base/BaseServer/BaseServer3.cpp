@@ -11,12 +11,21 @@
 #include "../../general/base/Version.hpp"
 #include "../../general/hps_quiet.hpp"
 #include <fstream>
+#ifdef CATCHCHALLENGER_BENCHMARK
+#include "../../../benchmark/BenchProbe.hpp"
+#endif
 
 using namespace CatchChallenger;
 
 void BaseServer::preload_1_the_data()
 {
     std::cout << "Preload data for server version " << CatchChallenger::Version::str << std::endl;
+    #ifdef CATCHCHALLENGER_BENCHMARK
+    //benchmarkserversave: the datapack load (XML or cache/flash) in us
+    const uint64_t benchLoadStartUs=CatchChallenger::benchProbeWallUs();
+    uint64_t benchLoadedUs=0;
+    bool benchFromXml=false;
+    #endif
 
     if(dataLoaded)
         return;
@@ -94,6 +103,9 @@ void BaseServer::preload_1_the_data()
 
         const uint64_t &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
+        #ifdef CATCHCHALLENGER_BENCHMARK
+        benchLoadedUs=CatchChallenger::benchProbeWallUs();
+        #endif
 
         //baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);
         BaseServerMasterSendDatapack::skinList=GlobalServerData::serverPrivateVariables.skinList;
@@ -139,6 +151,10 @@ void BaseServer::preload_1_the_data()
         //mapPathToId is cleared later at step 15 (preload_15_async_map_semi_after_db_id), after step 12 uses it
         const uint64_t &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
+        #ifdef CATCHCHALLENGER_BENCHMARK
+        benchLoadedUs=CatchChallenger::benchProbeWallUs();
+        benchFromXml=true;
+        #endif
         baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);//skinList
         #else
         std::cerr << "CATCHCHALLENGER_NOXML defined but no binary cache available in non-cache path (abort)" << std::endl;
@@ -180,6 +196,60 @@ void BaseServer::preload_1_the_data()
         #endif // CATCHCHALLENGER_NOXML
         #endif // CATCHCHALLENGER_CACHE_HPS
     }
+
+    #ifdef CATCHCHALLENGER_BENCHMARK
+    {
+        //benchmarkserversave: serialise the same data as the HPS cache into
+        //memory -- CatchChallenger's own work, no disk -- the same code on
+        //every platform (fileless ESP32 included)
+        std::string cache;
+        const uint64_t serialiseStartUs=CatchChallenger::benchProbeWallUs();
+        {
+            hps::StringOutputBuffer out(cache);
+            out << CommonDatapack::commonDatapack;
+            out << CommonDatapackServerSpec::commonDatapackServerSpec;
+            out << GlobalServerData::serverPrivateVariables.randomData;
+            out << GlobalServerData::serverPrivateVariables.events;
+            out << CommonSettingsCommon::commonSettingsCommon.datapackHashBase;
+            out << CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
+            out << CommonSettingsServer::commonSettingsServer.datapackHashServerSub;
+            out << GlobalServerData::serverPrivateVariables.skinList;
+            out << GlobalServerData::serverPrivateVariables.monsterDrops;
+            out << MapVisibilityAlgorithm::flat_map_list;
+            out.flush();
+        }
+        const uint64_t serialisedUs=CatchChallenger::benchProbeWallUs();
+        if(benchFromXml)
+        {
+            std::cout << "BENCH load_xml_us=" << (benchLoadedUs-benchLoadStartUs) << std::endl;
+            //what a warm boot does with the cache, from memory: parse it back
+            //(the big structures into scratch copies; the small ones are read
+            //over the live ones, with the very values they already hold)
+            CommonDatapack scratchDatapack;
+            CommonDatapackServerSpec scratchServerSpec;
+            std::vector<MapVisibilityAlgorithm> scratchMaps;
+            const uint64_t parseStartUs=CatchChallenger::benchProbeWallUs();
+            {
+                hps::StringInputBuffer in(cache);
+                in >> scratchDatapack;
+                in >> scratchServerSpec;
+                in >> GlobalServerData::serverPrivateVariables.randomData;
+                in >> GlobalServerData::serverPrivateVariables.events;
+                in >> CommonSettingsCommon::commonSettingsCommon.datapackHashBase;
+                in >> CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
+                in >> CommonSettingsServer::commonSettingsServer.datapackHashServerSub;
+                in >> GlobalServerData::serverPrivateVariables.skinList;
+                in >> GlobalServerData::serverPrivateVariables.monsterDrops;
+                in >> scratchMaps;
+            }
+            std::cout << "BENCH cache_load_us=" << (CatchChallenger::benchProbeWallUs()-parseStartUs) << std::endl;
+        }
+        else
+            std::cout << "BENCH cache_load_us=" << (benchLoadedUs-benchLoadStartUs) << std::endl;
+        std::cout << "BENCH cache_serialize_us=" << (serialisedUs-serialiseStartUs) << std::endl;
+        std::cout << "BENCH cache_serialize_bytes=" << cache.size() << std::endl;
+    }
+    #endif
 
     /* Both load paths (binary cache and datapack parsing) converge here with
      * the map list, its border offsets and the datapack final: precompute the

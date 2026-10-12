@@ -26,6 +26,9 @@
 // the ONLY source of nondeterminism in the binary -- they affect the
 // reported numbers but never the workload.
 
+#ifdef CC_TARGET_ESP32
+#include "../esp32_probe.hpp"
+#endif
 #include "../../test/testingmapmanagement/Stubs.hpp"
 #include "../../server/base/MapManagement/MapVisibilityAlgorithm.hpp"
 
@@ -83,9 +86,8 @@ struct Bench
         ClientList::list = nullptr;
     }
 
-    void addPlayer(uint32_t id, COORD_TYPE x, COORD_TYPE y, Direction d)
+    static void setPlayer(ClientWithMap *c, uint32_t id, COORD_TYPE x, COORD_TYPE y, Direction d)
     {
-        ClientWithMap *c = new ClientWithMap();
         c->setX(x); c->setY(y); c->setDirection(d);
         c->setPlayerId(id);
         c->setMapIndex(1);
@@ -96,8 +98,37 @@ struct Bench
         c->public_and_private_informations.public_informations.pseudo = pseudo;
         c->public_and_private_informations.public_informations.type    = Player_type_normal;
         c->public_and_private_informations.public_informations.skinId  = static_cast<uint8_t>(id & 0xff);
+    }
+
+    // owned[gid] is that gid's client: both lists grow together here only.
+    void addPlayer(uint32_t id, COORD_TYPE x, COORD_TYPE y, Direction d)
+    {
+        ClientWithMap *c = new ClientWithMap();
+        setPlayer(c, id, x, y, d);
         owned.push_back(c);
         PLAYER_INDEX_FOR_CONNECTED gid = cl.add(c);
+        if(gid != owned.size() - 1)
+            std::cerr << "harness: gid " << gid << " is not owned[" << owned.size() - 1 << "]" << std::endl;
+        mva.insertOnMap(gid);
+    }
+
+    // A player leaves and a new one connects on its index. Like production
+    // (ClientWithMapEventLoop::reset) the client object is REUSED, its
+    // vectors cleared but keeping their capacity: no allocation per pair, so a
+    // simple allocator (the i486's uClibc) does not fragment. It used to leave
+    // a dead client behind per pair instead, so memory and the per-tick prep
+    // loop grew with the run's length and ticks/s fell the longer it ran.
+    void replacePlayer(PLAYER_INDEX_FOR_CONNECTED gid, uint32_t id,
+                       COORD_TYPE x, COORD_TYPE y, Direction d)
+    {
+        ClientWithMap *c = owned[gid];
+        c->sendedMap = 0xffff;        // full insert (PATH 1) on its first tick
+        c->sendedStatus.clear();
+        c->visibleSlots.clear();
+        c->sentBytes = 0;
+        c->pingQueryCounter = 0;
+        c->setPing(0);
+        setPlayer(c, id, x, y, d);
         mva.insertOnMap(gid);
     }
 
@@ -106,7 +137,7 @@ struct Bench
     void clearCaptured()
     {
         for(ClientWithMap *c : owned)
-            if(c) c->sentBlocks.clear();
+            if(c) c->sentBytes = 0;
     }
 
     uint64_t totalBytesAndClear()
@@ -115,9 +146,8 @@ struct Bench
         for(ClientWithMap *c : owned)
         {
             if(!c) continue;
-            for(const Client::CapturedBlock &b : c->sentBlocks)
-                total += b.bytes.size();
-            c->sentBlocks.clear();
+            total += c->sentBytes;
+            c->sentBytes = 0;
         }
         return total;
     }
@@ -126,10 +156,8 @@ struct Bench
     // between ticks to know what was last broadcast. One shared snapshot
     // per MAP, plus a private baseline for each recipient currently held
     // back (only those get one). Counted over the clients CURRENTLY ON THE
-    // MAP: the harness keeps departed players in owned[] (it never frees
-    // mid-run) and production clears their state on slot reuse
-    // (ClientWithMapEventLoop::reset), so summing owned[] would report
-    // state the server does not actually hold.
+    // MAP: owned[] can also hold a player who left a slot empty, whose state
+    // production would clear on slot reuse (ClientWithMapEventLoop::reset).
     uint64_t visibilityStateBytes()
     {
         uint64_t total = static_cast<uint64_t>(mva.previousDenseBuffer.capacity())
@@ -219,15 +247,18 @@ static void prepare_tick(Bench &b, Lcg &rng, unsigned int insrem_pct,
         {
             unsigned int slot = rng.mod(n);
             PLAYER_INDEX_FOR_CONNECTED gid = b.mva.map_clients_id[slot];
+            static uint32_t fresh_id = 5000;
+            COORD_TYPE x = static_cast<COORD_TYPE>(rng.mod(120) + 1);
+            COORD_TYPE y = static_cast<COORD_TYPE>(rng.mod(120) + 1);
+            const Direction d = dir_of(rng.next());
             if(gid != PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
                 b.mva.removeOnMap(slot);
                 removes_total++;
+                b.replacePlayer(gid, fresh_id++, x, y, d);
             }
-            static uint32_t fresh_id = 5000;
-            COORD_TYPE x = static_cast<COORD_TYPE>(rng.mod(120) + 1);
-            COORD_TYPE y = static_cast<COORD_TYPE>(rng.mod(120) + 1);
-            b.addPlayer(fresh_id++, x, y, dir_of(rng.next()));
+            else
+                b.addPlayer(fresh_id++, x, y, d);
             inserts_total++;
         }
     }
@@ -257,6 +288,9 @@ static int run_scenario(unsigned int players, unsigned int ticks,
                         unsigned int lag_pct, unsigned int lag_rounds)
 #endif
 {
+#ifdef CC_TARGET_ESP32
+    CcEsp32Sample probe = ccEsp32ProbeStart();
+#endif
     Bench b;
     Lcg rng(seed);
 
@@ -287,6 +321,9 @@ static int run_scenario(unsigned int players, unsigned int ticks,
     auto warm1 = std::chrono::steady_clock::now();
     uint64_t warm_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(warm1 - warm0).count();
     uint64_t bytes_warm = b.totalBytesAndClear();
+#ifdef CC_TARGET_ESP32
+    ccEsp32ProbeHeap(probe);
+#endif
 
     std::vector<uint64_t> samples; samples.reserve(ticks ? ticks : 4096);
     uint64_t bytes_total = 0;
@@ -311,6 +348,9 @@ static int run_scenario(unsigned int players, unsigned int ticks,
             b.mva.min_balanced(1);
             auto t1 = std::chrono::steady_clock::now();
             samples.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count());
+#ifdef CC_TARGET_ESP32
+            ccEsp32ProbeHeap(probe);
+#endif
             bytes_total += b.totalBytesAndClear();
             t++;
         }
@@ -360,6 +400,9 @@ static int run_scenario(unsigned int players, unsigned int ticks,
             b.mva.min_balanced(1);
             auto t1 = std::chrono::steady_clock::now();
             samples.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count());
+#ifdef CC_TARGET_ESP32
+            ccEsp32ProbeHeap(probe);
+#endif
             bytes_total += b.totalBytesAndClear();
             t++;
             // (check_every - 1) UNTIMED ticks -- zero clock reads.
@@ -413,8 +456,18 @@ static int run_scenario(unsigned int players, unsigned int ticks,
               << " p95_tick_ns=" << p95
               << " bytes_sent=" << bytes_total
               << " inserts=" << inserts_total
-              << " removes=" << removes_total
-              << std::endl;
+              << " removes=" << removes_total;
+#ifdef CC_TARGET_ESP32
+    // Linux gets cpu_percent from /usr/bin/time around the process; the board
+    // measures this task's share of the cell with the FreeRTOS run-time stats.
+    double cpuPercent = 0.0;
+    long heapUsedKb = -1;
+    ccEsp32ProbeStop(probe, cpuPercent, heapUsedKb);
+    std::cout << " cpu_percent=" << cpuPercent;
+    if(heapUsedKb >= 0)
+        std::cout << " heap_used_kb=" << heapUsedKb;
+#endif
+    std::cout << std::endl;
     return 0;
 }
 

@@ -24,6 +24,7 @@ opts it in with no code change here.
 import os
 import sys
 import json
+import re
 import shutil
 import subprocess
 import time
@@ -32,6 +33,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test"))
 
 import benchmark_helpers as bh
+import benchmark_microbench as bmicro
 import benchmark_remote as br
 import history_recorder as hr
 
@@ -138,18 +140,15 @@ RUN_TIMEOUT_CALLGRIND = RUN_TIMEOUT * 30
 # toolchain or the board is absent. COMPARISON-ONLY: a single on-device sample
 # on a special target must NOT drive KEEP/DISCARD (benchmark/CLAUDE.md), so it is
 # recorded in history + charts but excluded from the cross-fleet decision.
-ESP32_NODE = {
-    "label": "esp32",
-    "arch":  "xtensa-lx6",
-    "esp32": True,            # marker: build+flash+read serial, no ssh/compile node
-}
-# Serial read budget: boot banner + 7 scenarios x 2 s fixed-time + the skip
-# lines + slack. The firmware idles after the sweep (no reboot), so over-reading
-# is harmless; under-reading would truncate the BENCH block.
-ESP32_READ_SECS = 30
+# Serial read budget: boot (5 s on a native-USB board waiting for the host) +
+# 7 scenarios x 2 s fixed-time + slack. The read stops at BENCH_END, so a
+# generous ceiling costs nothing.
+ESP32_READ_SECS = 60
 # Out-of-tree firmware build dir under the ESP32 prefix (separate from the
 # server firmware's build-fw).
 ESP32_FW_PROJECT_REL = os.path.join("benchmark", "benchmarkmapmanager", "esp32")
+# Toshiba T2100 (i486, comparison-only, see benchmark_t2100.py): no perf, no valgrind.
+T2100_PROFILERS = ["rusage", "binary-size"]
 
 
 def _color(c, s): return f"{c}{s}{bh.C_RESET}"
@@ -174,14 +173,25 @@ def measure_esp32(node, progress, per_tool, per_subbench, all_metrics):
     # reset -> read serial) is identical for every on-device benchmark and
     # lives in benchmark_esp32.run_ondevice_benchmark(). Only the metric
     # mapping below is specific to this benchmark.
+    if node["tty"] is None:
+        return "SKIP", node["skip_reason"]
     status, reason, text = esp.run_ondevice_benchmark(
         os.path.join(REPO_ROOT, ESP32_FW_PROJECT_REL),
         os.path.join(esp.ESP32_PREFIX, "build-mapmanager"),
-        read_secs=ESP32_READ_SECS, verbose=True)
+        read_secs=ESP32_READ_SECS, verbose=True,
+        target=node["target"], serial=node["tty"])
     if status != "PASS":
         bh.print_node_error("benchmarkmapmanager", label, "SKIP", reason)
         return "SKIP", reason
     bench = parse_bench_lines(text)
+    tried = re.findall(r"^BENCH_TRY players=(\d+)", text, re.M)
+    if tried and "ticks_per_s" not in bench.get(int(tried[-1]), {}):
+        # Built without exceptions: an allocation the heap check let through
+        # aborts, and the panic handler halts the board right there.
+        print(_color(bh.C_YELLOW,
+              f"[esp32] the board stopped while running players={tried[-1]} "
+              f"(out of memory past the heap check?): the counts after it are "
+              f"missing from this run"))
     if not bench:
         bh.print_node_error("benchmarkmapmanager", label, "SKIP",
             "no BENCH line parsed from serial (board up but no output?). "
@@ -196,6 +206,9 @@ def measure_esp32(node, progress, per_tool, per_subbench, all_metrics):
         cell[(p, "median_tick_ns")] = fields.get("median_tick_ns")
         cell[(p, "p95_tick_ns")]    = fields.get("p95_tick_ns")
         cell[(p, "bytes_sent")]     = fields.get("bytes_sent")
+        # measured on the board (FreeRTOS run-time stats + heap low-water mark)
+        cell[(p, "cpu_percent")]    = fields.get("cpu_percent")
+        cell[(p, "heap_used_kb")]   = fields.get("heap_used_kb")
     # drop None-only entries (skip_oom counts emit no tick metrics)
     cell = {k: v for k, v in cell.items() if v is not None}
     if not cell:
@@ -203,8 +216,8 @@ def measure_esp32(node, progress, per_tool, per_subbench, all_metrics):
     per_tool[label]["rusage"] = {"status": "PASS",
                                  "metrics": _cell_to_metric_block(cell)}
     all_metrics[label] = aggregate_metrics(cell)
-    # Per-player-count subbenchmarks (no cpu_percent: single-threaded firmware,
-    # no /usr/bin/time on the board -- the fixed-time ticks/s IS the work metric).
+    # Per-player-count subbenchmarks; cpu_percent is the benchmark task's share
+    # of the cell (FreeRTOS run-time stats), like getrusage/wall on Linux.
     cell_metrics = per_tool[label]["rusage"]["metrics"]
     slices = {}
     for p in PLAYER_COUNTS:
@@ -222,6 +235,31 @@ def measure_esp32(node, progress, per_tool, per_subbench, all_metrics):
     print(_color(bh.C_GREEN, f"[esp32] parsed {n_done} player-count(s) "
                              f"({n_oom} OOM-skipped on-device)"))
     return "PASS", None
+
+
+def measure_t2100(node, progress, per_tool, all_metrics):
+    """Cross-build here, push over the SLIP link, run on the laptop with the
+    fleet's rusage + binary-size profilers and record them the fleet's way.
+    Comparison-only: the caller keeps this label out of the decision record."""
+    import benchmark_t2100 as t2100
+    out = {}
+    bin_path, err = t2100.cross_build("benchmark/benchmarkmapmanager",
+                                      "build-mapmanager", BIN_NAME)
+    if bin_path is None:
+        msg = "SKIP:cross-build: " + err
+    else:
+        ok, detail = t2100.push([bin_path])
+        if not ok:
+            msg = "SKIP:push-failed: " + detail
+        else:
+            msg = "ok"
+            ex = t2100.exec_node()
+            out["rusage"] = br.remote_time_v(
+                ex, f"cd {ex['work_dir']} && {_runtime_cmd_string('rusage')}",
+                timeout=RUN_TIMEOUT)
+            out["binary-size"] = os.path.getsize(bin_path)
+    _record_remote_result(node["label"], T2100_PROFILERS, out, msg,
+                          progress, per_tool, all_metrics)
 
 
 def build():
@@ -805,6 +843,7 @@ def main():
     bh.set_node_filter(args.node)
     if bh.acquire_singleton_lock("benchmarkmapmanager") is None:
         return 3
+    bmicro.ensure_missing()   # before any build or measurement, once this run owns its lock
     br.set_benchmark_label("benchmarkmapmanager")
     if NETWORK_EXCLUSIVE:
         if bh.acquire_network_lock("benchmarkmapmanager") is None:
@@ -851,8 +890,11 @@ def main():
     # ESP32 on-device node, injected programmatically (remote_nodes.json
     # untouched). One cell (the firmware runs the whole sweep on boot). Honoured
     # by --node esp32 / --node xtensa-lx6 via node_allowed().
-    esp32_nodes = [ESP32_NODE] if bh.node_allowed(ESP32_NODE["label"],
-                                                  ESP32_NODE["arch"]) else []
+    import benchmark_esp32
+    esp32_nodes = benchmark_esp32.benchmark_nodes()
+    import benchmark_t2100 as t2100
+    t2100_nodes = [t2100.T2100_NODE] if bh.node_allowed(t2100.T2100_NODE["label"],
+                                                        t2100.T2100_NODE["arch"]) else []
 
     # Pre-resolve per-node profiler availability. profilers_runnable_on()
     # honours benchmark_disabled_tools (persisted skips) and probes the
@@ -867,6 +909,7 @@ def main():
 
     total = sum(len(node_profilers[node["label"]]) for node in nodes)
     total += len(esp32_nodes)   # one on-device cell per ESP32 node
+    total += len(t2100_nodes) * len(T2100_PROFILERS)
     progress = bh.Progress(total, "benchmarkmapmanager")
     deadline = bh.FleetDeadline()
 
@@ -1010,6 +1053,11 @@ def main():
                 if st == "SKIP" else {"status": st, "metrics": {}}
             all_metrics.setdefault(label, aggregate_metrics({}))
 
+    for node in t2100_nodes:
+        per_tool[node["label"]] = {}
+        per_subbench[node["label"]] = {}
+        measure_t2100(node, progress, per_tool, all_metrics)
+
     sha = bh.git_sha()
 
     # Cross-platform candidate record — metrics from every node that
@@ -1040,11 +1088,13 @@ def main():
 
     # Per-platform history -- one JSON per (benchmark, run, platform).
     # Per benchmark/CLAUDE.md the file is append-only; never overwritten.
-    for node in nodes:
+    for node in nodes + t2100_nodes:
         if node["label"] not in per_tool:
             continue
         if node["label"] == "local":
             runner = hr.local_runner
+        elif node.get("t2100"):
+            runner = t2100.runner
         else:
             runner = hr.make_ssh_runner(node.get("ssh_host"),
                                         node.get("ssh_user"),
@@ -1060,6 +1110,8 @@ def main():
                                    cc_binary_path=cc_path,
                                    sensor_baseline=(sensor_pre
                                        if node["label"] == "local" else None))
+        if node.get("t2100"):
+            pr.platform.update(t2100.platform_fields())
         for tool, blk in per_tool[node["label"]].items():
             pr.add_result(tool, blk["metrics"], status=blk["status"])
         for tool, slices in per_subbench.get(node["label"], {}).items():
@@ -1067,8 +1119,9 @@ def main():
                 pr.add_subbenchmark(tool, slabel, smetrics)
         out_p = pr.write(commit=sha, started_utc=started_utc,
                          ended_utc=ended_utc,
-                         compile_flags=compile_flags
-                             + list(br.exec_node_flag_defs(node).values()),
+                         compile_flags=(t2100.COMPILE_FLAGS if node.get("t2100")
+                             else compile_flags
+                             + list(br.exec_node_flag_defs(node).values())),
                          simd_tier="generic",
                          bitness=node.get("bitness"),
                          harness_version=hr.harness_version(),
@@ -1086,7 +1139,7 @@ def main():
         import benchmark_esp32 as esp
         pr = hr.PlatformRecord("benchmarkmapmanager", batch_id, label,
                                runner=None, arch_hint=node.get("arch"))
-        pr.platform.update(esp.esp32_platform_fields())
+        pr.platform.update(esp.esp32_platform_fields(node["target"]))
         for tool, blk in per_tool[label].items():
             pr.add_result(tool, blk.get("metrics", {}),
                           status=blk.get("status", "SKIP"))

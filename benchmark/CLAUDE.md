@@ -25,6 +25,15 @@ one command target: the IA not start every command, have to package in the corre
   persistence; the datapack HPS cache path is independent of it, so the
   serversave datapack-cache measurement is unaffected by the DB backend.
   serversave builds at -O2 (not the Release default -O3).
+* **serversave measures CatchChallenger's own work: datapack LOADING time and
+  SERIALISATION time, never disk time.** The benchmark server build prints them itself
+  (`BaseServer3.cpp`, `#ifdef CATCHCHALLENGER_BENCHMARK`): `load_xml_us` (datapack parse),
+  `cache_load_us` (HPS parse: of the serialised string after `save`, of flash at an ESP32
+  boot) and `cache_serialize_us` (into memory) -- same code on every node, ESP32 included.
+* **Every benchmark server is a CATCHCHALLENGER_BENCHMARK build: no DDoS filter**
+  (`VariableServer.hpp`). The ESP32 benchmark firmware (`build_firmware(benchmark=True)`)
+  must be emitted by a host server built the same way (`stage1_emit(benchmark=True)`): the
+  serialised DDoS settings exist only with the filter, a mismatch misreads the flash data.
 Generate helper to put in common the code it will mostly used by the majority
 
 ## Purpose
@@ -246,6 +255,20 @@ fields are mandatory"). Boolean.
 Independent of `sanitizer_*` flags: a node can build+run for
 correctness every commit and still set `benchmark: false` because
 its CPU is noisy.
+
+## Injected comparison-only nodes (not in remote_nodes.json)
+
+* ESP32 boards — `benchmark_esp32.BOARDS` (`esp32` classic on a CP2102, `esp32c6`
+  native USB-Serial/JTAG found by Espressif VID + `esptool chip_id`, never a CP2102 probe).
+  One build dir per chip; `flash()` refuses an image built for another chip. On-device
+  firmwares (mapmanager, mapmanager2) record `cpu_percent` (core busy = wall − idle, FreeRTOS
+  run-time stats) and `heap_used_kb` (sampled total free-heap low-water) per cell
+  (`benchmark/esp32_probe.hpp`). clientlatency needs `<TARGET>_STATIC_IP` in cc-esp32.conf.
+* `toshiba-T2100` — real i486 laptop over SLIP, `benchmark_t2100.py`: local
+  Buildroot cross build, 486 opcode check, one shared ssh connection (each
+  login costs ~9 s). In mapmanager, mapmanager2, serversave, botactions
+  (client beside the server, 2/8 bots: a 486 cannot seat 30) and clientlatency; not in
+  epolliouring (kernel 3.16 has no io_uring).
 
 ## Zero impact on production binaries — non-negotiable
 
@@ -850,7 +873,14 @@ merits. If the change is otherwise neutral (code clarity, smaller
 binary, removed dependency), promote it as a non-perf clean-up via
 the normal commit path, not via the benchmark champion mechanism.
 
-## The load client runs ON the node under test — always
+## The load client runs ON the node under test — except ESP32 and the i486 laptop
+
+Exception (operator, 2026-10-11): on the ESP32 boards (WiFi) and the T2100 (SLIP over
+RS232) the load client runs on the HOST. Their bandwidth is NOT the limiting factor, not even
+with several nodes measured in parallel, and they cannot host the client anyway. The on-node
+rule below exists so the fleet can run in parallel without the shared WiFi skewing results.
+Server CPU% there comes from the board itself (ESP32: event-loop busy ratio of BenchProbe).
+
 
 The load generator and the server share the hardware being measured. Only
 `tools/bot-bench` can do this fleet-wide: it is Qt-FREE, while `tools/bot-actions`
@@ -938,6 +968,13 @@ baseline until a future run promotes a new champion. Dry-run by default.
 
 Done so far: **p1mmx** (2026-08-21), clocked 233 -> 133 MHz to limit heat damage.
 
+**Re-baselined 2026-10-11: benchmarkmapmanager + benchmarkmapmanager2** (champions removed; the next full run
+promotes the first). Two harness bugs were measured as server cost: mapmanager kept every
+removed client alive (memory + prep loop grew with run length: ticks/s fell 3x at 2 s), and the
+test stub copied each sent packet with one malloc inside the timed window (~half the tick at 300
+players). History before that date is not comparable. Benchmark builds now count bytes
+(`Client::sentBytes`) and reuse a departing client like production, no allocation per pair.
+
 ## What NOT to put here
 
 * New testing*.py scripts — those live in `test/`. Benchmarks are
@@ -993,6 +1030,15 @@ GENERATED PER EXECUTION NODE AND PER DATAPACK.
   Stage 1 aims at a cycle and shortens it only if the bytes do not fit; the
   budget is 2% of the node's RAM (ESP32: a flash constant). Measured: 0.3% of
   ticks are resets.
+* **The world is FROZEN**: stage 1 loads `--world` = the datapack's `map/` at commit `14b4aab` (647 maps), exported once by `ensure_frozen_world()` to `~/.local/share/CatchChallenger/benchmark-mapmanager2/`. The live datapack keeps growing; a fleet on different worlds is not comparable.
+* **T2100 and ESP32 run the SAME player counts as `benchmarkmapmanager`** (5..300): they generate 300 players and replay the first N per cell. The ESP32 firmware (`benchmarkmapmanager2/esp32/`, workload in flash via `CC_WORKLOAD_CPP`, counts + budget compiled in from the harness) is built like every CatchChallenger target WITHOUT exceptions or RTTI (both ESP32 benchmark firmwares): a heap pre-check prints `skip_oom`, `BENCH_TRY` precedes each count and a panic halts, so an OOM past the check shows as a BENCH_TRY with no BENCH line.
+* **Toshiba T2100** = i486 DX2 50 MHz, Linux 3.16, SLIP over RS232 115200 baud (its latency numbers measure the serial line). its real MHz and cache steps come from the microbench below; never trust its `/proc/cpuinfo`.
+* **Microbench on every node** (`benchmark_microbench.py`, SpeedSys-style MHz + cache-step probe): `bh.Progress` measures, BEFORE the run, each node whose result is missing, older than 24 h or from another `microbench/main.cpp`; same 60 s + load < 1 gate. Fills `cpu_mhz`/`cpu_cache` (noted under `microbench`) only where /proc has none, so the tracked platform.json does not churn; full results stay in `~/.local/share/CatchChallenger/benchmark-microbench/`. The recorder only reads the cache.
+* **Open (2026-10-11): the ESP32-C6 server stops serving after ~20 s of bots ON THE MAP**
+  (botactions): event loop stops iterating, board off the network, no panic, heap ~100 KB
+  free. Connect-only load (clientlatency) is fine. Needs a JTAG backtrace of task `main`
+  (OpenOCD over the C6's USB fails with LIBUSB_ERROR_ACCESS: udev permission for 303a:1001).
+* **A pinned ESP32 port held by another process is reported, never flashed or probed** (neighbouring ports are an ONU, an OLT and a power relay): set `CC_ESP32_SERIAL=/dev/ttyUSBn`.
 * **Oracles**: `replay_mismatch` != 0 is a FAIL (stage 2's state after a cycle
   must equal what stage 1 computed, which also proves no vector walked into a
   wall); the `CATCHCHALLENGER_TESTING` x/y guard still checks every broadcast

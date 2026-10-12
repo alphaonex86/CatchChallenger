@@ -815,6 +815,11 @@ class Progress:
         self.total = total
         self.done  = 0
         self.bench_name = bench_name
+        # Safety net for a benchmark that forgets to call it first thing
+        # (each benchmark*.py does, right after the --node filter): a no-op
+        # once it has run in this process.
+        import benchmark_microbench
+        benchmark_microbench.ensure_missing()
 
     def emit(self, profiler, simd, node, status="OK", extra=""):
         if status == "SKIP" and extra.startswith("tool-disabled:"):
@@ -1343,16 +1348,17 @@ def measure_time_v(cmd, env=None, timeout=None, cwd=None):
     killed/crashed child never drops a core in the source tree."""
     out = {"wall_s": None, "user_s": None, "sys_s": None,
            "max_rss_kb": None,
-           "minor_pf": None, "major_pf": None, "rc": None}
+           "minor_pf": None, "major_pf": None, "rc": None, "stdout": None}
     if not os.path.exists("/usr/bin/time"):
-        rc, _, _, dt = run_capture(cmd, env=env, timeout=timeout,
-                                   cwd=cwd, preexec_fn=_drop_core_rlimit)
-        out["wall_s"] = dt; out["rc"] = rc
+        rc, sout, _, dt = run_capture(cmd, env=env, timeout=timeout,
+                                      cwd=cwd, preexec_fn=_drop_core_rlimit)
+        out["wall_s"] = dt; out["rc"] = rc; out["stdout"] = sout
         return out
     full = ["/usr/bin/time", "-v"] + list(cmd)
-    rc, _, err, _ = run_capture(full, env=env, timeout=timeout,
-                                cwd=cwd, preexec_fn=_drop_core_rlimit)
+    rc, sout, err, _ = run_capture(full, env=env, timeout=timeout,
+                                   cwd=cwd, preexec_fn=_drop_core_rlimit)
     out["rc"] = rc
+    out["stdout"] = sout
     for line in err.splitlines():
         s = line.strip()
         if s.startswith("Elapsed (wall clock) time"):
@@ -1376,7 +1382,10 @@ def measure_time_v(cmd, env=None, timeout=None, cwd=None):
 
 
 def _parse_wall(s):
-    # h:mm:ss or m:ss.ss
+    # h:mm:ss or m:ss.ss (GNU time), or BusyBox time's "1h 2m 3s" / "1m 5.32s"
+    m = re.fullmatch(r"\s*(?:(\d+)h\s*)?(?:(\d+)m\s*)?([0-9.]+)s\s*", s)
+    if m:
+        return int(m.group(1) or 0) * 3600 + int(m.group(2) or 0) * 60 + float(m.group(3))
     parts = s.split(":")
     try:
         if len(parts) == 3:

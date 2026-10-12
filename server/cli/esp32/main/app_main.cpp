@@ -26,9 +26,14 @@
 #include "esp_netif.h"
 #include "esp_event.h"
 #include "esp_wifi.h"
+#include "esp_pm.h"
 #include "esp_log.h"
 #include "esp_system.h"
 #include "sdkconfig.h"
+
+#if CONFIG_CATCHCHALLENGER_IDLE_CPU_FREQ_MHZ && !CONFIG_PM_ENABLE
+#error "CATCHCHALLENGER_IDLE_CPU_FREQ_MHZ needs CONFIG_PM_ENABLE=y (see sdkconfig.lowpower)"
+#endif
 
 static const char *TAG = "catchchallenger";
 static EventGroupHandle_t s_wifi_eg;
@@ -100,11 +105,23 @@ static void cc_wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wc));
     ESP_ERROR_CHECK(esp_wifi_start());
+#if CONFIG_CATCHCHALLENGER_IDLE_CPU_FREQ_MHZ
+    // Low-power build: full speed while working, the idle frequency otherwise.
+    // The CPU can only slow down while the modem sleeps (the WiFi driver holds
+    // the max-APB lock while its radio is on), hence the modem sleep.
+    esp_pm_config_t pm;
+    memset(&pm, 0, sizeof(pm));
+    pm.max_freq_mhz=CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ;
+    pm.min_freq_mhz=CONFIG_CATCHCHALLENGER_IDLE_CPU_FREQ_MHZ;
+    ESP_ERROR_CHECK(esp_pm_configure(&pm));
+    ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_MIN_MODEM));
+#else
     // Disable modem-sleep power save: the server is mains/USB-powered and runs a
     // continuous event loop, so the periodic PHY sleep/wake is pure downside —
     // it was crashing in the PHY wake path (phy_wakeup_init) right after bind and
     // it adds tens of ms of wake latency that would pollute the latency benchmark.
     ESP_ERROR_CHECK(esp_wifi_set_ps(WIFI_PS_NONE));
+#endif
 
     ESP_LOGI(TAG, "wifi STA connecting to \"%s\" (DHCP)...",
              CONFIG_CATCHCHALLENGER_WIFI_SSID);
