@@ -566,7 +566,7 @@ def run_pass(hardened, base):
             "login1",
             TC.bin_path(base, "server/login", "catchchallenger-server-login"),
             os.path.join(work, "login1"),
-            TC._xml_login(TC.PORT_LOGIN_1, "postgresql", mp, "")).start()
+            TC._xml_login(TC.PORT_LOGIN_1, "postgresql", mp, TC.NGINX_URL_BASE)).start()
         holders["login1"] = [login]
         ok, detail = login.wait_ready()
         if not ok:
@@ -1060,10 +1060,15 @@ def cluster_phase():
     if not ok:
         log_fail("postgresql", detail)
         return
+    # the login refuses to start without an HTTP mirror for the base datapack
+    ok, detail = TC.start_nginx()
+    if not ok:
+        log_fail("nginx mirror", detail)
     try:
         for hardened in FLAVOURS:
             run_pass(hardened, base_for[hardened])
     finally:
+        TC.stop_nginx()
         try:
             TC.stop_postgresql()
         except Exception:
