@@ -1695,6 +1695,87 @@ def check_kicked_connection_closes(label, port):
                         "server-side socket stays ESTABLISHED after close()")
 
 
+def _game1_unique_key(work_root):
+    """uniqueKey game1 wrote into its config at first start."""
+    with open(os.path.join(work_root, "game1", "server-properties.xml")) as fp:
+        return int(re.search(r'<uniqueKey value="(\d+)"', fp.read()).group(1))
+
+
+def _raw_login(port, user):
+    """Raw-protocol login on a login server, creating the account when absent.
+    Returns (connection, 0xA8 reply); reply[0]==0x01 is logged."""
+    import _protoharness as H
+    login_hash, pass_hash = H._creds(user, user)
+    conn = H._RawConn(socket.create_connection(("127.0.0.1", port), timeout=10))
+    token = conn.query(0xA0, H.PROTOCOL_HEADER_LOGIN, dynamic=False, timeout=10)[1:17]
+    a8 = login_hash + H.blake3(pass_hash + token)
+    logged = conn.query(0xA8, a8, dynamic=False, timeout=10)
+    if logged is not None and logged[0] == 0x07:
+        conn.query(0xA9, H.blake3(login_hash) + pass_hash, dynamic=False, timeout=10)
+        logged = conn.query(0xA8, a8, dynamic=False, timeout=10)
+    return conn, logged
+
+
+def _raw_add_character(conn, pseudo):
+    """Creates a character in group 0. Returns (character id or None, 0xAA reply)."""
+    # profile 0, monster group 0, skin 2: the datapack's default player profile
+    added = conn.query(0xAA, bytes([0, 0, len(pseudo)]) + pseudo.encode() + bytes([0, 2]),
+                       dynamic=True, timeout=10)
+    if added is None or len(added) < 5 or added[0] != 0x00:
+        return None, added
+    return struct.unpack("<I", added[1:5])[0], added
+
+
+def check_select_drop_unlocks(tag, work_root):
+    """A client dropping while the game server still loads its character must not
+    leave that character locked on the master. The unlock was only sent once the
+    character query had answered, so every later select of it was refused with
+    "Already logged" until a restart (prod 2026-10-18, the monitor's bot characters)."""
+    import _protoharness as H
+    label = f"{tag}/select-drop-unlocks"
+    stamp = "%x" % (int(time.time() * 1000) & 0xFFFFFFF)
+    user = ("seldrop" + stamp).encode()
+    try:
+        unique_key = _game1_unique_key(work_root)
+        conn, logged = _raw_login(PORT_LOGIN_1, user)
+        if logged is None or logged[0] != 0x01:
+            log_fail(label, f"login of {user!r} failed: {logged!r}")
+            return
+        character_id, added = _raw_add_character(conn, "Sd" + stamp)
+        if character_id is None:
+            log_fail(label, f"character creation for {user!r} failed: {added!r}")
+            return
+        select = bytes([0]) + struct.pack("<II", unique_key, character_id)
+        token = conn.query(0xAC, select, dynamic=False, timeout=20)
+        conn.sock.close()
+        if token is None or len(token) != 16:
+            log_fail(label, f"character {character_id}: no game-server token: {token!r}")
+            return
+        game = H._RawConn(socket.create_connection(("127.0.0.1", PORT_GAME_1), timeout=10))
+        if game.query(0xA0, H.PROTOCOL_HEADER_GAMESERVER, dynamic=False, timeout=10) is None:
+            log_fail(label, f"game1 port {PORT_GAME_1}: no reply to the protocol header")
+            return
+        # the token starts the async character query: close before it answers
+        game.sock.sendall(bytes([0x93, game.qn]) + token)
+        game.sock.close()
+        # master maxLockAge=1: 0x08 "recently disconnected" may answer first
+        reply = None
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            time.sleep(1)
+            conn, logged = _raw_login(PORT_LOGIN_1, user)
+            reply = conn.query(0xAC, select, dynamic=False, timeout=20)
+            conn.sock.close()
+            if reply is not None and len(reply) == 16:
+                log_pass(label, f"character {character_id} selectable again after its client dropped")
+                return
+    except (OSError, AttributeError, TypeError) as e:
+        log_fail(label, f"raw session: {e!r}")
+        return
+    log_fail(label, f"character {character_id} still locked 10s after its client dropped during "
+                    f"the load, last select reply {reply!r} (0x03 = Already logged)")
+
+
 def check_proxy_reused_query_number(tag, base, work_root, db_name, max_players,
                                     mirror_url, spawned_servers):
     """Login in proxy mode forwards client queries to the game server. A client
@@ -1716,28 +1797,17 @@ def check_proxy_reused_query_number(tag, base, work_root, db_name, max_players,
     stamp = "%x" % (int(time.time() * 1000) & 0xFFFFFFF)
     user, pseudo = ("proxyqn" + stamp).encode(), "Pq" + stamp
     try:
-        unique_key = int(re.search(r'<uniqueKey value="(\d+)"',
-                                   open(os.path.join(work_root, "game1", "server-properties.xml")).read()).group(1))
-        login_hash, pass_hash = H._creds(user, user)
-        sk = socket.create_connection(("127.0.0.1", PORT_LOGIN_PROXY), timeout=10)
-        conn = H._RawConn(sk)
-        token = conn.query(0xA0, H.PROTOCOL_HEADER_LOGIN, dynamic=False, timeout=10)[1:17]
-        a8 = login_hash + H.blake3(pass_hash + token)
-        logged = conn.query(0xA8, a8, dynamic=False, timeout=10)
-        if logged is not None and logged[0] == 0x07:
-            conn.query(0xA9, H.blake3(login_hash) + pass_hash, dynamic=False, timeout=10)
-            logged = conn.query(0xA8, a8, dynamic=False, timeout=10)
+        unique_key = _game1_unique_key(work_root)
+        conn, logged = _raw_login(PORT_LOGIN_PROXY, user)
+        sk = conn.sock
         if logged is None or logged[0] != 0x01:
             log_fail(label, f"login via proxy login failed: {logged!r}")
             return
-        # profile 0, monster group 0, skin 2: the datapack's default player profile
-        added = conn.query(0xAA, bytes([0, 0, len(pseudo)]) + pseudo.encode() + bytes([0, 2]),
-                           dynamic=True, timeout=10)
-        if added is None or len(added) < 5 or added[0] != 0x00:
+        character_id, added = _raw_add_character(conn, pseudo)
+        if character_id is None:
             log_fail(label, f"character creation via proxy login failed: {added!r}")
             return
-        found = (0, struct.unpack("<I", added[1:5])[0])
-        selected = conn.query(0xAC, bytes([found[0]]) + struct.pack("<II", unique_key, found[1]),
+        selected = conn.query(0xAC, bytes([0]) + struct.pack("<II", unique_key, character_id),
                               dynamic=False, timeout=20)
         if selected is None:
             log_fail(label, "no reply to 0xAC select through the proxy")
@@ -1882,6 +1952,7 @@ def _run_cluster_variant(db_name, base, max_players,
                      time.monotonic() - t_c1)
             return
         log_pass(f"{tag}/client1-via-login1", det1, time.monotonic() - t_c1)
+        check_select_drop_unlocks(tag, work_root)
 
         # 5) Second client autologin via login #2 (sticky check).
         #    Wait out the master's character-disconnect cooldown +

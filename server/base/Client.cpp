@@ -214,6 +214,15 @@ void Client::setToDefault()
     mHaveCurrentSkill=false;
     mMonsterChange=false;
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    //a query still in flight (client gone during its character load) must not
+    //answer into this slot: it is free now, or already serves another client
+    while(!callbackRegistred.empty())
+    {
+        callbackRegistred.front()->object=NULL;
+        callbackRegistred.pop();
+    }
+    #endif
     while(!paramToPassToCallBack.empty())
         paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_HARDENED
