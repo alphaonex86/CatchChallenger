@@ -10,10 +10,6 @@
 #include <fstream>
 #endif
 
-#ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "../game-server-alone/LinkToMaster.hpp"
-#endif
-
 #include <chrono>
 
 using namespace CatchChallenger;
@@ -47,6 +43,10 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     selectCharacterParam->query_id=query_id;
     selectCharacterParam->characterId=characterId;
     stat=ClientStat::CharacterSelecting;
+    //the master holds this character locked from now on: however the selection
+    //ends (client gone during the query, character not found...), disconnectClient()
+    //unlocks it with this id
+    character_id_db=characterId;
     //std::cout << "Client::selectCharacter(), Try select character " << characterId << " with account " << account_id << "..." << std::endl;
 
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
@@ -54,7 +54,6 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-        character_id_db=characterId;
         characterSelectionIsWrong(query_id,0x02,GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.queryText()+": "+GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         delete selectCharacterParam;
         return;
@@ -142,7 +141,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     if(!ClientList::list->haveFreeSlot())
     {
         std::cerr << "Need more simplifiedIdList entry to log the character " << characterId << " (" << account_id_db << ")" << std::endl;
-        character_id_db=0;
         characterSelectionIsWrong(query_id,0x04,"Need more simplifiedIdList entry to log the character");
         return;
     }
@@ -154,7 +152,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         if(CatchChallenger::dbInternalVarsStore.count(_kacc)==0)
         {
             std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
-            character_id_db=0;
             characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
             return;
         }
@@ -169,7 +166,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         if(!in_file.good() || !in_file.is_open())
         {
             std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
-            character_id_db=0;
             characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
             return;
         }
@@ -191,7 +187,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         if(index>=characterEntryList.size())
         {
             std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
-            character_id_db=0;
             characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
             return;
         }
@@ -225,7 +220,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         #else
         #error Define what do here
         #endif
-        character_id_db=0;
         characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
         return;
     }
@@ -247,26 +241,22 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
 
     if(stat!=ClientStat::CharacterSelecting)
     {
-        character_id_db=characterId;
         characterSelectionIsWrong(query_id,0x03,"character_loaded already to true, stat: "+std::to_string(stat));
         return;
     }
     const uint32_t &account_id=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
     if(!ok)
     {
-        character_id_db=characterId;
         characterSelectionIsWrong(query_id,0x02,"Account for character: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not an id");
         return;
     }
     if(this->account_id_db!=account_id)
     {
-        character_id_db=characterId;
         characterSelectionIsWrong(query_id,0x02,"Character: "+std::to_string(characterId)+" is not owned by the account: "+std::to_string(this->account_id_db));
         return;
     }
     if(GlobalServerData::serverPrivateVariables.playerById_db.find(characterId)!=GlobalServerData::serverPrivateVariables.playerById_db.cend())
     {
-        character_id_db=characterId;
         characterSelectionIsWrong(query_id,0x03,"Already logged");
         return;
     }
@@ -330,14 +320,12 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     const uint8_t &starter=GlobalServerData::serverPrivateVariables.db_common->stringtouint8(GlobalServerData::serverPrivateVariables.db_common->value(9),&ok);
     if(!ok)
     {
-        character_id_db=characterId;
         characterSelectionIsWrong(query_id,0x04,"start from base selection");
         return;
     }
     #ifdef CATCHCHALLENGER_HARDENED
     if(CommonDatapack::commonDatapack.get_profileList().size()!=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
     {
-        character_id_db=characterId;
         characterSelectionIsWrong(query_id,0x04,"selectCharacter_return() profile common and server don't match: "+
                                   std::to_string(CommonDatapack::commonDatapack.get_profileList().size())+
                                   "!="+
@@ -348,7 +336,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     #endif
     if(starter>=DictionaryLogin::dictionary_starter_database_to_internal.size())
     {
-        character_id_db=characterId;
         characterSelectionIsWrong(query_id,0x04,"starter "+std::to_string(starter)+
                                   " >= DictionaryLogin::dictionary_starter_database_to_internal.size() "+std::to_string(DictionaryLogin::dictionary_starter_database_to_internal.size()));
         return;
@@ -358,14 +345,10 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     {
         errorOutput("profile index: "+std::to_string(profileIndex)+
                     " out of range (profileList size: "+std::to_string(CommonDatapack::commonDatapack.get_profileList().size())+")");
-        #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        LinkToMaster::linkToMaster->characterDisconnected(characterId);
-        #endif
         return;
     }
     if(!GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).valid)
     {
-        character_id_db=characterId;
         characterSelectionIsWrong(query_id,0x04,"profile index: "+std::to_string(profileIndex)+" profil not valid");
         return;
     }
@@ -381,7 +364,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(15),&ok);
         if(!ok)
         {
-            character_id_db=characterId;
             characterSelectionIsWrong(query_id,0x04,"encyclopedia_monster not in hexa");
             return;
         }
@@ -403,7 +385,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(16),&ok);
         if(!ok)
         {
-            character_id_db=characterId;
             characterSelectionIsWrong(query_id,0x04,"encyclopedia_item not in hexa");
             return;
         }
@@ -425,7 +406,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(11),&ok);
         if(!ok)
         {
-            character_id_db=characterId;
             characterSelectionIsWrong(query_id,0x04,"item not in hexa");
             return;
         }
@@ -433,7 +413,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         unsigned int pos=0;
         if(data.size()%(2+4)!=0)
         {
-            character_id_db=characterId;
             characterSelectionIsWrong(query_id,0x04,"item have wrong size");
             return;
         }
@@ -455,7 +434,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                 #ifdef CATCHCHALLENGER_HARDENED
                 if(public_and_private_informations.items.find(item16)!=public_and_private_informations.items.cend())
                 {
-                    character_id_db=characterId;
                     characterSelectionIsWrong(query_id,0x04,"item duplicate");
                     return;
                 }
@@ -470,7 +448,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(13),&ok);
         if(!ok)
         {
-            character_id_db=characterId;
             characterSelectionIsWrong(query_id,0x04,"recipes not in hexa");
             return;
         }
@@ -492,7 +469,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(14),&ok);
         if(!ok)
         {
-            character_id_db=characterId;
             characterSelectionIsWrong(query_id,0x04,"reputations not in hexa");
             return;
         }
@@ -500,7 +476,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         unsigned int pos=0;
         if(data.size()%(4+1+1)!=0)
         {
-            character_id_db=characterId;
             characterSelectionIsWrong(query_id,0x04,"reputations have wrong size");
             return;
         }
@@ -601,7 +576,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     const uint64_t &commonCharacterDate=GlobalServerData::serverPrivateVariables.db_common->stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(18),&ok);
     if(!ok)
     {
-        character_id_db=characterId;
         characterSelectionIsWrong(query_id,0x04,"creation date wrong");
         return;
     }
@@ -614,7 +588,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         if(CatchChallenger::dbInternalVarsStore.count(_kchar)==0)
         {
             std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
-            character_id_db=0;
             characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
             return;
         }
@@ -627,7 +600,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         if(!in_file.good() || !in_file.is_open())
         {
             std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
-            character_id_db=0;
             characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
             return;
         }

@@ -851,7 +851,7 @@ int main(int argc, char *argv[])
     }
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     {
-        if(!timerPurgeTokenAuthList.start(LinkToMaster::purgeLockPeriod))
+        if(!timerPurgeTokenAuthList.start(LinkToMaster::purgeLockPeriod*1000))
         {
             std::cerr << "timerPurgeTokenAuthList fail to set" << std::endl;
             return EXIT_FAILURE;

@@ -75,6 +75,7 @@ _LOGIN_SALT = b"RtR3bm9Z1DFMfAC3"
 _PASS_SALT  = b"AwjDvPIzfJPTTgHs"
 
 PROTOCOL_HEADER_LOGIN = bytes([0x9c, 0xd6, 0x49, 0x8d, 0x14])
+PROTOCOL_HEADER_GAMESERVER = bytes([0x60, 0x0c, 0xd9, 0xbc, 0x14])
 
 # Forced-skin index in datapack profile 0 ("Normal"): skins sort to
 # bandit(0),girlplayer(1),player(2),terranite(3); forcedskin="player;girlplayer".
