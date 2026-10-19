@@ -1695,9 +1695,9 @@ def check_kicked_connection_closes(label, port):
                         "server-side socket stays ESTABLISHED after close()")
 
 
-def _game1_unique_key(work_root):
-    """uniqueKey game1 wrote into its config at first start."""
-    with open(os.path.join(work_root, "game1", "server-properties.xml")) as fp:
+def _game_unique_key(work_root, game="game1"):
+    """uniqueKey the game server wrote into its config at first start."""
+    with open(os.path.join(work_root, game, "server-properties.xml")) as fp:
         return int(re.search(r'<uniqueKey value="(\d+)"', fp.read()).group(1))
 
 
@@ -1736,7 +1736,7 @@ def check_select_drop_unlocks(tag, work_root):
     stamp = "%x" % (int(time.time() * 1000) & 0xFFFFFFF)
     user = ("seldrop" + stamp).encode()
     try:
-        unique_key = _game1_unique_key(work_root)
+        unique_key = _game_unique_key(work_root)
         conn, logged = _raw_login(PORT_LOGIN_1, user)
         if logged is None or logged[0] != 0x01:
             log_fail(label, f"login of {user!r} failed: {logged!r}")
@@ -1776,6 +1776,68 @@ def check_select_drop_unlocks(tag, work_root):
                     f"the load, last select reply {reply!r} (0x03 = Already logged)")
 
 
+def _raw_select(port, user, character_id, unique_key):
+    """Logs in and selects the character. Returns the 0xAC reply: 16 bytes = token."""
+    conn, logged = _raw_login(port, user)
+    reply = conn.query(0xAC, bytes([0]) + struct.pack("<II", unique_key, character_id),
+                       dynamic=False, timeout=20)
+    conn.sock.close()
+    return reply
+
+
+def check_late_master_reply_keeps_link(tag, work_root, game1):
+    """The master answers a select only once its game server did. A client gone
+    meanwhile left an entry the login's 60s timer gave back to the query pool: the
+    next select reused the number, the late reply desynced the master link and the
+    login dropped it for good, answering every later select 0x04 "Server internal
+    problem" (prod 2026-10-19, after the monitor's bot timed out on a slow game server).
+    The freeze outlasts the master's 60s ping, so the master also drops game1 with that
+    select pending: it used the erased game server entry (use-after-free, master died)."""
+    label = f"{tag}/late-master-reply-keeps-link"
+    stamp = "%x" % (int(time.time() * 1000) & 0xFFFFFFF)
+    reused = after = None
+    step = "setup"
+    try:
+        key1 = _game_unique_key(work_root, "game1")
+        key2 = _game_unique_key(work_root, "game2")
+        chars = {}
+        for role in ("dropped", "reuser", "after"):
+            user = (role + stamp).encode()
+            conn, logged = _raw_login(PORT_LOGIN_1, user)
+            character_id, added = _raw_add_character(conn, role[:2].capitalize() + stamp)
+            conn.sock.close()
+            if character_id is None:
+                log_fail(label, f"account {user!r}: login {logged!r}, character creation {added!r}")
+                return
+            chars[role] = (user, character_id)
+        step = "select left pending on frozen game1"
+        conn, logged = _raw_login(PORT_LOGIN_1, chars["dropped"][0])
+        os.kill(game1.proc.pid, signal.SIGSTOP)
+        try:
+            # game1 frozen: the master keeps this select pending, its client goes away
+            conn.sock.sendall(bytes([0xAC, conn.qn, 0]) + struct.pack("<II", key1, chars["dropped"][1]))
+            time.sleep(1)
+            conn.sock.close()
+            time.sleep(61)  # one period of the login's TimerDetectTimeout
+            step = "select while the dropped one was pending"
+            reused = _raw_select(PORT_LOGIN_1, *chars["reuser"], key2)
+        finally:
+            os.kill(game1.proc.pid, signal.SIGCONT)
+        time.sleep(2)  # the master answers the dropped select now
+        step = "select after the master's late reply"
+        after = _raw_select(PORT_LOGIN_1, *chars["after"], key2)
+    except (OSError, AttributeError, TypeError) as e:
+        log_fail(label, f"{step}: {e!r} (login {PORT_LOGIN_1} or master gone)")
+        return
+    if reused is None or len(reused) != 16:
+        log_fail(label, f"select while a dropped client's select was pending on the master: {reused!r}")
+    elif after is None or len(after) != 16:
+        log_fail(label, f"select after the master's late reply: {after!r} "
+                        "(0x04 = Server internal problem: the login lost its master link)")
+    else:
+        log_pass(label, "selects still answered after a late master reply for a dropped client")
+
+
 def check_proxy_reused_query_number(tag, base, work_root, db_name, max_players,
                                     mirror_url, spawned_servers):
     """Login in proxy mode forwards client queries to the game server. A client
@@ -1797,7 +1859,7 @@ def check_proxy_reused_query_number(tag, base, work_root, db_name, max_players,
     stamp = "%x" % (int(time.time() * 1000) & 0xFFFFFFF)
     user, pseudo = ("proxyqn" + stamp).encode(), "Pq" + stamp
     try:
-        unique_key = _game1_unique_key(work_root)
+        unique_key = _game_unique_key(work_root)
         conn, logged = _raw_login(PORT_LOGIN_PROXY, user)
         sk = conn.sock
         if logged is None or logged[0] != 0x01:
@@ -1992,6 +2054,7 @@ def _run_cluster_variant(db_name, base, max_players,
             check_kicked_connection_closes(f"{tag}/game1-kick-closes", PORT_GAME_1)
             check_proxy_reused_query_number(tag, base, work_root, db_name, max_players,
                                             mirror_url, spawned_servers)
+            check_late_master_reply_keeps_link(tag, work_root, game1)
     finally:
         # Stop only the servers spawned by THIS variant; leave any
         # outer setup intact for the next variant.

@@ -64,11 +64,8 @@ void EventLoopClientLoginMaster::resetToDisconnect()
     }
     if(stat==EventLoopClientLoginMasterStat::GameServer)
     {
-        addToRemoveList();
-        vectorremoveOne(EventLoopClientLoginMaster::gameServers,this);
-        passUniqueKeyToNextGameServer();
-
-        //select in progress: abort
+        //select in progress: abort. Before passUniqueKeyToNextGameServer(): it erases the
+        //InternalGameServer that charactersGroupForGameServerInformation points into
         unsigned int index=0;
         while(index<loginServerReturnForCharaterSelect.size())
         {
@@ -81,6 +78,9 @@ void EventLoopClientLoginMaster::resetToDisconnect()
             }
             index++;
         }
+        addToRemoveList();
+        vectorremoveOne(EventLoopClientLoginMaster::gameServers,this);
+        passUniqueKeyToNextGameServer();
         charactersGroupForGameServerInformation=NULL;
         EventLoopServerLoginMaster::unixServerLoginMaster->doTheServerList();
         EventLoopServerLoginMaster::unixServerLoginMaster->doTheReplyCache();

@@ -249,6 +249,20 @@ void LinkToMaster::errorParsingLayer(const std::string &error)
 {
     std::cerr << "LinkToMaster::errorParsingLayer: " << sanitizeUtf8String(error) << std::endl;
     disconnectClient();
+    //the closed fd leaves epoll, which then never reports this link again: without a retry
+    //the slave stayed master-less with its listener open, failing every select (prod 2026-10-19)
+    if(stat!=Stat::Unconnected)
+    {
+        stat=Stat::Unconnected;
+        reconnectTimer.setSingleShot(true);
+        reconnectTimer.stop();
+        //not 0: a master refusing this slave would turn into a hot reconnect loop
+        if(!reconnectTimer.start(1000))
+        {
+            std::cerr << "master reconnect timer fail to start after a link error (abort)" << std::endl;
+            abort();
+        }
+    }
 }
 
 void LinkToMaster::messageParsingLayer(const std::string &message) const
@@ -258,8 +272,7 @@ void LinkToMaster::messageParsingLayer(const std::string &message) const
 
 void LinkToMaster::errorParsingLayer(const char * const error)
 {
-    std::cerr << "LinkToMaster::errorParsingLayer: " << sanitizeUtf8String(std::string(error)) << std::endl;
-    disconnectClient();
+    errorParsingLayer(std::string(error));
 }
 
 void LinkToMaster::messageParsingLayer(const char * const message) const
@@ -472,37 +485,24 @@ void LinkToMaster::closeSocket()
     disconnectClient();
 }
 
+//A query number goes back to the pool only when the master answers it (parseReplyData()).
+//Freed here, the late answer was taken as the reply of the next select reusing that number,
+//and the real reply then came for an unregistered query: the link was dropped. Nothing is
+//erased here either: it was done inside this range-for, the login crashed at the tick.
 void LinkToMaster::detectTimeout()
 {
-    uint64_t timetemp=time(NULL);
-    for( const std::pair<const uint8_t,DataForSelectedCharacterReturn>& n : selectCharacterClients ) {
-        const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=n.second;
-        if(dataForSelectedCharacterReturn.client==nullptr)
+    const uint64_t timetemp=time(NULL);
+    for(std::pair<const uint8_t,DataForSelectedCharacterReturn> &n : selectCharacterClients)
+    {
+        EventLoopClientLoginSlave * const client=static_cast<EventLoopClientLoginSlave *>(n.second.client);
+        if(client==nullptr || n.second.start>=(timetemp-60))
+            continue;
+        n.second.client=nullptr;
+        if(client->stat!=EventLoopClientLoginSlave::GameServerConnected)
         {
-            messageParsingLayer("LinkToMaster::detectTimeout(): connected player NULL");
-            const uint8_t queryNumber=n.first;
-            queryNumberList.push_back(queryNumber);
-            selectCharacterClients.erase(queryNumber);
-        }
-        else
-        {
-            EventLoopClientLoginSlave * client=static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client);
-            if(dataForSelectedCharacterReturn.start<(timetemp-60))//if started than more 60s
-            {
-                if(client->stat!=EventLoopClientLoginSlave::GameServerConnected)
-                {
-                    messageParsingLayer("LinkToMaster::detectTimeout(): connected player: account_id: "+std::to_string(client->account_id)+" (stat: "+std::to_string(client->stat)+")");
-                    static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
-                    ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04/*Server internal problem*/);
-                    static_cast<EventLoopClientLoginSlave *>(dataForSelectedCharacterReturn.client)
-                    ->closeSocket();
-                }
-                else
-                    messageParsingLayer("LinkToMaster::detectTimeout(): connected player: account_id: "+std::to_string(client->account_id)+", should be removed from this list");
-                const uint8_t queryNumber=n.first;
-                queryNumberList.push_back(queryNumber);
-                selectCharacterClients.erase(queryNumber);
-            }
+            messageParsingLayer("LinkToMaster::detectTimeout(): no master reply in 60s for account_id: "+std::to_string(client->account_id)+" (stat: "+std::to_string(client->stat)+")");
+            client->selectCharacter_ReturnFailed(n.second.client_query_id,0x04/*Server internal problem*/);
+            client->closeSocket();
         }
     }
 }
