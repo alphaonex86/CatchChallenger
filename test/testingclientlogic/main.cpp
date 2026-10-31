@@ -735,6 +735,90 @@ static const ConnexionInfo *findServer(const std::vector<ConnexionInfo> &list,co
     return NULL;
 }
 
+static void testCustomServerList()
+{
+    QTemporaryDir dir;
+    if(!dir.isValid())
+    {
+        check("custom_list_temp_dir",false,true);
+        return;
+    }
+    QSettings settings(dir.path()+QStringLiteral("/settings.ini"),QSettings::IniFormat);
+    //the old qtcpu800x600 format: parallel lists
+    QStringList connexionList;
+    connexionList << QStringLiteral("h.example:1234") << QStringLiteral("wss://w.example/ws") << QStringLiteral("bad host:12") << QStringLiteral("noport");
+    QStringList nameList;
+    nameList << QStringLiteral("Home") << QStringLiteral("Web") << QStringLiteral("Bad") << QStringLiteral("NoPort");
+    QStringList counterList;
+    counterList << QStringLiteral("5") << QStringLiteral("0") << QStringLiteral("1") << QStringLiteral("1");
+    QStringList lastList;
+    lastList << QStringLiteral("200") << QStringLiteral("0") << QStringLiteral("1") << QStringLiteral("1");
+    QStringList proxyList;
+    proxyList << QStringLiteral("p.example:9050") << QString() << QString() << QString();
+    settings.setValue(QStringLiteral("connexionList"),connexionList);
+    settings.setValue(QStringLiteral("nameList"),nameList);
+    settings.setValue(QStringLiteral("connexionCounterList"),counterList);
+    settings.setValue(QStringLiteral("lastConnexionList"),lastList);
+    settings.setValue(QStringLiteral("proxyList"),proxyList);
+    //a server login stored by qtcpu800x600 must survive
+    settings.beginGroup(QStringLiteral("h.example-1234"));
+    settings.setValue(QStringLiteral("login"),QStringList() << QStringLiteral("player"));
+    settings.endGroup();
+
+    check("custom_list_migrated_count",ConnexionInfo::migrateOldCustomList(settings)==2,true);
+    check("custom_list_old_keys_removed",!settings.contains(QStringLiteral("connexionList")) && !settings.contains(QStringLiteral("nameList"))
+          && !settings.contains(QStringLiteral("proxyList")),true);
+    check("custom_list_login_kept",settings.value(QStringLiteral("h.example-1234/login")).toStringList().size()==1,true);
+    check("custom_list_migrate_once",ConnexionInfo::migrateOldCustomList(settings)==0,true);
+    std::vector<ConnexionInfo> list=ConnexionInfo::loadCustomList(settings);
+    check("custom_list_loaded",list.size()==2,true);
+    const ConnexionInfo *home=NULL;
+    const ConnexionInfo *web=NULL;
+    unsigned int index=0;
+    while(index<list.size())
+    {
+        if(list.at(index).name==QStringLiteral("Home"))
+            home=&list.at(index);
+        if(list.at(index).name==QStringLiteral("Web"))
+            web=&list.at(index);
+        index++;
+    }
+    check("custom_list_tcp",home!=NULL && home->isCustom && home->host==QStringLiteral("h.example") && home->port==1234
+          && home->connexionCounter==5 && home->lastConnexion==200 && home->unique_code.size()==16,true);
+    check("custom_list_proxy",home!=NULL && home->proxyHost==QStringLiteral("p.example") && home->proxyPort==9050,true);
+    check("custom_list_ws",web!=NULL && web->isCustom && web->ws==QStringLiteral("wss://w.example/ws") && web->host.isEmpty(),true);
+
+    //save: a removed custom server loses its group; LAN and command line entries are not written
+    std::vector<ConnexionInfo> toSave;
+    if(home!=NULL)
+        toSave.push_back(*home);
+    ConnexionInfo lan;
+    lan.lan=true;
+    lan.unique_code=QStringLiteral("lanserver");
+    lan.connexionCounter=1;
+    toSave.push_back(lan);
+    ConnexionInfo argument;
+    argument.isArgument=true;
+    argument.unique_code=QStringLiteral("127.0.0.1-1");
+    argument.connexionCounter=1;
+    toSave.push_back(argument);
+    ConnexionInfo listed;
+    listed.unique_code=QStringLiteral("official");
+    listed.connexionCounter=2;
+    listed.lastConnexion=300;
+    toSave.push_back(listed);
+    ConnexionInfo::saveList(toSave,settings);
+    list=ConnexionInfo::loadCustomList(settings);
+    check("custom_list_removed_dropped",list.size()==1 && list.at(0).name==QStringLiteral("Home"),true);
+    const QStringList groups=settings.childGroups();
+    check("custom_list_lan_and_argument_not_saved",!groups.contains(QStringLiteral("Xml-lanserver")) && !groups.contains(QStringLiteral("Xml-127.0.0.1-1")),true);
+    check("custom_list_listed_counters",settings.value(QStringLiteral("Xml-official/connexionCounter")).toUInt()==2
+          && settings.value(QStringLiteral("Xml-official/lastConnexion")).toULongLong()==300,true);
+    if(home!=NULL)
+        check("custom_list_round_trip",list.size()==1 && list.at(0).unique_code==home->unique_code && list.at(0).port==1234
+              && list.at(0).proxyHost==QStringLiteral("p.example"),true);
+}
+
 static void testServerList()
 {
     QTemporaryDir dir;
@@ -795,6 +879,21 @@ static void testServerList()
     check("server_list_broken_xml",ConnexionInfo::loadXmlList(QByteArray("<servers><server"),"en",settings).empty(),true);
     check("server_list_wrong_root",ConnexionInfo::loadXmlList(QByteArray("<list><server unique_code=\"a\"/></list>"),"en",settings).empty(),true);
     check("server_list_missing_file",ConnexionInfo::loadXmlListFromFile(dir.path()+QStringLiteral("/missing.xml"),"en",settings).empty(),true);
+
+    ConnexionInfo argument;
+    argument.isArgument=true;
+    argument.unique_code=QStringLiteral("127.0.0.1-42489");
+    check("server_cache_argument",argument.datapackCachePath().endsWith(QStringLiteral("/datapack/argument-127.0.0.1-42489")),true);
+    ConnexionInfo custom;
+    custom.isCustom=true;
+    custom.unique_code=QStringLiteral("abc");
+    custom.name=QStringLiteral("../../escape");
+    //the user-typed name is never part of the path
+    check("server_cache_custom",custom.datapackCachePath().endsWith(QStringLiteral("/datapack/Custom-abc")),true);
+    ConnexionInfo listed;
+    listed.unique_code=QStringLiteral("official");
+    check("server_cache_list",listed.datapackCachePath().endsWith(QStringLiteral("/datapack/Xml-official")),true);
+    check("server_custom_code",ConnexionInfo::newCustomCode().size()==16 && ConnexionInfo::newCustomCode()!=ConnexionInfo::newCustomCode(),true);
 
     ConnexionInfo first;
     ConnexionInfo second;
@@ -882,6 +981,7 @@ int main(int argc,char *argv[])
     testQuestText();
     testFactoryTrade();
     testServerList();
+    testCustomServerList();
     testProfileTexts();
     testBotDialog();
     if(failures>0)
