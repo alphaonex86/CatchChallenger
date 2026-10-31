@@ -2,6 +2,7 @@
 #define Animation_H
 
 #include <QObject>
+#include <QElapsedTimer>
 #include <QTimer>
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
@@ -25,29 +26,48 @@ public:
     void keyPressEvent(QKeyEvent * event, bool &eventTriggerGeneral) override;
     void keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral) override;
 
-    void startEvolution(const uint16_t monsterIdFrom, const uint16_t monsterIdTo);
+    //canCancel false for an item evolution: the item is already used
+    void startEvolution(const uint16_t monsterIdFrom, const uint16_t monsterIdTo, const bool canCancel);
 private slots:
     void animationTick();
-    void onFinishClicked();
+    void onButtonClicked();
 signals:
     void setAbove(ScreenInput *widget);
-    void animationFinished();
+    //the animation went to the end: confirm it to the server; never emitted when the player cancels
+    void evolved();
+    void closed();
 private:
+    enum State : uint8_t
+    {
+        State_Evolving,
+        State_Evolved,
+        State_Canceled
+    };
+    void showEnd(const State &state);
+    void updateMonsterImage();
+    static QString monsterName(const uint16_t monsterId);
+    static QPixmap monsterFront(const uint16_t monsterId);
+
     ImagesStrechMiddle *wdialog;
-    CustomButton *finishButton;
+    CustomButton *button;
     CustomText *title;
     QGraphicsPixmapItem label;
 
-    QGraphicsPixmapItem *monsterImageFrom;
-    QGraphicsPixmapItem *monsterImageTo;
+    QGraphicsPixmapItem *monsterImage;
     QGraphicsTextItem *evolutionText;
 
     QPixmap pixFrom;
     QPixmap pixTo;
+    QString nameFrom;
+    QString nameTo;
+    //what monsterImage holds, to rescale only on change
+    bool imageIsTo;
+    int imageSize;
+    int monsterSize;
 
     QTimer animTimer;
-    int animStep;
-    static const int ANIM_TOTAL_STEPS=60;
+    QElapsedTimer elapsed;
+    State state;
 };
 
 #endif // Animation_H

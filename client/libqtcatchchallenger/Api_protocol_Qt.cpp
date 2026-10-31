@@ -1,5 +1,6 @@
 #include "Api_protocol_Qt.hpp"
 #include "Language.hpp"
+#include "../libcatchchallenger/MonsterEvolution.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #ifndef CATCHCHALLENGER_NO_TCPSOCKET
 //#include "SslCert.h"
@@ -381,6 +382,7 @@ void Api_protocol_Qt::resetAll()
 
     randomSeeds.clear();
     fightEffectList.clear();
+    pendingEvolutions.clear();
 
     battleCurrentMonster.clear();
     battleStat.clear();
@@ -1428,41 +1430,81 @@ bool Api_protocol_Qt::doTheOtherMonsterTurn()
 void Api_protocol_Qt::levelUp(const uint8_t &level, const uint8_t &monsterIndex)//call after done the level
 {
     CommonFightEngine::levelUp(level,monsterIndex);
-    const PlayerMonster &monster=player_informations.monsters.at(monsterIndex);
-    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monster(monster.monster);
+    queueEvolution(monsterIndex,false);
+}
+
+void Api_protocol_Qt::queueEvolution(const uint8_t &monsterPosition,const bool &traded)
+{
     unsigned int index=0;
-    while(index<monsterInformations.evolutions.size())
+    while(index<pendingEvolutions.size())
     {
-        const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
-        if(evolution.type==Monster::EvolutionType_Level && evolution.data.level==level)//the current monster is not updated
+        if(pendingEvolutions.at(index).monsterPosition==monsterPosition)
         {
-            mEvolutionByLevelUp.push_back(monsterIndex);
+            if(traded)
+                pendingEvolutions[index].traded=true;
             return;
         }
         index++;
     }
+    PendingEvolution evolution;
+    evolution.monsterPosition=monsterPosition;
+    evolution.from=0;
+    evolution.to=0;
+    evolution.traded=traded;
+    pendingEvolutions.push_back(evolution);
 }
 
-PlayerMonster * Api_protocol_Qt::evolutionByLevelUp()
-{
-    if(mEvolutionByLevelUp.empty())
-        return NULL;
-    uint8_t monsterIndex=mEvolutionByLevelUp.front();
-    mEvolutionByLevelUp.erase(mEvolutionByLevelUp.cbegin());
-    return &player_informations.monsters[monsterIndex];
-}
-
-uint8_t Api_protocol_Qt::getPlayerMonsterPosition(const PlayerMonster * const playerMonster)
+void Api_protocol_Qt::addTradeEvolutions(const std::vector<uint8_t> &monsterPositions)
 {
     unsigned int index=0;
-    while(index<player_informations.monsters.size())
+    while(index<monsterPositions.size())
     {
-        if(&player_informations.monsters.at(index)==playerMonster)
-            return static_cast<uint8_t>(index);
+        queueEvolution(monsterPositions.at(index),true);
         index++;
     }
-    std::cerr << "getPlayerMonsterPosition() with not existing monster" << std::endl;
-    return 0;
+}
+
+bool Api_protocol_Qt::nextEvolution(PendingEvolution &evolution)
+{
+    while(!pendingEvolutions.empty())
+    {
+        evolution=pendingEvolutions.front();
+        pendingEvolutions.erase(pendingEvolutions.cbegin());
+        //revalidate: the team or the monster may have changed since queued
+        if(evolution.monsterPosition<player_informations.monsters.size())
+        {
+            const PlayerMonster &monster=player_informations.monsters.at(evolution.monsterPosition);
+            if(CommonDatapack::commonDatapack.has_monster(monster.monster))
+            {
+                evolution.from=monster.monster;
+                if(MonsterEvolution::evolveTo(CommonDatapack::commonDatapack.get_monster(monster.monster),monster.level,evolution.traded,evolution.to))
+                {
+                    if(CommonDatapack::commonDatapack.has_monster(evolution.to))
+                        return true;
+                    std::cerr << "Api_protocol_Qt::nextEvolution(): evolution to unknown monster " << evolution.to << std::endl;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+void Api_protocol_Qt::confirmEvolution(const PendingEvolution &evolution)
+{
+    if(evolution.monsterPosition>=player_informations.monsters.size() ||
+            player_informations.monsters.at(evolution.monsterPosition).monster!=evolution.from)
+    {
+        std::cerr << "Api_protocol_Qt::confirmEvolution(): the monster at " << std::to_string(evolution.monsterPosition) << " changed, evolution dropped" << std::endl;
+        return;
+    }
+    Api_protocol::confirmEvolutionByPosition(evolution.monsterPosition);
+    confirmEvolutionTo(&player_informations.monsters[evolution.monsterPosition],evolution.to);
+}
+
+void Api_protocol_Qt::confirmEvolutionTo(PlayerMonster * playerMonster,const uint16_t &monster)
+{
+    CommonFightEngine::confirmEvolutionTo(playerMonster,monster);
+    addToEncyclopedia(monster);
 }
 
 void Api_protocol_Qt::addToEncyclopedia(const uint16_t &monster)
@@ -1472,29 +1514,6 @@ void Api_protocol_Qt::addToEncyclopedia(const uint16_t &monster)
         informations.encyclopedia_monster[monster/8]|=(1<<(7-monster%8));
     else
         std::cerr << "Api_protocol_Qt::addPlayerMonster(PlayerMonster): encyclopedia_monster is null, unable to set" << std::endl;
-}
-
-void Api_protocol_Qt::confirmEvolutionByPosition(const uint8_t &monterPosition)
-{
-    Api_protocol::confirmEvolutionByPosition(monterPosition);
-    CatchChallenger::PlayerMonster &playerMonster=player_informations.monsters[monterPosition];
-    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monster(playerMonster.monster);
-    unsigned int sub_index=0;
-    while(sub_index<monsterInformations.evolutions.size())
-    {
-        if(monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level)
-        {
-            playerMonster.monster=monsterInformations.evolutions.at(sub_index).evolveTo;
-            addToEncyclopedia(playerMonster.monster);
-            Monster::Stat stat=getStat(monsterInformations,playerMonster.level);
-            if(playerMonster.hp>stat.hp)
-                playerMonster.hp=stat.hp;
-            return;
-        }
-        sub_index++;
-    }
-    qDebug() << "Evolution not found";
-    return;
 }
 
 uint32_t Api_protocol_Qt::lastGivenXP()
@@ -1535,8 +1554,16 @@ void Api_protocol_Qt::newRandomNumber(const std::string &data)
     randomSeeds.append(data);
 }
 
-//duplicate to have a return
+//apply locally then tell the server: call it once per use
 bool Api_protocol_Qt::useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition)
+{
+    if(!applyObjectOnMonsterByPosition(object,monsterPosition))
+        return false;
+    return Api_protocol::useObjectOnMonsterByPosition(object,monsterPosition);
+}
+
+//duplicate to have a return
+bool Api_protocol_Qt::applyObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition)
 {
     PlayerMonster * playerMonster=monsterByPosition(monsterPosition);
     if(playerMonster==NULL)

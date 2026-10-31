@@ -90,30 +90,29 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                         add_to_inventory(item,1,false);
                 break;
             }
-            const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monster(monster->monster);
             const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster->monster);
             if(CatchChallenger::CommonDatapack::commonDatapack.has_evolutionItem(item))
             {
-                monsterEvolutionPostion=0;
-                const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.get_monster(CatchChallenger::CommonDatapack::commonDatapack.get_evolutionItemForMonster(item,monster->monster));
-                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=
-                        QtDatapackClientLoader::datapackLoader->get_monsterExtra(
-                            CatchChallenger::CommonDatapack::commonDatapack.get_evolutionItemForMonster(item,monster->monster)
-                            );
-                //create animation widget
-                //show the animation
-                ui->stackedWidget->setCurrentWidget(ui->page_animation);
-                previousAnimationWidget=ui->page_map;
-                client->useObjectOnMonsterByPosition(item,monsterPosition);
-                if(!client->useObjectOnMonsterByPosition(item,monsterPosition))
+                const CATCHCHALLENGER_TYPE_MONSTER from=monster->monster;
+                //the server evolves it with the item use itself: nothing to confirm after the animation
+                if(client->useObjectOnMonsterByPosition(item,monsterPosition))
                 {
-                    std::cerr << "client->useObjectOnMonsterByPosition() Bug at " << __FILE__ << ":" << __LINE__ << std::endl;
-                    #ifdef CATCHCHALLENGER_HARDENED
-                    abort();
-                    #endif
+                    load_monsters();
+                    evolutionByItem=true;
+                    evolutionScreen->start(from,client->monsterByPosition(monsterPosition)->monster,false);
+                    ui->stackedWidget->setCurrentWidget(ui->page_animation);
+                    return;
                 }
-                load_monsters();
-                return;
+                ui->stackedWidget->setCurrentWidget(ui->page_inventory);
+                ui->inventoryUse->setText(tr("Select"));
+                showTip(tr("Failed to use <b>%1</b> on <b>%2</b>")
+                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(item).name))
+                        .arg(QString::fromStdString(monsterInformationsExtra.name))
+                        .toStdString());
+                if(CatchChallenger::CommonDatapack::commonDatapack.has_item(item))
+                    if(CatchChallenger::CommonDatapack::commonDatapack.get_item(item).consumeAtUse)
+                        add_to_inventory(item,1,false);
+                break;
             }
             else
             {
@@ -125,7 +124,6 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                             .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(item).name))
                             .arg(QString::fromStdString(monsterInformationsExtra.name))
                             .toStdString());
-                    client->useObjectOnMonsterByPosition(item,monsterPosition);
                     load_monsters();
                     checkEvolution();
                 }
@@ -442,7 +440,6 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                     remove_to_inventory(itemId);
                     if(CommonDatapack::commonDatapack.has_monsterItemEffect(itemId))
                     {
-                        client->useObjectOnMonsterByPosition(itemId,monsterPosition);
                         updateAttackList();
                         displayAttackProgression=0;
                         attack_quantity_changed=0;

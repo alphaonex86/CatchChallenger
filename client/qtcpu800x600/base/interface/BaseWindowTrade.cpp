@@ -81,7 +81,7 @@ void BaseWindow::tradeValidatedByTheServer()
     add_to_inventory(tradeOtherObjects);
     addCash(ui->tradeOtherCash->value());
     removeCash(ui->tradePlayerCash->value());
-    tradeEvolutionMonsters=client->addPlayerMonster(tradeOtherMonsters);
+    client->addTradeEvolutions(client->addPlayerMonster(tradeOtherMonsters));
     load_monsters();
     tradeOtherObjects.clear();
     tradeCurrentObjects.clear();

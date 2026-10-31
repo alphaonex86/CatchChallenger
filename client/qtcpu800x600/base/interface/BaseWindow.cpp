@@ -115,8 +115,8 @@ BaseWindow::BaseWindow() :
     newProfile=nullptr;
     datapackFileNumber=0;
     datapackFileSize=1;
-    previousAnimationWidget=nullptr;
-    monsterEvolutionPostion=0;
+    evolutionScreen=nullptr;
+    evolutionByItem=false;
     mLastGivenXP=0;
     currentMonsterLevel=0;
 
@@ -184,6 +184,12 @@ BaseWindow::BaseWindow() :
     client=NULL;
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
+    evolutionScreen=new EvolutionScreen(ui->page_animation);
+    ui->verticalLayoutPageAnimation->addWidget(evolutionScreen);
+    if(!connect(evolutionScreen,&EvolutionScreen::evolved,this,&BaseWindow::evolutionDone))
+        abort();
+    if(!connect(evolutionScreen,&EvolutionScreen::closed,this,&BaseWindow::evolutionClosed))
+        abort();
     monsterBeforeMoveForChangeInWaiting=false;
     //Chat::chat=new Chat(ui->page_map);
     escape=false;

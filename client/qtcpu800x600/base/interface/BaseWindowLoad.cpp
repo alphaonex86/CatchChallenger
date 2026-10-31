@@ -89,7 +89,6 @@ void BaseWindow::resetAll()
     previousRXSize=0;
     previousTXSize=0;
     attack_quantity_changed=0;
-    previousAnimationWidget=NULL;
     ui->plantUse->setVisible(false);
     ui->craftingUse->setVisible(false);
     waitToSell=false;
@@ -113,7 +112,7 @@ void BaseWindow::resetAll()
     escapeSuccess=false;
     datapackFileNumber=0;
     datapackFileSize=0;
-    monsterEvolutionPostion=0;
+    evolutionByItem=false;
     lastPlaceDisplayed.clear();
     events.clear();
     visualCategory.clear();
@@ -1470,26 +1469,19 @@ void BaseWindow::cityCapture(const uint32_t &remainingTime,const uint8_t &type)
     city.capture.minute=static_cast<uint8_t>(QDateTime::currentDateTime().addSecs(remainingTime).time().minute());
 }
 
-void BaseWindow::animationFinished()
+void BaseWindow::evolutionDone()
 {
-    if(previousAnimationWidget==ui->page_crafting)
-    {
-        ui->stackedWidget->setCurrentWidget(previousAnimationWidget);
-    }
-    else if(previousAnimationWidget==ui->page_map)
-    {
-        ui->stackedWidget->setCurrentWidget(previousAnimationWidget);
-        client->confirmEvolutionByPosition(monsterEvolutionPostion);
-        monsterEvolutionPostion=0;
-        load_monsters();
-    }
-    else
-        qDebug() << "Unknown animation quit";
+    //an item evolution is already done by the server with the item use
+    if(!evolutionByItem)
+        client->confirmEvolution(currentEvolution);
+    load_monsters();
 }
 
-void BaseWindow::evolutionCanceled()
+void BaseWindow::evolutionClosed()
 {
-    monsterEvolutionPostion=0;
+    evolutionByItem=false;
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    load_monsters();
     checkEvolution();
 }
 

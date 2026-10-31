@@ -110,6 +110,9 @@ client, each in its own idiom.
 | Datapack cache dir per server (`argument-`/`Custom-`/`Xml-<code>`) | `ConnexionInfo::datapackCachePath()` |
 | New-game profile texts (list index = profile index) | `DatapackClientLoader::profileTexts()` |
 | Bot text step by language, dialog links | `Api_protocol::botStepText()`, `Api_protocol::parseBotLink()` |
+| Evolution rule (same as the server) and screen timing | `MonsterEvolution` (libcatchchallenger) |
+| Evolutions waiting (level up, trade), confirm sent only when the animation completes, never on cancel | `Api_protocol_Qt::nextEvolution()`, `addTradeEvolutions()`, `confirmEvolution()` |
+| Item on monster: applied locally and sent once | `Api_protocol_Qt::useObjectOnMonsterByPosition()` |
 
 Each client keeps only its UI: the tip/dialog texts (own `tr()` context), the
 widgets, and what a link does on screen (clan name dialog vs popup).
@@ -121,7 +124,6 @@ write it a third time.
 
 | Logic | qtcpu800x600 | qtopengl | State |
 |---|---|---|---|
-| Evolution check after fight (`checkEvolution`) | `fight/interface/BaseWindowFight.cpp` | none live (`foreground/Battle.cpp` copy is commented out, QtQuick) | qtopengl feature missing, nothing to share yet |
 | Rest of the bot step dispatch (`goToBotStep`: shop/heal/learn/clan/fight/zone...) | `base/interface/BaseWindowBot.cpp` | `foreground/OverMapLogicBot.cpp` | mostly UI per step |
 
 **Why it matters, concrete case:** the three client copies of

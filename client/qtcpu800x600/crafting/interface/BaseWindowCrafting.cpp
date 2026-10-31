@@ -13,7 +13,6 @@
 #include <QBuffer>
 #include <QInputDialog>
 #include <QMessageBox>
-#include <QUrl>
 #include <iostream>
 
 /* show only the plant into the inventory */
@@ -544,9 +543,6 @@ void BaseWindow::on_craftingUse_clicked()
     QListWidgetItem *selectedItem=displayedItems.first();
     const CatchChallenger::CraftingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(crafting_recipes_items_graphical.at(selectedItem));
 
-    QStringList mIngredients;
-    QString mRecipe;
-    QString mProduct;
     //load the materials
     unsigned int index=0;
     while(index<content.materials.size())
@@ -555,14 +551,6 @@ void BaseWindow::on_craftingUse_clicked()
             return;
         if(playerInformations.items.at(content.materials.at(index).item)<content.materials.at(index).quantity)
             return;
-        uint32_t sub_index=0;
-        while(sub_index<content.materials.at(index).quantity)
-        {
-            mIngredients.push_back(QUrl::fromLocalFile(
-                                       QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(content.materials.at(index).item).imagePath)
-                                   ).toEncoded());
-            sub_index++;
-        }
         index++;
     }
     index=0;
@@ -582,10 +570,6 @@ void BaseWindow::on_craftingUse_clicked()
     pair.first=content.doItemId;
     pair.second=content.quantity;
     productOfRecipeInUsing.push_back(pair);
-    mProduct=QUrl::fromLocalFile(
-                QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(content.doItemId).imagePath)).toEncoded();
-    mRecipe=QUrl::fromLocalFile(
-                QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(content.itemToLearn).imagePath)).toEncoded();
     //update the UI
     load_inventory();
     load_plant_inventory();
@@ -594,11 +578,6 @@ void BaseWindow::on_craftingUse_clicked()
     client->useRecipe(crafting_recipes_items_graphical.at(selectedItem));
     appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(
                                 crafting_recipes_items_graphical.at(selectedItem)).rewards.reputation);
-    //create animation widget
-    //show the animation
-    previousAnimationWidget=ui->stackedWidget->currentWidget();
-    ui->stackedWidget->setCurrentWidget(ui->page_animation);
-    const QString datapackQmlFile=QString::fromStdString(client->datapackPathBase())+"qml/crafting-animation.qml";
 }
 
 void BaseWindow::on_listCraftingMaterials_itemActivated(QListWidgetItem *item)

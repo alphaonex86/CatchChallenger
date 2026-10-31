@@ -96,6 +96,11 @@ public:
     // graceful error path was taken instead of a crash.
     std::string lastNewError;
 
+    // When true, writeToSocket() appends the outgoing bytes to written
+    // so a test can check the wire format the client sends.
+    bool recordWrites;
+    std::string written;
+
     // Helpers for the delayed-message re-queue regression test: drive
     // have_main_and_sub_datapack_loaded() with messages that re-queue
     // themselves while !character_selected.

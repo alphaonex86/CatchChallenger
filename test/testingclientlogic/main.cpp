@@ -3,17 +3,19 @@
 // requirements and the beaten-bot lookup; then the client logic shared in
 // client/libqtcatchchallenger/ (chat text, chat input guard, command line,
 // language pick, server_list.xml), the ambiance file pick and profile texts of DatapackClientLoader,
-// the bot dialog text/links and the factory trade. The expected values mirror the
+// the bot dialog text/links, the factory trade and the monster evolution rule + packets. The expected values mirror the
 // server (server/base/ClientEvents/LocalClientHandlerQuest.cpp): a client that
 // disagrees hides a quest the server would accept, or offers one it refuses.
 // Prints "PASS <name>" / "FAIL <name> <detail>" lines for testingclientlogic.py.
 
 #include "../testingmapmanagement/TestApiProtocol.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/UnalignedLoad.hpp"
 #include "../../general/tinyXML2/tinyxml2.hpp"
 #include "../../client/libcatchchallenger/DatapackClientLoader.hpp"
 #include "../../client/libcatchchallenger/SlowServerDetector.hpp"
 #include "../../client/libcatchchallenger/FactoryTrade.hpp"
+#include "../../client/libcatchchallenger/MonsterEvolution.hpp"
 #include "../../client/libqtcatchchallenger/ChatInputGuard.hpp"
 #include "../../client/libqtcatchchallenger/ConnexionInfo.hpp"
 #include "../../client/libqtcatchchallenger/ChatParsing.hpp"
@@ -723,6 +725,93 @@ static void testFactoryTrade()
     check("factory_status_same_entry",FactoryTrade::industryStatus(informations,mapId,2).products.at(factoryProduct)==1,true);
 }
 
+static Monster::Evolution evolution(const Monster::EvolutionType &type,const int8_t &level,const CATCHCHALLENGER_TYPE_MONSTER &to)
+{
+    Monster::Evolution evolution;
+    evolution.type=type;
+    evolution.data.item=0;
+    evolution.data.level=level;
+    evolution.evolveTo=to;
+    return evolution;
+}
+
+//same rule as the server confirmEvolution(): a client that disagrees gets kicked ("Evolution not found")
+static void testMonsterEvolution()
+{
+    CATCHCHALLENGER_TYPE_MONSTER to=0;
+    Monster none;
+    check("evolution_none",MonsterEvolution::evolveTo(none,100,true,to),false);
+    Monster byLevel;
+    byLevel.evolutions.push_back(evolution(Monster::EvolutionType_Level,16,2));
+    check("evolution_level_below",MonsterEvolution::evolveTo(byLevel,15,false,to),false);
+    check("evolution_level_reached",MonsterEvolution::evolveTo(byLevel,16,false,to) && to==2,true);
+    //a cancelled evolution comes back at the next level up
+    check("evolution_level_after_cancel",MonsterEvolution::evolveTo(byLevel,20,false,to) && to==2,true);
+    Monster byTrade;
+    byTrade.evolutions.push_back(evolution(Monster::EvolutionType_Trade,0,3));
+    check("evolution_trade_not_traded",MonsterEvolution::evolveTo(byTrade,100,false,to),false);
+    check("evolution_trade_traded",MonsterEvolution::evolveTo(byTrade,1,true,to) && to==3,true);
+    Monster byItem;
+    byItem.evolutions.push_back(evolution(Monster::EvolutionType_Item,0,4));
+    check("evolution_item_not_by_level_or_trade",MonsterEvolution::evolveTo(byItem,100,true,to),false);
+    Monster both;
+    both.evolutions.push_back(evolution(Monster::EvolutionType_Trade,0,5));
+    both.evolutions.push_back(evolution(Monster::EvolutionType_Level,10,6));
+    check("evolution_first_match_trade",MonsterEvolution::evolveTo(both,12,true,to) && to==5,true);
+    check("evolution_first_match_level",MonsterEvolution::evolveTo(both,12,false,to) && to==6,true);
+
+    check("evolution_screen_starts_on_old",MonsterEvolution::showEvolved(0),false);
+    check("evolution_screen_ends_on_new",MonsterEvolution::showEvolved(MonsterEvolution::animationMs) &&
+          MonsterEvolution::showEvolved(MonsterEvolution::animationMs+1000),true);
+    //blinks faster and faster
+    unsigned int firstHalf=0;
+    unsigned int secondHalf=0;
+    bool previous=false;
+    uint32_t elapsed=0;
+    while(elapsed<MonsterEvolution::animationMs)
+    {
+        const bool current=MonsterEvolution::showEvolved(elapsed);
+        if(current!=previous)
+        {
+            if(elapsed<MonsterEvolution::animationMs/2)
+                firstHalf++;
+            else
+                secondHalf++;
+        }
+        previous=current;
+        elapsed+=10;
+    }
+    check("evolution_screen_blinks",firstHalf>0 && secondHalf>firstHalf*2,true);
+}
+
+static std::string dynamicPacket(const uint8_t &code,const std::string &data)
+{
+    std::string packet;
+    packet+=static_cast<char>(code);
+    char size[4];
+    storeLe32(size,static_cast<uint32_t>(data.size()));
+    packet.append(size,sizeof(size));
+    packet+=data;
+    return packet;
+}
+
+//the packets must match what the server parses (ClientNetworkReadMessage.cpp), else it kicks
+static void testEvolutionPackets()
+{
+    TestApiProtocol api;
+    api.get_player_informations().monsters.push_back(PlayerMonster());
+    api.get_player_informations().monsters.push_back(PlayerMonster());
+    api.recordWrites=true;
+    api.confirmEvolutionByPosition(1);
+    check("evolution_confirm_packet_one_byte",api.written==dynamicPacket(0x0F,std::string(1,'\x01')),true);
+    api.written.clear();
+    api.confirmEvolutionByPosition(2);
+    check("evolution_confirm_unknown_monster_not_sent",api.written.empty(),true);
+    api.written.clear();
+    api.useObjectOnMonsterByPosition(0x0102,1);
+    check("item_on_monster_packet",api.written==dynamicPacket(0x10,std::string("\x02\x01\x01",3)),true);
+}
+
 static const ConnexionInfo *findServer(const std::vector<ConnexionInfo> &list,const QString &uniqueCode)
 {
     unsigned int index=0;
@@ -980,6 +1069,8 @@ int main(int argc,char *argv[])
     testQuestSteps();
     testQuestText();
     testFactoryTrade();
+    testMonsterEvolution();
+    testEvolutionPackets();
     testServerList();
     testCustomServerList();
     testProfileTexts();

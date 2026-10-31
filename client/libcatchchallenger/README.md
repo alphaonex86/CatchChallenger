@@ -41,6 +41,7 @@ a headless consumer just ignores them.
 | `BlacklistPassword` | Weak-password list for account creation |
 | `SlowServerDetector` | When to show the slow-server sign (ms) |
 | `FactoryTrade` | Factory buy/sell queries, server replies, stock, prices, production time |
+| `MonsterEvolution` | Which evolution a monster takes (level reached / traded, as the server), evolution screen blink timing |
 | `lib.cmake` | CMake INTERFACE target `catchchallenger_client_lib` |
 
 ## Dependencies

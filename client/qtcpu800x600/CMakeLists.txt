@@ -73,13 +73,10 @@ set(_qtcpu_sources
     base/interface/GetPrice.cpp
     base/interface/NewProfile.cpp
     base/interface/NewGame.cpp
-    crafting/interface/QmlInterface/CraftingAnimation.cpp
     crafting/interface/BaseWindowCrafting.cpp
-    fight/interface/QmlInterface/QmlMonsterGeneralInformations.cpp
-    fight/interface/QmlInterface/EvolutionControl.cpp
+    fight/interface/EvolutionScreen.cpp
     fight/interface/BaseWindowFight.cpp
     fight/interface/BaseWindowFightNextAction.cpp
-    base/QmlInterface/AnimationControl.cpp
     base/Options.cpp
     base/LanguagesSelect.cpp
 

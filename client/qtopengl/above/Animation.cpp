@@ -1,15 +1,19 @@
 #include "Animation.hpp"
 #include "../../libqtcatchchallenger/Language.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../libcatchchallenger/MonsterEvolution.hpp"
 #include <QPainter>
 #include <QWidget>
 #include <iostream>
 
 Animation::Animation() :
     wdialog(new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this)),
-    label(this)
+    label(this),
+    imageIsTo(false),
+    imageSize(0),
+    monsterSize(120),
+    state(State_Evolved)
 {
-    animStep=0;
     label.setPixmap(QPixmap(":/CC/images/interface/labelL.png"));
     label.setTransformationMode(Qt::SmoothTransformation);
     label.setCacheMode(QGraphicsItem::DeviceCoordinateCache);
@@ -22,13 +26,11 @@ Animation::Animation() :
     gradient2.setColorAt(1,QColor(64,28,2));
     title=new CustomText(gradient1,gradient2,this);
 
-    finishButton=new CustomButton(":/CC/images/interface/greenbutton.png",wdialog);
-    finishButton->setText(tr("OK"));
-    finishButton->setVisible(false);
+    button=new CustomButton(":/CC/images/interface/greenbutton.png",wdialog);
+    button->setText(tr("OK"));
+    button->setVisible(false);
 
-    monsterImageFrom=new QGraphicsPixmapItem(this);
-    monsterImageTo=new QGraphicsPixmapItem(this);
-    monsterImageTo->setVisible(false);
+    monsterImage=new QGraphicsPixmapItem(this);
 
     evolutionText=new QGraphicsTextItem(this);
     evolutionText->setDefaultTextColor(Qt::white);
@@ -36,7 +38,7 @@ Animation::Animation() :
     animTimer.setInterval(50);
     if(!connect(&animTimer,&QTimer::timeout,this,&Animation::animationTick))
         abort();
-    if(!connect(finishButton,&CustomButton::clicked,this,&Animation::onFinishClicked))
+    if(!connect(button,&CustomButton::clicked,this,&Animation::onButtonClicked))
         abort();
 
     title->setText(tr("Evolution"));
@@ -82,21 +84,19 @@ void Animation::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *wi
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    int monsterSize=120;
     if(widget->width()<800 || widget->height()<600)
     {
         label.setScale(0.5);
-        finishButton->setSize(148,61);
-        finishButton->setPixelSize(23);
+        button->setSize(148,61);
+        button->setPixelSize(23);
         label.setPos(x+(idealW-label.pixmap().width()/2)/2,y-36/2);
         title->setPixelSize(30/2);
-        monsterSize=60;
     }
     else
     {
         label.setScale(1);
-        finishButton->setSize(223,92);
-        finishButton->setPixelSize(35);
+        button->setSize(223,92);
+        button->setPixelSize(35);
         label.setPos(x+(idealW-label.pixmap().width())/2,y-36);
         title->setPixelSize(30);
     }
@@ -104,21 +104,13 @@ void Animation::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *wi
     const QRectF trect=title->boundingRect();
     title->setPos(x+(idealW-title->boundingRect().width())/2,y-trect.height()/2);
 
-    // position monster images centered
-    int monsterY=y+idealH/2-monsterSize/2-space;
-    if(!pixFrom.isNull())
-    {
-        QPixmap scaledFrom=pixFrom.scaled(monsterSize,monsterSize,Qt::KeepAspectRatio,Qt::SmoothTransformation);
-        monsterImageFrom->setPixmap(scaledFrom);
-    }
-    monsterImageFrom->setPos(x+idealW/2-monsterSize-space/2,monsterY);
-
-    if(!pixTo.isNull())
-    {
-        QPixmap scaledTo=pixTo.scaled(monsterSize,monsterSize,Qt::KeepAspectRatio,Qt::SmoothTransformation);
-        monsterImageTo->setPixmap(scaledTo);
-    }
-    monsterImageTo->setPos(x+idealW/2+space/2,monsterY);
+    if(widget->width()<800 || widget->height()<600)
+        monsterSize=60;
+    else
+        monsterSize=120;
+    updateMonsterImage();
+    const int monsterY=y+idealH/2-monsterSize/2-space;
+    monsterImage->setPos(x+idealW/2-monsterSize/2,monsterY);
 
     // evolution text
     QFont font=evolutionText->font();
@@ -131,19 +123,19 @@ void Animation::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *wi
     evolutionText->setPos(x+space,monsterY+monsterSize+space/2);
 
     // finish button
-    finishButton->setPos(idealW/2-finishButton->width()/2,idealH-finishButton->height()-space/2);
+    button->setPos(idealW/2-button->width()/2,idealH-button->height()-space/2);
 }
 
 void Animation::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
-    finishButton->mousePressEventXY(p,pressValidated);
+    button->mousePressEventXY(p,pressValidated);
     pressValidated=true;
     callParentClass=true;
 }
 
 void Animation::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
-    finishButton->mouseReleaseEventXY(p,pressValidated);
+    button->mouseReleaseEventXY(p,pressValidated);
     pressValidated=true;
     callParentClass=true;
 }
@@ -160,83 +152,91 @@ void Animation::keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral)
     eventTriggerGeneral=true;
 }
 
-void Animation::startEvolution(const uint16_t monsterIdFrom, const uint16_t monsterIdTo)
+QString Animation::monsterName(const uint16_t monsterId)
 {
-    animStep=0;
-    finishButton->setVisible(false);
-    monsterImageTo->setVisible(false);
-    monsterImageFrom->setVisible(true);
-    monsterImageFrom->setOpacity(1.0);
+    if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(monsterId))
+        return QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterId).name);
+    return QString::number(monsterId);
+}
 
-    // load monster images
-    if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(monsterIdFrom))
-    {
-        const std::string &path=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterIdFrom).frontPath;
-        pixFrom=QPixmap(QString::fromStdString(path));
-        evolutionText->setHtml(tr("Your %1 is evolving!")
-            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterIdFrom).name)));
-    }
-    else
-    {
-        pixFrom=QPixmap(":/CC/images/monsters/default/front.png");
-        evolutionText->setHtml(tr("Your monster is evolving!"));
-    }
+QPixmap Animation::monsterFront(const uint16_t monsterId)
+{
+    const QPixmap front=QtDatapackClientLoader::datapackLoader->getMonsterExtra(monsterId).front;
+    if(front.isNull())
+        return QPixmap(":/CC/images/monsters/default/front.png");
+    return front;
+}
 
-    if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(monsterIdTo))
-    {
-        const std::string &path=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monsterIdTo).frontPath;
-        pixTo=QPixmap(QString::fromStdString(path));
-    }
-    else
-        pixTo=QPixmap(":/CC/images/monsters/default/front.png");
-
+void Animation::startEvolution(const uint16_t monsterIdFrom, const uint16_t monsterIdTo, const bool canCancel)
+{
+    pixFrom=monsterFront(monsterIdFrom);
+    pixTo=monsterFront(monsterIdTo);
+    nameFrom=monsterName(monsterIdFrom);
+    nameTo=monsterName(monsterIdTo);
+    state=State_Evolving;
+    imageIsTo=false;
+    imageSize=0;
+    updateMonsterImage();
+    evolutionText->setHtml(tr("%1 is evolving!").arg(nameFrom));
+    button->setText(tr("Cancel"));
+    button->setVisible(canCancel);
+    elapsed.start();
     animTimer.start();
+}
+
+void Animation::updateMonsterImage()
+{
+    if(imageSize==monsterSize)
+        return;
+    imageSize=monsterSize;
+    //pixel art: no smoothing
+    if(imageIsTo)
+        monsterImage->setPixmap(pixTo.scaled(monsterSize,monsterSize,Qt::KeepAspectRatio));
+    else
+        monsterImage->setPixmap(pixFrom.scaled(monsterSize,monsterSize,Qt::KeepAspectRatio));
 }
 
 void Animation::animationTick()
 {
-    animStep++;
-    if(animStep<ANIM_TOTAL_STEPS/2)
-    {
-        // fade out old monster with blinking
-        double opacity=1.0-((double)animStep/(ANIM_TOTAL_STEPS/2));
-        if(animStep%4<2)
-            monsterImageFrom->setOpacity(opacity);
-        else
-            monsterImageFrom->setOpacity(opacity*0.3);
-    }
-    else if(animStep==ANIM_TOTAL_STEPS/2)
-    {
-        // switch monsters
-        monsterImageFrom->setVisible(false);
-        monsterImageTo->setVisible(true);
-        monsterImageTo->setOpacity(0.0);
-    }
-    else if(animStep<ANIM_TOTAL_STEPS)
-    {
-        // fade in new monster
-        double opacity=(double)(animStep-ANIM_TOTAL_STEPS/2)/(ANIM_TOTAL_STEPS/2);
-        monsterImageTo->setOpacity(opacity);
-    }
+    const uint32_t elapsedMs=static_cast<uint32_t>(elapsed.elapsed());
+    if(elapsedMs>=CatchChallenger::MonsterEvolution::animationMs)
+        showEnd(State_Evolved);
     else
     {
-        // animation finished
-        animTimer.stop();
-        monsterImageTo->setOpacity(1.0);
-        finishButton->setVisible(true);
-
-        uint16_t monsterIdTo=0;
-        // update text
-        if(!pixTo.isNull())
+        const bool showTo=CatchChallenger::MonsterEvolution::showEvolved(elapsedMs);
+        if(showTo!=imageIsTo)
         {
-            evolutionText->setHtml(tr("Your monster has evolved!"));
+            imageIsTo=showTo;
+            imageSize=0;
+            updateMonsterImage();
         }
     }
 }
 
-void Animation::onFinishClicked()
+void Animation::showEnd(const State &newState)
 {
     animTimer.stop();
-    emit animationFinished();
-    emit setAbove(nullptr);
+    state=newState;
+    imageIsTo=(newState==State_Evolved);
+    imageSize=0;
+    updateMonsterImage();
+    if(newState==State_Evolved)
+        evolutionText->setHtml(tr("%1 evolved into %2!").arg(nameFrom).arg(nameTo));
+    else
+        evolutionText->setHtml(tr("%1 stopped evolving.").arg(nameFrom));
+    button->setText(tr("OK"));
+    button->setVisible(true);
+    if(newState==State_Evolved)
+        emit evolved();
+}
+
+void Animation::onButtonClicked()
+{
+    if(state==State_Evolving)
+        showEnd(State_Canceled);
+    else
+    {
+        emit setAbove(nullptr);
+        emit closed();
+    }
 }

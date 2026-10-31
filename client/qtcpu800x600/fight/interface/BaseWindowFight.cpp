@@ -1244,60 +1244,14 @@ void BaseWindow::on_listWidgetFightAttack_itemSelectionChanged()
 
 void BaseWindow::checkEvolution()
 {
-    PlayerMonster *monster=client->evolutionByLevelUp();
-    if(monster!=NULL)
+    //one at a time, evolutionFinished() shows the next one
+    if(ui->stackedWidget->currentWidget()==ui->page_animation)
+        return;
+    if(client->nextEvolution(currentEvolution))
     {
-        const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monster(monster->monster);
-        const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster->monster);
-        unsigned int index=0;
-        while(index<monsterInformations.evolutions.size())
-        {
-            const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
-            if(evolution.type==Monster::EvolutionType_Level && evolution.data.level==monster->level)
-            {
-                monsterEvolutionPostion=client->getPlayerMonsterPosition(monster);
-                const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.get_monster(evolution.evolveTo);
-                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=QtDatapackClientLoader::datapackLoader->get_monsterExtra(
-                            evolution.evolveTo);
-                //create animation widget
-                //show the animation
-                ui->stackedWidget->setCurrentWidget(ui->page_animation);
-                previousAnimationWidget=ui->page_map;
-                return;
-            }
-            index++;
-        }
-    }
-    while(!tradeEvolutionMonsters.empty())
-    {
-        const uint8_t monsterPosition=tradeEvolutionMonsters.at(0);
-        PlayerMonster * const playerMonster=client->monsterByPosition(monsterPosition);
-        if(playerMonster==NULL)
-        {
-            tradeEvolutionMonsters.erase(tradeEvolutionMonsters.begin());
-            continue;
-        }
-        const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monster(playerMonster->monster);
-        const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader->get_monsterExtra(playerMonster->monster);
-        unsigned int index=0;
-        while(index<monsterInformations.evolutions.size())
-        {
-            const Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
-            if(evolution.type==Monster::EvolutionType_Trade)
-            {
-                monsterEvolutionPostion=monsterPosition;
-                const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.get_monster(evolution.evolveTo);
-                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=QtDatapackClientLoader::datapackLoader->get_monsterExtra(evolution.evolveTo);
-                //create animation widget
-                //show the animation
-                ui->stackedWidget->setCurrentWidget(ui->page_animation);
-                previousAnimationWidget=ui->page_map;
-                tradeEvolutionMonsters.erase(tradeEvolutionMonsters.begin());
-                return;
-            }
-            index++;
-        }
-        tradeEvolutionMonsters.erase(tradeEvolutionMonsters.begin());
+        evolutionByItem=false;
+        evolutionScreen->start(currentEvolution.from,currentEvolution.to,true);
+        ui->stackedWidget->setCurrentWidget(ui->page_animation);
     }
 }
 
