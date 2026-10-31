@@ -23,7 +23,7 @@
 
 #include "../../../general/base/GeneralVariable.hpp"
 #include "../../../general/base/Version.hpp"
-#include "../base/PlatformMacro.h"
+#include "../../libqtcatchchallenger/PlatformMacro.hpp"
 #include "../../libcatchchallenger/ClientVariable.hpp"
 #include "../../libqtcatchchallenger/Settings.hpp"
 

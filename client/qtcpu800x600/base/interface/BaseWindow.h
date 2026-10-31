@@ -5,7 +5,7 @@
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <QAudioOutput>
 #include <QAudioSink>
-#include "../QInfiniteBuffer.h"
+#include "../../../libqtcatchchallenger/QInfiniteBuffer.hpp"
 #endif
 
 #include <QWidget>
@@ -57,8 +57,6 @@ public:
     void dumpAutoSoloInfo() const;
     std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> getQuests() const;
     uint16_t getActualBotId() const;
-    bool haveNextStepQuestRequirements(const Quest &quest) const;
-    bool haveStartQuestRequirement(const Quest &quest) const;
     enum ObjectType
     {
         ObjectType_All,
