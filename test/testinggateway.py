@@ -195,6 +195,11 @@ def should_run(test_name, failed_cases):
 
 
 def save_failed_cases():
+    # a CC_GW_ONLY / CC_GW_MINIMIZE run covers part of the plan: saving it marked the
+    # skipped cases as passed, so the next resume run skipped them all
+    if os.environ.get("CC_GW_ONLY", "") or os.environ.get("CC_GW_MINIMIZE", ""):
+        log_info("partial run (CC_GW_ONLY/CC_GW_MINIMIZE): failed.json not updated")
+        return
     failed = []
     for name, ok, detail, _elapsed in results:
         if not ok:
