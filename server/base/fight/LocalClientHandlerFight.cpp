@@ -888,6 +888,9 @@ void Client::confirmEvolution(const uint8_t &monsterPosition)
                  GlobalServerData::serverPrivateVariables.tradedMonster.cend())
         )
         {
+            //one trade gives one trade evolution: the evolved monster can not use it again without a new trade
+            if(monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Trade)
+                GlobalServerData::serverPrivateVariables.tradedMonster.erase(public_and_private_informations.monsters.at(index).id);
             confirmEvolutionTo(&public_and_private_informations.monsters[index],monsterInformations.evolutions.at(sub_index).evolveTo);
             return;
         }

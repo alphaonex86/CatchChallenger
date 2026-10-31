@@ -139,9 +139,12 @@ DatabaseBaseCallBack *QtDatabase::asyncRead(const std::string &query,void * retu
         queriesList.push_back(query);
         return &queue.back();
     }
-    emit sendQuery(query,*conn);
+    //queue before the emit: the solo server calls this from its own thread while the reply is
+    //handled in the thread owning this object, a reply before the push_back lost the callback (hang)
     queue.push_back(tempCallback);
-    return &queue.back();
+    DatabaseBaseCallBack * const callback=&queue.back();
+    emit sendQuery(query,*conn);
+    return callback;
 }
 
 void QtDatabase::receiveReply(const QSqlQuery &queryReturn)

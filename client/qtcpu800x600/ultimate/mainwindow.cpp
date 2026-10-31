@@ -249,8 +249,9 @@ MainWindow::MainWindow(QWidget *parent) :
                 return;
             }
         });
-        QTimer::singleShot(10000,this,[this](){
-            std::cerr << "AutoArgs: --autosolo timeout (10s) reached, dumping and exiting" << std::endl;
+        //stuck guard only: a first start generates the datapack binary cache (>10s on a loaded host)
+        QTimer::singleShot(60000,this,[this](){
+            std::cerr << "AutoArgs: --autosolo timeout (60s) reached, dumping and exiting" << std::endl;
             if(baseWindow!=NULL)
                 baseWindow->dumpAutoSoloInfo();
             else if(client!=NULL)

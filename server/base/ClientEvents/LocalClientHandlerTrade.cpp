@@ -4,10 +4,32 @@
 #include "../../general/base/FacilityLib.hpp"
 #include "../SQL/PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include <cstring>
 
 using namespace CatchChallenger;
+
+//only the species with a trade evolution, else the set grows with every trade; confirmEvolution() erases the id once used
+static void rememberTradeEvolutions(const std::vector<PlayerMonster> &monsters)
+{
+    unsigned int index=0;
+    while(index<monsters.size())
+    {
+        const Monster &monster=CommonDatapack::commonDatapack.get_monster(monsters.at(index).monster);
+        unsigned int sub_index=0;
+        while(sub_index<monster.evolutions.size())
+        {
+            if(monster.evolutions.at(sub_index).type==Monster::EvolutionType_Trade)
+            {
+                GlobalServerData::serverPrivateVariables.tradedMonster.insert(monsters.at(index).id);
+                break;
+            }
+            sub_index++;
+        }
+        index++;
+    }
+}
 
 bool Client::getInTrade() const
 {
@@ -123,20 +145,8 @@ void Client::tradeFinished()
         }
 
         //monster evolution
-        {
-            unsigned int index=0;
-            while(index<tradeMonster.size())
-            {
-                GlobalServerData::serverPrivateVariables.tradedMonster.insert(tradeMonster.at(index).id);
-                index++;
-            }
-            index=0;
-            while(index<otherPlayerTrade.tradeMonster.size())
-            {
-                GlobalServerData::serverPrivateVariables.tradedMonster.insert(otherPlayerTrade.tradeMonster.at(index).id);
-                index++;
-            }
-        }
+        rememberTradeEvolutions(tradeMonster);
+        rememberTradeEvolutions(otherPlayerTrade.tradeMonster);
         //monster
         otherPlayerTrade.transferExistingMonster(tradeMonster);
         transferExistingMonster(otherPlayerTrade.tradeMonster);

@@ -60,10 +60,15 @@ CLIENT_GL_PRO      = os.path.join(ROOT, "client/qtopengl/catchchallenger-qtopeng
 CLIENT_GL_BUILD    = build_paths.build_path("client/qtopengl/build/testing-multi-gl" + _DIAG_SUFFIX)
 CLIENT_GL_BIN      = "catchchallenger"
 
+FILEDB_CONVERTER_PRO   = os.path.join(ROOT, "server/cli/filedb-converter/filedb-converter.pro")
+FILEDB_CONVERTER_BUILD = build_paths.build_path("server/cli/filedb-converter/build/testing-multi" + _DIAG_SUFFIX)
+FILEDB_CONVERTER_BIN   = "filedb-converter"
+
 # Tear down owned build dirs at script exit (see cleanup_helpers).
 cleanup_helpers.register_build_dir(SERVER_BUILD)
 cleanup_helpers.register_build_dir(CLIENT_CPU_BUILD)
 cleanup_helpers.register_build_dir(CLIENT_GL_BUILD)
+cleanup_helpers.register_build_dir(FILEDB_CONVERTER_BUILD)
 
 SERVER_HOST = _config["server_host"]
 SERVER_PORT = str(_config["server_port"])
@@ -414,6 +419,228 @@ signal.signal(signal.SIGTERM, cleanup)
 
 
 # ── main ────────────────────────────────────────────────────────────────────
+def _filedb_character_file(pseudo):
+    """The server-filedb character file: database/common/characters/<PSEUDO HEX>."""
+    return os.path.join(SERVER_BUILD, "database", "common", "characters", pseudo.encode().hex().upper())
+
+
+def _filedb_convert(command, path):
+    """filedb-converter b2x|x2b <path>. Returns (ok, error)."""
+    binary = os.path.join(FILEDB_CONVERTER_BUILD, FILEDB_CONVERTER_BIN)
+    rc, output = run_cmd([binary, command, path], FILEDB_CONVERTER_BUILD, timeout=60)
+    if rc != 0:
+        return False, f"filedb-converter {command} {path} rc={rc}: {output[-300:]}"
+    return True, ""
+
+
+def _filedb_team(pseudo):
+    """Team species of a character, read from the server-filedb (server stopped).
+    Returns (list, error)."""
+    import xml.etree.ElementTree as ET
+    path = _filedb_character_file(pseudo)
+    ok, err = _filedb_convert("b2x", path)
+    if not ok:
+        return None, err
+    try:
+        team = [int(m.get("monster")) for m in ET.parse(path + ".xml").getroot().find(".//monsters")]
+    except (ET.ParseError, OSError, AttributeError, TypeError, ValueError) as e:
+        return None, f"{path}.xml: {e}"
+    os.remove(path + ".xml")
+    return team, ""
+
+
+def _filedb_add_monster(pseudo, species):
+    """Append a copy of the first team monster as `species` (hp 1: always under the
+    max, a higher loaded hp aborts the HARDENED server). Server stopped. Returns (ok, error)."""
+    import copy
+    import xml.etree.ElementTree as ET
+    path = _filedb_character_file(pseudo)
+    ok, err = _filedb_convert("b2x", path)
+    if not ok:
+        return False, err
+    try:
+        tree = ET.parse(path + ".xml")
+        monsters = tree.getroot().find(".//monsters")
+        added = copy.deepcopy(monsters[0])
+        added.set("monster", str(species))
+        added.set("hp", "1")
+        monsters.append(added)
+        tree.write(path + ".xml")
+    except (ET.ParseError, OSError, AttributeError, IndexError, TypeError) as e:
+        return False, f"{path}.xml: {e}"
+    ok, err = _filedb_convert("x2b", path + ".xml")
+    if ok:
+        os.remove(path + ".xml")
+    return ok, err
+
+
+def _crash_tail(out, n=40):
+    """From the gdb crash marker (signal / out_of_range breakpoint) if any, else the tail."""
+    i = 0
+    while i < len(out):
+        if "received signal" in out[i] or "hit Breakpoint" in out[i]:
+            return out[max(0, i - 15):i + n]
+        i += 1
+    return out[-25:]
+
+
+def _channel_team(sk):
+    """GETTEAM -> list of monster species."""
+    out = []
+    for t in _channel_cmd(sk, "GETTEAM").replace("TEAM", "", 1).split():
+        p = t.split(":")
+        if len(p) == 3 and p[0].isdigit():
+            out.append(int(p[0]))
+    return out
+
+
+def _start_local_server_fresh_db(case):
+    """Datapack staged, empty database/ + cache, server started and probed. Returns ok."""
+    setup_server_datapack(SERVER_BUILD, DATAPACK_SRC, MAINCODE)
+    db_dir = os.path.join(SERVER_BUILD, "database")
+    if os.path.isdir(db_dir):
+        shutil.rmtree(db_dir)
+    cache_file = os.path.join(SERVER_BUILD, "datapack-cache.bin")
+    if os.path.exists(cache_file):
+        os.remove(cache_file)
+    set_http_datapack_mirror(SERVER_BUILD, "")
+    set_map_visibility_minimize(SERVER_BUILD, "cpu")
+    return _start_local_server(case)
+
+
+def _start_local_server(case):
+    if start_server(SERVER_BUILD) is None:
+        log_fail(case, "server did not start")
+        return False
+    if not assert_port_or_fail(SERVER_HOST, int(SERVER_PORT), log_fail, f"{case} tcp probe"):
+        stop_server()
+        log_fail(case, "tcp probe failed")
+        return False
+    return True
+
+
+def run_channel_trade_evolution_test(dp_name, failed_cases):
+    """Two players trade a monster over the real server, then the trade evolution:
+    PlayerA gets monster 13 (evolves by trade into 14) by a savegame edit, gives it
+    to PlayerB, B's evolution screen runs to the end -> 0x0F -> the server must
+    accept it (only after a trade) and save 14. Regressions: "/trade <connected
+    player>" was always refused (inverted isNull check), and a server rejecting the
+    0x0F kicks the client. The result is read back from the server savegame.
+    Then, same session, "/battle <connected player>" (same inverted check): the
+    accepted request must put both players in fight."""
+    import time
+    case = "trade + trade evolution between two players vs local server"
+    battle_case = "player battle request accepted vs local server"
+    if not should_run(case, failed_cases) and not should_run(battle_case, failed_cases):
+        return
+    print(f"\n{C_CYAN}--- Trade + trade evolution (2 clients vs local server-filedb): {dp_name} {MAINCODE} ---{C_RESET}\n")
+    if not os.path.isfile(os.path.join(FILEDB_CONVERTER_BUILD, FILEDB_CONVERTER_BIN)):
+        log_fail(case, "filedb-converter not built")
+        return
+    clients = []
+    # run 1: create both characters (saved on disconnect)
+    if not _start_local_server_fresh_db(case):
+        return
+    for character in (CHAR_A, CHAR_B):
+        proc, out, sk, err = _start_channel_client(character, f"testTrade{character}Key", "cc-test-trade-")
+        if err is not None:
+            for c in clients: kill_client(c[0])
+            stop_server()
+            log_fail(case, f"run1 {err}")
+            for line in out[-25:]: print(f"  | {line}")
+            return
+        clients.append((proc, out, sk))
+    for c in clients: kill_client(c[0])
+    clients = []
+    time.sleep(1.0)
+    stop_server()
+    ok, err = _filedb_add_monster(CHAR_A, 13)
+    if not ok:
+        log_fail(case, f"savegame edit: {err}")
+        return
+    # run 2: trade then evolve
+    if not _start_local_server(case):
+        return
+    detail = ""
+    try:
+        for character in (CHAR_A, CHAR_B):
+            proc, out, sk, err = _start_channel_client(character, f"testTrade{character}Key", "cc-test-trade-")
+            if err is not None:
+                log_fail(case, f"run2 {err}")
+                for line in out[-25:]: print(f"  | {line}")
+                return
+            clients.append((proc, out, sk))
+        sk_a, sk_b = clients[0][2], clients[1][2]
+        team_a = _channel_team(sk_a)
+        if team_a[1:2] != [13]:
+            log_fail(case, f"savegame edit not loaded: PlayerA team={team_a}")
+            return
+        _channel_cmd(sk_a, f"TRADEREQUEST {CHAR_B}", 1.5)
+        _channel_cmd(sk_b, "TRADEACCEPT", 1.5)
+        _channel_cmd(sk_a, "TRADEADDMONSTER 1", 1.0)
+        _channel_cmd(sk_a, "TRADEFINISH", 1.0)
+        _channel_cmd(sk_b, "TRADEFINISH", 1.0)
+        # the evolution animation lasts 4s, then B sends the 0x0F confirm
+        deadline = time.time() + 20
+        team_b = _channel_team(sk_b)
+        while time.time() < deadline and 14 not in team_b:
+            time.sleep(0.5)
+            team_b = _channel_team(sk_b)
+        if 14 not in team_b:
+            log_fail(case, f"PlayerB did not get the evolved monster 14: team={team_b}; PlayerA team={_channel_team(sk_a)}")
+            for line in clients[0][1][-15:]: print(f"  A| {line}")
+            for line in clients[1][1][-15:]: print(f"  B| {line}")
+            return
+        time.sleep(2.0)
+        i = 0
+        while i < len(clients):
+            if clients[i][0].poll() is not None or _channel_state(clients[i][2]) is None:
+                log_fail(case, f"{(CHAR_A, CHAR_B)[i]} disconnected/kicked after the trade evolution")
+                for line in clients[i][1][-25:]: print(f"  | {line}")
+                return
+            i += 1
+        detail = f"local team B={team_b}"
+        _channel_cmd(sk_a, f"FIGHTREQUEST {CHAR_B}", 1.5)
+        _channel_cmd(sk_b, "FIGHTACCEPT", 1.5)
+        # a PvP battle is not in GETFIGHT's inFight (wild/bot only): its start is the
+        # "FIGHTEVENT ACCEPTED <other> monster <id>" event, received by both players
+        deadline = time.time() + 10
+        events = ["", ""]
+        while time.time() < deadline and not all("ACCEPTED" in e for e in events):
+            i = 0
+            while i < len(clients):
+                events[i] += _channel_cmd(clients[i][2], "GETFIGHT") + "\n"
+                i += 1
+            time.sleep(0.5)
+        if all("ACCEPTED" in e for e in events):
+            log_pass(battle_case, "both players got the battle start after /battle + accept")
+        else:
+            log_fail(battle_case, f"the accepted /battle request did not start the battle; fight events A={events[0]!r} B={events[1]!r}")
+            for line in clients[0][1][-15:]: print(f"  A| {line}")
+            for line in clients[1][1][-15:]: print(f"  B| {line}")
+    except OSError as e:
+        log_fail(case, f"channel closed (client died or kicked): {e}")
+        i = 0
+        while i < len(clients):
+            print(f"  {(CHAR_A, CHAR_B)[i]} rc={clients[i][0].poll()}")
+            for line in _crash_tail(clients[i][1]): print(f"  | {line}")
+            i += 1
+        return
+    finally:
+        for c in clients: kill_client(c[0])
+        time.sleep(1.0)
+        stop_server()
+    # the server state
+    team_b, err = _filedb_team(CHAR_B)
+    team_a, err_a = _filedb_team(CHAR_A)
+    if team_b is None or team_a is None:
+        log_fail(case, f"savegame read: {err} {err_a}")
+    elif 14 not in team_b or 13 in team_a:
+        log_fail(case, f"server saved PlayerA={team_a} PlayerB={team_b} (expected 14 at B, no 13 at A); {detail}")
+    else:
+        log_pass(case, f"server saved PlayerA={team_a} PlayerB={team_b}; {detail}")
+
+
 def main():
     print(f"\n{C_CYAN}{'='*60}")
     print("  CatchChallenger — Multiplayer Interaction Testing")
@@ -434,7 +661,7 @@ def main():
     CLIENTS = (CLIENT_CPU_BUILD, CLIENT_GL_BUILD)
     CHECK_TYPES = ("map_displayed", "insert_player", "direction", "chat")
     # per mode: 1 server_start + len(CLIENTS) * len(CHECK_TYPES)
-    total_expected[0] = 3 + len(MINIMIZE_MODES) * (1 + len(CLIENTS) * len(CHECK_TYPES))
+    total_expected[0] = 4 + len(MINIMIZE_MODES) * (1 + len(CLIENTS) * len(CHECK_TYPES))
 
     # ── 1. build ────────────────────────────────────────────────────
     print(f"\n{C_CYAN}--- Compilation ---{C_RESET}\n")
@@ -459,6 +686,8 @@ def main():
     if not cpu_ok or not gl_ok:
         summary()
         return
+    if should_run("compile filedb-converter", failed_cases):
+        build_project(FILEDB_CONVERTER_PRO, FILEDB_CONVERTER_BUILD, "filedb-converter")
 
     # ── 2. run multiplayer test with both minimize modes ──────────────
     for minimize_mode in MINIMIZE_MODES:
@@ -477,6 +706,9 @@ def main():
     # inputs that used to crash the server (/trade <unknown>) and the client
     # (out-of-fight fight spam -> re-entrant use-after-free). Both are fixed.
     run_channel_crash_regression_test(dp_name, failed_cases)
+
+    # Two clients trade a monster and the receiver's trade evolution is confirmed.
+    run_channel_trade_evolution_test(dp_name, failed_cases)
 
     # Drive a live client over the same socket to leave a map by clicking a
     # "teleport on push" exit (regression for the can't-leave-the-gym bug).
@@ -742,6 +974,54 @@ def run_channel_teleport_push_test(dp_name, failed_cases):
             print(f"  | {line}")
 
 
+def _start_channel_client(character, conf_key, prefix):
+    """qtcpu800x600 on the local server with --remote-control (isolated config/data/
+    TMPDIR so a parallel client can't steal socket slot 0), waited on the map and
+    connected to its QLocalServer socket. Returns (proc, out, sk, error): error is
+    None on success, else the client is already killed."""
+    import tempfile, time
+    tmpdir = tempfile.mkdtemp(prefix=prefix)
+    env = os.environ.copy()
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    env["XDG_CONFIG_HOME"] = os.path.join(tmpdir, "config")
+    env["XDG_DATA_HOME"] = os.path.join(tmpdir, "data")
+    env["TMPDIR"] = tmpdir
+    app_name = "CatchChallenger/client-qtcpu800x600"
+    cache_name = f"argument-{SERVER_HOST}-{_config['server_port']}"
+    cache_dir = os.path.join(tmpdir, "data", app_name, "datapack", cache_name)
+    shutil.copytree(os.path.join(SERVER_BUILD, "datapack"), cache_dir,
+                    ignore=shutil.ignore_patterns(".git"))
+    conf_dir = os.path.join(tmpdir, "config", "CatchChallenger")
+    os.makedirs(conf_dir, exist_ok=True)
+    with open(os.path.join(conf_dir, "client-qtcpu800x600.conf"), "w") as f:
+        f.write(f"[General]\nkey={conf_key}\n")
+    # NO --test flag: the client stays on the map so we can drive it via the socket
+    args = ["--host", SERVER_HOST, "--port", SERVER_PORT,
+            "--autologin", "--character", character, "--remote-control"]
+    log_info(f"connecting client (qtcpu800x600) as {character}, driven over its channel")
+    proc, done, out, fail = run_client_async(CLIENT_CPU_BUILD, CLIENT_CPU_BIN, args, env)
+    on_map = False
+    deadline = time.time() + diagnostic.scale_timeout(DIAG, 150)
+    while time.time() < deadline:
+        if any("MapVisualiserPlayer::mapDisplayedSlot()" in l for l in out):
+            on_map = True
+            break
+        if done.is_set():
+            break
+        time.sleep(0.5)
+    if not on_map:
+        kill_client(proc)
+        return None, out, None, f"{character}: client never reached the map; early_fail={fail[0]}"
+    uid = os.getuid()
+    candidates = ([os.path.join(tmpdir, f"CatchChallenger-Client-{n}-{uid}") for n in range(4)] +
+                  [os.path.join("/tmp", f"CatchChallenger-Client-{n}-{uid}") for n in range(4)])
+    sk = _channel_connect(candidates)
+    if sk is None:
+        kill_client(proc)
+        return None, out, None, f"{character}: could not connect to the client's QLocalServer automation socket"
+    return proc, out, sk, None
+
+
 def run_channel_crash_regression_test(dp_name, failed_cases):
     """Drive a live client over its QLocalServer automation socket against the
     local server-filedb, replaying the exact inputs that used to crash:
@@ -773,52 +1053,12 @@ def run_channel_crash_regression_test(dp_name, failed_cases):
         stop_server()
         log_fail(case, "tcp probe failed")
         return
-    tmpdir = tempfile.mkdtemp(prefix="cc-test-chan-")
-    env = os.environ.copy()
-    env["QT_QPA_PLATFORM"] = "offscreen"
-    env["XDG_CONFIG_HOME"] = os.path.join(tmpdir, "config")
-    env["XDG_DATA_HOME"] = os.path.join(tmpdir, "data")
-    # isolate the QLocalServer socket so a parallel client can't steal slot 0
-    env["TMPDIR"] = tmpdir
-    app_name = "CatchChallenger/client-qtcpu800x600"
-    cache_name = f"argument-{SERVER_HOST}-{_config['server_port']}"
-    cache_dir = os.path.join(tmpdir, "data", app_name, "datapack", cache_name)
-    shutil.copytree(os.path.join(SERVER_BUILD, "datapack"), cache_dir,
-                    ignore=shutil.ignore_patterns(".git"))
-    conf_dir = os.path.join(tmpdir, "config", "CatchChallenger")
-    os.makedirs(conf_dir, exist_ok=True)
-    with open(os.path.join(conf_dir, "client-qtcpu800x600.conf"), "w") as f:
-        f.write("[General]\nkey=testChanKey\n")
-    # NO --test flag: the client stays on the map so we can drive it via the socket
-    args = ["--host", SERVER_HOST, "--port", SERVER_PORT,
-            "--autologin", "--character", CHAR_A, "--remote-control"]
-    log_info("connecting client (qtcpu800x600) for the channel crash-regression run")
-    proc, done, out, fail = run_client_async(CLIENT_CPU_BUILD, CLIENT_CPU_BIN, args, env)
-    # wait for the client to reach the map
-    on_map = False
-    deadline = time.time() + diagnostic.scale_timeout(DIAG, 150)
-    while time.time() < deadline:
-        if any("MapVisualiserPlayer::mapDisplayedSlot()" in l for l in out):
-            on_map = True
-            break
-        if done.is_set():
-            break
-        time.sleep(0.5)
-    if not on_map:
-        kill_client(proc)
+    proc, out, sk, err = _start_channel_client(CHAR_A, "testChanKey", "cc-test-chan-")
+    if err is not None:
         stop_server()
-        log_fail(case, f"client never reached the map; early_fail={fail[0]}")
+        log_fail(case, err)
         for line in out[-25:]:
             print(f"  | {line}")
-        return
-    uid = os.getuid()
-    candidates = ([os.path.join(tmpdir, f"CatchChallenger-Client-{n}-{uid}") for n in range(4)] +
-                  [os.path.join("/tmp", f"CatchChallenger-Client-{n}-{uid}") for n in range(4)])
-    sk = _channel_connect(candidates)
-    if sk is None:
-        kill_client(proc)
-        stop_server()
-        log_fail(case, "could not connect to the client's QLocalServer automation socket")
         return
     # --- sequence 1: the server /trade crash (must NOT abort the server) ---
     _channel_cmd(sk, "GETSTATE")
