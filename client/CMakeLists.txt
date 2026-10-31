@@ -105,7 +105,6 @@ set(_qtopengl_sources
     ${_qtopengl_dir}/CCGraphicsTextItem.cpp
     ${_qtopengl_dir}/CCSliderH.cpp
     ${_qtopengl_dir}/MultiItem.cpp
-    ${_qtopengl_dir}/ConnexionInfo.cpp
     ${_qtopengl_dir}/CCScrollZone.cpp
     ${_qtopengl_dir}/LineEdit.cpp
     ${_qtopengl_dir}/ComboBox.cpp

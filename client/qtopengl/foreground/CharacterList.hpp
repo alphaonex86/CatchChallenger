@@ -12,7 +12,7 @@
 #include "../ImagesStrechMiddle.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
-#include "../ConnexionInfo.hpp"
+#include "../../libqtcatchchallenger/ConnexionInfo.hpp"
 #include "../CCScrollZone.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
 

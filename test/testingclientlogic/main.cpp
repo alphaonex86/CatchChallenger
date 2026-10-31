@@ -2,7 +2,7 @@
 // client (client/libcatchchallenger/Api_protocol.cpp): quest start / next-step
 // requirements and the beaten-bot lookup; then the client logic shared in
 // client/libqtcatchchallenger/ (chat text, chat input guard, command line,
-// language pick), the ambiance file pick of DatapackClientLoader and the factory trade. The expected values mirror the
+// language pick, server_list.xml), the ambiance file pick of DatapackClientLoader and the factory trade. The expected values mirror the
 // server (server/base/ClientEvents/LocalClientHandlerQuest.cpp): a client that
 // disagrees hides a quest the server would accept, or offers one it refuses.
 // Prints "PASS <name>" / "FAIL <name> <detail>" lines for testingclientlogic.py.
@@ -13,11 +13,14 @@
 #include "../../client/libcatchchallenger/SlowServerDetector.hpp"
 #include "../../client/libcatchchallenger/FactoryTrade.hpp"
 #include "../../client/libqtcatchchallenger/ChatInputGuard.hpp"
+#include "../../client/libqtcatchchallenger/ConnexionInfo.hpp"
 #include "../../client/libqtcatchchallenger/ChatParsing.hpp"
 #include "../../client/libqtcatchchallenger/CliClientOptions.hpp"
 #include "../../client/libqtcatchchallenger/Language.hpp"
 
 #include <QCoreApplication>
+#include <QDateTime>
+#include <QSettings>
 #include <QDir>
 #include <QFile>
 #include <QTemporaryDir>
@@ -711,6 +714,90 @@ static void testFactoryTrade()
     check("factory_status_same_entry",FactoryTrade::industryStatus(informations,mapId,2).products.at(factoryProduct)==1,true);
 }
 
+static const ConnexionInfo *findServer(const std::vector<ConnexionInfo> &list,const QString &uniqueCode)
+{
+    unsigned int index=0;
+    while(index<list.size())
+    {
+        if(list.at(index).unique_code==uniqueCode)
+            return &list.at(index);
+        index++;
+    }
+    return NULL;
+}
+
+static void testServerList()
+{
+    QTemporaryDir dir;
+    if(!dir.isValid())
+    {
+        check("server_list_temp_dir",false,true);
+        return;
+    }
+    QSettings settings(dir.path()+QStringLiteral("/settings.ini"),QSettings::IniFormat);
+    settings.beginGroup(QStringLiteral("Xml-a"));
+    settings.setValue(QStringLiteral("connexionCounter"),3);
+    settings.setValue(QStringLiteral("lastConnexion"),100);
+    settings.setValue(QStringLiteral("proxyHost"),QStringLiteral("proxy.example"));
+    settings.setValue(QStringLiteral("proxyPort"),1080);
+    settings.endGroup();
+    settings.beginGroup(QStringLiteral("Xml-future"));
+    settings.setValue(QStringLiteral("lastConnexion"),QString::number(static_cast<quint64>(QDateTime::currentSecsSinceEpoch())+100000));
+    settings.endGroup();
+    const QByteArray xml(
+        "<servers>"
+        "<server unique_code=\"a\" host=\"h.example\" port=\"1234\">"
+        "<lang><name>A en</name><site_page>http://en</site_page></lang>"
+        "<lang lang=\"fr\"><name>A fr</name><register_page>http://fr/register</register_page></lang>"
+        "</server>"
+        "<server host=\"nocode.example\" port=\"1\"/>"
+        "<server unique_code=\"badhost\" host=\"bad host!\" port=\"5\"/>"
+        "<server unique_code=\"badport\" host=\"h.example\" port=\"70000\"/>"
+        "<server unique_code=\"future\" ws=\"wss://h.example/ws\"/>"
+        "</servers>");
+    const uint64_t before=static_cast<uint64_t>(QDateTime::currentSecsSinceEpoch());
+    std::vector<ConnexionInfo> list=ConnexionInfo::loadXmlList(xml,"fr",settings);
+    check("server_list_without_unique_code_dropped",list.size()==4,true);
+    const ConnexionInfo *a=findServer(list,QStringLiteral("a"));
+    check("server_list_entry",a!=NULL && a->host==QStringLiteral("h.example") && a->port==1234 && !a->isCustom && !a->lan,true);
+    if(a!=NULL)
+    {
+        checkText("server_list_name_in_language",a->name.toStdString(),"A fr");
+        checkText("server_list_page_in_language",a->register_page.toStdString(),"http://fr/register");
+        check("server_list_no_mix_with_english",a->site_page.isEmpty(),true);
+        check("server_list_settings",a->connexionCounter==3 && a->lastConnexion==100 && a->proxyHost==QStringLiteral("proxy.example") && a->proxyPort==1080,true);
+    }
+    const ConnexionInfo *badHost=findServer(list,QStringLiteral("badhost"));
+    check("server_list_bad_host_no_port",badHost!=NULL && badHost->port==0,true);
+    const ConnexionInfo *badPort=findServer(list,QStringLiteral("badport"));
+    check("server_list_port_out_of_range",badPort!=NULL && badPort->port==0,true);
+    if(badPort!=NULL)
+        check("server_list_default_settings",badPort->connexionCounter==0 && badPort->proxyPort==9050 && badPort->proxyHost.isEmpty() && badPort->lastConnexion>=before,true);
+    const ConnexionInfo *future=findServer(list,QStringLiteral("future"));
+    check("server_list_future_last_connexion_clamped",future!=NULL && future->lastConnexion<=static_cast<uint64_t>(QDateTime::currentSecsSinceEpoch()),true);
+    check("server_list_ws",future!=NULL && future->ws==QStringLiteral("wss://h.example/ws"),true);
+
+    list=ConnexionInfo::loadXmlList(xml,"de",settings);
+    a=findServer(list,QStringLiteral("a"));
+    check("server_list_unknown_language_english",a!=NULL && a->name==QStringLiteral("A en") && a->site_page==QStringLiteral("http://en"),true);
+    list=ConnexionInfo::loadXmlList(xml,"",settings);
+    a=findServer(list,QStringLiteral("a"));
+    check("server_list_no_language_english",a!=NULL && a->name==QStringLiteral("A en"),true);
+    check("server_list_broken_xml",ConnexionInfo::loadXmlList(QByteArray("<servers><server"),"en",settings).empty(),true);
+    check("server_list_wrong_root",ConnexionInfo::loadXmlList(QByteArray("<list><server unique_code=\"a\"/></list>"),"en",settings).empty(),true);
+    check("server_list_missing_file",ConnexionInfo::loadXmlListFromFile(dir.path()+QStringLiteral("/missing.xml"),"en",settings).empty(),true);
+
+    ConnexionInfo first;
+    ConnexionInfo second;
+    check("server_order_equal_is_not_less",first<second || second<first,false);
+    first.connexionCounter=2;
+    second.connexionCounter=1;
+    second.lastConnexion=500;
+    check("server_order_most_used_first",first<second && !(second<first),true);
+    second.connexionCounter=2;
+    check("server_order_then_most_recent",second<first && !(first<second),true);
+}
+
 int main(int argc,char *argv[])
 {
     //ChatInputGuard owns a QTimer
@@ -729,6 +816,7 @@ int main(int argc,char *argv[])
     testQuestSteps();
     testQuestText();
     testFactoryTrade();
+    testServerList();
     if(failures>0)
     {
         std::cerr << failures << " failure(s)" << std::endl;

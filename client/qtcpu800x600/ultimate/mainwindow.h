@@ -28,6 +28,7 @@
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../../../general/base/ConnectedSocket.hpp"
 #include "../../libqtcatchchallenger/FeedNews.hpp"
+#include "../../libqtcatchchallenger/ConnexionInfo.hpp"
 #include "../../libqtcatchchallenger/Api_client_real.hpp"
 #include "../../libqtcatchchallenger/maprender/MapController.hpp"
 #include "../base/interface/BaseWindow.h"
@@ -44,33 +45,6 @@ namespace Ui {
 class LocalListener;
 
 class AddOrEditServer;
-
-class ConnexionInfo
-{
-public:
-    QString unique_code;
-    QString name;
-
-    //hightest priority
-    QString host;
-    uint16_t port;
-    //lower priority
-    QString ws;
-
-    uint32_t connexionCounter;
-    uint32_t lastConnexion;
-
-    QString register_page;
-    QString lost_passwd_page;
-    QString site_page;
-
-    QString proxyHost;
-    uint16_t proxyPort;
-
-    bool lan;
-
-    bool operator<(const ConnexionInfo &connexionInfo) const;
-};
 
 class MainWindow : public QMainWindow
 {
@@ -126,9 +100,6 @@ private slots:
     void on_server_remove_clicked();
     void on_server_refresh_clicked();
     void on_login_cancel_clicked();
-    std::vector<ConnexionInfo> loadXmlConnexionInfoList();
-    std::vector<ConnexionInfo> loadXmlConnexionInfoListFromData(const QByteArray &xmlContent);
-    std::vector<ConnexionInfo> loadXmlConnexionInfoListFromFile(const QString &file);
     std::vector<ConnexionInfo> loadConfigConnexionInfoList();
     void closeEvent(QCloseEvent *event);
     void downloadFile();

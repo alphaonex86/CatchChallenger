@@ -22,6 +22,7 @@ add_executable(testclientlogic
     ${CC_REPO_ROOT}/test/testingmapmanagement/TestApiProtocol.cpp
     ${CC_REPO_ROOT}/client/libqtcatchchallenger/ChatParsing.cpp
     ${CC_REPO_ROOT}/client/libqtcatchchallenger/ChatInputGuard.cpp
+    ${CC_REPO_ROOT}/client/libqtcatchchallenger/ConnexionInfo.cpp
     ${CC_REPO_ROOT}/client/libqtcatchchallenger/CliClientOptions.cpp
     ${CC_REPO_ROOT}/client/libqtcatchchallenger/Language.cpp
 )
