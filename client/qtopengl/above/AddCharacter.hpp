@@ -12,6 +12,7 @@
 #include "../LineEdit.hpp"
 #include "../SpinBox.hpp"
 #include "../ComboBox.hpp"
+#include "../../libcatchchallenger/DatapackClientLoader.hpp"
 
 class AddCharacter : public ScreenInput
 {
@@ -30,7 +31,6 @@ public:
     void on_cancel_clicked();
     void on_ok_clicked();
 
-    void loadProfileText();
     int getProfileIndex();
     int getProfileCount();
     void on_comboBox_currentIndexChanged(int index);
@@ -51,12 +51,7 @@ private:
     bool ok;
 
     std::string datapackPath;
-    struct ProfileText
-    {
-        std::string name;
-        std::string description;
-    };
-    std::vector<ProfileText> profileTextList;
+    std::vector<DatapackClientLoader::ProfileText> profileTextList;
 signals:
     void removeAbove();
 };

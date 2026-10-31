@@ -35,7 +35,6 @@ using namespace CatchChallenger;
 
 std::string BaseWindow::text_type="type";
 std::string BaseWindow::text_lang="lang";
-std::string BaseWindow::text_en="en";
 std::string BaseWindow::text_text="text";
 QFile BaseWindow::debugFile;
 uint8_t BaseWindow::debugFileStatus=0;

@@ -2,13 +2,15 @@
 // client (client/libcatchchallenger/Api_protocol.cpp): quest start / next-step
 // requirements and the beaten-bot lookup; then the client logic shared in
 // client/libqtcatchchallenger/ (chat text, chat input guard, command line,
-// language pick, server_list.xml), the ambiance file pick of DatapackClientLoader and the factory trade. The expected values mirror the
+// language pick, server_list.xml), the ambiance file pick and profile texts of DatapackClientLoader,
+// the bot dialog text/links and the factory trade. The expected values mirror the
 // server (server/base/ClientEvents/LocalClientHandlerQuest.cpp): a client that
 // disagrees hides a quest the server would accept, or offers one it refuses.
 // Prints "PASS <name>" / "FAIL <name> <detail>" lines for testingclientlogic.py.
 
 #include "../testingmapmanagement/TestApiProtocol.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#include "../../general/tinyXML2/tinyxml2.hpp"
 #include "../../client/libcatchchallenger/DatapackClientLoader.hpp"
 #include "../../client/libcatchchallenger/SlowServerDetector.hpp"
 #include "../../client/libcatchchallenger/FactoryTrade.hpp"
@@ -351,6 +353,13 @@ public:
             questsExtra[questId]=questExtra;
         }
         questsExtra[questId].text[textId].texts.push_back(entry);
+    }
+    void addProfileText(const uint32_t &index,const std::string &name)
+    {
+        ProfileText text;
+        text.name=name;
+        text.description=name+" description";
+        profileTextList[index]=text;
     }
     TestLoader()
     {
@@ -798,6 +807,62 @@ static void testServerList()
     check("server_order_then_most_recent",second<first && !(first<second),true);
 }
 
+static void testProfileTexts()
+{
+    TestLoader loader;
+    loader.addProfileText(0,"first");
+    loader.addProfileText(2,"third");
+    const std::vector<DatapackClientLoader::ProfileText> texts=loader.profileTexts(3);
+    check("profile_texts_one_per_profile",texts.size()==3,true);
+    if(texts.size()==3)
+    {
+        //a missing text must not shift the next profiles: the list index is the profile index sent
+        check("profile_texts_missing_kept_empty",texts.at(1).name.empty() && texts.at(1).description.empty(),true);
+        checkText("profile_texts_index_aligned",texts.at(2).name,"third");
+    }
+    check("profile_texts_none",loader.profileTexts(0).empty(),true);
+}
+
+static bool botText(const char *xml,const std::string &language,std::string &text)
+{
+    tinyxml2::XMLDocument document;
+    if(document.Parse(xml)!=tinyxml2::XML_SUCCESS)
+        return false;
+    return Api_protocol::botStepText(document.RootElement(),language,text);
+}
+
+static bool isLink(const Api_protocol::BotLink &link,const Api_protocol::BotLinkType &type,const uint16_t &value)
+{
+    return link.type==type && link.value==value;
+}
+
+static void testBotDialog()
+{
+    const char * const step="<step><text lang=\"en\">hello</text><text lang=\"fr\">bonjour</text></step>";
+    std::string text;
+    check("bot_text_language",botText(step,"fr",text) && text=="bonjour",true);
+    check("bot_text_english",botText(step,"en",text) && text=="hello",true);
+    //was "not found": the fallback only took a text without lang
+    check("bot_text_unknown_language_tagged_english",botText(step,"de",text) && text=="hello",true);
+    check("bot_text_untagged_is_english",botText("<step><text>hi</text></step>","de",text) && text=="hi",true);
+    check("bot_text_none",botText("<step><text lang=\"fr\">bonjour</text></step>","de",text),false);
+    check("bot_text_null_step",Api_protocol::botStepText(NULL,"en",text),false);
+
+    check("bot_link_url",Api_protocol::parseBotLink("https://example.org",false,0).type==Api_protocol::BotLink_Url,true);
+    check("bot_link_quest",isLink(Api_protocol::parseBotLink("quest_12",false,0),Api_protocol::BotLink_Quest,12),true);
+    check("bot_link_quest_bad_id",Api_protocol::parseBotLink("quest_x",false,0).type==Api_protocol::BotLink_Invalid,true);
+    check("bot_link_clan",Api_protocol::parseBotLink("clan_create",false,0).type==Api_protocol::BotLink_ClanCreate,true);
+    check("bot_link_close",Api_protocol::parseBotLink("close",false,0).type==Api_protocol::BotLink_Close,true);
+    check("bot_link_next_quest_step",Api_protocol::parseBotLink("next_quest_step",true,0).type==Api_protocol::BotLink_NextQuestStep,true);
+    check("bot_link_next_quest_step_out_of_quest",Api_protocol::parseBotLink("next_quest_step",false,0).type==Api_protocol::BotLink_Invalid,true);
+    check("bot_link_next",isLink(Api_protocol::parseBotLink("next",false,3),Api_protocol::BotLink_Step,4),true);
+    check("bot_link_next_without_step",Api_protocol::parseBotLink("next",false,0).type==Api_protocol::BotLink_Invalid,true);
+    check("bot_link_next_after_last_step",Api_protocol::parseBotLink("next",false,255).type==Api_protocol::BotLink_Invalid,true);
+    check("bot_link_step",isLink(Api_protocol::parseBotLink("2",false,1),Api_protocol::BotLink_Step,2),true);
+    check("bot_link_step_in_quest_is_text",isLink(Api_protocol::parseBotLink("2",true,1),Api_protocol::BotLink_QuestText,2),true);
+    check("bot_link_garbage",Api_protocol::parseBotLink("nope",false,1).type==Api_protocol::BotLink_Invalid,true);
+}
+
 int main(int argc,char *argv[])
 {
     //ChatInputGuard owns a QTimer
@@ -817,6 +882,8 @@ int main(int argc,char *argv[])
     testQuestText();
     testFactoryTrade();
     testServerList();
+    testProfileTexts();
+    testBotDialog();
     if(failures>0)
     {
         std::cerr << failures << " failure(s)" << std::endl;

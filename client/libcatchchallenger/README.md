@@ -31,6 +31,7 @@ a headless consumer just ignores them.
 | `Api_protocol_query.cpp` | Server → client queries (client must reply) |
 | `Api_protocol_reply.cpp` | Replies to the client's own queries |
 | `Api_protocol_loadchar.cpp` | Character block (inventory, monsters, quests, rescue point...) |
+| `Api_protocol_quest.cpp` | Quest/reputation rules shared by the clients (bot quests, step validation, rewards), same as the server |
 | `DatapackClientLoader.hpp/.cpp` | Abstract datapack loader: base then main/sub, fills `CommonDatapack` singletons + client-only "extra" texts |
 | `DatapackChecksum.hpp/.cpp` | Base/main/sub datapack hash (must match the server's) |
 | `TarDecode`, `ZstdDecode` | Decode a `.tar.zst` datapack archive in memory |
@@ -38,6 +39,8 @@ a headless consumer just ignores them.
 | `Map_client.hpp/.cpp` | `CommonMap` + client border info |
 | `ClientVariable.hpp` | Client constants (server list URL, timings) |
 | `BlacklistPassword` | Weak-password list for account creation |
+| `SlowServerDetector` | When to show the slow-server sign (ms) |
+| `FactoryTrade` | Factory buy/sell queries, server replies, stock, prices, production time |
 | `lib.cmake` | CMake INTERFACE target `catchchallenger_client_lib` |
 
 ## Dependencies

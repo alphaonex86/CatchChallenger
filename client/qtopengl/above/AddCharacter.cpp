@@ -7,7 +7,7 @@
 #include <QGraphicsProxyWidget>
 #include <QTextDocument>
 #include "../../libqtcatchchallenger/Ultimate.hpp"
-#include "../../../general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp"
+#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/GeneralVariable.hpp"
 #include <QDesktopServices>
@@ -174,7 +174,7 @@ void AddCharacter::setDatapack(std::string path)
         description->setHtml(tr("No profile selected to start a new game"));
         return;
     }
-    loadProfileText();
+    profileTextList=QtDatapackClientLoader::datapackLoader->profileTexts(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size());
     unsigned int index=0;
     while(index<profileTextList.size())
     {
@@ -214,105 +214,6 @@ void AddCharacter::on_cancel_clicked()
 {
     ok=false;
     emit removeAbove();
-}
-
-void AddCharacter::loadProfileText()
-{
-    const std::string &xmlFile=datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"start.xml";
-    std::vector<const tinyxml2::XMLElement *> xmlList=CatchChallenger::DatapackGeneralLoader::loadProfileList(
-                datapackPath,xmlFile,
-                CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
-                ).first;
-    profileTextList.clear();
-    unsigned int index=0;
-    while(index<xmlList.size())
-    {
-        ProfileText profile;
-        const tinyxml2::XMLElement * startItem=xmlList.at(index);
-        #ifndef CATCHCHALLENGER_BOT
-        const std::string &language=Language::language.getLanguage().toStdString();
-        #else
-        const std::string language("en");
-        #endif
-        bool found=false;
-        const tinyxml2::XMLElement * name = startItem->FirstChildElement("name");
-        if(!language.empty() && language!="en")
-            while(name!=NULL)
-            {
-                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
-                {
-                    profile.name=name->GetText();
-                    found=true;
-                    break;
-                }
-                name = name->NextSiblingElement("name");
-            }
-        if(!found)
-        {
-            name = startItem->FirstChildElement("name");
-            while(name!=NULL)
-            {
-                if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                    if(name->GetText()!=NULL)
-                    {
-                        profile.name=name->GetText();
-                        break;
-                    }
-                name = name->NextSiblingElement("name");
-            }
-        }
-        if(profile.name.empty())
-        {
-            if(startItem->GetText()!=NULL)
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(): %2")
-                         .arg(QString::fromStdString(xmlFile)).arg(startItem->GetText()));
-            else
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(")
-                         .arg(QString::fromStdString(xmlFile)));
-            startItem = startItem->NextSiblingElement("start");
-            continue;
-        }
-        found=false;
-        const tinyxml2::XMLElement * description = startItem->FirstChildElement("description");
-        if(!language.empty() && language!="en")
-            while(description!=NULL)
-            {
-                if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language && description->GetText()!=NULL)
-                {
-                    profile.description=description->GetText();
-                    found=true;
-                    break;
-                }
-                description = description->NextSiblingElement("description");
-            }
-        if(!found)
-        {
-            description = startItem->FirstChildElement("description");
-            while(description!=NULL)
-            {
-                if(description->Attribute("lang")==NULL || strcmp(description->Attribute("lang"),"en")==0)
-                    if(description->GetText()!=NULL)
-                    {
-                        profile.description=description->GetText();
-                        break;
-                    }
-                description = description->NextSiblingElement("description");
-            }
-        }
-        if(profile.description.empty())
-        {
-            if(description->GetText()!=NULL)
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName(): %2")
-                         .arg(QString::fromStdString(xmlFile)).arg(startItem->GetText()));
-            else
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName()")
-                         .arg(QString::fromStdString(xmlFile)));
-            startItem = startItem->NextSiblingElement("start");
-            continue;
-        }
-        profileTextList.push_back(profile);
-        index++;
-    }
 }
 
 int AddCharacter::getProfileIndex()

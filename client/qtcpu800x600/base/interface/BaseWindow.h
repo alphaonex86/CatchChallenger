@@ -647,7 +647,6 @@ private:
 
     static std::string text_type;
     static std::string text_lang;
-    static std::string text_en;
     static std::string text_text;
 
     static QIcon icon_server_list_star1;

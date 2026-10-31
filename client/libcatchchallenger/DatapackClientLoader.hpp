@@ -289,6 +289,8 @@ public:
     size_t get_profileTextList_size() const;
     const ProfileText &get_profileText(const uint32_t &key) const;
     bool has_profileText(const uint32_t &key) const;
+    //one entry per profile, at the profile index (empty text if the datapack has none): a list index is a profile index
+    std::vector<ProfileText> profileTexts(const size_t &profileCount) const;
     //visualCategories
     size_t get_visualCategories_size() const;
     const VisualCategory &get_visualCategory(const std::string &key) const;

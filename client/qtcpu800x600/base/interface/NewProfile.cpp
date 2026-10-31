@@ -28,7 +28,7 @@ NewProfile::NewProfile(const std::string &datapackPath, QWidget *parent) :
         close();
         return;
     }
-    loadProfileText();
+    profileTextList=QtDatapackClientLoader::datapackLoader->profileTexts(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size());
     if(profileTextList.empty())
         std::cerr << "No loadProfileText to start a new game" << std::endl;
     else
@@ -53,25 +53,6 @@ NewProfile::NewProfile(const std::string &datapackPath, QWidget *parent) :
 NewProfile::~NewProfile()
 {
     delete ui;
-}
-
-void NewProfile::loadProfileText()
-{
-    const std::vector<CatchChallenger::Profile> &profile=CatchChallenger::CommonDatapack::commonDatapack.get_profileList();
-    profileTextList.clear();
-    unsigned int index=0;
-    while(index<profile.size())
-    {
-        if(QtDatapackClientLoader::datapackLoader->has_profileText(index))
-        {
-            const DatapackClientLoader::ProfileText &pt=QtDatapackClientLoader::datapackLoader->get_profileText(index);
-            ProfileText profile;
-            profile.name=pt.name;
-            profile.description=pt.description;
-            profileTextList.push_back(profile);
-        }
-        index++;
-    }
 }
 
 bool NewProfile::ok()

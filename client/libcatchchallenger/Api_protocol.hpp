@@ -462,6 +462,26 @@ public:
     //shop screen. Returns items with price resolved from the datapack (or the
     //product's overridePrice) and quantity=0.
     static std::vector<ItemToSellOrBuy> shopItemsFromStepXml(const tinyxml2::XMLElement *stepXml);
+    //bot text step: the <text> in language, else the one without lang or in english; false if none
+    static bool botStepText(const tinyxml2::XMLElement *stepXml,const std::string &language,std::string &text);
+    enum BotLinkType : uint8_t
+    {
+        BotLink_Invalid,
+        BotLink_Url,//the link itself
+        BotLink_Quest,//value: quest id
+        BotLink_ClanCreate,
+        BotLink_Close,
+        BotLink_NextQuestStep,
+        BotLink_Step,//value: bot step to go
+        BotLink_QuestText//value: quest text to show
+    };
+    struct BotLink
+    {
+        BotLinkType type;
+        uint16_t value;
+    };
+    //one link of a bot dialog (the dialog links are ';' separated); lastStep is the bot step shown, 0 if none
+    static BotLink parseBotLink(const std::string &link,const bool &inQuest,const uint8_t &lastStep);
     void getShopList();/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     void buyObject(const CATCHCHALLENGER_TYPE_ITEM &objectId,const uint32_t &quantity,const uint32_t &price);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     void sellObject(const CATCHCHALLENGER_TYPE_ITEM &objectId, const uint32_t &quantity, const uint32_t &price);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
