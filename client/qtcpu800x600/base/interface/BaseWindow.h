@@ -30,6 +30,7 @@
 
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../libcatchchallenger/Api_protocol.hpp"
+#include "../../../libcatchchallenger/SlowServerDetector.hpp"
 #include "../../../libqtcatchchallenger/maprender/MapController.hpp"
 #include "Chat.h"
 #include "NewProfile.h"
@@ -662,8 +663,7 @@ private:
 
     bool monsterBeforeMoveForChangeInWaiting;
     QTimer checkQueryTime;
-    int lastReplyTimeValue;
-    QElapsedTimer lastReplyTimeSince;
+    CatchChallenger::SlowServerDetector slowServerDetector;
     uint32_t worseQueryTime;
     bool multiplayer;
 

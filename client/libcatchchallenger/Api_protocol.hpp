@@ -95,6 +95,10 @@ public:
     bool getIsLogged() const;
     bool getCaracterSelected() const;
     std::map<uint8_t,uint64_t> getQuerySendTimeList() const;
+    //ms since the oldest query still waiting for its reply was sent, 0 if none
+    uint32_t worstRunningQueryTime(const uint64_t &nowMs) const;
+    //monotonic ms clock of querySendTime and lastReplyTime()
+    static uint64_t queryClockMs();
     std::vector<uint8_t> &getEvents();
 
     //to manipulate the monsters

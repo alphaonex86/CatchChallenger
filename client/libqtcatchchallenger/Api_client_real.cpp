@@ -118,9 +118,9 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
 {
     if(querySendTime.find(queryNumber)!=querySendTime.cend())
     {
-        std::time_t result = std::time(nullptr);
-        if((uint64_t)result>=(uint64_t)querySendTime.at(queryNumber))
-            lastReplyTime(result-querySendTime.at(queryNumber));
+        const uint64_t nowMs=queryClockMs();
+        if(nowMs>=querySendTime.at(queryNumber))
+            lastReplyTime(static_cast<uint32_t>(nowMs-querySendTime.at(queryNumber)));
         querySendTime.erase(queryNumber);
     }
     QDataStream in(QByteArray(data.data(),data.size()));

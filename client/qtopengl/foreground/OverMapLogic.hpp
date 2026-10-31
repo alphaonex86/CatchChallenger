@@ -5,6 +5,7 @@
 #include "../DisplayStructures.hpp"
 #include "../../libqtcatchchallenger/maprender/MapVisualiserPlayer.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
+#include "../../libcatchchallenger/SlowServerDetector.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <QAudioSink>
 #include "../../libqtcatchchallenger/QInfiniteBuffer.hpp"
@@ -306,8 +307,7 @@ private:
     std::vector<QueryType> queryList;
 
     QTimer checkQueryTime;
-    int lastReplyTimeValue;
-    QElapsedTimer lastReplyTimeSince;
+    CatchChallenger::SlowServerDetector slowServerDetector;
     uint32_t worseQueryTime;
     uint8_t lastStepUsed;
 

@@ -9,6 +9,7 @@
 
 #include "../testingmapmanagement/TestApiProtocol.hpp"
 #include "../../client/libcatchchallenger/DatapackClientLoader.hpp"
+#include "../../client/libcatchchallenger/SlowServerDetector.hpp"
 #include "../../client/libqtcatchchallenger/ChatInputGuard.hpp"
 #include "../../client/libqtcatchchallenger/ChatParsing.hpp"
 #include "../../client/libqtcatchchallenger/CliClientOptions.hpp"
@@ -387,6 +388,48 @@ static void testAmbianceFile()
     checkText("ambiance_directory_skipped",loader.ambianceFile("folder.opus","town","outdoor",mainPath,basePath),basePath+"zone.opus");
 }
 
+//querySendTime is protected: filled directly, no socket
+class QueryTimeApi : public TestApiProtocol
+{
+public:
+    void setQuerySendTime(const uint8_t &queryNumber,const uint64_t &sentAtMs)
+    {
+        querySendTime[queryNumber]=sentAtMs;
+    }
+};
+
+static void testSlowServerDetector()
+{
+    QueryTimeApi api;
+    check("query_time_none",api.worstRunningQueryTime(10000)==0,true);
+    api.setQuerySendTime(1,9500);
+    api.setQuerySendTime(2,8000);
+    check("query_time_worst_in_ms",api.worstRunningQueryTime(10000)==2000,true);
+    api.setQuerySendTime(3,20000);
+    check("query_time_future_ignored",api.worstRunningQueryTime(10000)==2000,true);
+    const uint64_t first=Api_protocol::queryClockMs();
+    const uint64_t second=Api_protocol::queryClockMs();
+    check("query_clock_monotonic",second>=first,true);
+
+    SlowServerDetector detector;
+    check("slow_fast",detector.state(0,1000)==SlowServerDetector::State_Fast,true);
+    check("slow_query_waiting",detector.state(701,1000)==SlowServerDetector::State_QueryWaiting,true);
+    check("slow_query_at_threshold",detector.state(700,1000)==SlowServerDetector::State_Fast,true);
+    detector.replyReceived(800,1000);
+    check("slow_reply_shown",detector.state(0,1000)==SlowServerDetector::State_LastReplySlow && detector.slowReplyTime()==800,true);
+    detector.replyReceived(50,2000);
+    check("slow_reply_kept_after_fast_reply",detector.state(0,2000)==SlowServerDetector::State_LastReplySlow && detector.slowReplyTime()==800,true);
+    detector.replyReceived(900,3000);
+    check("slow_reply_replaced_by_slower",detector.slowReplyTime()==900,true);
+    check("slow_reply_still_shown_before_15s",detector.state(0,3000+14999)==SlowServerDetector::State_LastReplySlow,true);
+    check("slow_reply_hidden_after_15s",detector.state(0,3000+15000)==SlowServerDetector::State_Fast,true);
+    detector.replyReceived(50,3000+15000);
+    check("fast_reply_after_15s_replaces",detector.slowReplyTime()==50,true);
+    detector.replyReceived(800,40000);
+    detector.reset();
+    check("slow_reset",detector.state(0,40000)==SlowServerDetector::State_Fast,true);
+}
+
 int main(int argc,char *argv[])
 {
     //ChatInputGuard owns a QTimer
@@ -399,6 +442,7 @@ int main(int argc,char *argv[])
     testCliClientOptions();
     testPickLanguage();
     testAmbianceFile();
+    testSlowServerDetector();
     if(failures>0)
     {
         std::cerr << failures << " failure(s)" << std::endl;

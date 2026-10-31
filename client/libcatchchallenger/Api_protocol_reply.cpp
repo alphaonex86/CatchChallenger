@@ -31,9 +31,9 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
     int pos=0;
     if(querySendTime.find(queryNumber)!=querySendTime.cend())
     {
-        std::time_t result = std::time(nullptr);
-        if((uint64_t)result>querySendTime.at(queryNumber))
-            lastReplyTime(result-querySendTime.at(queryNumber));
+        const uint64_t nowMs=queryClockMs();
+        if(nowMs>=querySendTime.at(queryNumber))
+            lastReplyTime(static_cast<uint32_t>(nowMs-querySendTime.at(queryNumber)));
         querySendTime.erase(queryNumber);
     }
     if(vectorcontainsAtLeastOne(lastQueryNumber,queryNumber))

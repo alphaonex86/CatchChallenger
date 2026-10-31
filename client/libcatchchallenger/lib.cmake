@@ -18,6 +18,7 @@ if(NOT TARGET catchchallenger_client_lib)
         ${CMAKE_CURRENT_LIST_DIR}/Map_client.cpp
         ${CMAKE_CURRENT_LIST_DIR}/ClientStructures.cpp
         ${CMAKE_CURRENT_LIST_DIR}/DatapackClientLoader.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/SlowServerDetector.cpp
         ${CMAKE_CURRENT_LIST_DIR}/DatapackChecksum.cpp
         ${CMAKE_CURRENT_LIST_DIR}/ZstdDecode.cpp
         ${CMAKE_CURRENT_LIST_DIR}/TarDecode.cpp
