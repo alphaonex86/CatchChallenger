@@ -38,6 +38,8 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         errorOutput("charaters is not logged, parseQuery("+std::to_string(packetCode)+","+std::to_string(queryNumber)+")");
         return false;
     }
+    //a trade evolution is confirmed before any other action, else it is lost
+    tradeEvolutionPositions.clear();
     switch(packetCode)
     {
         //Usage of recipe

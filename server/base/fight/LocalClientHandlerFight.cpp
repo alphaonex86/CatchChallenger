@@ -5,6 +5,7 @@
 #include "../ClientList.hpp"
 #include "../SQL/PreparedDBQuery.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
+#include <algorithm>
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
 #include "../../../general/base/FacilityLib.hpp"
@@ -884,13 +885,12 @@ void Client::confirmEvolution(const uint8_t &monsterPosition)
                  monsterInformations.evolutions.at(sub_index).data.level<=public_and_private_informations.monsters.at(index).level)
                 ||
                 (monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Trade &&
-                 GlobalServerData::serverPrivateVariables.tradedMonster.find(public_and_private_informations.monsters.at(index).id)!=
-                 GlobalServerData::serverPrivateVariables.tradedMonster.cend())
+                 std::find(tradeEvolutionPositions.cbegin(),tradeEvolutionPositions.cend(),monsterPosition)!=tradeEvolutionPositions.cend())
         )
         {
             //one trade gives one trade evolution: the evolved monster can not use it again without a new trade
             if(monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Trade)
-                GlobalServerData::serverPrivateVariables.tradedMonster.erase(public_and_private_informations.monsters.at(index).id);
+                tradeEvolutionPositions.erase(std::find(tradeEvolutionPositions.begin(),tradeEvolutionPositions.end(),monsterPosition));
             confirmEvolutionTo(&public_and_private_informations.monsters[index],monsterInformations.evolutions.at(sub_index).evolveTo);
             return;
         }

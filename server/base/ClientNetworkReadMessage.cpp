@@ -67,6 +67,9 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         break;
     }
     #endif
+    //a trade evolution is confirmed before any other action, else it is lost
+    if(!tradeEvolutionPositions.empty() && packetCode!=0x0F)
+        tradeEvolutionPositions.clear();
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
     normalOutput("parsenormalOutput("+std::to_string(packetCode)+","+binarytoHexa(data,size)+")");

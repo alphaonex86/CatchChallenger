@@ -64,7 +64,6 @@ void BaseServer::unload_the_static_data()
 void BaseServer::unload_zone()
 {
     GlobalServerData::serverPrivateVariables.zoneIdToMapList.clear();
-    GlobalServerData::serverPrivateVariables.tradedMonster.clear();
 }
 
 void BaseServer::unload_industries()

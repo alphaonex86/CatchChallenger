@@ -10,27 +10,6 @@
 
 using namespace CatchChallenger;
 
-//only the species with a trade evolution, else the set grows with every trade; confirmEvolution() erases the id once used
-static void rememberTradeEvolutions(const std::vector<PlayerMonster> &monsters)
-{
-    unsigned int index=0;
-    while(index<monsters.size())
-    {
-        const Monster &monster=CommonDatapack::commonDatapack.get_monster(monsters.at(index).monster);
-        unsigned int sub_index=0;
-        while(sub_index<monster.evolutions.size())
-        {
-            if(monster.evolutions.at(sub_index).type==Monster::EvolutionType_Trade)
-            {
-                GlobalServerData::serverPrivateVariables.tradedMonster.insert(monsters.at(index).id);
-                break;
-            }
-            sub_index++;
-        }
-        index++;
-    }
-}
-
 bool Client::getInTrade() const
 {
     return (otherPlayerTrade!=PLAYER_INDEX_FOR_CONNECTED_MAX);
@@ -144,9 +123,6 @@ void Client::tradeFinished()
             ++j;
         }
 
-        //monster evolution
-        rememberTradeEvolutions(tradeMonster);
-        rememberTradeEvolutions(otherPlayerTrade.tradeMonster);
         //monster
         otherPlayerTrade.transferExistingMonster(tradeMonster);
         transferExistingMonster(otherPlayerTrade.tradeMonster);
@@ -187,9 +163,22 @@ void Client::resetTheTrade()
 void Client::transferExistingMonster(std::vector<PlayerMonster> tradeMonster)
 {
     const std::vector<uint8_t> &positionsList=addPlayerMonster(tradeMonster);
+    tradeEvolutionPositions.clear();
     unsigned int index=0;
     while(index<tradeMonster.size())
     {
+        //only the species with a trade evolution, by position: the monster id is not known by the client
+        const Monster &monster=CommonDatapack::commonDatapack.get_monster(tradeMonster.at(index).monster);
+        unsigned int sub_index=0;
+        while(sub_index<monster.evolutions.size())
+        {
+            if(monster.evolutions.at(sub_index).type==Monster::EvolutionType_Trade)
+            {
+                tradeEvolutionPositions.push_back(positionsList.at(index));
+                break;
+            }
+            sub_index++;
+        }
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_owner.asyncWrite({
                     std::to_string(character_id_db),
