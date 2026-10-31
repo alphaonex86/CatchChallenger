@@ -2,6 +2,8 @@
 
 Combine with root CLAUDE.md.
 
+Logic a third client would have to rewrite goes in `libqtcatchchallenger/` (rule, client checklist, move-here list: its `README.md`); a client only draws its UI.
+
 ## Datapack is checksummed — two distinct things: the datapack vs its binary cache
 
 Keep two separate things straight:
