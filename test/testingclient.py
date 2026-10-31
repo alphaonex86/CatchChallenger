@@ -843,6 +843,75 @@ def run_reconnect_cached_datapack(build_dir, bin_name, label, character):
                    expect_cached_datapack=True)
 
 
+def run_select_already_logged(build_dir, bin_name, label, character):
+    """A holder client stays on the map; a second one (same --character, so same
+    autologin account) selecting that character must get "Already logged" and quit
+    with an error rc. Was: the server let it in twice (playerById_db never filled) and
+    qtcpu800x600 waited on its error dialog until killed."""
+    binary = os.path.join(build_dir, bin_name)
+    if not os.path.isfile(binary):
+        log_fail(label, f"binary not found: {binary}")
+        return
+    args = [binary, "--host", SERVER_HOST, "--port", SERVER_PORT, "--autologin",
+            "--character", character]
+    env = os.environ.copy()
+    env["QT_QPA_PLATFORM"] = "offscreen"
+    env.update(_isolated_home_env("cc-dupsel-"))
+    holder = subprocess.Popen(args + ["--closewhenonmapafter=40"], cwd=build_dir,
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
+                              preexec_fn=process_helpers.setsid_and_pdeathsig)
+    holder_lines = []
+    on_map = threading.Event()
+
+    def holder_reader():
+        for raw in iter(holder.stdout.readline, b""):
+            line = raw.decode(errors="replace").rstrip("\n")
+            holder_lines.append(line)
+            if "MapVisualiserPlayer::mapDisplayedSlot()" in line:
+                on_map.set()
+
+    threading.Thread(target=holder_reader, daemon=True).start()
+    try:
+        if not on_map.wait(timeout=clamp_local(diagnostic.scale_timeout(DIAG, 30))):
+            log_fail(label, "holder client never reached the map")
+            for line in holder_lines[-30:]:
+                print(f"  | {line}")
+            return
+        env2 = dict(env)
+        env2.update(_isolated_home_env("cc-dupsel-"))
+        start = time.monotonic()
+        dup = subprocess.Popen(args + ["--closewhenonmap"], cwd=build_dir,
+                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env2,
+                               preexec_fn=process_helpers.setsid_and_pdeathsig)
+        try:
+            out, _ = dup.communicate(timeout=clamp_local(diagnostic.scale_timeout(DIAG, 30)))
+        except subprocess.TimeoutExpired:
+            os.killpg(os.getpgid(dup.pid), signal.SIGKILL)
+            out, _ = dup.communicate()
+            log_fail(label, "second client did not exit after the select refusal (hung)")
+            for line in out.decode(errors="replace").splitlines()[-30:]:
+                print(f"  | {line}")
+            return
+        lines = out.decode(errors="replace").splitlines()
+        report_unknown_client_output(label, lines)
+        if dup.returncode == 0 or "Already logged" not in out.decode(errors="replace"):
+            log_fail(label, f"second client rc={dup.returncode}, expected an error rc "
+                            f"with \"Already logged\"")
+            for line in lines[-30:]:
+                print(f"  | {line}")
+            return
+        log_pass(label, f"refused, rc={dup.returncode} in {time.monotonic() - start:.1f}s")
+    finally:
+        try:
+            os.killpg(os.getpgid(holder.pid), signal.SIGTERM)
+            holder.wait(timeout=5)
+        except (ProcessLookupError, subprocess.TimeoutExpired):
+            try:
+                os.killpg(os.getpgid(holder.pid), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+
+
 # the official master keeps a character locked maxLockAge (10s) after its client
 # left: every live run logs TestPlayerLive in, the next one got 0x08 "Too recently
 # disconnected" when started at once
@@ -3446,6 +3515,12 @@ def main():
         if gl_ok and should_run("qtopengl reconnect with cached datapack", failed_cases):
             run_reconnect_cached_datapack(CLIENT_GL_BUILD, CLIENT_GL_BIN,
                                           "qtopengl reconnect with cached datapack", "PlayerRCGL")
+        if cpu_ok and should_run("qtcpu800x600 select a character already logged", failed_cases):
+            run_select_already_logged(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
+                                      "qtcpu800x600 select a character already logged", "PlayerDupCPU")
+        if gl_ok and should_run("qtopengl select a character already logged", failed_cases):
+            run_select_already_logged(CLIENT_GL_BUILD, CLIENT_GL_BIN,
+                                      "qtopengl select a character already logged", "PlayerDupGL")
 
     # ═══════════════════════════════════════════════════════════════
     # 4b. BENCHMARK — time to player on map

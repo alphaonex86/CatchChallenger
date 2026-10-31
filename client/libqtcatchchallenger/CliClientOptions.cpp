@@ -1,5 +1,6 @@
 #include "CliClientOptions.hpp"
 
+#include <QCoreApplication>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -213,5 +214,14 @@ bool CliClientOptions::parse(int &argc,char *argv[])
         port=0;
         url.clear();
     }
+    return true;
+}
+
+bool CliClientOptions::exitOnErrorIfAutomated(const std::string &error)
+{
+    if(!closeWhenOnMap && closeWhenOnMapAfter<=0)
+        return false;
+    std::cerr << "CliClientOptions: error with --closewhenonmap[after], exiting with rc=2: " << error << std::endl;
+    QCoreApplication::exit(2);
     return true;
 }

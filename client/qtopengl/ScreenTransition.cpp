@@ -1271,12 +1271,8 @@ void ScreenTransition::errorString(std::string error)
     // can't even fire. Exit with non-zero so the python harness's
     // proc.wait() rc check FAILs the test immediately instead of
     // sitting through its outer 60-120s timeout.
-    if(!error.empty() &&
-       (CliClientOptions::closeWhenOnMap || CliClientOptions::closeWhenOnMapAfter>0))
-    {
-        std::cerr << "CliClientOptions: errorString with --closewhenonmap[after], exiting with rc=2" << std::endl;
-        QCoreApplication::exit(2);
-    }
+    if(!error.empty())
+        CliClientOptions::exitOnErrorIfAutomated(error);
 }
 
 void ScreenTransition::goToServerList()

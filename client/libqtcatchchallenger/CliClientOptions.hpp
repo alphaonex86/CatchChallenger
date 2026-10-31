@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <cstdint>
+#include <string>
 
 // Client-only command-line options shared between the qtopengl and
 // (eventually) other Qt client front-ends. Do NOT use from server code.
@@ -52,6 +53,9 @@ public:
     // Once on the map, toggle movement direction every second and quit
     // after this many seconds. 0 = disabled. Used by movement / soak tests.
     static int closeWhenOnMapAfter;
+    // Automated run (--closewhenonmap[after]): an error dialog would wait for a click that never
+    // comes, so print the error to cerr and quit with rc=2. Returns true when it did.
+    static bool exitOnErrorIfAutomated(const std::string &error);
 
     // Once on the map, drop all outgoing network traffic. Lets tests verify
     // server-side timeout / disconnection handling without closing the socket

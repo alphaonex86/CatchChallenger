@@ -912,6 +912,8 @@ void MainWindow::sslErrors(const QList<QSslError> &errors)
 
 void MainWindow::disconnected(std::string reason)
 {
+    if(CliClientOptions::exitOnErrorIfAutomated("Disconnected by the reason: "+reason))
+        return;
     QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(QString::fromStdString(reason)));
     /*if(serverConnexion.contains(selectedServer))
         lastServerIsKick[serverConnexion.value(selectedServer)->host]=true;*/
@@ -1259,13 +1261,8 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
     if(!lastServer.isEmpty())
         additionalText=tr(" on %1").arg(lastServer);
     resetAll();
-    // Mirror every UI dialog message to the console (qWarning -> stderr)
-    // so the testing*.py harness can scan stdout/stderr for the exact
-    // failure reason ("Connection refused by the server" etc.) and FAIL
-    // the test fast instead of waiting for its 60-120s timeout. The
-    // QMessageBox below is non-blocking only with QT_QPA_PLATFORM=offscreen
-    // because the dialog never gets shown — but it'd block a real GUI run,
-    // which is why we print BEFORE the dialog call.
+    QString title=tr("Connection closed");
+    QString text;
     switch(socketError)
     {
     case QAbstractSocket::RemoteHostClosedError:
@@ -1282,52 +1279,42 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
             haveShowDisconnectionReason=false;
             return;
         }
-        qWarning() << "MainWindow::error(): Connection closed by the server"
-                   << additionalText;
-        QMessageBox::information(this,tr("Connection closed"),tr("Connection closed by the server")+additionalText);
+        text=tr("Connection closed by the server");
     break;
     case QAbstractSocket::ConnectionRefusedError:
-        qWarning() << "MainWindow::error(): Connection refused by the server"
-                   << additionalText;
-        // If the run is non-interactive (--closewhenonmap /
-        // --closewhenonmapafter set the test harness's "drive then exit"
-        // intent), the map will never load — so closing the QMessageBox
-        // is impossible under QT_QPA_PLATFORM=offscreen and the app
-        // would hang until the harness's outer timeout. Exit with
-        // non-zero so the python `proc.wait()` rc check FAILs the test
-        // immediately.
-        if(CliClientOptions::closeWhenOnMap || CliClientOptions::closeWhenOnMapAfter>0)
-        {
-            std::cerr << "AutoArgs: connection refused with --closewhenonmap[after], exiting with rc=2" << std::endl;
-            QCoreApplication::exit(2);
-            break;
-        }
-        QMessageBox::information(this,tr("Connection closed"),tr("Connection refused by the server")+additionalText);
+        text=tr("Connection refused by the server");
     break;
     case QAbstractSocket::SocketTimeoutError:
-        QMessageBox::information(this,tr("Connection closed"),tr("Socket time out, server too long")+additionalText);
+        text=tr("Socket time out, server too long");
     break;
     case QAbstractSocket::HostNotFoundError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The host address was not found")+additionalText);
+        text=tr("The host address was not found");
     break;
     case QAbstractSocket::SocketAccessError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The socket operation failed because the application lacked the required privileges")+additionalText);
+        text=tr("The socket operation failed because the application lacked the required privileges");
     break;
     case QAbstractSocket::SocketResourceError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The local system ran out of resources")+additionalText);
+        text=tr("The local system ran out of resources");
     break;
     case QAbstractSocket::NetworkError:
-        QMessageBox::information(this,tr("Connection closed"),tr("An error occurred with the network (Connection refused on game server?)")+additionalText);
+        text=tr("An error occurred with the network (Connection refused on game server?)");
     break;
     case QAbstractSocket::UnsupportedSocketOperationError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The requested socket operation is not supported by the local operating system (e.g., lack of IPv6 support)")+additionalText);
+        text=tr("The requested socket operation is not supported by the local operating system (e.g., lack of IPv6 support)");
     break;
     case QAbstractSocket::SslHandshakeFailedError:
-        QMessageBox::information(this,tr("Connection closed"),tr("The SSL/TLS handshake failed, so the connection was closed")+additionalText);
+        text=tr("The SSL/TLS handshake failed, so the connection was closed");
     break;
     default:
-        QMessageBox::information(this,tr("Connection error"),tr("Connection error: %1").arg(socketError)+additionalText);
+        title=tr("Connection error");
+        text=tr("Connection error: %1").arg(socketError);
     }
+    text+=additionalText;
+    //console first: the testing*.py harness scans the output for the reason
+    qWarning() << "MainWindow::error():" << text;
+    if(CliClientOptions::exitOnErrorIfAutomated(text.toStdString()))
+        return;
+    QMessageBox::information(this,title,text);
 }
 
 void MainWindow::newError(std::string error,std::string detailedError)
@@ -1335,6 +1322,8 @@ void MainWindow::newError(std::string error,std::string detailedError)
     std::cout << "MainWindow::newError(): " << error << ": " << detailedError << std::endl;
     if(client!=NULL)
         client->tryDisconnect();
+    if(CliClientOptions::exitOnErrorIfAutomated(error+": "+detailedError))
+        return;
     if(!errorInProgress)
     {
         errorInProgress=true;
@@ -2100,12 +2089,16 @@ void MainWindow::saveTime()
 
 void MainWindow::serverError(const QString &error)
 {
+    if(CliClientOptions::exitOnErrorIfAutomated("The engine is closed due to: "+error.toStdString()))
+        return;
     QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(error));
     resetAll();
 }
 
 void MainWindow::serverErrorStd(const std::string &error)
 {
+    if(CliClientOptions::exitOnErrorIfAutomated("The engine is closed due to: "+error))
+        return;
     QMessageBox::critical(NULL,tr("Error"),tr("The engine is closed due to: %1").arg(QString::fromStdString(error)));
     resetAll();
 }

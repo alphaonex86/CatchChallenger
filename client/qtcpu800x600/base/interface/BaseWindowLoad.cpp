@@ -211,6 +211,8 @@ void BaseWindow::disconnected(std::string reason)
     if(haveShowDisconnectionReason)
         return;
     haveShowDisconnectionReason=true;
+    if(CliClientOptions::exitOnErrorIfAutomated("Disconnected by the reason: "+reason))
+        return;
     QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(QString::fromStdString(reason)));
     newError("Disconnected","Disconnected by the reason: "+reason);
     resetAll();
@@ -218,6 +220,8 @@ void BaseWindow::disconnected(std::string reason)
 
 void BaseWindow::notLogged(std::string reason)
 {
+    if(CliClientOptions::exitOnErrorIfAutomated("Unable to login: "+reason))
+        return;
     QMessageBox::information(this,tr("Unable to login"),tr("Unable to login: %1").arg(QString::fromStdString(reason)));
     newError("Unable to login","Unable to login: "+reason);
     resetAll();
