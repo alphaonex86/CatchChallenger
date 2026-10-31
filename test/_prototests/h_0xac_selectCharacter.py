@@ -484,6 +484,76 @@ def run(server):
         semantic_invalid_cases += 1
 
         # ----------------------------------------------------------------
+        # SAME CHARACTER from TWO connections of one account: the second select
+        # must get 0x03 "Already logged" and the server must survive (playerById_db
+        # was never filled: the duplicate reached insert_characterSelected and its
+        # HARDENED "pseudo is already found" abort). A third try while the first is
+        # still on the map must be refused too (the 2nd refusal must not drop the
+        # 1st connection's entry), and once the first leaves the character is free.
+        # ----------------------------------------------------------------
+        try:
+            ul, up, _ucid = _make_account_with_char(server, "dup")
+            first = _Logged(server, ul, up, create=False)
+        except H.HandshakeError as e:
+            return (False, "same-character: first Logged handshake failed: %s" % e)
+        if not first.account_chars:
+            first.close()
+            return (False, "same-character: account has no owned character")
+        ucid = first.account_chars[0][0]
+        pa = first.select(ucid)
+        if pa is None or len(pa) < 1 or pa[0] != 0x01:
+            first.close()
+            return (False, "same-character: first select did not succeed: %r"
+                    % (pa[:4] if pa else None))
+        attempt = 0
+        while attempt < 2:
+            try:
+                dup = _Logged(server, ul, up, create=False)
+            except H.HandshakeError as e:
+                first.close()
+                return (False, "same-character: duplicate login #%d failed: %s" % (attempt + 1, e))
+            try:
+                pa = dup.select(ucid, timeout=3.0)
+            except OSError:
+                pa = None
+            dup.close()
+            ok, why = _alive_clean(server)
+            if not ok:
+                first.close()
+                return (False, "after same-character select #%d: %s" % (attempt + 1, why))
+            if pa is None or len(pa) < 1 or pa[0] != 0x03:
+                first.close()
+                return (False, "CONTRACT VIOLATION: same character selected while already on "
+                               "the map, try #%d replied %r (expected 0x03 Already logged)"
+                        % (attempt + 1, pa[:4] if pa else None))
+            time.sleep(0.3)
+            attempt += 1
+        # the duplicates' own "Kicked by: Already logged" lines are in the log too:
+        # look for the first session's pseudo only, then probe its socket
+        with open(server.log_path, "r", errors="replace") as f:
+            f.seek(first._log_base)
+            first_kicked = (first.account_chars[0][1] + ": Kicked by:") in f.read()
+            first._log_base = f.tell()
+        if first_kicked or first.is_kicked():
+            first.close()
+            return (False, "same-character: the refused duplicate kicked the connected session")
+        first.close()
+        time.sleep(0.4)
+        try:
+            again = _Logged(server, ul, up, create=False)
+        except H.HandshakeError as e:
+            return (False, "same-character: relogin after leave failed: %s" % e)
+        try:
+            pa = again.select(ucid)
+        except OSError:
+            pa = None
+        again.close()
+        if pa is None or len(pa) < 1 or pa[0] != 0x01:
+            return (False, "same-character: still refused after the first session left: %r"
+                    % (pa[:4] if pa else None))
+        semantic_invalid_cases += 1
+
+        # ----------------------------------------------------------------
         # MALFORMED-FRAMING cases. 0xAC is a FIXED-size QUERY: on the wire it is
         # [0xAC][qnum][9 data bytes], NO 4-byte length. Wrong framing must never
         # crash/hang the server (HARDENED size!=9 guard kicks; bad framing is

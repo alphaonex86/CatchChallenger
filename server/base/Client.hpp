@@ -762,6 +762,8 @@ private:
     void askStatClient(const uint8_t &query_id,const char *rawdata);
     #endif
     void characterSelectionIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const std::string &debugMessage);
+    bool registerCharacterId_db(const uint8_t &query_id,const uint32_t &characterId);
+    void unregisterCharacterId_db();
     //load linked data (like item, quests, ...)
     //void loadLinkedData();
 

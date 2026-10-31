@@ -196,6 +196,8 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         std::cerr << "Client::selectCharacter_return() hexa.empty() can't be empty at this point " << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
+    if(!registerCharacterId_db(query_id,characterId))
+        return;
     #ifdef CATCHCHALLENGER_DB_INTERNAL_VARS
     if(CatchChallenger::dbInternalVarsStore.count(std::string("database/common/characters/")+hexa)==0)
     #else
@@ -255,11 +257,8 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         characterSelectionIsWrong(query_id,0x02,"Character: "+std::to_string(characterId)+" is not owned by the account: "+std::to_string(this->account_id_db));
         return;
     }
-    if(GlobalServerData::serverPrivateVariables.playerById_db.find(characterId)!=GlobalServerData::serverPrivateVariables.playerById_db.cend())
-    {
-        characterSelectionIsWrong(query_id,0x03,"Already logged");
+    if(!registerCharacterId_db(query_id,characterId))
         return;
-    }
 
     public_and_private_informations.public_informations.pseudo=std::string(GlobalServerData::serverPrivateVariables.db_common->value(1));
 
