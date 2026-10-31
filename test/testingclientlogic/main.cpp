@@ -8,6 +8,7 @@
 // Prints "PASS <name>" / "FAIL <name> <detail>" lines for testingclientlogic.py.
 
 #include "../testingmapmanagement/TestApiProtocol.hpp"
+#include "../../general/base/CommonDatapack.hpp"
 #include "../../client/libcatchchallenger/DatapackClientLoader.hpp"
 #include "../../client/libcatchchallenger/SlowServerDetector.hpp"
 #include "../../client/libqtcatchchallenger/ChatInputGuard.hpp"
@@ -322,11 +323,32 @@ static void testPickLanguage()
     checkText("language_fallback_en",::Language::pickLanguage("",false,languagesByShortName,"German","de_DE"),"en");
 }
 
-//only the ambiance tables are filled, no datapack is parsed
-class AmbianceLoader : public DatapackClientLoader
+//only the tables a test needs are filled, no datapack is parsed
+class TestLoader : public DatapackClientLoader
 {
 public:
-    AmbianceLoader()
+    void addQuestText(const CATCHCHALLENGER_TYPE_QUEST &questId,const uint32_t &textId,const std::string &text,
+                      const QuestCondition &type,const uint8_t &value,const bool &withCondition)
+    {
+        QuestStepWithConditionExtra entry;
+        entry.text=text;
+        if(withCondition)
+        {
+            QuestConditionExtra condition;
+            condition.type=type;
+            condition.value=value;
+            entry.conditions.push_back(condition);
+        }
+        if(questsExtra.find(questId)==questsExtra.cend())
+        {
+            QuestExtra questExtra;
+            questExtra.showRewards=false;
+            questExtra.autostep=false;
+            questsExtra[questId]=questExtra;
+        }
+        questsExtra[questId].text[textId].texts.push_back(entry);
+    }
+    TestLoader()
     {
         ZoneExtra zone;
         zone.id=0;
@@ -372,7 +394,7 @@ static void testAmbianceFile()
         failures++;
         return;
     }
-    const AmbianceLoader loader;
+    const TestLoader loader;
     checkText("ambiance_none_exists",loader.ambianceFile("map.opus","town","outdoor",mainPath,basePath),"");
     if(!createFile(dir.path()+"/base/general.opus"))
         return;
@@ -386,6 +408,133 @@ static void testAmbianceFile()
         return;
     checkText("ambiance_map_main_before_base",loader.ambianceFile("map.opus","town","outdoor",mainPath,basePath),mainPath+"map.opus");
     checkText("ambiance_directory_skipped",loader.ambianceFile("folder.opus","town","outdoor",mainPath,basePath),basePath+"zone.opus");
+}
+
+//records what the quest rules take from the inventory
+class QuestApi : public TestApiProtocol
+{
+public:
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> removedItems;
+    void remove_to_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items) override
+    {
+        std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t>::const_iterator i=items.cbegin();
+        while(i!=items.cend())
+        {
+            removedItems[i->first]+=i->second;
+            ++i;
+        }
+    }
+};
+
+static Quest::Step makeStep(const CATCHCHALLENGER_TYPE_MAPID &stepMapId,const CATCHCHALLENGER_TYPE_BOTID &stepBotId)
+{
+    Quest::Step step;
+    step.botToTalkMapId=stepMapId;
+    step.botToTalkBotId=stepBotId;
+    return step;
+}
+
+//step 1 at bot (mapId,botId) wants 2 items, step 2 at bot (mapId,botId+1); rewards reputation 0 and clan creation
+static Quest makeTwoStepQuest()
+{
+    Quest quest;
+    quest.id=questId;
+    quest.repeatable=false;
+    quest.rewards.allow_create_clan=true;
+    ReputationRewards reputationReward;
+    reputationReward.reputationId=0;
+    reputationReward.point=150;
+    quest.rewards.reputation.push_back(reputationReward);
+    Quest::Step first=makeStep(mapId,botId);
+    Quest::Item item;
+    item.item=itemId;
+    item.quantity=2;
+    first.requirements.items.push_back(item);
+    quest.steps.push_back(first);
+    quest.steps.push_back(makeStep(mapId,botId+1));
+    return quest;
+}
+
+static void testQuestSteps()
+{
+    //reputation 0: level 1 at 100 points, level 2 at 200
+    if(CommonDatapack::commonDatapack.get_reputation().empty())
+    {
+        Reputation reputation;
+        reputation.reputation_positive.push_back(0);
+        reputation.reputation_positive.push_back(100);
+        reputation.reputation_positive.push_back(200);
+        reputation.reputation_negative.push_back(0);
+        reputation.reputation_negative.push_back(-100);
+        reputation.reverse_database_id=0;
+        reputation.name="test";
+        CommonDatapack::commonDatapack.get_reputation_rw().push_back(reputation);
+    }
+    Quest quest=makeTwoStepQuest();
+    QuestApi api;
+    api.player_informations.allow_create_clan=false;
+    std::vector<Api_protocol::ReputationLevelChange> changes;
+
+    check("quest_can_start_at_first_step_bot",api.questForBot(quest,mapId,botId)==Api_protocol::QuestForBot_CanStart,true);
+    check("quest_not_at_other_bot",api.questForBot(quest,mapId,botId+1)==Api_protocol::QuestForBot_None,true);
+    check("quest_bot_id_on_other_map",api.questForBot(quest,mapId+1,botId)==Api_protocol::QuestForBot_None,true);
+    check("quest_start_wrong_bot",api.validateQuestStep(quest,mapId,botId+1,changes)==Api_protocol::QuestStep_CantStart,true);
+    check("quest_start",api.validateQuestStep(quest,mapId,botId,changes)==Api_protocol::QuestStep_Started &&
+          api.player_informations.quests.at(questId).step==1 && !api.player_informations.quests.at(questId).finish_one_time,true);
+    check("quest_step1_in_progress_at_its_bot",api.questForBot(quest,mapId,botId)==Api_protocol::QuestForBot_InProgress,true);
+    check("quest_step1_missing_items",api.validateQuestStep(quest,mapId,botId,changes)==Api_protocol::QuestStep_CantContinue &&
+          api.player_informations.quests.at(questId).step==1,true);
+    api.player_informations.items[itemId]=2;
+    check("quest_step1_at_next_step_bot",api.validateQuestStep(quest,mapId,botId+1,changes)==Api_protocol::QuestStep_OtherBot,true);
+    check("quest_next_step",api.validateQuestStep(quest,mapId,botId,changes)==Api_protocol::QuestStep_NextStep &&
+          api.player_informations.quests.at(questId).step==2,true);
+    check("quest_step_items_taken",api.removedItems.size()==1 && api.removedItems[itemId]==2,true);
+    check("quest_step2_bot_moved",api.questForBot(quest,mapId,botId)==Api_protocol::QuestForBot_None &&
+          api.questForBot(quest,mapId,botId+1)==Api_protocol::QuestForBot_InProgress,true);
+    check("quest_step2_at_first_bot",api.validateQuestStep(quest,mapId,botId,changes)==Api_protocol::QuestStep_OtherBot,true);
+    check("quest_finish",api.validateQuestStep(quest,mapId,botId+1,changes)==Api_protocol::QuestStep_Finished &&
+          api.player_informations.quests.at(questId).step==0 && api.player_informations.quests.at(questId).finish_one_time,true);
+    check("quest_reward_reputation",api.player_informations.reputation.at(0).level==1 && api.player_informations.reputation.at(0).point==50 &&
+          changes.size()==1 && changes.at(0).reputationId==0 && changes.at(0).better,true);
+    check("quest_reward_clan",api.player_informations.allow_create_clan,true);
+    check("quest_done_not_repeatable",api.questForBot(quest,mapId,botId)==Api_protocol::QuestForBot_None &&
+          api.validateQuestStep(quest,mapId,botId,changes)==Api_protocol::QuestStep_CantStart,true);
+    quest.repeatable=true;
+    check("quest_done_repeatable",api.validateQuestStep(quest,mapId,botId,changes)==Api_protocol::QuestStep_Started &&
+          api.player_informations.quests.at(questId).finish_one_time,true);
+
+    Quest emptyQuest;
+    emptyQuest.id=prerequisiteId;
+    emptyQuest.repeatable=false;
+    check("quest_without_step",api.questForBot(emptyQuest,mapId,botId)==Api_protocol::QuestForBot_None,true);
+
+    Api_protocol::ReputationLevelChange change;
+    check("reputation_zero_point",api.appendReputationPoint(0,0,change),false);
+    check("reputation_unknown",api.appendReputationPoint(200,10,change),false);
+    check("reputation_same_level",!api.appendReputationPoint(0,10,change) && api.player_informations.reputation.at(0).point==60,true);
+    check("reputation_level_down",api.appendReputationPoint(0,-200,change) && !change.better && api.player_informations.reputation.at(0).level<1,true);
+    const std::vector<Api_protocol::ReputationLevelChange> rewardChanges=api.appendReputationRewards(quest.rewards.reputation);
+    check("reputation_rewards_list",rewardChanges.size()==1 && rewardChanges.at(0).better,true);
+}
+
+static void testQuestText()
+{
+    TestLoader loader;
+    loader.addQuestText(questId,1,"step2",DatapackClientLoader::QuestCondition_queststep,2,true);
+    loader.addQuestText(questId,1,"requirements",DatapackClientLoader::QuestCondition_haverequirements,0,true);
+    loader.addQuestText(questId,1,"step1",DatapackClientLoader::QuestCondition_queststep,1,true);
+    loader.addQuestText(questId,1,"always",DatapackClientLoader::QuestCondition_queststep,0,false);
+    loader.addQuestText(questId,2,"step3",DatapackClientLoader::QuestCondition_queststep,3,true);
+    TestApiProtocol api;
+    std::string text;
+    check("quest_text_no_extra",loader.questText(prerequisiteId,1,api,text)==DatapackClientLoader::QuestText_NoQuestExtra,true);
+    check("quest_text_no_entry",loader.questText(questId,9,api,text)==DatapackClientLoader::QuestText_NoEntryPoint,true);
+    check("quest_text_not_started_is_step1",loader.questText(questId,1,api,text)==DatapackClientLoader::QuestText_Found && text=="step1",true);
+    setQuest(api,questId,2,false);
+    check("quest_text_step2",loader.questText(questId,1,api,text)==DatapackClientLoader::QuestText_Found && text=="step2",true);
+    setQuest(api,questId,0,true);
+    check("quest_text_finished_no_step_text",loader.questText(questId,1,api,text)==DatapackClientLoader::QuestText_Found && text=="always",true);
+    check("quest_text_none_matches",loader.questText(questId,2,api,text)==DatapackClientLoader::QuestText_NoText,true);
 }
 
 //querySendTime is protected: filled directly, no socket
@@ -434,6 +583,8 @@ int main(int argc,char *argv[])
 {
     //ChatInputGuard owns a QTimer
     QCoreApplication application(argc,argv);
+    //packet sizes: the quest rules send their packet
+    ProtocolParsing::initialiseTheVariable(ProtocolParsing::InitialiseTheVariableType::AllInOne);
     testBeatBot();
     testNextStepRequirement();
     testStartRequirement();
@@ -443,6 +594,8 @@ int main(int argc,char *argv[])
     testPickLanguage();
     testAmbianceFile();
     testSlowServerDetector();
+    testQuestSteps();
+    testQuestText();
     if(failures>0)
     {
         std::cerr << failures << " failure(s)" << std::endl;

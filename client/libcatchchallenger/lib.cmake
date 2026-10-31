@@ -15,6 +15,7 @@ if(NOT TARGET catchchallenger_client_lib)
         ${CMAKE_CURRENT_LIST_DIR}/Api_protocol_message.cpp
         ${CMAKE_CURRENT_LIST_DIR}/Api_protocol_query.cpp
         ${CMAKE_CURRENT_LIST_DIR}/Api_protocol_reply.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/Api_protocol_quest.cpp
         ${CMAKE_CURRENT_LIST_DIR}/Map_client.cpp
         ${CMAKE_CURRENT_LIST_DIR}/ClientStructures.cpp
         ${CMAKE_CURRENT_LIST_DIR}/DatapackClientLoader.cpp

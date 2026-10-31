@@ -30,7 +30,8 @@
 #include "../../../server/qt/InternalServer.hpp"
 #endif
 
-OverMapLogic::OverMapLogic()
+OverMapLogic::OverMapLogic() :
+    actualBotMapId(0)
 {
     inventory=nullptr;
     monsterSelect=nullptr;
@@ -1207,6 +1208,7 @@ bool OverMapLogic::actionOnCheckBot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, 
     if(bot==nullptr)
         return false;
     actualBot=*bot;
+    actualBotMapId=mapIndex;
     isInQuest=false;
     goToBotStep(1);
     return true;
@@ -2222,61 +2224,24 @@ void OverMapLogic::on_listCraftingMaterials_itemActivated(QListWidgetItem *item)
 
 void OverMapLogic::appendReputationRewards(const std::vector<CatchChallenger::ReputationRewards> &reputationList)
 {
-    unsigned int index=0;
-    while(index<reputationList.size())
-    {
-        const CatchChallenger::ReputationRewards &reputationRewards=reputationList.at(index);
-        appendReputationPoint(CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(reputationRewards.reputationId).name,reputationRewards.point);
-        index++;
-    }
+    showReputationChanges(connexionManager->client->appendReputationRewards(reputationList));
 }
 
-//reputation
-void OverMapLogic::appendReputationPoint(const std::string &type,const int32_t &point)
+void OverMapLogic::showReputationChanges(const std::vector<CatchChallenger::Api_protocol::ReputationLevelChange> &changes)
 {
-    if(point==0)
-        return;
-    if(!QtDatapackClientLoader::datapackLoader->has_reputationNameToId(type))
+    unsigned int index=0;
+    while(index<changes.size())
     {
-        emit error("Unknow reputation: "+type);
-        return;
-    }
-    const uint8_t &reputationId=QtDatapackClientLoader::datapackLoader->get_reputationNameToId(type);
-    CatchChallenger::PlayerReputation playerReputation;
-    if(connexionManager->client->player_informations.reputation.find(reputationId)!=connexionManager->client->player_informations.reputation.cend())
-        playerReputation=connexionManager->client->player_informations.reputation.at(reputationId);
-    else
-    {
-        playerReputation.point=0;
-        playerReputation.level=0;
-    }
-    CatchChallenger::PlayerReputation oldPlayerReputation=playerReputation;
-    int32_t old_level=playerReputation.level;
-    CatchChallenger::FacilityLib::appendReputationPoint(&playerReputation,point,CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(reputationId));
-    if(oldPlayerReputation.level==playerReputation.level && oldPlayerReputation.point==playerReputation.point)
-        return;
-    if(connexionManager->client->player_informations.reputation.find(reputationId)!=connexionManager->client->player_informations.reputation.cend())
-        connexionManager->client->player_informations.reputation[reputationId]=playerReputation;
-    else
-        connexionManager->client->player_informations.reputation[reputationId]=playerReputation;
-    const std::string &reputationCodeName=CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(reputationId).name;
-    if(old_level<playerReputation.level)
-    {
+        const CatchChallenger::Api_protocol::ReputationLevelChange &change=changes.at(index);
+        const std::string &reputationCodeName=CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(change.reputationId).name;
+        QString name("???");
         if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(reputationCodeName))
-            showTip(tr("You have better reputation into %1")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputationCodeName).name)).toStdString());
+            name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputationCodeName).name);
+        if(change.better)
+            showTip(tr("You have better reputation into %1").arg(name).toStdString());
         else
-            showTip(tr("You have better reputation into %1")
-                    .arg("???").toStdString());
-    }
-    else if(old_level>playerReputation.level)
-    {
-        if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(reputationCodeName))
-            showTip(tr("You have worse reputation into %1")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputationCodeName).name)).toStdString());
-        else
-            showTip(tr("You have worse reputation into %1")
-                    .arg("???").toStdString());
+            showTip(tr("You have worse reputation into %1").arg(name).toStdString());
+        index++;
     }
 }
 

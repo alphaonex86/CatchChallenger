@@ -70,7 +70,7 @@ uint32_t BotTargetList::getSeedToPlant(const CatchChallenger::Api_protocol_Qt * 
             /// \todo check the requirement
             const uint8_t &plantId=QtDatapackClientLoader::datapackLoader->get_itemToPlant(itemId);
 
-            if(ActionsAction::haveReputationRequirements(api,CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).requirements.reputation))
+            if(api->haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).requirements.reputation))
             {
                 if(!haveQuantity)
                 {

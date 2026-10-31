@@ -36,9 +36,44 @@ public:
     void add_chat_text(Chat_type chat_type, std::string text, std::string pseudo, CatchChallenger::Player_type player_type);
     //reputation
     bool haveReputationRequirements(const std::vector<CatchChallenger::ReputationRequirements> &reputationList) const;
-    //quest
+    //the server changes the reputation without telling the client: apply the same change locally
+    struct ReputationLevelChange
+    {
+        uint8_t reputationId;
+        bool better;
+    };
+    //true if the level changed, then change says how
+    bool appendReputationPoint(const uint8_t &reputationId,const int32_t &point,ReputationLevelChange &change);
+    std::vector<ReputationLevelChange> appendReputationRewards(const std::vector<CatchChallenger::ReputationRewards> &reputationList);
+    //quest, same rules as the server; at step N (1 based) the player talks to steps[N-1]'s bot
     bool haveNextStepQuestRequirements(const CatchChallenger::Quest &quest) const;
     bool haveStartQuestRequirement(const CatchChallenger::Quest &quest) const;
+    enum QuestForBot : uint8_t
+    {
+        QuestForBot_None,
+        QuestForBot_CanStart,
+        QuestForBot_InProgress
+    };
+    QuestForBot questForBot(const CatchChallenger::Quest &quest,const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const;
+    //quests this bot can start or continue, by quest id; second: in progress
+    std::vector<std::pair<CATCHCHALLENGER_TYPE_QUEST,bool> > questsForBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const;
+    bool botHaveQuest(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const;
+    enum QuestStepResult : uint8_t
+    {
+        QuestStep_UnknownQuest,
+        QuestStep_CantStart,
+        QuestStep_OtherBot,
+        QuestStep_CantContinue,
+        QuestStep_Started,
+        QuestStep_NextStep,
+        QuestStep_Finished
+    };
+    //talking to the bot about this quest: sends start/next step/finish to the server and applies it
+    //locally (step items removed via remove_to_inventory(), reputation rewards, clan creation allowed)
+    QuestStepResult validateQuestStep(const CATCHCHALLENGER_TYPE_QUEST &questId,const CATCHCHALLENGER_TYPE_MAPID &mapId,
+                                      const CATCHCHALLENGER_TYPE_BOTID &botId,std::vector<ReputationLevelChange> &reputationChanges);
+    QuestStepResult validateQuestStep(const CatchChallenger::Quest &quest,const CATCHCHALLENGER_TYPE_MAPID &mapId,
+                                      const CATCHCHALLENGER_TYPE_BOTID &botId,std::vector<ReputationLevelChange> &reputationChanges);
     //item
     uint32_t itemQuantity(const CATCHCHALLENGER_TYPE_ITEM &itemId) const;
     //fight

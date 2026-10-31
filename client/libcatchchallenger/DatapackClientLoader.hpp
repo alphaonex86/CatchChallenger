@@ -11,6 +11,10 @@
 #include "Map_client.hpp"
 #include "ClientStructures.hpp"
 
+namespace CatchChallenger {
+class Api_protocol;
+}
+
 class DLL_PUBLIC DatapackClientLoader
 {
 public:
@@ -254,15 +258,21 @@ public:
     size_t get_questsExtra_size() const;
     const QuestExtra &get_questExtra(const CATCHCHALLENGER_TYPE_QUEST &key) const;
     bool has_questExtra(const CATCHCHALLENGER_TYPE_QUEST &key) const;
+    enum QuestTextResult : uint8_t
+    {
+        QuestText_NoQuestExtra,
+        QuestText_NoEntryPoint,
+        QuestText_NoText,//no text condition matches the player now
+        QuestText_Found
+    };
+    #if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
+    //text textId of the quest for the player now: first text whose conditions (step, next step requirements) all match
+    QuestTextResult questText(const CATCHCHALLENGER_TYPE_QUEST &questId,const uint32_t &textId,const CatchChallenger::Api_protocol &client,std::string &text) const;
+    #endif
     //questsPathToId
     size_t get_questsPathToId_size() const;
     CATCHCHALLENGER_TYPE_QUEST get_questPathToId(const std::string &key) const;
     bool has_questPathToId(const std::string &key) const;
-    //botToQuestStart (nested: mapId -> botId -> quests)
-    size_t get_botToQuestStart_size() const;
-    bool has_botToQuestStart(const CATCHCHALLENGER_TYPE_MAPID &mapId) const;
-    bool has_botToQuestStartForBot(const CATCHCHALLENGER_TYPE_MAPID &mapId, const CATCHCHALLENGER_TYPE_BOTID &botId) const;
-    const std::vector<CATCHCHALLENGER_TYPE_QUEST> &get_botToQuestStartForBot(const CATCHCHALLENGER_TYPE_MAPID &mapId, const CATCHCHALLENGER_TYPE_BOTID &botId) const;
     //zonesExtra
     size_t get_zonesExtra_size() const;
     const ZoneExtra &get_zoneExtra(const std::string &key) const;
@@ -304,7 +314,6 @@ protected:
     catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_ITEM,uint8_t> itemToPlants;
     catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_QUEST,QuestExtra> questsExtra;
     catchchallenger_datapack_map<std::string,CATCHCHALLENGER_TYPE_QUEST> questsPathToId;
-    catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BOTID,std::vector<CATCHCHALLENGER_TYPE_QUEST>>> botToQuestStart;
     catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_map<std::pair<uint8_t,uint8_t>,CatchChallenger::Bot>> mapBots;
     //catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BOTID,BotFightExtra>> botFightsExtra;-> load ondemand with map
     catchchallenger_datapack_map<std::string,ZoneExtra> zonesExtra;
@@ -368,7 +377,6 @@ private:
     void parseSkillsExtra();
     void parseQuestsExtra();
     void parseQuestsText();
-    void parseQuestsLink();
     void parseSkins();
     //void parseBotFightsExtra();-> load ondemand with map
     void parseAudioAmbiance();

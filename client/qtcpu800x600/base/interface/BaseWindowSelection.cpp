@@ -287,7 +287,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 return;
             }
             const uint8_t &plantId=QtDatapackClientLoader::datapackLoader->get_itemToPlant(itemId);
-            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).requirements.reputation))
+            if(!client->haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).requirements.reputation))
             {
                 qDebug() << "You don't have the requirements to plant the seed";
                 QMessageBox::critical(this,tr("Error"),tr("You don't have the requirements to plant the seed"));
@@ -525,7 +525,7 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
 
         //check if have the requirements
         const CraftingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(recipeId);
-        if(!haveReputationRequirements(recipe.requirements.reputation))
+        if(!client->haveReputationRequirements(recipe.requirements.reputation))
         {
             std::string string;
             unsigned int index=0;

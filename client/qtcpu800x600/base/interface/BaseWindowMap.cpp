@@ -158,6 +158,7 @@ bool BaseWindow::actionOnCheckBot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, ui
     if(bot==nullptr)
         return false;
     actualBot=*bot;
+    actualBotMapId=mapIndex;
     isInQuest=false;
     goToBotStep(1);
     return true;
