@@ -53,7 +53,16 @@ void QtDatapackClientLoaderThread::run()
         while(index<ImagemonsterToLoad.size())
         {
             const uint16_t &id=ImagemonsterToLoad.at(index);
-            QtDatapackClientLoader::MonsterExtra monsterExtraEntry=QtDatapackClientLoader::datapackLoader->monsterExtra.at(id);
+            QtDatapackClientLoader::MonsterExtra monsterExtraEntry;
+            {
+                //resetAll() clears the extras under this mutex, copy the entry out
+                #ifndef NOTHREADS
+                QMutexLocker a(&QtDatapackClientLoader::datapackLoader->mutex);
+                #endif
+                if(QtDatapackClientLoader::datapackLoader->monsterExtra.find(id)==QtDatapackClientLoader::datapackLoader->monsterExtra.cend())
+                    return;
+                monsterExtraEntry=QtDatapackClientLoader::datapackLoader->monsterExtra.at(id);
+            }
             QtDatapackClientLoader::ImageMonsterExtra *entry=new QtDatapackClientLoader::ImageMonsterExtra;
             entry->front=QImage(QString::fromStdString(basepath+std::to_string(id)+"/front.png"));
             if(stopIt)
@@ -118,15 +127,26 @@ void QtDatapackClientLoaderThread::run()
         while(index<ImageitemsToLoad.size())
         {
             const uint16_t &id=ImageitemsToLoad.at(index);
-            QtDatapackClientLoader::ImageItemExtra *entry=new QtDatapackClientLoader::ImageItemExtra;
             if(stopIt)
                 return;
-            if(QtDatapackClientLoader::datapackLoader!=nullptr && QtDatapackClientLoader::datapackLoader->itemsExtra.find(id)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
+            std::string imagePath;
             {
-                const DatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(id);
-                entry->image=QImage(QString::fromStdString(extra.imagePath));
+                //resetAll() clears the extras under this mutex, copy the path out
+                #ifndef NOTHREADS
+                QMutexLocker a(&QtDatapackClientLoader::datapackLoader->mutex);
+                #endif
+                if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(id)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
+                    imagePath=QtDatapackClientLoader::datapackLoader->itemsExtra.at(id).imagePath;
+            }
+            if(!imagePath.empty())
+            {
+                QtDatapackClientLoader::ImageItemExtra *entry=new QtDatapackClientLoader::ImageItemExtra;
+                entry->image=QImage(QString::fromStdString(imagePath));
                 if(stopIt)
+                {
+                    delete entry;
                     return;
+                }
                 emit loadItemImage(id,entry);
             }
             if(stopIt)

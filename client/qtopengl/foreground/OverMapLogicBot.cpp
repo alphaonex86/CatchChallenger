@@ -392,6 +392,14 @@ void OverMapLogic::on_IG_dialog_text_linkActivated(const QString &rawlink)
 
 void OverMapLogic::IG_dialog_text_linkActivated(const std::string &rawlink)
 {
+    if(tradePromptShown && (rawlink=="tradeaccept" || rawlink=="traderefuse"))
+    {
+        //answer first: the setIG_dialog() below would refuse it
+        tradePromptAnswer(rawlink=="tradeaccept");
+        if(!tradePromptShown)
+            setIG_dialog(QString());
+        return;
+    }
     setIG_dialog(QString());
     const std::vector<std::string> stringList=stringsplit(rawlink,';');
     unsigned int index=0;

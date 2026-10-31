@@ -41,6 +41,9 @@ public:
     void tradeAddTradeCash(const uint64_t &cash);
     void tradeAddTradeObject(const uint16_t &item, const uint32_t &quantity);
     void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
+    // the local player's offer, already sent to the server and removed locally
+    void addCurrentObject(const uint16_t &item, const uint32_t &quantity);
+    void addCurrentMonster(const CatchChallenger::PlayerMonster &monster, const uint8_t &position);
 private slots:
     void newLanguage();
     void onAddItemClicked();
@@ -50,6 +53,7 @@ private slots:
 private:
     void updateCurrentItemsDisplay();
     void updateOtherItemsDisplay();
+    void returnCurrentOffer();
 
     ImagesStrechMiddle *wdialog;
     CustomText *title;
@@ -78,6 +82,7 @@ private:
 
     ConnexionManager *connexionManager;
     TradeOtherStat tradeOtherStat;
+    uint64_t otherCash;
     std::unordered_map<uint16_t,uint32_t> tradeCurrentObjects;
     std::unordered_map<uint16_t,uint32_t> tradeOtherObjects;
     std::vector<CatchChallenger::PlayerMonster> tradeCurrentMonsters;
@@ -86,11 +91,9 @@ private:
 signals:
     void setAbove(ScreenInput *widget);
     void add_to_inventory(const uint16_t &item, const uint32_t &quantity, const bool &showGain);
-    void remove_to_inventory(const uint16_t &itemId, const uint32_t &quantity);
     void addCash(const uint32_t &cash);
     void removeCash(const uint32_t &cash);
     void showTip(const std::string &tip);
-    void tradeClosed();
     void selectObjectForTrade();
     void selectMonsterForTrade();
 };

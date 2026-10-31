@@ -113,7 +113,7 @@ public slots:
     //MonsterSelect picker result: a chosen team position -> objectSelection(true,
     //position); cancel -> objectSelection(false) (restores the consumed item).
     void monsterSelected(const uint8_t &monsterPosition);
-    void monsterSelectCanceled();
+    void selectionCanceled();
     //clan-name entry (replaces the old QInputDialog): a non-empty name creates the clan
     void clanNameEntered(const QString &clanName);
     //battle: lazy-create + wire Battle::battle; exit back to the map on win/lose;
@@ -235,7 +235,10 @@ public slots:
     std::vector<std::pair<uint16_t, std::string> > getQuestList() const;
     void updateDisplayedQuests();
     //trade
-    /*void tradeRequested(const std::string &pseudo, const uint8_t &skinInt);
+    void ensureTrade();
+    void tradeRequested(const std::string &pseudo, const uint8_t &skinInt);
+    void tradePromptShow();
+    void tradePromptAnswer(const bool &accept);
     void tradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt);
     void tradeCanceledByOther();
     void tradeFinishedByOther();
@@ -243,8 +246,8 @@ public slots:
     void tradeAddTradeCash(const uint64_t &cash);
     void tradeAddTradeObject(const uint16_t &item, const uint32_t &quantity);
     void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
-    void tradeUpdateCurrentObject();
-    std::vector<CatchChallenger::PlayerMonster> warehouseMonsterOnPlayer() const;*/
+    void tradeSelectObject();
+    void tradeSelectMonster();
     //battle
     /*void battleRequested(const std::string &pseudo, const uint8_t &skinInt);
     void battleAcceptedByOther(const std::string &pseudo, const uint8_t &skinId, const std::vector<uint8_t> &stat, const uint8_t &monsterPlace, const CatchChallenger::PublicPlayerMonster &publicPlayerMonster);
@@ -298,6 +301,9 @@ private:
     Shop *shop;
     Factory *factory;
     Trade *trade;
+    //requests not answered yet, same order as the protocol's: the prompt answers the front one
+    std::vector<std::pair<std::string,uint8_t> > tradeRequests;
+    bool tradePromptShown;
     Warehouse *warehouse;
     //the bot fight in progress (for the win reward): fightFinished() clears the
     //engine's fightInProgress before battleWin fires, so remember it here. 0xFFFF = none.

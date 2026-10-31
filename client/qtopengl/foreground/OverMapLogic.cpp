@@ -57,6 +57,7 @@ OverMapLogic::OverMapLogic() :
     currentBotFightMapId=0xFFFF;
     factory=nullptr;
     trade=nullptr;
+    tradePromptShown=false;
     warehouse=nullptr;
 
     multiplayer=true;
@@ -175,6 +176,8 @@ void OverMapLogic::resetAll()
     itemsToSell.clear();
     itemsToBuy.clear();
     objectInUsing.clear();
+    tradeRequests.clear();
+    tradePromptShown=false;
     monster_to_deposit.clear();
     monster_to_withdraw.clear();
 }
@@ -230,6 +233,9 @@ void OverMapLogic::stopped_in_front_of(const CATCHCHALLENGER_TYPE_MAPID &mapInde
 
 void OverMapLogic::setIG_dialog(QString text,QString name)
 {
+    //anything replacing the trade prompt refuses the requests
+    while(tradePromptShown)
+        tradePromptAnswer(false);
     this->IG_dialog_textString=text;
     this->IG_dialog_nameString=name;
     this->IG_dialog_text->setHtml(text);
@@ -244,6 +250,9 @@ void OverMapLogic::setIG_dialog(QString text,QString name)
 
 void OverMapLogic::IG_dialog_close()
 {
+    //closing the trade prompt refuses the requests
+    while(tradePromptShown)
+        tradePromptAnswer(false);
     OverMap::IG_dialog_close();//clears IG_dialog_textString (hides the box)
     if(ccmap!=nullptr)
         ccmap->mapController.setRemoteDialogText(QString());
@@ -340,23 +349,23 @@ void OverMapLogic::connectAllSignals()
     //crafting
     /*if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtrecipeUsed,     this,&OverMapLogic::recipeUsed))
         abort();*/
-    /*//trade
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeRequested,             this,&OverMapLogic::tradeRequested))
+    //trade
+    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeRequested,             this,&OverMapLogic::tradeRequested,Qt::UniqueConnection))
         abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAcceptedByOther,       this,&OverMapLogic::tradeAcceptedByOther))
+    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAcceptedByOther,       this,&OverMapLogic::tradeAcceptedByOther,Qt::UniqueConnection))
         abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeCanceledByOther,       this,&OverMapLogic::tradeCanceledByOther))
+    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeCanceledByOther,       this,&OverMapLogic::tradeCanceledByOther,Qt::UniqueConnection))
         abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeFinishedByOther,       this,&OverMapLogic::tradeFinishedByOther))
+    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeFinishedByOther,       this,&OverMapLogic::tradeFinishedByOther,Qt::UniqueConnection))
         abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeValidatedByTheServer,  this,&OverMapLogic::tradeValidatedByTheServer))
+    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeValidatedByTheServer,  this,&OverMapLogic::tradeValidatedByTheServer,Qt::UniqueConnection))
         abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAddTradeCash,          this,&OverMapLogic::tradeAddTradeCash))
+    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAddTradeCash,          this,&OverMapLogic::tradeAddTradeCash,Qt::UniqueConnection))
         abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAddTradeObject,        this,&OverMapLogic::tradeAddTradeObject))
+    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAddTradeObject,        this,&OverMapLogic::tradeAddTradeObject,Qt::UniqueConnection))
         abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAddTradeMonster,       this,&OverMapLogic::tradeAddTradeMonster))
-        abort();*/
+    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAddTradeMonster,       this,&OverMapLogic::tradeAddTradeMonster,Qt::UniqueConnection))
+        abort();
     //inventory
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtobjectUsed,                 this,&OverMapLogic::objectUsed))
         abort();
@@ -413,6 +422,8 @@ void OverMapLogic::ensureInventory()
             abort();
         if(!connect(inventory,&Inventory::deleteItem,this,&OverMapLogic::inventoryItemDeleted))
             abort();
+        if(!connect(inventory,&Inventory::canceled,this,&OverMapLogic::selectionCanceled))
+            abort();
     }
 }
 
@@ -441,7 +452,7 @@ void OverMapLogic::ensureMonsterSelect()
             abort();
         if(!connect(monsterSelect,&MonsterSelect::useMonster,this,&OverMapLogic::monsterSelected))
             abort();
-        if(!connect(monsterSelect,&MonsterSelect::canceled,this,&OverMapLogic::monsterSelectCanceled))
+        if(!connect(monsterSelect,&MonsterSelect::canceled,this,&OverMapLogic::selectionCanceled))
             abort();
     }
 }
@@ -452,7 +463,7 @@ void OverMapLogic::monsterSelected(const uint8_t &monsterPosition)
     objectSelection(true,monsterPosition,1);
 }
 
-void OverMapLogic::monsterSelectCanceled()
+void OverMapLogic::selectionCanceled()
 {
     objectSelection(false);
 }
@@ -2446,8 +2457,48 @@ void OverMapLogic::objectSelection(const bool &ok, const uint16_t &itemId, const
                 Battle::battle->doNextAction();
         }
         break;
+        case ObjectType_Trade:
+            //back to the trade screen; itemId is the item
+            setAbove(trade);
+            if(!ok || trade==nullptr)
+                break;
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend() || playerInformations.items.at(itemId)<quantity)
+                break;
+            connexionManager->client->addObject(itemId,quantity);
+            remove_to_inventory(itemId,quantity);
+            trade->addCurrentObject(itemId,quantity);
+        break;
+        case ObjectType_MonsterToTrade:
+        {
+            //back to the trade screen; itemId is the team position
+            setAbove(trade);
+            if(!ok || trade==nullptr)
+                break;
+            const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
+            if(monsterPosition>=playerInformations.monsters.size())
+                break;
+            if(playerInformations.monsters.size()<=1)
+            {
+                showTip(tr("You can't trade your last monster").toStdString());
+                break;
+            }
+            if(!connexionManager->client->remainMonstersToFightWithoutThisMonster(monsterPosition))
+            {
+                showTip(tr("You don't have more monster valid").toStdString());
+                break;
+            }
+            const CatchChallenger::PlayerMonster monster=playerInformations.monsters.at(monsterPosition);
+            //send before the local remove: addMonsterByPosition() rejects a position past the shrunk team
+            connexionManager->client->addMonsterByPosition(monsterPosition);
+            if(!connexionManager->client->removeMonsterByPosition(monsterPosition))
+            {
+                emit error("removeMonsterByPosition failed for a traded monster");
+                break;
+            }
+            trade->addCurrentMonster(monster,monsterPosition);
+        }
+        break;
         default:
-            //Trade item and out-of-fight monster-trade are ported in later steps.
             setAbove(nullptr);
             showTip(tr("This action is not available yet").toStdString());
         break;

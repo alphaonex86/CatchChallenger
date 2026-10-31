@@ -1,122 +1,124 @@
 #include "OverMapLogic.hpp"
+#include "../above/Trade.hpp"
+#include "../ConnexionManager.hpp"
 
-/*void OverMapLogic::tradeRequested(const std::string &pseudo,const uint8_t &skinInt)
+void OverMapLogic::ensureTrade()
 {
-    WithAnotherPlayer withAnotherPlayerDialog(this,WithAnotherPlayer::WithAnotherPlayerType_Trade,getFrontSkin(skinInt),pseudo);
-    withAnotherPlayerDialog.exec();
-    if(!withAnotherPlayerDialog.actionIsAccepted())
+    if(trade==nullptr)
     {
-        client->tradeRefused();
-        return;
+        trade=new Trade();
+        if(!connect(trade,&Trade::setAbove,this,&OverMapLogic::setAbove))
+            abort();
+        if(!connect(trade,&Trade::add_to_inventory,this,&OverMapLogic::add_to_inventory_slotpair))
+            abort();
+        if(!connect(trade,&Trade::addCash,this,&OverMapLogic::addCash))
+            abort();
+        if(!connect(trade,&Trade::removeCash,this,&OverMapLogic::removeCash))
+            abort();
+        if(!connect(trade,&Trade::showTip,this,&OverMapLogic::showTip))
+            abort();
+        if(!connect(trade,&Trade::selectObjectForTrade,this,&OverMapLogic::tradeSelectObject))
+            abort();
+        if(!connect(trade,&Trade::selectMonsterForTrade,this,&OverMapLogic::tradeSelectMonster))
+            abort();
     }
-    client->tradeAccepted();
-    tradeAcceptedByOther(pseudo,skinInt);
+}
+
+void OverMapLogic::tradeRequested(const std::string &pseudo,const uint8_t &skinInt)
+{
+    tradeRequests.push_back(std::pair<std::string,uint8_t>(pseudo,skinInt));
+    if(!tradePromptShown)
+        tradePromptShow();
+}
+
+//no modal dialog here: the in-game dialog asks, closing or replacing it refuses
+void OverMapLogic::tradePromptShow()
+{
+    if(tradeRequests.empty())
+        return;
+    setIG_dialog(tr("%1 wants to trade with you").arg(QString::fromStdString(tradeRequests.front().first))+
+                 QStringLiteral("<br/><a href=\"tradeaccept\">%1</a><br/><a href=\"traderefuse\">%2</a>").arg(tr("Accept")).arg(tr("Refuse")),
+                 QString::fromStdString(tradeRequests.front().first));
+    tradePromptShown=true;
+}
+
+//accept: the trade opens, the other requests are refused; refuse: ask the next one
+void OverMapLogic::tradePromptAnswer(const bool &accept)
+{
+    tradePromptShown=false;
+    if(tradeRequests.empty())
+        return;
+    const std::pair<std::string,uint8_t> request=tradeRequests.front();
+    tradeRequests.erase(tradeRequests.cbegin());
+    if(accept)
+    {
+        connexionManager->client->tradeAccepted();
+        while(!tradeRequests.empty())
+        {
+            connexionManager->client->tradeRefused();
+            tradeRequests.erase(tradeRequests.cbegin());
+        }
+        tradeAcceptedByOther(request.first,request.second);
+    }
+    else
+    {
+        connexionManager->client->tradeRefused();
+        tradePromptShow();
+    }
 }
 
 void OverMapLogic::tradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt)
 {
-    ui->stackedWidget->setCurrentWidget(ui->page_trade);
-    tradeOtherStat=TradeOtherStat_InWait;
-    //reset the current player info
-    ui->tradePlayerCash->setMinimum(0);
-    ui->tradePlayerCash->setValue(0);
-    ui->tradePlayerItems->clear();
-    ui->tradePlayerMonsters->clear();
-    ui->tradePlayerCash->setEnabled(true);
-    ui->tradePlayerItems->setEnabled(true);
-    ui->tradePlayerMonsters->setEnabled(true);
-    ui->tradeAddItem->setEnabled(true);
-    ui->tradeAddMonster->setEnabled(true);
-    ui->tradeValidate->setEnabled(true);
-
-    const QPixmap skin(getFrontSkin(skinInt));
-    if(!skin.isNull())
-    {
-        //reset the other player info
-        ui->tradePlayerImage->setVisible(true);
-        ui->tradePlayerPseudo->setVisible(true);
-        ui->tradeOtherImage->setVisible(true);
-        ui->tradeOtherPseudo->setVisible(true);
-        ui->tradeOtherImage->setPixmap(skin);
-        ui->tradeOtherPseudo->setText(QString::fromStdString(pseudo));
-    }
-    else
-    {
-        ui->tradePlayerImage->setVisible(false);
-        ui->tradePlayerPseudo->setVisible(false);
-        ui->tradeOtherImage->setVisible(false);
-        ui->tradeOtherPseudo->setVisible(false);
-    }
-    ui->tradeOtherCash->setValue(0);
-    ui->tradeOtherItems->clear();
-    ui->tradeOtherMonsters->clear();
-    ui->tradeOtherStat->setText(tr("The other player don't have validate their selection"));
+    ensureTrade();
+    trade->setVar(connexionManager,pseudo,skinInt);
+    setAbove(trade);
 }
 
 void OverMapLogic::tradeCanceledByOther()
 {
-    if(ui->stackedWidget->currentWidget()!=ui->page_trade)
-        return;
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
-    showTip(tr("The other player have canceled your trade request").toStdString());
-    addCash(ui->tradePlayerCash->value());
-    add_to_inventory(tradeCurrentObjects,false);
-    fightEngine.addPlayerMonster(tradeCurrentMonsters);
-    load_monsters();
-    tradeOtherObjects.clear();
-    tradeCurrentObjects.clear();
-    tradeCurrentMonsters.clear();
-    tradeOtherMonsters.clear();
+    if(trade!=nullptr)
+        trade->tradeCanceledByOther();
 }
 
 void OverMapLogic::tradeFinishedByOther()
 {
-    tradeOtherStat=TradeOtherStat_Accepted;
-    if(!ui->tradeValidate->isEnabled())
-        ui->stackedWidget->setCurrentWidget(ui->page_map);
-    else
-        ui->tradeOtherStat->setText(tr("The other player have validated the selection"));
+    if(trade!=nullptr)
+        trade->tradeFinishedByOther();
 }
 
 void OverMapLogic::tradeValidatedByTheServer()
 {
-    if(ui->stackedWidget->currentWidget()==ui->page_trade)
-        ui->stackedWidget->setCurrentWidget(ui->page_map);
-    showTip(tr("Your trade is successfull").toStdString());
-    add_to_inventory(tradeOtherObjects);
-    addCash(ui->tradeOtherCash->value());
-    removeCash(ui->tradePlayerCash->value());
-    tradeEvolutionMonsters=fightEngine.addPlayerMonster(tradeOtherMonsters);
-    load_monsters();
-    tradeOtherObjects.clear();
-    tradeCurrentObjects.clear();
-    tradeCurrentMonsters.clear();
-    tradeOtherMonsters.clear();
+    if(trade==nullptr)
+        return;
+    trade->tradeValidatedByTheServer();
+    //a monster received with a trade evolution
     checkEvolution();
 }
 
 void OverMapLogic::tradeAddTradeCash(const uint64_t &cash)
 {
-    ui->tradeOtherCash->setValue(ui->tradeOtherCash->value()+static_cast<uint32_t>(cash));
+    if(trade!=nullptr)
+        trade->tradeAddTradeCash(cash);
 }
 
 void OverMapLogic::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
 {
-    if(tradeOtherObjects.find(item)!=tradeOtherObjects.cend())
-        tradeOtherObjects[item]+=quantity;
-    else
-        tradeOtherObjects[item]=quantity;
-    ui->tradeOtherItems->clear();
-    for(const auto &n : tradeOtherObjects) {
-        ui->tradeOtherItems->addItem(itemToGraphic(n.first,n.second));
-    }
+    if(trade!=nullptr)
+        trade->tradeAddTradeObject(item,quantity);
 }
 
-void OverMapLogic::tradeUpdateCurrentObject()
+void OverMapLogic::tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster)
 {
-    ui->tradePlayerItems->clear();
-    for(const auto &n : tradeCurrentObjects) {
-        ui->tradePlayerItems->addItem(itemToGraphic(n.first,n.second));
-    }
+    if(trade!=nullptr)
+        trade->tradeAddTradeMonster(monster);
 }
-*/
+
+void OverMapLogic::tradeSelectObject()
+{
+    selectObject(ObjectType_Trade);
+}
+
+void OverMapLogic::tradeSelectMonster()
+{
+    selectObject(ObjectType_MonsterToTrade);
+}

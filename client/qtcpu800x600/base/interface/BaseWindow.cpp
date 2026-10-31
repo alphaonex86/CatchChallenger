@@ -1457,12 +1457,12 @@ void BaseWindow::on_tradeCancel_clicked()
         add_to_inventory(tradeCurrentObjects,false);
         tradeCurrentObjects.clear();
 
-        //monster
+        //monster, last removed first: each position is relative to the team at its removal
         while(!tradeCurrentMonsters.empty())
         {
-            client->insertPlayerMonster(tradeCurrentMonstersPosition.front(),tradeCurrentMonsters.front());
-            tradeCurrentMonstersPosition.erase(tradeCurrentMonstersPosition.cbegin());
-            tradeCurrentMonsters.erase(tradeCurrentMonsters.cbegin());
+            client->insertPlayerMonster(tradeCurrentMonstersPosition.back(),tradeCurrentMonsters.back());
+            tradeCurrentMonstersPosition.pop_back();
+            tradeCurrentMonsters.pop_back();
         }
     }
 
