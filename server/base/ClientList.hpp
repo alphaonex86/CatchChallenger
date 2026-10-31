@@ -48,7 +48,6 @@ protected:
     //on push.
     std::vector<PLAYER_INDEX_FOR_CONNECTED> clients_removed_index;//garbage collector, reuse slot and only grow memory, never remove vector index and have to move whole back data
 private:
-    //std::unordered_map<uint32_t,PLAYER_INDEX_FOR_CONNECTED> playerById_db;//where used?
     std::unordered_map<std::string,PLAYER_INDEX_FOR_CONNECTED> playerByPseudo;//see ClientWithMapEventLoop.hpp or QtClientWithMap, only after character is selected
     std::unordered_set<PLAYER_INDEX_FOR_CONNECTED> clientForStatus;//to directly send status update to this specific client (without search into whole list)
 };

@@ -431,7 +431,7 @@ bool Client::disconnectClient()
     if(stat==ClientStat::CharacterSelecting)
     {
         stat=ClientStat::CharacterSelected;//to block the new connection util th destructor is invocked
-        GlobalServerData::serverPrivateVariables.playerById_db.erase(character_id_db);
+        unregisterCharacterId_db();
         //simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
         #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         if(character_id_db==0)
@@ -472,7 +472,7 @@ bool Client::disconnectClient()
         battleCanceled();
         removeFromClan();
         //simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
-        GlobalServerData::serverPrivateVariables.playerById_db.erase(character_id_db);
+        unregisterCharacterId_db();
         #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         LinkToMaster::linkToMaster->characterDisconnected(character_id_db);
         #endif
@@ -760,6 +760,28 @@ uint32_t Client::getMaxClanId(bool * const ok)
 bool Client::characterConnected_db(const uint32_t &characterId_db)
 {
     return GlobalServerData::serverPrivateVariables.playerById_db.find(characterId_db)!=GlobalServerData::serverPrivateVariables.playerById_db.cend();
+}
+
+//false (and the client refused with 0x03) when the character is already selecting or on this server
+bool Client::registerCharacterId_db(const uint8_t &query_id,const uint32_t &characterId)
+{
+    std::unordered_map<uint32_t,PLAYER_INDEX_FOR_CONNECTED> &playerById_db=GlobalServerData::serverPrivateVariables.playerById_db;
+    if(playerById_db.find(characterId)!=playerById_db.cend())
+    {
+        characterSelectionIsWrong(query_id,0x03,"Already logged");
+        return false;
+    }
+    playerById_db[characterId]=index_connected_player;
+    return true;
+}
+
+//only our own entry: a select refused with "Already logged" must not drop the connected one
+void Client::unregisterCharacterId_db()
+{
+    std::unordered_map<uint32_t,PLAYER_INDEX_FOR_CONNECTED> &playerById_db=GlobalServerData::serverPrivateVariables.playerById_db;
+    const std::unordered_map<uint32_t,PLAYER_INDEX_FOR_CONNECTED>::const_iterator it=playerById_db.find(character_id_db);
+    if(it!=playerById_db.cend() && it->second==index_connected_player)
+        playerById_db.erase(it);
 }
 
 void Client::disconnectClientById_db(const uint32_t &characterId_db)

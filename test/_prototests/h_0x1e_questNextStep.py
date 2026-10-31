@@ -102,6 +102,9 @@ def run(server):
         if not server.alive():
             return (False, "server died just after victim handshake: %r"
                     % server.crash_report())
+        # read back once the session left: the server refuses a character already on the map
+        victim.close()
+        time.sleep(0.4)
         base = H.reload_state(server, b"questvictim01", b"questvictim01pw")
         victim_base = (base.get("character_id"), base.get("x"),
                        base.get("y"), base.get("mapIndex"))
@@ -242,11 +245,6 @@ def run(server):
         # byte identical (id/pseudo/position) after all the rejected cheats.
         # ===============================================================
         time.sleep(0.4)  # let any disconnect-saves settle before reload
-        try:
-            victim.close()
-        except Exception:
-            pass
-        time.sleep(0.4)
         after = H.reload_state(server, b"questvictim01", b"questvictim01pw")
         victim_after = (after.get("character_id"), after.get("x"),
                         after.get("y"), after.get("mapIndex"))

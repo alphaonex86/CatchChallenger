@@ -576,7 +576,8 @@ struct ServerPrivateVariables
     int8_t sizeofInsertRequest;
 
     //connection
-    //std::unordered_set<uint32_t> connected_players_id_list; see playerById_db
+    //characters selecting or on this server, from select to disconnect: "Already logged" guard,
+    //master 0x4D duplicate-connection kick, 0xF8 token refusal
     std::unordered_map<uint32_t,PLAYER_INDEX_FOR_CONNECTED> playerById_db;
     std::vector<std::string> server_message;
     struct GiftEntry
