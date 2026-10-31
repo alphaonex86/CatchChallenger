@@ -64,7 +64,6 @@ private slots:
     void on_lineEditPass_returnPressed();
     void on_pushButtonTryLogin_clicked();
     void connectTheExternalSocket();
-    QString serverToDatapachPath(ListEntryEnvolued *selectedServer) const;
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
     void haveNewError();

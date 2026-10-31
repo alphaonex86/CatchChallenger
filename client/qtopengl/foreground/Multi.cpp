@@ -7,7 +7,6 @@
 #include <QDateTime>
 #include <QHash>
 #include "Multi.hpp"
-#include "../../../general/base/FacilityLibGeneral.hpp"
 #include "../../../general/tinyXML2/tinyxml2.hpp"
 #include "../../../general/base/cpp11addition.hpp"
 #include "../../../general/base/Version.hpp"
@@ -261,7 +260,7 @@ void Multi::server_add_finished()
     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
 
     connexionInfo.name=addServer->name();
-    connexionInfo.unique_code=QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",16));
+    connexionInfo.unique_code=ConnexionInfo::newCustomCode();
     connexionInfo.isCustom=true;
 
     if(addServer->type()==0)
@@ -366,7 +365,7 @@ void Multi::server_edit_finished()
                 return;
 
             connexionInfo.name=addServer->name();
-            connexionInfo.unique_code=QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",16));
+            connexionInfo.unique_code=ConnexionInfo::newCustomCode();
             connexionInfo.isCustom=true;
 
             if(addServer->type()==0)
@@ -494,170 +493,12 @@ std::string Multi::serverListLanguage()
 
 void Multi::saveConnexionInfoList()
 {
-    QSet<QString> valid;
-    unsigned int index=0;
-    while(index<temp_customConnexionInfoList.size())
-    {
-        const ConnexionInfo &connexionInfo=temp_customConnexionInfoList.at(index);
-        if(connexionInfo.unique_code.isEmpty())
-            abort();
-
-        if(connexionInfo.isCustom)
-        {
-            valid.insert(QStringLiteral("Custom-%1").arg(connexionInfo.unique_code));
-            Settings::settings->beginGroup(QStringLiteral("Custom-%1").arg(connexionInfo.unique_code));
-            if(!connexionInfo.ws.isEmpty())
-            {
-                Settings::settings->setValue(QStringLiteral("ws"),connexionInfo.ws);
-                Settings::settings->remove("host");
-                Settings::settings->remove("port");
-            }
-            else {
-                Settings::settings->setValue(QStringLiteral("host"),connexionInfo.host);
-                Settings::settings->setValue(QStringLiteral("port"),connexionInfo.port);
-                Settings::settings->remove("ws");
-            }
-            Settings::settings->setValue(QStringLiteral("name"),connexionInfo.name);
-        }
-        else
-            Settings::settings->beginGroup(QStringLiteral("Xml-%1").arg(connexionInfo.unique_code));
-        if(connexionInfo.connexionCounter>0)
-            Settings::settings->setValue(QStringLiteral("connexionCounter"),connexionInfo.connexionCounter);
-        else
-            Settings::settings->remove(QStringLiteral("connexionCounter"));
-        if(connexionInfo.lastConnexion>0 && connexionInfo.connexionCounter>0)
-            Settings::settings->setValue(QStringLiteral("lastConnexion"),(quint64)connexionInfo.lastConnexion);
-        else
-            Settings::settings->remove(QStringLiteral("lastConnexion"));
-        Settings::settings->setValue(QStringLiteral("proxyHost"),connexionInfo.proxyHost);
-        Settings::settings->setValue(QStringLiteral("proxyPort"),connexionInfo.proxyPort);
-        Settings::settings->endGroup();
-        index++;
-    }
-    QStringList groups=Settings::settings->childGroups();
-    index=0;
-    while(index<(unsigned int)groups.size())
-    {
-        const QString &groupName=groups.at(index);
-        if(groupName.startsWith("Custom-") && !valid.contains(groupName))
-            Settings::settings->remove(groupName);
-        index++;
-    }
-    Settings::settings->sync();
+    ConnexionInfo::saveList(temp_customConnexionInfoList,*Settings::settings);
 }
 
 std::vector<ConnexionInfo> Multi::loadConfigConnexionInfoList()
 {
-    std::vector<ConnexionInfo> returnedVar;
-    QStringList groups=Settings::settings->childGroups();
-    int index=0;
-    while(index<groups.size())
-    {
-        const QString &groupName=groups.at(index);
-        Settings::settings->beginGroup(groupName);
-        if((Settings::settings->contains("host") && Settings::settings->contains("port")) || Settings::settings->contains("ws"))
-        {
-            QString ws="";
-            if(Settings::settings->contains("ws"))
-                ws=Settings::settings->value("ws").toString();
-            QString Shost="";
-            if(Settings::settings->contains("host"))
-                Shost=Settings::settings->value("host").toString();
-            QString port_string="";
-            if(Settings::settings->contains("port"))
-                port_string=Settings::settings->value("port").toString();
-
-            QString name="";
-            if(Settings::settings->contains("name"))
-                name=Settings::settings->value("name").toString();
-            QString connexionCounter="0";
-            if(Settings::settings->contains("connexionCounter"))
-                connexionCounter=Settings::settings->value("connexionCounter").toString();
-            QString lastConnexion="0";
-            if(Settings::settings->contains("lastConnexion"))
-                lastConnexion=Settings::settings->value("lastConnexion").toString();
-
-            QString proxyHost="";
-            if(Settings::settings->contains("proxyHost"))
-                proxyHost=Settings::settings->value("proxyHost").toString();
-            QString proxyPort="0";
-            if(Settings::settings->contains("proxyPort"))
-                proxyPort=Settings::settings->value("proxyPort").toString();
-
-            bool ok=true;
-            ConnexionInfo connexionInfo;
-            connexionInfo.isCustom=false;
-            connexionInfo.port=0;
-            connexionInfo.connexionCounter=0;
-            connexionInfo.lastConnexion=0;
-            connexionInfo.proxyPort=0;
-
-            if(!ws.isEmpty())
-                connexionInfo.ws=ws;
-            else
-            {
-                #ifndef CATCHCHALLENGER_NO_TCPSOCKET
-                uint16_t port=static_cast<uint16_t>(port_string.toInt(&ok));
-                if(!ok)
-                    qDebug() << "dropped connexion, port wrong: " << port_string;
-                else
-                {
-                    connexionInfo.host=Shost;
-                    connexionInfo.port=port;
-                }
-                #else
-                ok=false;
-                #endif
-            }
-            if(groupName.startsWith("Custom-"))
-                connexionInfo.isCustom=true;
-            else if(groupName.startsWith("Xml-"))
-                connexionInfo.isCustom=false;
-            else
-                ok=false;
-            if(ok)
-            {
-                if(groupName.startsWith("Custom-"))
-                    connexionInfo.unique_code=groupName.mid(7);
-                else //Xml-
-                    connexionInfo.unique_code=groupName.mid(7);
-                connexionInfo.name=name;
-                connexionInfo.connexionCounter=connexionCounter.toUInt(&ok);
-                if(!ok)
-                {
-                    qDebug() << "ignored bug for connexion : connexionCounter";
-                    connexionInfo.connexionCounter=0;
-                }
-                connexionInfo.lastConnexion=lastConnexion.toUInt(&ok);
-                if(!ok)
-                {
-                    qDebug() << "ignored bug for connexion : lastConnexion";
-                    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-                }
-                if(connexionInfo.lastConnexion>static_cast<uint64_t>(QDateTime::currentMSecsSinceEpoch()/1000))
-                {
-                    qDebug() << "ignored bug for connexion : lastConnexion<time()";
-                    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-                }
-                if(!proxyHost.isEmpty())
-                {
-                    bool ok;
-                    uint16_t proxy_port=static_cast<uint16_t>(proxyPort.toInt(&ok));
-                    if(ok)
-                    {
-                        connexionInfo.proxyHost=proxyHost;
-                        connexionInfo.proxyPort=proxy_port;
-                    }
-                }
-                returnedVar.push_back(connexionInfo);
-            }
-        }
-        else
-            qDebug() << "dropped connexion, info seam wrong";
-        index++;
-        Settings::settings->endGroup();
-    }
-    return returnedVar;
+    return ConnexionInfo::loadCustomList(*Settings::settings);
 }
 
 void Multi::downloadFile()

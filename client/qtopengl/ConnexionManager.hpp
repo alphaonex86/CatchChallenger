@@ -36,7 +36,6 @@ public slots:
     void sslErrors(const QList<QSslError> &errors);
     #endif
     void connectTheExternalSocket(ConnexionInfo connexionInfo,CatchChallenger::Api_client_real * client);
-    QString serverToDatapachPath(ConnexionInfo connexionInfo) const;
     void stateChanged(QAbstractSocket::SocketState socketState);
     QAbstractSocket::SocketState state();
     void error(QAbstractSocket::SocketError socketError);

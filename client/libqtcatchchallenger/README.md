@@ -106,6 +106,8 @@ client, each in its own idiom.
 | Quest text by step condition | `DatapackClientLoader::questText()` |
 | Factory buy/sell replies, stock, prices, production time | `FactoryTrade` (libcatchchallenger) |
 | Server list entry + `server_list.xml` loader | `ConnexionInfo`, `ConnexionInfo::loadXmlList()` |
+| Custom servers in settings (one `Custom-<code>` group each; old qtcpu800x600 keys migrated once) | `ConnexionInfo::loadCustomList()`, `saveList()`, `migrateOldCustomList()` |
+| Datapack cache dir per server (`argument-`/`Custom-`/`Xml-<code>`) | `ConnexionInfo::datapackCachePath()` |
 | New-game profile texts (list index = profile index) | `DatapackClientLoader::profileTexts()` |
 | Bot text step by language, dialog links | `Api_protocol::botStepText()`, `Api_protocol::parseBotLink()` |
 
@@ -119,8 +121,6 @@ write it a third time.
 
 | Logic | qtcpu800x600 | qtopengl | State |
 |---|---|---|---|
-| Custom server list in settings (`loadConfigConnexionInfoList`, `saveConnexionInfoList`) | `ultimate/mainwindow.cpp` (parallel key lists) | `foreground/Multi.cpp` (one `Custom-<code>` group per server) | two storage formats: one shared code means migrating one client's saved servers |
-| Datapack cache dir per server (`serverToDatapachPath`) | `ultimate/mainwindow.cpp` (`<name>/`, `<host>-<port>/`, `argument-<code>`) | `ConnexionManager.cpp` (`argument-`/`Custom-`/`Xml-<code>`) | diverged; qtcpu puts the user-typed server name in the path |
 | Evolution check after fight (`checkEvolution`) | `fight/interface/BaseWindowFight.cpp` | none live (`foreground/Battle.cpp` copy is commented out, QtQuick) | qtopengl feature missing, nothing to share yet |
 | Rest of the bot step dispatch (`goToBotStep`: shop/heal/learn/clan/fight/zone...) | `base/interface/BaseWindowBot.cpp` | `foreground/OverMapLogicBot.cpp` | mostly UI per step |
 

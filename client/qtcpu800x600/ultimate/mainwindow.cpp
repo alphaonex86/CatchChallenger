@@ -272,6 +272,7 @@ MainWindow::MainWindow(QWidget *parent) :
         ci.port=CliClientOptions::port;
         ci.name=CliClientOptions::host+QStringLiteral(":")+QString::number(CliClientOptions::port);
         ci.unique_code=CliClientOptions::host+QStringLiteral("-")+QString::number(CliClientOptions::port);
+        ci.isArgument=true;
         mergedConnexionInfoList.push_back(ci);
 
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
@@ -290,7 +291,7 @@ MainWindow::MainWindow(QWidget *parent) :
         ci.ws=CliClientOptions::url;
         ci.name=CliClientOptions::url;
         ci.unique_code=CliClientOptions::url;
-        ci.port=0;
+        ci.isArgument=true;
         mergedConnexionInfoList.push_back(ci);
 
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
@@ -445,132 +446,18 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
 {
-    std::vector<ConnexionInfo> returnedVar;
-    QStringList connexionList;
-    QStringList nameList;
-    QStringList connexionCounterList;
-    QStringList lastConnexionList;
-    QStringList proxyList;
-    if(settings.contains(QStringLiteral("connexionList")))
-        connexionList=settings.value(QStringLiteral("connexionList")).toStringList();
-    if(settings.contains(QStringLiteral("proxyList")))
-        proxyList=settings.value(QStringLiteral("proxyList")).toStringList();
-    if(settings.contains(QStringLiteral("nameList")))
-        nameList=settings.value(QStringLiteral("nameList")).toStringList();
-    if(settings.contains(QStringLiteral("connexionCounterList")))
-        connexionCounterList=settings.value(QStringLiteral("connexionCounterList")).toStringList();
-    if(settings.contains(QStringLiteral("lastConnexionList")))
-        lastConnexionList=settings.value(QStringLiteral("lastConnexionList")).toStringList();
-    if(nameList.size()!=connexionList.size())
-        nameList.clear();
-    if(connexionCounterList.size()!=connexionList.size())
-        connexionCounterList.clear();
-    if(proxyList.size()!=connexionList.size())
-        proxyList.clear();
-    if(lastConnexionList.size()!=connexionList.size())
-        lastConnexionList.clear();
-    while(nameList.size()<connexionList.size())
-        nameList << QString();
-    while(proxyList.size()<connexionList.size())
-        proxyList << QString();
-    while(connexionCounterList.size()<connexionList.size())
-        connexionCounterList << QString();
-    while(lastConnexionList.size()<connexionList.size())
-        lastConnexionList << QString();
-    int index=0;
-    const QRegularExpression regexConnexion(QStringLiteral("^[a-zA-Z0-9\\.\\-_:]+:[0-9]{1,5}$"));
-    const QRegularExpression hostRemove(QStringLiteral(":[0-9]{1,5}$"));
-    const QRegularExpression postRemove("^.*:");
-    while(index<connexionList.size())
+    ConnexionInfo::migrateOldCustomList(settings);
+    std::vector<ConnexionInfo> list=ConnexionInfo::loadCustomList(settings);
+    unsigned int index=0;
+    while(index<list.size())
     {
-        QString connexion=connexionList.at(index);
-        QString name=nameList.at(index);
-        QString connexionCounter=connexionCounterList.at(index);
-        QString lastConnexion=lastConnexionList.at(index);
-        QString proxy=proxyList.at(index);
-        if(connexion.contains(regexConnexion) || connexion.startsWith("ws://") || connexion.startsWith("wss://"))
-        {
-            bool ok=true;
-            #ifndef CATCHCHALLENGER_NO_TCPSOCKET
-            QString host=connexion;
-            uint16_t port=0;
-            #endif
-            if(connexion.startsWith("ws://") || connexion.startsWith("wss://"))
-            {}
-            else
-            {
-                #ifndef CATCHCHALLENGER_NO_TCPSOCKET
-                host=connexion;
-                host.remove(hostRemove);
-                QString port_string=connexion;
-                port_string.remove(postRemove);
-                port=static_cast<uint16_t>(port_string.toInt(&ok));
-                if(!ok)
-                    qDebug() << "dropped connexion, port wrong: " << port_string;
-                #else
-                ok=false;
-                #endif
-            }
-            if(ok)
-            {
-                ConnexionInfo connexionInfo;
-                connexionInfo.lan=false;
-                if(connexion.startsWith("ws://") || connexion.startsWith("wss://"))
-                {
-                    #ifndef CATCHCHALLENGER_NO_WEBSOCKET
-                    connexionInfo.ws=connexion;
-                    #endif
-                }
-                else
-                {
-                    #ifndef CATCHCHALLENGER_NO_TCPSOCKET
-                    connexionInfo.host=host;
-                    connexionInfo.port=port;
-                    #endif
-                }
-                connexionInfo.name=name;
-                while(customServerName.contains(connexionInfo.name))
-                    connexionInfo.name=tr("Copy of %1").arg(connexionInfo.name);
-                customServerName << name;
-                connexionInfo.connexionCounter=connexionCounter.toUInt(&ok);
-                if(!ok)
-                {
-                    qDebug() << "ignored bug for connexion : " << connexion << " connexionCounter";
-                    connexionInfo.connexionCounter=0;
-                }
-                connexionInfo.lastConnexion=lastConnexion.toUInt(&ok);
-                if(!ok)
-                {
-                    qDebug() << "ignored bug for connexion : " << connexion << " lastConnexion";
-                    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-                }
-                if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
-                {
-                    qDebug() << "ignored bug for connexion : " << connexion << " lastConnexion<time()";
-                    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-                }
-                if(proxy.contains(regexConnexion))
-                {
-                    QString host=proxy;
-                    host.remove(hostRemove);
-                    QString proxy_port_string=proxy;
-                    proxy_port_string.remove(postRemove);
-                    bool ok;
-                    uint16_t proxy_port=static_cast<uint16_t>(proxy_port_string.toInt(&ok));
-                    if(ok)
-                    {
-                        connexionInfo.proxyHost=host;
-                        connexionInfo.proxyPort=proxy_port;
-                    }
-                }
-                returnedVar.push_back(connexionInfo);
-            }
-        }
-        else
-            qDebug() << "dropped connexion, info seam wrong: " << connexion;
+        ConnexionInfo &connexionInfo=list[index];
+        while(customServerName.contains(connexionInfo.name))
+            connexionInfo.name=tr("Copy of %1").arg(connexionInfo.name);
+        customServerName << connexionInfo.name;
         index++;
     }
-    return returnedVar;
+    return list;
 }
 
 void MainWindow::displayServerList()
@@ -588,38 +475,7 @@ void MainWindow::displayServerList()
     }
     else if(serverConnexion.contains(selectedServer))
     {
-        ConnexionInfo * connexionInfo=serverConnexion.value(selectedServer);
-        if(connexionInfo->unique_code.isEmpty())
-        {
-            if(connexionInfo->proxyHost.isEmpty())
-            {
-                if(!connexionInfo->host.isEmpty())
-                    unique_code=QString("%1:%2")
-                        .arg(connexionInfo->host)
-                        .arg(connexionInfo->port)
-                        ;
-                else
-                    unique_code=QString(connexionInfo->ws.toUtf8().toHex());
-            }
-            else
-            {
-                if(!connexionInfo->host.isEmpty())
-                    unique_code=QString("%1:%2:%3:%4")
-                        .arg(connexionInfo->host)
-                        .arg(connexionInfo->port)
-                        .arg(connexionInfo->proxyHost)
-                        .arg(connexionInfo->proxyPort)
-                        ;
-                else
-                    unique_code=QString("%1:%2:%3")
-                        .arg(QString(connexionInfo->ws.toUtf8().toHex()))
-                        .arg(connexionInfo->proxyHost)
-                        .arg(connexionInfo->proxyPort)
-                        ;
-            }
-        }
-        else
-            unique_code=connexionInfo->unique_code;
+        unique_code=serverConnexion.value(selectedServer)->unique_code;
     }
     const ListEntryEnvolued * tempSelectedServer=selectedServer;
     selectedServer=NULL;
@@ -676,48 +532,10 @@ void MainWindow::displayServerList()
         if(connexionInfo.connexionCounter>0)
             lastConnexion=tr("Last connexion: %1").arg(QDateTime::fromMSecsSinceEpoch((uint64_t)connexionInfo.lastConnexion*1000).toString());
         QString custom;
-        if(connexionInfo.unique_code.isEmpty())
-        {
+        if(connexionInfo.isCustom)
             custom=QStringLiteral(" (%1)").arg(tr("Custom"));
-            QString tempUniqueCode;
-            if(connexionInfo.proxyHost.isEmpty())
-            {
-                #ifndef CATCHCHALLENGER_NO_TCPSOCKET
-                if(!connexionInfo.host.isEmpty())
-                    tempUniqueCode=QString("%1:%2")
-                        .arg(connexionInfo.host)
-                        .arg(connexionInfo.port)
-                        ;
-                else
-                #endif
-                    tempUniqueCode=QString(connexionInfo.ws.toUtf8().toHex());
-            }
-            else
-            {
-                #ifndef CATCHCHALLENGER_NO_TCPSOCKET
-                if(!connexionInfo.host.isEmpty())
-                    tempUniqueCode=QString("%1:%2:%3:%4")
-                        .arg(connexionInfo.host)
-                        .arg(connexionInfo.port)
-                        .arg(connexionInfo.proxyHost)
-                        .arg(connexionInfo.proxyPort)
-                        ;
-                else
-                #endif
-                    tempUniqueCode=QString("%1:%2:%3")
-                        .arg(QString(connexionInfo.ws.toUtf8().toHex()))
-                        .arg(connexionInfo.proxyHost)
-                        .arg(connexionInfo.proxyPort)
-                        ;
-            }
-            if(unique_code==tempUniqueCode)
-                selectedServer=newEntry;
-        }
-        else
-        {
-            if(unique_code==connexionInfo.unique_code)
-                selectedServer=newEntry;
-        }
+        if(unique_code==connexionInfo.unique_code)
+            selectedServer=newEntry;
         QString stringPort;
         #ifndef CATCHCHALLENGER_NO_TCPSOCKET
         if(!connexionInfo.host.isEmpty())
@@ -757,7 +575,7 @@ void MainWindow::displayServerList()
 
         server.push_back(newEntry);
         serverConnexion[newEntry]=&mergedConnexionInfoList[index];
-        if(connexionInfo.unique_code.isEmpty())
+        if(connexionInfo.isCustom)
             customServerConnexion << newEntry;
         index++;
     }
@@ -850,6 +668,9 @@ void MainWindow::server_add_finished()
     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
 
     connexionInfo.name=addServer->name();
+    connexionInfo.isCustom=true;
+    connexionInfo.unique_code=ConnexionInfo::newCustomCode();
+    customServerName << connexionInfo.name;
 
     if(addServer->type()==0)
     {
@@ -1000,52 +821,7 @@ void MainWindow::on_server_remove_clicked()
 
 void MainWindow::saveConnexionInfoList()
 {
-    QStringList connexionList;
-    QStringList nameList;
-    QStringList connexionCounterList;
-    QStringList lastConnexionList;
-    QStringList proxyList;
-    unsigned int index=0;
-    while(index<mergedConnexionInfoList.size())
-    {
-        const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(index);
-        if(connexionInfo.unique_code.isEmpty())
-        {
-            QString proxy;
-            if(!connexionInfo.proxyHost.isEmpty())
-                proxy=QStringLiteral("%1:%2").arg(connexionInfo.proxyHost).arg(connexionInfo.proxyPort);
-            else
-                proxy=QStringLiteral("");
-            if(!connexionInfo.host.isEmpty())
-                connexionList << QStringLiteral("%1:%2").arg(connexionInfo.host).arg(connexionInfo.port);
-            else
-                connexionList << connexionInfo.ws;
-            nameList << connexionInfo.name;
-            connexionCounterList << QString::number(connexionInfo.connexionCounter);
-            lastConnexionList << QString::number(connexionInfo.lastConnexion);
-            proxyList << proxy;
-        }
-        else
-        {
-            settings.beginGroup(QStringLiteral("Xml-%1").arg(connexionInfo.unique_code));
-            if(connexionInfo.connexionCounter>0)
-                settings.setValue(QStringLiteral("connexionCounter"),connexionInfo.connexionCounter);
-            else
-                settings.remove(QStringLiteral("connexionCounter"));
-            if(connexionInfo.lastConnexion>0 && connexionInfo.connexionCounter>0)
-                settings.setValue(QStringLiteral("lastConnexion"),static_cast<quint64>(connexionInfo.lastConnexion));
-            else
-                settings.remove(QStringLiteral("lastConnexion"));
-            settings.endGroup();
-        }
-        index++;
-    }
-    settings.setValue(QStringLiteral("connexionList"),connexionList);
-    settings.setValue(QStringLiteral("nameList"),nameList);
-    settings.setValue(QStringLiteral("connexionCounterList"),connexionCounterList);
-    settings.setValue(QStringLiteral("lastConnexionList"),lastConnexionList);
-    settings.setValue(QStringLiteral("proxyList"),proxyList);
-    settings.sync();
+    ConnexionInfo::saveList(mergedConnexionInfoList,settings);
 }
 
 void MainWindow::serverListEntryEnvoluedDoubleClicked()
@@ -1382,7 +1158,7 @@ void MainWindow::connectTheExternalSocket()
 
     baseWindow->connectAllSignals();
     baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
-    QDir datapack(serverToDatapachPath(selectedServer));
+    QDir datapack(serverConnexion.value(selectedServer)->datapackCachePath());
     if(!datapack.exists())
         if(!datapack.mkpath(datapack.absolutePath()))
         {
@@ -1391,21 +1167,6 @@ void MainWindow::connectTheExternalSocket()
         }
     client->setDatapackPath(datapack.absolutePath().toStdString());
     baseWindow->stateChanged(QAbstractSocket::ConnectedState);
-}
-
-QString MainWindow::serverToDatapachPath(ListEntryEnvolued * selectedServer) const
-{
-    QDir datapack;
-    if(customServerConnexion.contains(selectedServer))
-    {
-        if(!serverConnexion.value(selectedServer)->name.isEmpty())
-             datapack=QDir(QStringLiteral("%1/datapack/%2/").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->name));
-        else
-             datapack=QDir(QStringLiteral("%1/datapack/%2-%3/").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port));
-    }
-    else
-        datapack=QDir(QStringLiteral("%1/datapack/argument-%2").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->unique_code));
-    return datapack.absolutePath();
 }
 
 void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
@@ -2047,6 +1808,7 @@ void MainWindow::reinjectAutoArgsServer()
             ci.port=CliClientOptions::port;
             ci.name=CliClientOptions::host+QStringLiteral(":")+QString::number(CliClientOptions::port);
             ci.unique_code=want;
+            ci.isArgument=true;
             mergedConnexionInfoList.push_back(ci);
         }
     }
@@ -2064,7 +1826,7 @@ void MainWindow::reinjectAutoArgsServer()
             ci.ws=CliClientOptions::url;
             ci.name=CliClientOptions::url;
             ci.unique_code=CliClientOptions::url;
-            ci.port=0;
+            ci.isArgument=true;
             mergedConnexionInfoList.push_back(ci);
         }
     }

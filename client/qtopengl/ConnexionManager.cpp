@@ -372,9 +372,9 @@ void ConnexionManager::connectTheExternalSocket(ConnexionInfo connexionInfo,Catc
             datapack=QDir(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/"));
     }
     else
-        datapack=QDir(serverToDatapachPath(connexionInfo));
+        datapack=QDir(connexionInfo.datapackCachePath());
     #else
-    QDir datapack(serverToDatapachPath(connexionInfo));
+    QDir datapack(connexionInfo.datapackCachePath());
     #endif
     if(!datapack.exists())
         if(!datapack.mkpath(datapack.absolutePath()))
@@ -391,42 +391,6 @@ void ConnexionManager::connectTheExternalSocket(ConnexionInfo connexionInfo,Catc
     CommonSettingsServer::commonSettingsServer.subDatapackCode=subDatapackCode;
     //baseWindow->stateChanged(QAbstractSocket::ConnectedState);
 }
-
-QString ConnexionManager::serverToDatapachPath(ConnexionInfo connexionInfo) const
-{
-    QDir datapack;
-    if(connexionInfo.isArgument)
-        datapack=QDir(QStringLiteral("%1/datapack/argument-%2/")
-                      .arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation))
-                      .arg(connexionInfo.unique_code)
-                      );
-    else if(connexionInfo.isCustom)
-        datapack=QDir(QStringLiteral("%1/datapack/Custom-%2/")
-                      .arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation))
-                      .arg(connexionInfo.unique_code)
-                      );
-    else
-        datapack=QDir(QStringLiteral("%1/datapack/Xml-%2")
-                      .arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation))
-                      .arg(connexionInfo.unique_code)
-                      );
-    return datapack.absolutePath();
-}
-
-/*QString ConnexionManager::serverToDatapachPath(ListEntryEnvolued * selectedServer) const
-{
-    QDir datapack;
-    if(customServerConnexion.contains(selectedServer))
-    {
-        if(!serverConnexion.value(selectedServer)->name.isEmpty())
-             datapack=QDir(QStringLiteral("%1/datapack/%2/").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->name));
-        else
-             datapack=QDir(QStringLiteral("%1/datapack/%2-%3/").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port));
-    }
-    else
-        datapack=QDir(QStringLiteral("%1/datapack/Xml-%2").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->unique_code));
-    return datapack.absolutePath();
-}*/
 
 void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
 {
