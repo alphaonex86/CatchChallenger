@@ -78,21 +78,14 @@ void MultipleBotConnectionImplForGui::detectSlowDown()
 {
     quint32 queryCount=0;
     quint32 worseTime=0;
+    const uint64_t nowMs=CatchChallenger::Api_protocol::queryClockMs();
     QHashIterator<CatchChallenger::Api_client_real *,CatchChallengerClient *> i(apiToCatchChallengerClient);
     while (i.hasNext()) {
         i.next();
-        const std::map<uint8_t,uint64_t> &values=i.key()->getQuerySendTimeList();
-        queryCount+=values.size();
-        for ( const std::pair<const uint8_t, uint64_t> &n : values )
-        {
-            std::time_t result = std::time(nullptr);
-            if(result>=(std::time_t)n.second)
-            {
-                const uint32_t &time=result-n.second;
-                if(time>worseTime)
-                    worseTime=time;
-            }
-        }
+        queryCount+=i.key()->getQuerySendTimeList().size();
+        const uint32_t time=i.key()->worstRunningQueryTime(nowMs);
+        if(time>worseTime)
+            worseTime=time;
     }
     emit emit_detectSlowDown(queryCount,worseTime);
 }

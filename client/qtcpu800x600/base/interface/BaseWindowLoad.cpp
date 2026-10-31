@@ -43,7 +43,7 @@ void BaseWindow::resetAll()
     ui->itemFilterAdmin->clear();
     mapController->resetAll();
     waitedObjectType=ObjectType_All;
-    lastReplyTimeValue=-1;
+    slowServerDetector.reset();
     protocolIsGood=false;
     monsterBeforeMoveForChangeInWaiting=false;
     worseQueryTime=0;

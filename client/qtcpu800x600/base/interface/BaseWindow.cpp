@@ -165,7 +165,6 @@ BaseWindow::BaseWindow() :
     questId=0;
 
     monsterBeforeMoveForChangeInWaiting=false;
-    lastReplyTimeValue=0;
     worseQueryTime=0;
     multiplayer=false;
 
@@ -1735,19 +1734,7 @@ void BaseWindow::changeDeviceIndex(int device)
 void BaseWindow::lastReplyTime(const uint32_t &time)
 {
     ui->labelLastReplyTime->setText(tr("Last reply time: %1ms").arg(time));
-    if(lastReplyTimeValue<=TIMEINMSTOBESLOW || lastReplyTimeSince.elapsed()>TIMETOSHOWTHETURTLE)
-    {
-        lastReplyTimeValue=time;
-        lastReplyTimeSince.restart();
-    }
-    else
-    {
-        if(time>TIMEINMSTOBESLOW)
-        {
-            lastReplyTimeValue=time;
-            lastReplyTimeSince.restart();
-        }
-    }
+    slowServerDetector.replyReceived(time,CatchChallenger::Api_protocol::queryClockMs());
     updateTheTurtle();
 }
 
@@ -1755,20 +1742,15 @@ void BaseWindow::detectSlowDown()
 {
     if(client==NULL)
         return;
-    uint32_t queryCount=0;
-    worseQueryTime=0;
+    worseQueryTime=client->worstRunningQueryTime(CatchChallenger::Api_protocol::queryClockMs());
     std::vector<std::string> middleQueryList;
     const std::map<uint8_t,uint64_t> &values=client->getQuerySendTimeList();
-    queryCount+=values.size();
-    for(const std::pair<const uint8_t, uint64_t> n : values) {
-        middleQueryList.push_back(std::to_string(n.first));
-        std::time_t result = std::time(nullptr);
-        if((uint64_t)result>=n.second)
-        {
-            const uint32_t &time=result-n.second;
-            if(time>worseQueryTime)
-                worseQueryTime=time;
-        }
+    const uint32_t queryCount=static_cast<uint32_t>(values.size());
+    std::map<uint8_t,uint64_t>::const_iterator i=values.cbegin();
+    while(i!=values.cend())
+    {
+        middleQueryList.push_back(std::to_string(i->first));
+        ++i;
     }
     if(queryCount>0)
         ui->labelQueryList->setText(
@@ -1792,26 +1774,20 @@ void BaseWindow::updateTheTurtle()
         ui->labelSlow->hide();
         return;
     }
-    if(lastReplyTimeValue>TIMEINMSTOBESLOW && lastReplyTimeSince.elapsed()<TIMETOSHOWTHETURTLE)
+    const CatchChallenger::SlowServerDetector::State state=slowServerDetector.state(worseQueryTime,CatchChallenger::Api_protocol::queryClockMs());
+    if(state==CatchChallenger::SlowServerDetector::State_Fast)
     {
-        //qDebug() << "The last query was slow:" << lastReplyTimeValue << ">" << TIMEINMSTOBESLOW << " && " << lastReplyTimeSince.elapsed() << "<" << TIMETOSHOWTHETURTLE;
         if(ui->labelSlow->isVisible())
-            return;
-        ui->labelSlow->setToolTip(tr("The last query was slow (%1ms)").arg(lastReplyTimeValue));
-        ui->labelSlow->show();
+            ui->labelSlow->hide();
         return;
     }
-    if(worseQueryTime>TIMEINMSTOBESLOW)
-    {
-        if(ui->labelSlow->isVisible())
-            return;
+    if(ui->labelSlow->isVisible())
+        return;
+    if(state==CatchChallenger::SlowServerDetector::State_LastReplySlow)
+        ui->labelSlow->setToolTip(tr("The last query was slow (%1ms)").arg(slowServerDetector.slowReplyTime()));
+    else
         ui->labelSlow->setToolTip(tr("Remain query in suspend (%1ms ago)").arg(worseQueryTime));
-        ui->labelSlow->show();
-        return;
-    }
-    if(!ui->labelSlow->isVisible())
-        return;
-    ui->labelSlow->hide();
+    ui->labelSlow->show();
 }
 
 void BaseWindow::on_serverList_activated(const QModelIndex &index)

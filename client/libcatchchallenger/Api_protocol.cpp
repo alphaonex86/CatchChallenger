@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #endif
 #include <iostream>
+#include <chrono>
 
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/GeneralVariable.hpp"
@@ -120,6 +121,25 @@ std::map<uint8_t,uint64_t> Api_protocol::getQuerySendTimeList() const
     return querySendTime;
 }
 
+uint32_t Api_protocol::worstRunningQueryTime(const uint64_t &nowMs) const
+{
+    uint32_t worst=0;
+    std::map<uint8_t,uint64_t>::const_iterator i=querySendTime.cbegin();
+    while(i!=querySendTime.cend())
+    {
+        if(nowMs>=i->second && (nowMs-i->second)>worst)
+            worst=static_cast<uint32_t>(nowMs-i->second);
+        ++i;
+    }
+    return worst;
+}
+
+uint64_t Api_protocol::queryClockMs()
+{
+    return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now().time_since_epoch()).count());
+}
+
 std::vector<uint8_t> &Api_protocol::getEvents()
 {
     return events;
@@ -198,8 +218,7 @@ uint8_t Api_protocol::queryNumber()
         abort();
     }
     const uint8_t lastQueryNumberTemp=this->lastQueryNumber.back();
-    const std::time_t result = std::time(nullptr);
-    querySendTime[lastQueryNumberTemp]=result;
+    querySendTime[lastQueryNumberTemp]=queryClockMs();
     this->lastQueryNumber.pop_back();
     return lastQueryNumberTemp;
 }
