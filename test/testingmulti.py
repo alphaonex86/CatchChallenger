@@ -519,9 +519,9 @@ def _start_local_server(case):
     return True
 
 
-def _trade_characters_ready(case, gl):
-    """Fresh server-filedb with PlayerA and PlayerB created, PlayerA given a second
-    monster 13 (evolves by trade into 14), the server started again. Returns ok."""
+def _trade_characters_ready(case, gl, traded=1):
+    """Fresh server-filedb with PlayerA and PlayerB created, PlayerA given `traded`
+    more monsters 13 (evolves by trade into 14), the server started again. Returns ok."""
     import time
     if not os.path.isfile(os.path.join(FILEDB_CONVERTER_BUILD, FILEDB_CONVERTER_BIN)):
         log_fail(case, "filedb-converter not built")
@@ -542,10 +542,13 @@ def _trade_characters_ready(case, gl):
     for proc in clients: kill_client(proc)
     time.sleep(1.0)
     stop_server()
-    ok, err = _filedb_add_monster(CHAR_A, 13)
-    if not ok:
-        log_fail(case, f"savegame edit: {err}")
-        return False
+    i = 0
+    while i < traded:
+        ok, err = _filedb_add_monster(CHAR_A, 13)
+        if not ok:
+            log_fail(case, f"savegame edit: {err}")
+            return False
+        i += 1
     return _start_local_server(case)
 
 
@@ -561,10 +564,12 @@ def run_channel_trade_evolution_test(dp_name, failed_cases):
     import time
     case = "trade + trade evolution between two players vs local server"
     battle_case = "player battle request accepted vs local server"
-    if not should_run(case, failed_cases) and not should_run(battle_case, failed_cases):
+    refused_case = "trade evolution refused after another action vs local server"
+    if not (should_run(case, failed_cases) or should_run(battle_case, failed_cases) or
+            should_run(refused_case, failed_cases)):
         return
     print(f"\n{C_CYAN}--- Trade + trade evolution (2 clients vs local server-filedb): {dp_name} {MAINCODE} ---{C_RESET}\n")
-    if not _trade_characters_ready(case, False):
+    if not _trade_characters_ready(case, False, 2):
         return
     clients = []
     detail = ""
@@ -578,9 +583,27 @@ def run_channel_trade_evolution_test(dp_name, failed_cases):
             clients.append((proc, out, sk))
         sk_a, sk_b = clients[0][2], clients[1][2]
         team_a = _channel_team(sk_a)
-        if team_a[1:2] != [13]:
+        if team_a[1:3] != [13, 13]:
             log_fail(case, f"savegame edit not loaded: PlayerA team={team_a}")
             return
+        # first trade: the trade evolution is valid until B's next action. B turns
+        # first, its 0x0F (sent after the 4s animation) must be refused (B kicked,
+        # 13 saved). B reconnects: the client shows one evolution at a time.
+        _channel_cmd(sk_a, f"TRADEREQUEST {CHAR_B}", 1.5)
+        _channel_cmd(sk_b, "TRADEACCEPT", 1.5)
+        _channel_cmd(sk_a, "TRADEADDMONSTER 1", 1.0)
+        _channel_cmd(sk_a, "TRADEFINISH", 1.0)
+        _channel_cmd(sk_b, "TRADEFINISH", 0.3)
+        _channel_cmd(sk_b, "KEY Left", 0.3)
+        time.sleep(8.0)
+        kill_client(clients[1][0])
+        proc, out, sk_b, err = _start_channel_client(CHAR_B, f"testTrade{CHAR_B}Key", "cc-test-trade-")
+        if err is not None:
+            log_fail(refused_case, f"reconnect {err}")
+            for line in out[-25:]: print(f"  | {line}")
+            return
+        clients[1] = (proc, out, sk_b)
+        # second trade: confirmed with no action before -> evolves
         _channel_cmd(sk_a, f"TRADEREQUEST {CHAR_B}", 1.5)
         _channel_cmd(sk_b, "TRADEACCEPT", 1.5)
         _channel_cmd(sk_a, "TRADEADDMONSTER 1", 1.0)
@@ -645,6 +668,10 @@ def run_channel_trade_evolution_test(dp_name, failed_cases):
         log_fail(case, f"server saved PlayerA={team_a} PlayerB={team_b} (expected 14 at B, no 13 at A); {detail}")
     else:
         log_pass(case, f"server saved PlayerA={team_a} PlayerB={team_b}; {detail}")
+        if team_b.count(13) == 1 and team_b.count(14) == 1:
+            log_pass(refused_case, f"the monster traded before B's action stayed 13: PlayerB={team_b}")
+        else:
+            log_fail(refused_case, f"expected one 14 and one non evolved 13 at B: PlayerB={team_b}")
 
 
 # qtopengl trade UI at the channel's 640x480 (CLICKSCREEN pixels)

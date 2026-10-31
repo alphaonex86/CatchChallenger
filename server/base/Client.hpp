@@ -672,6 +672,8 @@ private:
     uint64_t tradeCash;
     std::unordered_map<uint16_t,uint32_t> tradeObjects;
     std::vector<PlayerMonster> tradeMonster;
+    //team positions received by the last trade with a trade evolution, valid until the next action
+    std::vector<uint8_t> tradeEvolutionPositions;
     std::vector<uint32_t> inviteToClanList;
     //Clan *clan;->public_and_private_informations.clan + clanList
     PLAYER_INDEX_FOR_CONNECTED otherCityPlayerBattle;

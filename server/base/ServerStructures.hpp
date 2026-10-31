@@ -550,7 +550,6 @@ struct ServerPrivateVariables
     std::vector<std::vector<CATCHCHALLENGER_TYPE_MAPID/*mapId*/> > zoneIdToMapList;
     std::vector<CityStatus> cityStatusList;
     std::unordered_map<uint32_t,uint16_t> cityStatusListReverse;
-    std::unordered_set<uint32_t> tradedMonster;
     std::vector<char> randomData;
 
     //general data

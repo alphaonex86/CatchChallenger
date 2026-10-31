@@ -203,6 +203,7 @@ void Client::setToDefault()
     deferedEnduranceSync.clear();
     tradeObjects.clear();
     tradeMonster.clear();
+    tradeEvolutionPositions.clear();
     inviteToClanList.clear();
     questsDrop.clear();
     connectedSince=0;

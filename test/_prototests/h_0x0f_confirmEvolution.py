@@ -21,8 +21,8 @@ CommonFightEngineTurn.cpp:959 CommonFightEngine::confirmEvolutionTo):
           -> errorOutput("Monster for evolution not found") -> KICK     (OOB)
     * look up the monster's evolutions; an evolution fires only when:
           - EvolutionType_Level and the monster's level >= the required level, OR
-          - EvolutionType_Trade and this exact monster id is in the server's
-            tradedMonster set (i.e. it was just received in a trade).
+          - EvolutionType_Trade and this team position was just received in a
+            trade, with no other action from the player since.
       If NO evolution condition is met -> errorOutput("Evolution not found")
           -> KICK.
     * on a met condition -> confirmEvolutionTo(&monsters[index], evolveTo):
