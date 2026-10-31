@@ -56,7 +56,8 @@ std::vector<QIcon> BaseWindow::icon_server_list_color;
 
 BaseWindow::BaseWindow() :
     ui(new Ui::BaseWindowUI),
-    closeWhenOnMapAfterRemaining_(0)
+    closeWhenOnMapAfterRemaining_(0),
+    actualBotMapId(0)
 {
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
@@ -972,7 +973,7 @@ void BaseWindow::on_inventory_itemSelectionChanged()
         {
             const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipe(items_graphical.at(item));
             const CraftingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipe(recipeId);
-            if(!haveReputationRequirements(recipe.requirements.reputation))
+            if(!client->haveReputationRequirements(recipe.requirements.reputation))
             {
                 std::string string;
                 unsigned int index=0;
@@ -1227,161 +1228,26 @@ void BaseWindow::updateRXTX()
 
 void BaseWindow::appendReputationRewards(const std::vector<ReputationRewards> &reputationList)
 {
+    showReputationChanges(client->appendReputationRewards(reputationList));
+}
+
+void BaseWindow::showReputationChanges(const std::vector<CatchChallenger::Api_protocol::ReputationLevelChange> &changes)
+{
     unsigned int index=0;
-    while(index<reputationList.size())
+    while(index<changes.size())
     {
-        const ReputationRewards &reputationRewards=reputationList.at(index);
-        appendReputationPoint(CommonDatapack::commonDatapack.get_reputation().at(reputationRewards.reputationId).name,reputationRewards.point);
+        const CatchChallenger::Api_protocol::ReputationLevelChange &change=changes.at(index);
+        const std::string &reputationCodeName=CommonDatapack::commonDatapack.get_reputation().at(change.reputationId).name;
+        QString name("???");
+        if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(reputationCodeName))
+            name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputationCodeName).name);
+        if(change.better)
+            showTip(tr("You have better reputation into %1").arg(name).toStdString());
+        else
+            showTip(tr("You have worse reputation into %1").arg(name).toStdString());
         index++;
     }
     show_reputation();
-}
-
-bool BaseWindow::haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const
-{
-    unsigned int index=0;
-    while(index<reputationList.size())
-    {
-        const CatchChallenger::ReputationRequirements &reputation=reputationList.at(index);
-        if(client->player_informations.reputation.find(reputation.reputationId)!=client->player_informations.reputation.cend())
-        {
-            const PlayerReputation &playerReputation=client->player_informations.reputation.at(reputation.reputationId);
-            if(!reputation.positif)
-            {
-                if(-reputation.level<playerReputation.level)
-                {
-                    emit message(QStringLiteral("reputation.level(%1)<playerReputation.level(%2)")
-                                 .arg(reputation.level).arg(playerReputation.level).toStdString());
-                    return false;
-                }
-            }
-            else
-            {
-                if(reputation.level>playerReputation.level || playerReputation.point<0)
-                {
-                    emit message(QStringLiteral("reputation.level(%1)>playerReputation.level(%2) || playerReputation.point(%3)<0")
-                                 .arg(reputation.level).arg(playerReputation.level).arg(playerReputation.point).toStdString());
-                    return false;
-                }
-            }
-        }
-        else
-            if(!reputation.positif)//default level is 0, but required level is negative
-            {
-                emit message(QStringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputation.level).arg(
-                                 QString::fromStdString(CommonDatapack::commonDatapack.get_reputation().at(reputation.reputationId).name)
-                                 ).toStdString());
-                return false;
-            }
-        index++;
-    }
-    return true;
-}
-
-bool BaseWindow::nextStepQuest(const Quest &quest)
-{
-    CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations();
-    #ifdef DEBUG_CLIENT_QUEST
-    qDebug() << "drop quest step requirement for: " << quest.id;
-    #endif
-    if(playerInformations.quests.find(quest.id)==playerInformations.quests.cend())
-    {
-        qDebug() << "step out of range for: " << quest.id;
-        return false;
-    }
-    uint8_t step=playerInformations.quests.at(quest.id).step;
-    if(step<=0 || step>quest.steps.size())
-    {
-        qDebug() << "step out of range for: " << quest.id;
-        return false;
-    }
-    const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
-    unsigned int index=0;
-    while(index<requirements.items.size())
-    {
-        const CatchChallenger::Quest::Item &item=requirements.items.at(index);
-        std::unordered_map<uint16_t,uint32_t> items;
-        items[item.item]=item.quantity;
-        remove_to_inventory(items);
-        index++;
-    }
-    playerInformations.quests[quest.id].step++;
-    if(playerInformations.quests.at(quest.id).step>quest.steps.size())
-    {
-        #ifdef DEBUG_CLIENT_QUEST
-        qDebug() << "finish the quest: " << quest.id;
-        #endif
-        playerInformations.quests[quest.id].step=0;
-        playerInformations.quests[quest.id].finish_one_time=true;
-        index=0;
-        while(index<quest.rewards.reputation.size())
-        {
-            appendReputationPoint(CommonDatapack::commonDatapack.get_reputation().at(
-                                      quest.rewards.reputation.at(index).reputationId).name,
-                                  quest.rewards.reputation.at(index).point);
-            index++;
-        }
-        show_reputation();
-        if(quest.rewards.allow_create_clan)
-            playerInformations.allow_create_clan=true;
-    }
-    return true;
-}
-
-//reputation
-void BaseWindow::appendReputationPoint(const std::string &type,const int32_t &point)
-{
-    if(point==0)
-        return;
-    if(!QtDatapackClientLoader::datapackLoader->has_reputationNameToId(type))
-    {
-        std::cerr << std::string("appendReputationPoint(")+type+std::string(",")+std::to_string(point)+std::string(")") << std::endl;
-        emit error("Unknow reputation: "+type);
-        return;
-    }
-    const uint8_t &reputationId=QtDatapackClientLoader::datapackLoader->get_reputationNameToId(type);
-    PlayerReputation playerReputation;
-    if(client->player_informations.reputation.find(reputationId)!=client->player_informations.reputation.cend())
-        playerReputation=client->player_informations.reputation.at(reputationId);
-    else
-    {
-        playerReputation.point=0;
-        playerReputation.level=0;
-    }
-    #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-    emit message(QStringLiteral("Reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
-    #endif
-    PlayerReputation oldPlayerReputation=playerReputation;
-    int32_t old_level=playerReputation.level;
-    FacilityLib::appendReputationPoint(&playerReputation,point,CommonDatapack::commonDatapack.get_reputation().at(reputationId));
-    if(oldPlayerReputation.level==playerReputation.level && oldPlayerReputation.point==playerReputation.point)
-        return;
-    if(client->player_informations.reputation.find(reputationId)!=client->player_informations.reputation.cend())
-        client->player_informations.reputation[reputationId]=playerReputation;
-    else
-        client->player_informations.reputation[reputationId]=playerReputation;
-    const std::string &reputationCodeName=CommonDatapack::commonDatapack.get_reputation().at(reputationId).name;
-    if(old_level<playerReputation.level)
-    {
-        if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(reputationCodeName))
-            showTip(tr("You have better reputation into %1")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputationCodeName).name)).toStdString());
-        else
-            showTip(tr("You have better reputation into %1")
-                    .arg("???").toStdString());
-    }
-    else if(old_level>playerReputation.level)
-    {
-        if(QtDatapackClientLoader::datapackLoader->has_reputationExtra(reputationCodeName))
-            showTip(tr("You have worse reputation into %1")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra(reputationCodeName).name)).toStdString());
-        else
-            showTip(tr("You have worse reputation into %1")
-                    .arg("???").toStdString());
-    }
-    #ifdef DEBUG_MESSAGE_CLIENT_REPUTATION
-    emit message(QStringLiteral("New reputation %1 at level: %2 with point: %3").arg(type).arg(playerReputation.level).arg(playerReputation.point));
-    #endif
 }
 
 void BaseWindow::objectUsed(const ObjectUsage &objectUsage)

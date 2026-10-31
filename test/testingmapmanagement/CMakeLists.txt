@@ -62,6 +62,7 @@ add_executable(testmapvisibility
     ${CC_REPO_ROOT}/client/libcatchchallenger/Api_protocol_message.cpp
     ${CC_REPO_ROOT}/client/libcatchchallenger/Api_protocol_query.cpp
     ${CC_REPO_ROOT}/client/libcatchchallenger/Api_protocol_reply.cpp
+    ${CC_REPO_ROOT}/client/libcatchchallenger/Api_protocol_quest.cpp
     ${CC_REPO_ROOT}/client/libcatchchallenger/Api_protocol_loadchar.cpp
     ${CC_REPO_ROOT}/client/libcatchchallenger/Map_client.cpp
     ${CC_REPO_ROOT}/client/libcatchchallenger/ClientStructures.cpp

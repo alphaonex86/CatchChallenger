@@ -325,16 +325,12 @@ private slots:
     void updatePageZoneCatch();
 
     //quest
-    bool haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const;
     void appendReputationRewards(const std::vector<ReputationRewards> &reputationList);
     void showQuestText(const uint32_t &textId);
-    bool tryValidateQuestStep(const uint16_t &questId, const uint16_t &botId, bool silent=false);
-    bool nextStepQuest(const Quest &quest);
-    bool startQuest(const Quest &quest);
-    bool botHaveQuest(const uint16_t &botId) const;
-    std::vector<std::pair<uint16_t, std::string> > getQuestList(const uint16_t &botId) const;
+    bool tryValidateQuestStep(const uint16_t &questId, bool silent=false);
+    std::vector<std::pair<uint16_t,std::string> > getQuestList() const;
+    void showReputationChanges(const std::vector<CatchChallenger::Api_protocol::ReputationLevelChange> &changes);
     void updateDisplayedQuests();
-    void appendReputationPoint(const std::string &type,const int32_t &point);
 
     //clan
     void clanActionSuccess(const uint32_t &clanId);
@@ -572,6 +568,7 @@ private:
 
     //bot
     Bot actualBot;
+    CATCHCHALLENGER_TYPE_MAPID actualBotMapId;
 
     //fight
     QTimer moveFightMonsterBottomTimer;

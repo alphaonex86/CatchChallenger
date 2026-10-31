@@ -172,7 +172,7 @@ void BaseWindow::load_plant_inventory()
                 item->setIcon(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
                 item->setText(QStringLiteral("item id: %1").arg(i->first)+"\n"+tr("Quantity: %1").arg(i->second));
             }
-            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).requirements.reputation))
+            if(!client->haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.get_plant(plantId).requirements.reputation))
             {
                 item->setText(item->text()+"\n"+tr("You don't have the requirements"));
                 item->setFont(disableIntoListFont);

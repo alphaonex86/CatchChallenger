@@ -54,7 +54,6 @@ add_executable(bot-actions
     ../libbot/actions/MapServerMiniNear.cpp
     ../libbot/actions/ActionsCheck.cpp
     ../libbot/actions/ActionsFight.cpp
-    ../libbot/actions/ActionsQuests.cpp
     ../libbot/actions/ActionsAPIReturn.cpp
 )
 

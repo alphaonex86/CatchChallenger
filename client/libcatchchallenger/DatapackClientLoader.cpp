@@ -1,4 +1,5 @@
 #include "DatapackClientLoader.hpp"
+#include "Api_protocol.hpp"
 #include "DatapackChecksum.hpp"
 #include "../../general/base/CatchChallenger_Hash.hpp"
 #include "../../general/base/GeneralVariable.hpp"
@@ -208,7 +209,6 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
 
     parseZoneExtra();//need be before map
     parseMaps();
-    parseQuestsLink();
     parseQuestsExtra();
     parseQuestsText();
     //parseBotFightsExtra();-> load ondemand with map
@@ -998,7 +998,6 @@ void DatapackClientLoader::resetAll()
 
     itemToPlants.clear();
     questsExtra.clear();
-    botToQuestStart.clear();
     mapBots.clear();
     //botFightsExtra.clear();
     monsterExtra.clear();
@@ -1461,36 +1460,6 @@ void DatapackClientLoader::parseProfileText()
     }
 
     std::cout << std::to_string(profileTextList.size()) << " profile text(s) loaded" << std::endl;
-}
-
-void DatapackClientLoader::parseQuestsLink()
-{
-    CATCHCHALLENGER_TYPE_QUEST questCount=0;
-    {
-        CATCHCHALLENGER_TYPE_QUEST questId=0;
-        do {
-            if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
-            {
-                const CatchChallenger::Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
-                if(!quest.steps.empty())
-                {
-                    const CatchChallenger::Quest::Step &step=quest.steps.front();
-                    const CatchChallenger::Quest::StepRequirements &stepRequirements=step.requirements;
-                    for (const std::pair<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID>> m : stepRequirements.fights)
-                    {
-                        const CATCHCHALLENGER_TYPE_MAPID &mapId=m.first;
-                        const catchchallenger_datapack_set<CATCHCHALLENGER_TYPE_BOTID> &botIdList=m.second;
-                        for (const CATCHCHALLENGER_TYPE_BOTID& elem : botIdList)
-                        {
-                            botToQuestStart[mapId][elem].push_back(questId);
-                            questCount++;
-                        }
-                    }
-                }
-            }
-        } while(questId++<255);
-    }
-    std::cout << std::to_string(questCount) << " bot linked with quest(s) loaded" << std::endl;
 }
 
 void DatapackClientLoader::parseZoneExtra()
@@ -2096,16 +2065,6 @@ bool DatapackClientLoader::has_questExtra(const CATCHCHALLENGER_TYPE_QUEST &key)
 size_t DatapackClientLoader::get_questsPathToId_size() const { return questsPathToId.size(); }
 CATCHCHALLENGER_TYPE_QUEST DatapackClientLoader::get_questPathToId(const std::string &key) const { return questsPathToId.at(key); }
 bool DatapackClientLoader::has_questPathToId(const std::string &key) const { return questsPathToId.find(key)!=questsPathToId.cend(); }
-//botToQuestStart
-size_t DatapackClientLoader::get_botToQuestStart_size() const { return botToQuestStart.size(); }
-bool DatapackClientLoader::has_botToQuestStart(const CATCHCHALLENGER_TYPE_MAPID &mapId) const { return botToQuestStart.find(mapId)!=botToQuestStart.cend(); }
-bool DatapackClientLoader::has_botToQuestStartForBot(const CATCHCHALLENGER_TYPE_MAPID &mapId, const CATCHCHALLENGER_TYPE_BOTID &botId) const
-{
-    const catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_MAPID,catchchallenger_datapack_map<CATCHCHALLENGER_TYPE_BOTID,std::vector<CATCHCHALLENGER_TYPE_QUEST>>>::const_iterator i=botToQuestStart.find(mapId);
-    if(i==botToQuestStart.cend()) return false;
-    return i->second.find(botId)!=i->second.cend();
-}
-const std::vector<CATCHCHALLENGER_TYPE_QUEST> &DatapackClientLoader::get_botToQuestStartForBot(const CATCHCHALLENGER_TYPE_MAPID &mapId, const CATCHCHALLENGER_TYPE_BOTID &botId) const { return botToQuestStart.at(mapId).at(botId); }
 
 const CatchChallenger::Bot* DatapackClientLoader::getBot(CATCHCHALLENGER_TYPE_MAPID mapIndex, uint8_t x, uint8_t y) const
 {
@@ -2171,6 +2130,53 @@ std::string DatapackClientLoader::ambianceFile(const std::string &mapSound,const
     }
     return std::string();
 }
+#if ! defined (CATCHCHALLENGER_ONLYMAPRENDER)
+DatapackClientLoader::QuestTextResult DatapackClientLoader::questText(const CATCHCHALLENGER_TYPE_QUEST &questId,const uint32_t &textId,
+                                                                      const CatchChallenger::Api_protocol &client,std::string &text) const
+{
+    if(!has_questExtra(questId))
+        return QuestText_NoQuestExtra;
+    const QuestExtra &questExtra=get_questExtra(questId);
+    if(questExtra.text.find(textId)==questExtra.text.cend())
+        return QuestText_NoEntryPoint;
+    //not started: the step 1 texts; finished (step 0): no step text
+    const std::map<CATCHCHALLENGER_TYPE_QUEST,CatchChallenger::PlayerQuest> &playerQuests=client.get_player_informations_ro().quests;
+    const std::map<CATCHCHALLENGER_TYPE_QUEST,CatchChallenger::PlayerQuest>::const_iterator playerQuest=playerQuests.find(questId);
+    bool noStep=false;
+    uint8_t step=1;
+    if(playerQuest!=playerQuests.cend())
+    {
+        step=playerQuest->second.step;
+        noStep=(step==0);
+    }
+    const std::vector<QuestStepWithConditionExtra> &texts=questExtra.text.at(textId).texts;
+    unsigned int index=0;
+    while(index<texts.size())
+    {
+        const std::vector<QuestConditionExtra> &conditions=texts.at(index).conditions;
+        bool match=true;
+        unsigned int conditionIndex=0;
+        while(match && conditionIndex<conditions.size())
+        {
+            const QuestConditionExtra &condition=conditions.at(conditionIndex);
+            if(condition.type==QuestCondition_queststep)
+                match=!noStep && step==condition.value;
+            else if(condition.type==QuestCondition_haverequirements)
+                match=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId) &&
+                        client.haveNextStepQuestRequirements(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId));
+            conditionIndex++;
+        }
+        if(match)
+        {
+            text=texts.at(index).text;
+            return QuestText_Found;
+        }
+        index++;
+    }
+    return QuestText_NoText;
+}
+#endif
+
 //profileTextList
 size_t DatapackClientLoader::get_profileTextList_size() const { return profileTextList.size(); }
 const DatapackClientLoader::ProfileText &DatapackClientLoader::get_profileText(const uint32_t &key) const { return profileTextList.at(key); }

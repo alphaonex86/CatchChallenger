@@ -29,7 +29,7 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("No cash"),tr("No bash to buy this item"));
         return;
     }
-    if(!haveReputationRequirements(QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId).requirements))
+    if(!client->haveReputationRequirements(QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId).requirements))
     {
         QMessageBox::warning(this,tr("No requirements"),tr("You don't meet the requirements"));
         return;
@@ -93,7 +93,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("No item"),tr("You have not the item to sell"));
         return;
     }
-    if(!haveReputationRequirements(QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId).requirements))
+    if(!client->haveReputationRequirements(QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId).requirements))
     {
         QMessageBox::warning(this,tr("No requirements"),tr("You don't meet the requirements"));
         return;
@@ -398,7 +398,7 @@ void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
         else
             item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(itemId).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
-    if(playerInformations.items.find(static_cast<uint16_t>(item->data(99).toUInt()))==playerInformations.items.cend() || !haveReputationRequirements(QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId).requirements))
+    if(playerInformations.items.find(static_cast<uint16_t>(item->data(99).toUInt()))==playerInformations.items.cend() || !client->haveReputationRequirements(QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId).requirements))
     {
         item->setFont(MissingQuantity);
         item->setForeground(QBrush(QColor(200,20,20)));

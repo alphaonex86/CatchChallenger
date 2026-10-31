@@ -228,13 +228,10 @@ public slots:
     //quest
     void appendReputationRewards(const std::vector<CatchChallenger::ReputationRewards> &reputationList);
     void showQuestText(const uint32_t &textId);
-    bool tryValidateQuestStep(const uint16_t &questId, const uint16_t &botId, bool silent=false);
-    bool nextStepQuest(const CatchChallenger::Quest &quest);
-    bool startQuest(const CatchChallenger::Quest &quest);
-    bool botHaveQuest(const uint16_t &botId) const;
-    std::vector<std::pair<uint16_t, std::string> > getQuestList(const uint16_t &botId) const;
+    bool tryValidateQuestStep(const uint16_t &questId, bool silent=false);
+    void showReputationChanges(const std::vector<CatchChallenger::Api_protocol::ReputationLevelChange> &changes);
+    std::vector<std::pair<uint16_t, std::string> > getQuestList() const;
     void updateDisplayedQuests();
-    void appendReputationPoint(const std::string &type,const int32_t &point);
     //trade
     /*void tradeRequested(const std::string &pseudo, const uint8_t &skinInt);
     void tradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt);
@@ -333,6 +330,7 @@ private:
     bool factoryInProduction;
     //bot
     CatchChallenger::Bot actualBot;
+    CATCHCHALLENGER_TYPE_MAPID actualBotMapId;
     //quest
     bool isInQuest;
     uint16_t questId;
