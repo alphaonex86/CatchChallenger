@@ -140,7 +140,8 @@ void Api_protocol_Qt::stateChanged(QAbstractSocket::SocketState socketState)
 
 bool Api_protocol_Qt::haveBeatBot(const uint16_t &mapId, const uint8_t &botFightId) const
 {
-    return CommonFightEngine::haveBeatBot(mapId,botFightId);
+    //not CommonFightEngine::haveBeatBot(): that one is a stub that always says yes
+    return Api_protocol::haveBeatBot(mapId,botFightId);
 }
 
 void Api_protocol_Qt::errorFromFightEngine(const std::string &error)

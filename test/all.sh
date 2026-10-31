@@ -452,6 +452,7 @@ declare -A PER_TEST_TIMEOUT_MAP=(
     [testingmapmanagement.py]=10m
     [testingpathfinding.py]=10m
     [testingoverworld.py]=10m
+    [testingclientlogic.py]=10m
     [testingmulti.py]=30m
     [testingprotocolfuzz.py]=90m
     [testingprotocolstate.py]=90m
@@ -566,6 +567,7 @@ run_test testingfight.py
 run_test testingmapmanagement.py
 run_test testingpathfinding.py
 run_test testingoverworld.py
+run_test testingclientlogic.py
 run_test testingprotocolstate.py
 run_test testingprotocolfuzz.py
 run_test testingclient.py

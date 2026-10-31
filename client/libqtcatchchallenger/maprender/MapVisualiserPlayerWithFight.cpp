@@ -41,16 +41,9 @@ void MapVisualiserPlayerWithFight::addBeatenBotFight(const CATCHCHALLENGER_TYPE_
 
 bool MapVisualiserPlayerWithFight::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId) const
 {
-    //Consult the authoritative per-map beaten-bot set the server sent at
-    //character load (mirrors server-side Client::haveBeatBot). A missing map or
-    //bot means "not beaten yet" -> return false gracefully (never abort).
     if(client==NULL)
         return false;
-    const CatchChallenger::Player_private_and_public_informations &info=client->get_player_informations_ro();
-    if(info.mapData.find(mapId)==info.mapData.cend())
-        return false;
-    const CatchChallenger::Player_private_and_public_informations_Map &mapData=info.mapData.at(mapId);
-    return mapData.bots_beaten.find(botFightId)!=mapData.bots_beaten.cend();
+    return client->haveBeatBot(mapId,botFightId);
 }
 
 void MapVisualiserPlayerWithFight::addRepelStep(const uint32_t &repel_step)

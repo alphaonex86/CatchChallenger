@@ -125,7 +125,6 @@ public:
     void allowDynamicSizeForTest();
 
     // ----- Pure-virtual implementations (Api_protocol) -----
-    bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId) const override;
     void tryDisconnect() override;
     void readForFirstHeader() override;
     void defineMaxPlayers(const uint16_t &maxPlayers) override;

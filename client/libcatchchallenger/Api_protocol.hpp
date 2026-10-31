@@ -43,7 +43,7 @@ public:
     uint32_t itemQuantity(const CATCHCHALLENGER_TYPE_ITEM &itemId) const;
     //fight
     void addBeatenBotFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId);
-    virtual bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId) const = 0;
+    virtual bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId) const;
 
     //protocol command
     void hashDigest(const char * const data,const int size,char *buffer);

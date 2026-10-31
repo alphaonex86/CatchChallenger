@@ -50,6 +50,7 @@ _CAPS_SECONDS = {
     "testingmap2png.py":              15 * 60,
     "testingmap4client.py":           30 * 60,
     "testingmapmanagement.py":        10 * 60,
+    "testingclientlogic.py":          10 * 60,
     "testingmulti.py":                30 * 60,
     "testingpathfinding.py":          10 * 60,
     # Per-handler valgrind suite: one fresh `valgrind memcheck` server boot per

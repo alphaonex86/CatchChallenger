@@ -197,7 +197,6 @@ void TestApiProtocol::dropAllPlayerOnTheMap()
 
 // ---- No-op pure virtuals -------------------------------------------
 
-bool TestApiProtocol::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &, const CATCHCHALLENGER_TYPE_BOTID &) const { return false; }
 void TestApiProtocol::tryDisconnect() {}
 void TestApiProtocol::readForFirstHeader() {}
 void TestApiProtocol::defineMaxPlayers(const uint16_t &) {}

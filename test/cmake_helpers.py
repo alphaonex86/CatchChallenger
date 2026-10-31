@@ -223,6 +223,13 @@ _PRO_TO_CMAKE = {
         [],
         "test/testingmapmanagement",
     ),
+    # test/testingclientlogic/ — Api_protocol client game rules (quests,
+    # beaten bots); reuses testingmapmanagement's TestApiProtocol.
+    "test/testingclientlogic/testclientlogic.pro": (
+        "testclientlogic",
+        [],
+        "test/testingclientlogic",
+    ),
     # test/testingpathfinding/ — PathFinding.cpp item-gated-zone routing.
     # Loads city.tmx into a fixed MapServer; no network/DB/event loop.
     "test/testingpathfinding/testpathfinding.pro": (
