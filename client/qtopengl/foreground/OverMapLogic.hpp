@@ -204,11 +204,6 @@ public slots:
     void haveShopList(const std::vector<CatchChallenger::ItemToSellOrBuy> &items);
     void haveBuyObject(const CatchChallenger::BuyStat &stat,const uint32_t &newPrice);
     void haveSellObject(const CatchChallenger::SoldStat &stat,const uint32_t &newPrice);
-    //factory
-    void updateFactoryStatProduction(const CatchChallenger::IndustryStatus &industryStatus,const CatchChallenger::Industry &industry);
-    void haveBuyFactoryObject(const CatchChallenger::BuyStat &stat,const uint32_t &newPrice);
-    void haveSellFactoryObject(const CatchChallenger::SoldStat &stat,const uint32_t &newPrice);
-    void haveFactoryList(const uint32_t &remainingProductionTime, const std::vector<CatchChallenger::ItemToSellOrBuy> &resources, const std::vector<CatchChallenger::ItemToSellOrBuy> &products);
     //plant
     void insert_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
     void remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId, const uint8_t &x, const uint8_t &y);
@@ -324,10 +319,6 @@ private:
     std::string clanName;
     bool haveClanInformations;
 
-    //industry
-    uint16_t factoryId;
-    CatchChallenger::IndustryStatus industryStatus;
-    bool factoryInProduction;
     //bot
     CatchChallenger::Bot actualBot;
     CATCHCHALLENGER_TYPE_MAPID actualBotMapId;

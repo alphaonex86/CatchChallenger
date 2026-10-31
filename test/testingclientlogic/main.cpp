@@ -2,7 +2,7 @@
 // client (client/libcatchchallenger/Api_protocol.cpp): quest start / next-step
 // requirements and the beaten-bot lookup; then the client logic shared in
 // client/libqtcatchchallenger/ (chat text, chat input guard, command line,
-// language pick) and the ambiance file pick of DatapackClientLoader. The expected values mirror the
+// language pick), the ambiance file pick of DatapackClientLoader and the factory trade. The expected values mirror the
 // server (server/base/ClientEvents/LocalClientHandlerQuest.cpp): a client that
 // disagrees hides a quest the server would accept, or offers one it refuses.
 // Prints "PASS <name>" / "FAIL <name> <detail>" lines for testingclientlogic.py.
@@ -11,6 +11,7 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../client/libcatchchallenger/DatapackClientLoader.hpp"
 #include "../../client/libcatchchallenger/SlowServerDetector.hpp"
+#include "../../client/libcatchchallenger/FactoryTrade.hpp"
 #include "../../client/libqtcatchchallenger/ChatInputGuard.hpp"
 #include "../../client/libqtcatchchallenger/ChatParsing.hpp"
 #include "../../client/libqtcatchchallenger/CliClientOptions.hpp"
@@ -579,6 +580,137 @@ static void testSlowServerDetector()
     check("slow_reset",detector.state(0,40000)==SlowServerDetector::State_Fast,true);
 }
 
+static const CATCHCHALLENGER_TYPE_ITEM factoryResource=20;
+static const CATCHCHALLENGER_TYPE_ITEM factoryProduct=30;
+
+//resource full at 50, product full at 10, a cycle every 100s
+static Industry makeIndustry()
+{
+    Industry industry;
+    industry.time=100;
+    industry.cycletobefull=5;
+    Industry::Resource resource;
+    resource.item=factoryResource;
+    resource.quantity=10;
+    industry.resources.push_back(resource);
+    Industry::Product product;
+    product.item=factoryProduct;
+    product.quantity=2;
+    industry.products.push_back(product);
+    return industry;
+}
+
+static ItemToSellOrBuy listEntry(const CATCHCHALLENGER_TYPE_ITEM &item,const uint32_t &quantity)
+{
+    ItemToSellOrBuy entry;
+    entry.object=item;
+    entry.quantity=quantity;
+    entry.price=1;
+    return entry;
+}
+
+static bool isAnswer(const FactoryTrade::Answer &answer,const FactoryTrade::Result &result,const bool &done,const uint32_t &itemsToAdd,
+                     const uint32_t &cashToAdd,const uint32_t &cashToRemove)
+{
+    return answer.result==result && answer.done==done && answer.itemsToAdd==itemsToAdd && answer.cashToAdd==cashToAdd && answer.cashToRemove==cashToRemove;
+}
+
+static void testFactoryTrade()
+{
+    const Industry industry=makeIndustry();
+    IndustryStatus status;
+    status.last_update=0;
+    FactoryTrade trade;
+
+    check("factory_buy_answer_without_query",trade.buyAnswer(BuyStat_Done,0,status,industry,1000).result==FactoryTrade::Result_WrongReply,true);
+    check("factory_sell_answer_without_query",trade.sellAnswer(SoldStat_Done,0,status,industry,1000).result==FactoryTrade::Result_WrongReply,true);
+
+    check("factory_buy_cash_is_total",trade.buy(factoryProduct,3,7)==21,true);
+    status.products[factoryProduct]=5;
+    FactoryTrade::Answer answer=trade.buyAnswer(BuyStat_Done,0,status,industry,1000);
+    check("factory_bought",isAnswer(answer,FactoryTrade::Result_Bought,true,3,0,0) && answer.item==factoryProduct,true);
+    check("factory_bought_stock",status.products.at(factoryProduct)==2,true);
+    check("factory_bought_restarts_production",status.last_update==1000,true);
+
+    trade.buy(factoryProduct,2,7);
+    answer=trade.buyAnswer(BuyStat_BetterPrice,5,status,industry,2000);
+    check("factory_bought_better_price",isAnswer(answer,FactoryTrade::Result_BoughtBetterPrice,true,2,14,10),true);
+    check("factory_bought_last_stock_erased",status.products.find(factoryProduct)==status.products.cend(),true);
+
+    //the refund is the price paid, not the item id
+    trade.buy(factoryProduct,2,7);
+    answer=trade.buyAnswer(BuyStat_HaveNotQuantity,0,status,industry,3000);
+    check("factory_buy_not_the_quantity_refund",isAnswer(answer,FactoryTrade::Result_NotTheQuantity,false,0,14,0),true);
+    trade.buy(factoryProduct,1,9);
+    answer=trade.buyAnswer(BuyStat_PriceHaveChanged,0,status,industry,3000);
+    check("factory_buy_price_worse_refund",isAnswer(answer,FactoryTrade::Result_PriceWorse,false,0,9,0),true);
+
+    //a wrong reply still consumes its query, the next reply is for the next query
+    trade.buy(factoryProduct,1,9);
+    trade.buy(factoryProduct,4,3);
+    check("factory_buy_better_price_zero",trade.buyAnswer(BuyStat_BetterPrice,0,status,industry,3000).result==FactoryTrade::Result_WrongReply,true);
+    answer=trade.buyAnswer(BuyStat_HaveNotQuantity,0,status,industry,3000);
+    check("factory_buy_queue_order",answer.cashToAdd==12,true);
+    check("factory_buy_queue_empty",trade.buyAnswer(BuyStat_Done,0,status,industry,3000).result==FactoryTrade::Result_WrongReply,true);
+
+    status.resources.clear();
+    status.products.clear();
+    status.last_update=0;
+    trade.sell(factoryResource,10,4);
+    answer=trade.sellAnswer(SoldStat_Done,0,status,industry,5000);
+    check("factory_sold",isAnswer(answer,FactoryTrade::Result_Sold,true,0,40,0),true);
+    check("factory_sold_stock",status.resources.at(factoryResource)==10,true);
+    check("factory_sold_restarts_production",status.last_update==5000,true);
+    trade.sell(factoryResource,2,4);
+    answer=trade.sellAnswer(SoldStat_BetterPrice,6,status,industry,6000);
+    check("factory_sold_better_price",isAnswer(answer,FactoryTrade::Result_SoldBetterPrice,true,0,12,0),true);
+    check("factory_sold_in_production_keeps_cycle",status.last_update==5000 && status.resources.at(factoryResource)==12,true);
+    trade.sell(factoryResource,3,4);
+    answer=trade.sellAnswer(SoldStat_WrongQuantity,0,status,industry,6000);
+    check("factory_sell_wrong_quantity_gives_back",isAnswer(answer,FactoryTrade::Result_NotTheQuantity,false,3,0,0),true);
+    trade.sell(factoryResource,3,4);
+    answer=trade.sellAnswer(SoldStat_PriceHaveChanged,0,status,industry,6000);
+    check("factory_sell_price_worse_gives_back",isAnswer(answer,FactoryTrade::Result_PriceWorse,false,3,0,0),true);
+    check("factory_sell_refused_keeps_stock",status.resources.at(factoryResource)==12,true);
+    trade.sell(factoryResource,1,4);
+    trade.reset();
+    check("factory_reset_drops_queries",trade.sellAnswer(SoldStat_Done,0,status,industry,6000).result==FactoryTrade::Result_WrongReply,true);
+
+    std::vector<ItemToSellOrBuy> resources;
+    resources.push_back(listEntry(factoryResource,30));
+    std::vector<ItemToSellOrBuy> products;
+    products.push_back(listEntry(factoryProduct,4));
+    FactoryTrade::statusFromServerList(status,industry,40,10000,resources,products);
+    check("factory_list_resource_stock",status.resources.at(factoryResource)==20,true);
+    check("factory_list_product_stock",status.products.at(factoryProduct)==4,true);
+    check("factory_list_cycle_start",status.last_update==10000+40-100,true);
+    check("factory_list_remaining_time",FactoryTrade::remainingProductionTime(status,industry,10000)==40,true);
+    resources.clear();
+    FactoryTrade::statusFromServerList(status,industry,0,10000,resources,products);
+    check("factory_list_missing_resource_full",status.resources.at(factoryResource)==50,true);
+    resources.push_back(listEntry(factoryResource,90));
+    FactoryTrade::statusFromServerList(status,industry,0,10000,resources,products);
+    check("factory_list_over_full_clamped",status.resources.at(factoryResource)==0,true);
+
+    status.last_update=1000;
+    check("factory_remaining_in_cycle",FactoryTrade::remainingProductionTime(status,industry,1030)==70,true);
+    check("factory_remaining_at_cycle_end",FactoryTrade::remainingProductionTime(status,industry,1100)==100,true);
+    check("factory_remaining_later_cycle",FactoryTrade::remainingProductionTime(status,industry,1250)==50,true);
+    Industry instant=industry;
+    instant.time=0;
+    check("factory_remaining_no_time",FactoryTrade::remainingProductionTime(status,instant,1250)==0,true);
+
+    uint32_t price=0;
+    check("factory_product_price_unknown_item",FactoryTrade::productPrice(industry,factoryResource,1,price),false);
+    check("factory_resource_price_unknown_item",FactoryTrade::resourcePrice(industry,factoryProduct,1,price),false);
+
+    Player_private_and_public_informations informations;
+    IndustryStatus &created=FactoryTrade::industryStatus(informations,mapId,2);
+    created.products[factoryProduct]=1;
+    check("factory_status_created",informations.mapData[mapId].industriesStatus.size()==3 && informations.mapData[mapId].industriesStatus.at(0).last_update==0,true);
+    check("factory_status_same_entry",FactoryTrade::industryStatus(informations,mapId,2).products.at(factoryProduct)==1,true);
+}
+
 int main(int argc,char *argv[])
 {
     //ChatInputGuard owns a QTimer
@@ -596,6 +728,7 @@ int main(int argc,char *argv[])
     testSlowServerDetector();
     testQuestSteps();
     testQuestText();
+    testFactoryTrade();
     if(failures>0)
     {
         std::cerr << failures << " failure(s)" << std::endl;

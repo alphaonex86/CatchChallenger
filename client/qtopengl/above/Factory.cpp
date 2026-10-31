@@ -5,6 +5,7 @@
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../general/base/FacilityLib.hpp"
 #include <QPainter>
 #include <QWidget>
 #include <QGraphicsProxyWidget>
@@ -13,11 +14,11 @@
 
 Factory::Factory() :
     wdialog(new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this)),
-    label(this)
+    label(this),
+    connexionManager(nullptr),
+    m_mapId(0),
+    m_factoryId(0)
 {
-    connexionManager=nullptr;
-    m_factoryId=0;
-    factoryInProduction=false;
 
     label.setPixmap(QPixmap(":/CC/images/interface/labelL.png"));
     label.setTransformationMode(Qt::SmoothTransformation);
@@ -224,15 +225,13 @@ void Factory::newLanguage()
     factoryDescription->setHtml(tr("Select an item"));
 }
 
-void Factory::setVar(ConnexionManager *connexionManager, const uint16_t factoryId)
+void Factory::setVar(ConnexionManager *connexionManager,const CATCHCHALLENGER_TYPE_MAPID &mapId,const uint16_t &factoryId)
 {
     this->connexionManager=connexionManager;
-    this->m_factoryId=factoryId;
+    m_mapId=mapId;
+    m_factoryId=factoryId;
     factoryResources->clear();
     factoryProducts->clear();
-    itemsToBuy.clear();
-    itemsToSell.clear();
-    factoryInProduction=false;
     buyButton->setEnabled(false);
     sellButton->setEnabled(false);
     factoryDescription->setHtml(tr("Loading..."));
@@ -249,9 +248,32 @@ void Factory::setVar(ConnexionManager *connexionManager, const uint16_t factoryI
         abort();
 }
 
+void Factory::resetAll()
+{
+    factoryTrade.reset();
+}
+
+const CatchChallenger::Industry &Factory::industry() const
+{
+    return QtDatapackClientLoader::datapackLoader->getMap(m_mapId).industries.at(m_factoryId);
+}
+
+CatchChallenger::IndustryStatus &Factory::industryStatus()
+{
+    return CatchChallenger::FactoryTrade::industryStatus(connexionManager->client->get_player_informations(),m_mapId,m_factoryId);
+}
+
+void Factory::updateProductionStatus()
+{
+    if(CatchChallenger::FacilityLib::factoryProductionStarted(industryStatus(),industry()))
+        factoryStatus->setHtml(tr("In production"));
+    else
+        factoryStatus->setHtml(tr("Production stopped"));
+}
+
 void Factory::haveFactoryList(const uint32_t &remainingProductionTime, const std::vector<CatchChallenger::ItemToSellOrBuy> &resources, const std::vector<CatchChallenger::ItemToSellOrBuy> &products)
 {
-    Q_UNUSED(remainingProductionTime);
+    CatchChallenger::FactoryTrade::statusFromServerList(industryStatus(),industry(),remainingProductionTime,QDateTime::currentSecsSinceEpoch(),resources,products);
 
     factoryResources->clear();
     unsigned int index=0;
@@ -279,16 +301,7 @@ void Factory::haveFactoryList(const uint32_t &remainingProductionTime, const std
         index++;
     }
 
-    if(remainingProductionTime>0)
-    {
-        factoryInProduction=true;
-        factoryStatus->setHtml(tr("In production"));
-    }
-    else
-    {
-        factoryInProduction=false;
-        factoryStatus->setHtml(tr("Production stopped"));
-    }
+    updateProductionStatus();
     factoryDescription->setHtml(tr("Select an item"));
 }
 
@@ -406,6 +419,11 @@ void Factory::onBuyClicked()
         emit showTip(tr("Not enough cash").toStdString());
         return;
     }
+    if(!connexionManager->client->haveReputationRequirements(industry().requirements))
+    {
+        emit showTip(tr("You don't meet the requirements").toStdString());
+        return;
+    }
 
     uint32_t quantityToBuy=1;
     quantity-=quantityToBuy;
@@ -413,14 +431,14 @@ void Factory::onBuyClicked()
     if(quantity<1)
         delete item;
     else
+    {
+        uint32_t newPrice=0;
+        if(CatchChallenger::FactoryTrade::productPrice(industry(),id,quantity,newPrice))
+            item->setData(98,newPrice);
         factoryToProductItem(item);
+    }
 
-    CatchChallenger::ItemToSellOrBuy buyEntry;
-    buyEntry.object=id;
-    buyEntry.quantity=quantityToBuy;
-    buyEntry.price=quantityToBuy*price;
-    itemsToBuy.push_back(buyEntry);
-    emit removeCash(buyEntry.price);
+    emit removeCash(factoryTrade.buy(id,quantityToBuy,price));
     connexionManager->client->buyFactoryProduct(id,quantityToBuy,price);
 }
 
@@ -440,6 +458,11 @@ void Factory::onSellClicked()
         emit showTip(tr("You don't have this item").toStdString());
         return;
     }
+    if(!connexionManager->client->haveReputationRequirements(industry().requirements))
+    {
+        emit showTip(tr("You don't meet the requirements").toStdString());
+        return;
+    }
 
     uint32_t quantityToSell=1;
     quantity-=quantityToSell;
@@ -447,73 +470,56 @@ void Factory::onSellClicked()
     if(quantity<1)
         delete item;
     else
+    {
+        uint32_t newPrice=0;
+        if(CatchChallenger::FactoryTrade::resourcePrice(industry(),itemId,quantity,newPrice))
+            item->setData(98,newPrice);
         factoryToResourceItem(item);
+    }
 
-    CatchChallenger::ItemToSellOrBuy sellEntry;
-    sellEntry.object=itemId;
-    sellEntry.quantity=quantityToSell;
-    sellEntry.price=price;
-    itemsToSell.push_back(sellEntry);
+    factoryTrade.sell(itemId,quantityToSell,price);
     emit remove_to_inventory(itemId,quantityToSell);
     connexionManager->client->sellFactoryResource(itemId,quantityToSell,price);
 }
 
-void Factory::haveBuyFactoryObject(const CatchChallenger::BuyStat &stat, const uint32_t &newPrice)
+void Factory::applyAnswer(const CatchChallenger::FactoryTrade::Answer &answer)
 {
-    if(itemsToBuy.empty())
-        return;
-    const CatchChallenger::ItemToSellOrBuy &item=itemsToBuy.front();
-    switch(stat)
+    if(answer.cashToAdd>0)
+        emit addCash(answer.cashToAdd);
+    if(answer.cashToRemove>0)
+        emit removeCash(answer.cashToRemove);
+    if(answer.itemsToAdd>0)
+        emit add_to_inventory(answer.item,answer.itemsToAdd,answer.done);
+    switch(answer.result)
     {
-        case CatchChallenger::BuyStat_Done:
-            emit add_to_inventory(item.object,item.quantity,true);
+        case CatchChallenger::FactoryTrade::Result_Sold:
+            emit showTip(tr("Item sold").toStdString());
         break;
-        case CatchChallenger::BuyStat_BetterPrice:
-            if(newPrice==0) return;
-            emit addCash(item.price);
-            emit removeCash(newPrice*item.quantity);
-            emit add_to_inventory(item.object,item.quantity,true);
+        case CatchChallenger::FactoryTrade::Result_SoldBetterPrice:
+            emit showTip(tr("Item sold at better price").toStdString());
         break;
-        case CatchChallenger::BuyStat_HaveNotQuantity:
-            emit addCash(item.price);
+        case CatchChallenger::FactoryTrade::Result_NotTheQuantity:
             emit showTip(tr("Sorry but have not the quantity of this item").toStdString());
         break;
-        case CatchChallenger::BuyStat_PriceHaveChanged:
-            emit addCash(item.price);
+        case CatchChallenger::FactoryTrade::Result_PriceWorse:
             emit showTip(tr("Sorry but now the price is worse").toStdString());
         break;
         default:
         break;
     }
-    itemsToBuy.erase(itemsToBuy.cbegin());
+    if(answer.done)
+    {
+        emit appendReputationRewards(industry().rewards);
+        updateProductionStatus();
+    }
+}
+
+void Factory::haveBuyFactoryObject(const CatchChallenger::BuyStat &stat, const uint32_t &newPrice)
+{
+    applyAnswer(factoryTrade.buyAnswer(stat,newPrice,industryStatus(),industry(),QDateTime::currentSecsSinceEpoch()));
 }
 
 void Factory::haveSellFactoryObject(const CatchChallenger::SoldStat &stat, const uint32_t &newPrice)
 {
-    if(itemsToSell.empty())
-        return;
-    const CatchChallenger::ItemToSellOrBuy &item=itemsToSell.front();
-    switch(stat)
-    {
-        case CatchChallenger::SoldStat_Done:
-            emit addCash(item.price*item.quantity);
-            emit showTip(tr("Item sold").toStdString());
-        break;
-        case CatchChallenger::SoldStat_BetterPrice:
-            if(newPrice==0) return;
-            emit addCash(newPrice*item.quantity);
-            emit showTip(tr("Item sold at better price").toStdString());
-        break;
-        case CatchChallenger::SoldStat_WrongQuantity:
-            emit add_to_inventory(item.object,item.quantity,false);
-            emit showTip(tr("Sorry but have not the quantity of this item").toStdString());
-        break;
-        case CatchChallenger::SoldStat_PriceHaveChanged:
-            emit add_to_inventory(item.object,item.quantity,false);
-            emit showTip(tr("Sorry but now the price is worse").toStdString());
-        break;
-        default:
-        break;
-    }
-    itemsToSell.erase(itemsToSell.cbegin());
+    applyAnswer(factoryTrade.sellAnswer(stat,newPrice,industryStatus(),industry(),QDateTime::currentSecsSinceEpoch()));
 }

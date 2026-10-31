@@ -144,6 +144,8 @@ void OverMapLogic::resetAll()
     add_to_inventoryGainExtraTime.clear();
     currentAmbianceFile.clear();
     visualCategory.clear();
+    if(factory!=nullptr)
+        factory->resetAll();
     OverMap::resetAll();
     #ifndef CATCHCHALLENGER_NOAUDIO
     AudioGL::audio->stopCurrentAmbiance();
@@ -360,13 +362,6 @@ void OverMapLogic::connectAllSignals()
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QthaveSellObject,             this,&OverMapLogic::haveSellObject))
         abort();
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QthaveBuyObject,              this,&OverMapLogic::haveBuyObject))
-        abort();
-    //factory
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QthaveFactoryList,            this,&OverMapLogic::haveFactoryList))
-        abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QthaveSellFactoryObject,      this,&OverMapLogic::haveSellFactoryObject))
-        abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QthaveBuyFactoryObject,       this,&OverMapLogic::haveBuyFactoryObject))
         abort();
     /*//battle
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtbattleRequested,            this,&OverMapLogic::battleRequested))

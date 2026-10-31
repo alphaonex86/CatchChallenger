@@ -224,8 +224,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
         }
         //industries are now per-map in BaseMap
         {
-            CATCHCHALLENGER_TYPE_MAPID currentMapId=ccmap->mapController.currentMap();
-            const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(currentMapId);
+            const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(actualBotMapId);
             if(factoryId>=logicalMap.industries.size())
             {
                 showTip(tr("The factory is not found").toStdString());
@@ -252,7 +251,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
                 if(!connect(factory,&Factory::appendReputationRewards,this,&OverMapLogic::appendReputationRewards))
                     abort();
             }
-            factory->setVar(connexionManager,factoryId);
+            factory->setVar(connexionManager,actualBotMapId,factoryId);
             setAbove(factory);
             connexionManager->client->getFactoryList();
         }

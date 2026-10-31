@@ -8,6 +8,7 @@
 #include "../CustomButton.hpp"
 #include "../CustomText.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
+#include "../../libcatchchallenger/FactoryTrade.hpp"
 
 class ConnexionManager;
 
@@ -25,7 +26,8 @@ public:
     void keyPressEvent(QKeyEvent * event, bool &eventTriggerGeneral) override;
     void keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral) override;
     void removeAbove();
-    void setVar(ConnexionManager *connexionManager, const uint16_t factoryId);
+    void setVar(ConnexionManager *connexionManager,const CATCHCHALLENGER_TYPE_MAPID &mapId,const uint16_t &factoryId);
+    void resetAll();
 private slots:
     void newLanguage();
     void on_factoryResources_itemSelectionChanged();
@@ -38,6 +40,10 @@ private slots:
 private:
     void factoryToResourceItem(QListWidgetItem *item);
     void factoryToProductItem(QListWidgetItem *item);
+    const CatchChallenger::Industry &industry() const;
+    CatchChallenger::IndustryStatus &industryStatus();
+    void updateProductionStatus();
+    void applyAnswer(const CatchChallenger::FactoryTrade::Answer &answer);
 
     ImagesStrechMiddle *wdialog;
     CustomButton *quit;
@@ -59,11 +65,9 @@ private:
     CustomButton *sellButton;
 
     ConnexionManager *connexionManager;
+    CATCHCHALLENGER_TYPE_MAPID m_mapId;
     uint16_t m_factoryId;
-    bool factoryInProduction;
-    CatchChallenger::IndustryStatus industryStatus;
-    std::vector<CatchChallenger::ItemToSellOrBuy> itemsToBuy;
-    std::vector<CatchChallenger::ItemToSellOrBuy> itemsToSell;
+    CatchChallenger::FactoryTrade factoryTrade;
 signals:
     void setAbove(ScreenInput *widget);
     void add_to_inventory(const uint16_t &item, const uint32_t &quantity, const bool &showGain);

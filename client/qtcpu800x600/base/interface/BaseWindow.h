@@ -31,6 +31,7 @@
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../libcatchchallenger/Api_protocol.hpp"
 #include "../../../libcatchchallenger/SlowServerDetector.hpp"
+#include "../../../libcatchchallenger/FactoryTrade.hpp"
 #include "../../../libqtcatchchallenger/maprender/MapController.hpp"
 #include "Chat.h"
 #include "NewProfile.h"
@@ -216,7 +217,10 @@ private slots:
     void currentMapLoaded();
     void pathFindingNotFound();
     void pathFindingInternalError();
-    void updateFactoryStatProduction(const IndustryStatus &industryStatus,const Industry &industry);
+    void updateFactoryStatProduction();
+    const Industry &factoryIndustry() const;
+    IndustryStatus &factoryIndustryStatus();
+    void applyFactoryAnswer(const CatchChallenger::FactoryTrade::Answer &answer);
     void factoryToProductItem(QListWidgetItem *item);
     void factoryToResourceItem(QListWidgetItem *item);
     void insert_player(const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
@@ -479,7 +483,7 @@ private:
     std::string clanName;
     bool haveClanInformations;
     uint16_t factoryId;
-    bool factoryInProduction;
+    CatchChallenger::FactoryTrade factoryTrade;
     ObjectType waitedObjectType;
     uint32_t datapackDownloadedCount;
     uint32_t datapackDownloadedSize;
@@ -569,6 +573,7 @@ private:
     //bot
     Bot actualBot;
     CATCHCHALLENGER_TYPE_MAPID actualBotMapId;
+    CATCHCHALLENGER_TYPE_MAPID factoryMapId;
 
     //fight
     QTimer moveFightMonsterBottomTimer;
