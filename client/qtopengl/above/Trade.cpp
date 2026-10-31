@@ -14,6 +14,7 @@ Trade::Trade() :
 {
     connexionManager=nullptr;
     tradeOtherStat=TradeOtherStat_InWait;
+    otherCash=0;
 
     label.setPixmap(QPixmap(":/CC/images/interface/labelL.png"));
     label.setTransformationMode(Qt::SmoothTransformation);
@@ -29,13 +30,13 @@ Trade::Trade() :
 
     // player side
     playerPseudo=new QGraphicsTextItem(this);
-    playerPseudo->setDefaultTextColor(Qt::white);
+    playerPseudo->setDefaultTextColor(QColor(64,28,2));
     playerImage=new QGraphicsPixmapItem(this);
     playerItemsList=new QListWidget();
     playerItemsProxy=new QGraphicsProxyWidget(this);
     playerItemsProxy->setWidget(playerItemsList);
     playerCashLabel=new QGraphicsTextItem(this);
-    playerCashLabel->setDefaultTextColor(Qt::white);
+    playerCashLabel->setDefaultTextColor(QColor(64,28,2));
     playerCash=new SpinBox(this);
     playerCash->setMinimum(0);
     playerCash->setMaximum(999999);
@@ -45,15 +46,15 @@ Trade::Trade() :
 
     // other player side
     otherPseudo=new QGraphicsTextItem(this);
-    otherPseudo->setDefaultTextColor(Qt::white);
+    otherPseudo->setDefaultTextColor(QColor(64,28,2));
     otherImage=new QGraphicsPixmapItem(this);
     otherItemsList=new QListWidget();
     otherItemsProxy=new QGraphicsProxyWidget(this);
     otherItemsProxy->setWidget(otherItemsList);
     otherCashLabel=new QGraphicsTextItem(this);
-    otherCashLabel->setDefaultTextColor(Qt::white);
+    otherCashLabel->setDefaultTextColor(QColor(64,28,2));
     otherStatusText=new QGraphicsTextItem(this);
-    otherStatusText->setDefaultTextColor(QColor(200,200,100));
+    otherStatusText->setDefaultTextColor(QColor(120,70,10));
 
     validateBtn=new CustomButton(":/CC/images/interface/greenbutton.png",this);
     cancelBtn=new CustomButton(":/CC/images/interface/cancel.png",this);
@@ -125,13 +126,13 @@ void Trade::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget
         title->setPixelSize(30/2);
         font.setPixelSize(10);
         btnH=30;
-        btnW=74;
+        btnW=95;
         skinSize=24;
-        addItemBtn->setSize(74,30);
+        addItemBtn->setSize(btnW,btnH);
         addItemBtn->setPixelSize(10);
-        addMonsterBtn->setSize(74,30);
+        addMonsterBtn->setSize(btnW,btnH);
         addMonsterBtn->setPixelSize(10);
-        validateBtn->setSize(74,30);
+        validateBtn->setSize(btnW,btnH);
         validateBtn->setPixelSize(10);
         cancelBtn->setSize(42,47);
     }
@@ -189,7 +190,8 @@ void Trade::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget
 
     // validate/cancel buttons
     validateBtn->setPos(x+idealW-space-btnW,y+idealH-btnH-space/2);
-    cancelBtn->setPos(x+space,y+idealH-cancelBtn->height()-space/2);
+    // top right corner, as the other screens' quit button
+    cancelBtn->setPos(x+idealW-cancelBtn->width()/1.5,y-cancelBtn->height()/2.5);
 
     const QRectF trect=title->boundingRect();
     title->setPos(x+(idealW-title->boundingRect().width())/2,y-trect.height()/2);
@@ -242,6 +244,8 @@ void Trade::setVar(ConnexionManager *connexionManager, const std::string &otherP
     tradeOtherStat=TradeOtherStat_InWait;
 
     // reset current player
+    playerCash->setMinimum(0);
+    playerCash->setMaximum(static_cast<int>(connexionManager->client->get_player_informations_ro().cash));
     playerCash->setValue(0);
     playerItemsList->clear();
     tradeCurrentObjects.clear();
@@ -270,6 +274,7 @@ void Trade::setVar(ConnexionManager *connexionManager, const std::string &otherP
     otherItemsList->clear();
     tradeOtherObjects.clear();
     tradeOtherMonsters.clear();
+    otherCash=0;
     otherCashLabel->setHtml(tr("Cash: 0$"));
     otherStatusText->setHtml(tr("Waiting for validation..."));
 }
@@ -293,12 +298,9 @@ void Trade::onValidateClicked()
     playerCash->setMinimum(playerCash->value());
     playerCash->setMaximum(playerCash->value());
 
-    // send cash if any
+    // the cash leaves the player only when the server validates the trade
     if(playerCash->value()>0)
-    {
-        connexionManager->client->tradeAddTradeCash(playerCash->value());
-        emit removeCash(playerCash->value());
-    }
+        connexionManager->client->addTradeCash(playerCash->value());
 
     connexionManager->client->tradeFinish();
 
@@ -310,34 +312,32 @@ void Trade::onValidateClicked()
 
 void Trade::onCancelClicked()
 {
-    // return items/cash/monsters to player
-    emit addCash(playerCash->value());
+    connexionManager->client->tradeCanceled();
+    returnCurrentOffer();
+    emit setAbove(nullptr);
+}
+
+//give back the offered items and monsters (cash was never removed)
+void Trade::returnCurrentOffer()
+{
     for(const std::pair<const uint16_t, uint32_t> &obj : tradeCurrentObjects)
         emit add_to_inventory(obj.first,obj.second,false);
-
+    // last removed first: each position is relative to the team at its removal
+    while(!tradeCurrentMonsters.empty())
+    {
+        connexionManager->client->insertPlayerMonster(tradeCurrentMonstersPosition.back(),tradeCurrentMonsters.back());
+        tradeCurrentMonstersPosition.pop_back();
+        tradeCurrentMonsters.pop_back();
+    }
     tradeCurrentObjects.clear();
-    tradeCurrentMonsters.clear();
     tradeOtherObjects.clear();
     tradeOtherMonsters.clear();
-
-    connexionManager->client->tradeRefused();
-    emit tradeClosed();
-    emit setAbove(nullptr);
 }
 
 void Trade::tradeCanceledByOther()
 {
-    emit addCash(playerCash->value());
-    for(const std::pair<const uint16_t, uint32_t> &obj : tradeCurrentObjects)
-        emit add_to_inventory(obj.first,obj.second,false);
-
-    tradeCurrentObjects.clear();
-    tradeCurrentMonsters.clear();
-    tradeOtherObjects.clear();
-    tradeOtherMonsters.clear();
-
+    returnCurrentOffer();
     emit showTip(tr("Trade canceled by other player").toStdString());
-    emit tradeClosed();
     emit setAbove(nullptr);
 }
 
@@ -352,23 +352,29 @@ void Trade::tradeFinishedByOther()
 
 void Trade::tradeValidatedByTheServer()
 {
-    // receive other player's items
+    // receive other player's items, cash and monsters
     for(const std::pair<const uint16_t, uint32_t> &obj : tradeOtherObjects)
         emit add_to_inventory(obj.first,obj.second,true);
+    if(otherCash>0)
+        emit addCash(static_cast<uint32_t>(otherCash));
+    if(playerCash->value()>0)
+        emit removeCash(playerCash->value());
+    connexionManager->client->addTradeEvolutions(connexionManager->client->addPlayerMonster(tradeOtherMonsters));
 
     tradeCurrentObjects.clear();
     tradeOtherObjects.clear();
     tradeCurrentMonsters.clear();
+    tradeCurrentMonstersPosition.clear();
     tradeOtherMonsters.clear();
 
     emit showTip(tr("Trade successful!").toStdString());
-    emit tradeClosed();
     emit setAbove(nullptr);
 }
 
 void Trade::tradeAddTradeCash(const uint64_t &cash)
 {
-    otherCashLabel->setHtml(tr("Cash: %1$").arg(cash));
+    otherCash+=cash;
+    otherCashLabel->setHtml(tr("Cash: %1$").arg(otherCash));
 }
 
 void Trade::tradeAddTradeObject(const uint16_t &item, const uint32_t &quantity)
@@ -383,81 +389,66 @@ void Trade::tradeAddTradeObject(const uint16_t &item, const uint32_t &quantity)
 void Trade::tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster)
 {
     tradeOtherMonsters.push_back(monster);
-    // add to other player list display
-    QListWidgetItem *listItem=new QListWidgetItem();
-    if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(monster.monster))
-    {
-        listItem->setText(tr("%1 Lv.%2").arg(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).name)).arg(monster.level));
-        listItem->setIcon(QPixmap(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).frontPath)));
-    }
+    updateOtherItemsDisplay();
+}
+
+void Trade::addCurrentObject(const uint16_t &item, const uint32_t &quantity)
+{
+    if(tradeCurrentObjects.find(item)!=tradeCurrentObjects.cend())
+        tradeCurrentObjects[item]+=quantity;
     else
-        listItem->setText(tr("Monster Lv.%1").arg(monster.level));
-    otherItemsList->addItem(listItem);
+        tradeCurrentObjects[item]=quantity;
+    updateCurrentItemsDisplay();
+}
+
+void Trade::addCurrentMonster(const CatchChallenger::PlayerMonster &monster, const uint8_t &position)
+{
+    tradeCurrentMonsters.push_back(monster);
+    tradeCurrentMonstersPosition.push_back(position);
+    updateCurrentItemsDisplay();
+}
+
+static void addListEntries(QListWidget *list,const std::unordered_map<uint16_t,uint32_t> &objects,const std::vector<CatchChallenger::PlayerMonster> &monsters)
+{
+    list->clear();
+    for(const std::pair<const uint16_t, uint32_t> &obj : objects)
+    {
+        QListWidgetItem *item=new QListWidgetItem();
+        if(QtDatapackClientLoader::datapackLoader->has_itemExtra(obj.first))
+        {
+            const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemExtra(obj.first);
+            item->setText(Trade::tr("%1 x%2").arg(QString::fromStdString(extra.name)).arg(obj.second));
+            item->setIcon(QPixmap(QString::fromStdString(extra.imagePath)));
+        }
+        else
+            item->setText(Trade::tr("Item %1 x%2").arg(obj.first).arg(obj.second));
+        list->addItem(item);
+    }
+    unsigned int index=0;
+    while(index<monsters.size())
+    {
+        const CatchChallenger::PlayerMonster &m=monsters.at(index);
+        QListWidgetItem *item=new QListWidgetItem();
+        if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(m.monster))
+        {
+            item->setText(Trade::tr("%1 Lv.%2").arg(QString::fromStdString(
+                QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.monster).name)).arg(m.level));
+            item->setIcon(QPixmap(QString::fromStdString(
+                QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.monster).frontPath)));
+        }
+        else
+            item->setText(Trade::tr("Monster Lv.%1").arg(m.level));
+        list->addItem(item);
+        index++;
+    }
 }
 
 void Trade::updateCurrentItemsDisplay()
 {
-    playerItemsList->clear();
-    for(const std::pair<const uint16_t, uint32_t> &obj : tradeCurrentObjects)
-    {
-        QListWidgetItem *item=new QListWidgetItem();
-        if(QtDatapackClientLoader::datapackLoader->has_itemExtra(obj.first))
-        {
-            const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemExtra(obj.first);
-            item->setText(tr("%1 x%2").arg(QString::fromStdString(extra.name)).arg(obj.second));
-            item->setIcon(QPixmap(QString::fromStdString(extra.imagePath)));
-        }
-        else
-            item->setText(tr("Item %1 x%2").arg(obj.first).arg(obj.second));
-        playerItemsList->addItem(item);
-    }
-    // add monsters
-    for(const CatchChallenger::PlayerMonster &m : tradeCurrentMonsters)
-    {
-        QListWidgetItem *item=new QListWidgetItem();
-        if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(m.monster))
-        {
-            item->setText(tr("%1 Lv.%2").arg(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.monster).name)).arg(m.level));
-            item->setIcon(QPixmap(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.monster).frontPath)));
-        }
-        else
-            item->setText(tr("Monster Lv.%1").arg(m.level));
-        playerItemsList->addItem(item);
-    }
+    addListEntries(playerItemsList,tradeCurrentObjects,tradeCurrentMonsters);
 }
 
 void Trade::updateOtherItemsDisplay()
 {
-    otherItemsList->clear();
-    for(const std::pair<const uint16_t, uint32_t> &obj : tradeOtherObjects)
-    {
-        QListWidgetItem *item=new QListWidgetItem();
-        if(QtDatapackClientLoader::datapackLoader->has_itemExtra(obj.first))
-        {
-            const QtDatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->get_itemExtra(obj.first);
-            item->setText(tr("%1 x%2").arg(QString::fromStdString(extra.name)).arg(obj.second));
-            item->setIcon(QPixmap(QString::fromStdString(extra.imagePath)));
-        }
-        else
-            item->setText(tr("Item %1 x%2").arg(obj.first).arg(obj.second));
-        otherItemsList->addItem(item);
-    }
-    for(const CatchChallenger::PlayerMonster &m : tradeOtherMonsters)
-    {
-        QListWidgetItem *item=new QListWidgetItem();
-        if(QtDatapackClientLoader::datapackLoader->has_monsterExtra(m.monster))
-        {
-            item->setText(tr("%1 Lv.%2").arg(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.monster).name)).arg(m.level));
-            item->setIcon(QPixmap(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_monsterExtra(m.monster).frontPath)));
-        }
-        else
-            item->setText(tr("Monster Lv.%1").arg(m.level));
-        otherItemsList->addItem(item);
-    }
+    addListEntries(otherItemsList,tradeOtherObjects,tradeOtherMonsters);
 }

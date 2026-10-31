@@ -83,6 +83,7 @@ signals:
     void sendBack();
     void useItem(uint16_t item);
     void deleteItem(uint16_t item);
+    void canceled();
 };
 
 #endif // OPTIONSDIALOG_H

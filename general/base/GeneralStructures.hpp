@@ -222,7 +222,7 @@ class PlayerMonster : public PublicPlayerMonster
     //in form of list to get random into the list
     std::vector<PlayerSkill> skills;
     #ifndef CATCHCHALLENGER_VERSION_SINGLESERVER
-    uint32_t id;//id into the db, only on server part, but no way to leave from here with risk of structure problem
+    uint32_t id;//id into the db, server only: never sent, the protocol refers to a monster by its team position
     #endif
     uint32_t character_origin;
     #ifdef CATCHCHALLENGER_DB_FILE

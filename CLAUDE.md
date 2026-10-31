@@ -190,6 +190,7 @@ If `git status` shows build dirs / `.qtcreator/` / `__pycache__/` / `.claude/` /
 
 # Network Protocol
 * Packet: header byte, with/without reply, both directions
+* The protocol refers to a player's monsters/items by POSITION, never by DB id: the id never leaves the server (smaller attack surface, less data leaked, backend-independent). A client without ids is normal.
 * Compression: Zstandard (level 1-9), optional — applied to a small set of packets only (the client character-load protocol), not the hot per-tick packets. Hard-disable via `#ifdef CATCHCHALLENGER_SERVER_NO_COMPRESSION`; runtime off via server-properties `compression=none`.
 * 4 separate DBs: login (accounts), common (shared, characters), server (server-specific)
 

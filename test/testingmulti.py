@@ -519,6 +519,36 @@ def _start_local_server(case):
     return True
 
 
+def _trade_characters_ready(case, gl):
+    """Fresh server-filedb with PlayerA and PlayerB created, PlayerA given a second
+    monster 13 (evolves by trade into 14), the server started again. Returns ok."""
+    import time
+    if not os.path.isfile(os.path.join(FILEDB_CONVERTER_BUILD, FILEDB_CONVERTER_BIN)):
+        log_fail(case, "filedb-converter not built")
+        return False
+    # run 1: create both characters (saved on disconnect)
+    if not _start_local_server_fresh_db(case):
+        return False
+    clients = []
+    for character in (CHAR_A, CHAR_B):
+        proc, out, sk, err = _start_channel_client(character, f"testTrade{character}Key", "cc-test-trade-", gl)
+        if err is not None:
+            for c in clients: kill_client(c[0])
+            stop_server()
+            log_fail(case, f"run1 {err}")
+            for line in out[-25:]: print(f"  | {line}")
+            return False
+        clients.append(proc)
+    for proc in clients: kill_client(proc)
+    time.sleep(1.0)
+    stop_server()
+    ok, err = _filedb_add_monster(CHAR_A, 13)
+    if not ok:
+        log_fail(case, f"savegame edit: {err}")
+        return False
+    return _start_local_server(case)
+
+
 def run_channel_trade_evolution_test(dp_name, failed_cases):
     """Two players trade a monster over the real server, then the trade evolution:
     PlayerA gets monster 13 (evolves by trade into 14) by a savegame edit, gives it
@@ -534,33 +564,9 @@ def run_channel_trade_evolution_test(dp_name, failed_cases):
     if not should_run(case, failed_cases) and not should_run(battle_case, failed_cases):
         return
     print(f"\n{C_CYAN}--- Trade + trade evolution (2 clients vs local server-filedb): {dp_name} {MAINCODE} ---{C_RESET}\n")
-    if not os.path.isfile(os.path.join(FILEDB_CONVERTER_BUILD, FILEDB_CONVERTER_BIN)):
-        log_fail(case, "filedb-converter not built")
+    if not _trade_characters_ready(case, False):
         return
     clients = []
-    # run 1: create both characters (saved on disconnect)
-    if not _start_local_server_fresh_db(case):
-        return
-    for character in (CHAR_A, CHAR_B):
-        proc, out, sk, err = _start_channel_client(character, f"testTrade{character}Key", "cc-test-trade-")
-        if err is not None:
-            for c in clients: kill_client(c[0])
-            stop_server()
-            log_fail(case, f"run1 {err}")
-            for line in out[-25:]: print(f"  | {line}")
-            return
-        clients.append((proc, out, sk))
-    for c in clients: kill_client(c[0])
-    clients = []
-    time.sleep(1.0)
-    stop_server()
-    ok, err = _filedb_add_monster(CHAR_A, 13)
-    if not ok:
-        log_fail(case, f"savegame edit: {err}")
-        return
-    # run 2: trade then evolve
-    if not _start_local_server(case):
-        return
     detail = ""
     try:
         for character in (CHAR_A, CHAR_B):
@@ -641,6 +647,136 @@ def run_channel_trade_evolution_test(dp_name, failed_cases):
         log_pass(case, f"server saved PlayerA={team_a} PlayerB={team_b}; {detail}")
 
 
+# qtopengl trade UI at the channel's 640x480 (CLICKSCREEN pixels)
+GL_TRADE_ADD_MONSTER = (259, 342)
+GL_TRADE_VALIDATE = (482, 343)
+GL_TRADE_CANCEL = (538, 117)
+GL_MONSTER_SELECT_ROW2 = (260, 245)
+GL_MONSTER_SELECT_OK = (440, 300)
+GL_PROMPT_REFUSE = (191, 253)
+
+
+def _gl_click(sk, xy, wait=1.0):
+    return _channel_cmd(sk, f"CLICKSCREEN {xy[0]} {xy[1]}", wait)
+
+
+def _gl_trade_open(sk_a, sk_b):
+    """A requests, B accepts from the in-game prompt (Return = first link). Returns
+    the prompt text B got."""
+    _channel_cmd(sk_a, f"TRADEREQUEST {CHAR_B}", 1.5)
+    prompt = _channel_cmd(sk_b, "GETDIALOG")
+    _channel_cmd(sk_b, "KEY Return", 1.5)
+    return prompt
+
+
+def _gl_trade_offer_second_monster(sk_a):
+    _gl_click(sk_a, GL_TRADE_ADD_MONSTER)
+    _gl_click(sk_a, GL_MONSTER_SELECT_ROW2, 0.5)
+    _gl_click(sk_a, GL_MONSTER_SELECT_OK, 1.5)
+
+
+def run_channel_trade_gl_test(dp_name, failed_cases):
+    """The qtopengl trade, driven through its UI (prompt, trade screen, monster
+    picker) by two clients on the local server:
+      - the in-game prompt refuses on its Refuse link, nobody is kicked
+      - cancel gives the offered monster back to the local team
+      - the offered monster reaches B, its trade evolution runs, the server saves it"""
+    import time
+    refuse_case = "qtopengl trade request refused from the in-game prompt"
+    cancel_case = "qtopengl trade cancel gives the offered monster back"
+    case = "qtopengl trade + trade evolution through the trade screen"
+    if not (should_run(case, failed_cases) or should_run(cancel_case, failed_cases) or
+            should_run(refuse_case, failed_cases)):
+        return
+    print(f"\n{C_CYAN}--- qtopengl trade UI (2 clients vs local server-filedb): {dp_name} {MAINCODE} ---{C_RESET}\n")
+    if not _trade_characters_ready(case, True):
+        return
+    clients = []
+    detail = ""
+    try:
+        for character in (CHAR_A, CHAR_B):
+            proc, out, sk, err = _start_channel_client(character, f"testTrade{character}Key", "cc-test-trade-", True)
+            if err is not None:
+                log_fail(case, f"run2 {err}")
+                for line in out[-25:]: print(f"  | {line}")
+                return
+            clients.append((proc, out, sk))
+        sk_a, sk_b = clients[0][2], clients[1][2]
+        team_a = _channel_team(sk_a)
+        if team_a[1:2] != [13]:
+            log_fail(case, f"savegame edit not loaded: PlayerA team={team_a}")
+            return
+        # refuse
+        _channel_cmd(sk_a, f"TRADEREQUEST {CHAR_B}", 1.5)
+        prompt = _channel_cmd(sk_b, "GETDIALOG")
+        _gl_click(sk_b, GL_PROMPT_REFUSE, 1.5)
+        after = _channel_cmd(sk_b, "GETDIALOG")
+        if "wants to trade" not in prompt:
+            log_fail(refuse_case, f"no trade prompt on B: {prompt!r}")
+        elif after.strip() != "DIALOG":
+            log_fail(refuse_case, f"the prompt is still open after Refuse: {after!r}")
+        elif _channel_state(sk_a) is None or _channel_state(sk_b) is None:
+            log_fail(refuse_case, "a client was kicked by the refused request")
+        else:
+            log_pass(refuse_case, "prompt shown, closed by Refuse, both still connected")
+        # cancel
+        _gl_trade_open(sk_a, sk_b)
+        _gl_trade_offer_second_monster(sk_a)
+        offered = _channel_team(sk_a)
+        _gl_click(sk_a, GL_TRADE_CANCEL, 1.5)
+        back = _channel_team(sk_a)
+        if offered != team_a[:1] or back != team_a:
+            log_fail(cancel_case, f"team before={team_a} offered={offered} after cancel={back}")
+        else:
+            log_pass(cancel_case, f"offered {offered}, back to {back}")
+        # trade then evolve
+        prompt = _gl_trade_open(sk_a, sk_b)
+        _gl_trade_offer_second_monster(sk_a)
+        _gl_click(sk_a, GL_TRADE_VALIDATE)
+        _gl_click(sk_b, GL_TRADE_VALIDATE)
+        # the evolution animation lasts 4s, then B sends the 0x0F confirm
+        deadline = time.time() + 20
+        team_b = _channel_team(sk_b)
+        while time.time() < deadline and 14 not in team_b:
+            time.sleep(0.5)
+            team_b = _channel_team(sk_b)
+        local_a = _channel_team(sk_a)
+        if 14 not in team_b or 13 in local_a:
+            log_fail(case, f"after the trade: local team A={local_a} B={team_b}; prompt={prompt!r}")
+            for line in clients[0][1][-15:]: print(f"  A| {line}")
+            for line in clients[1][1][-15:]: print(f"  B| {line}")
+            return
+        time.sleep(2.0)
+        i = 0
+        while i < len(clients):
+            if clients[i][0].poll() is not None or _channel_state(clients[i][2]) is None:
+                log_fail(case, f"{(CHAR_A, CHAR_B)[i]} disconnected/kicked after the trade evolution")
+                for line in clients[i][1][-25:]: print(f"  | {line}")
+                return
+            i += 1
+        detail = f"local team A={local_a} B={team_b}"
+    except OSError as e:
+        log_fail(case, f"channel closed (client died or kicked): {e}")
+        i = 0
+        while i < len(clients):
+            print(f"  {(CHAR_A, CHAR_B)[i]} rc={clients[i][0].poll()}")
+            for line in _crash_tail(clients[i][1]): print(f"  | {line}")
+            i += 1
+        return
+    finally:
+        for c in clients: kill_client(c[0])
+        time.sleep(1.0)
+        stop_server()
+    team_b, err = _filedb_team(CHAR_B)
+    team_a, err_a = _filedb_team(CHAR_A)
+    if team_b is None or team_a is None:
+        log_fail(case, f"savegame read: {err} {err_a}")
+    elif 14 not in team_b or 13 in team_a:
+        log_fail(case, f"server saved PlayerA={team_a} PlayerB={team_b} (expected 14 at B, no 13 at A); {detail}")
+    else:
+        log_pass(case, f"server saved PlayerA={team_a} PlayerB={team_b}; {detail}")
+
+
 def main():
     print(f"\n{C_CYAN}{'='*60}")
     print("  CatchChallenger — Multiplayer Interaction Testing")
@@ -709,6 +845,8 @@ def main():
 
     # Two clients trade a monster and the receiver's trade evolution is confirmed.
     run_channel_trade_evolution_test(dp_name, failed_cases)
+    # The same through the qtopengl trade UI: prompt, trade screen, monster picker.
+    run_channel_trade_gl_test(dp_name, failed_cases)
 
     # Drive a live client over the same socket to leave a map by clicking a
     # "teleport on push" exit (regression for the can't-leave-the-gym bug).
@@ -974,11 +1112,11 @@ def run_channel_teleport_push_test(dp_name, failed_cases):
             print(f"  | {line}")
 
 
-def _start_channel_client(character, conf_key, prefix):
-    """qtcpu800x600 on the local server with --remote-control (isolated config/data/
-    TMPDIR so a parallel client can't steal socket slot 0), waited on the map and
-    connected to its QLocalServer socket. Returns (proc, out, sk, error): error is
-    None on success, else the client is already killed."""
+def _start_channel_client(character, conf_key, prefix, gl=False):
+    """qtcpu800x600 (qtopengl if gl) on the local server with --remote-control
+    (isolated config/data/TMPDIR so a parallel client can't steal socket slot 0),
+    waited on the map and connected to its QLocalServer socket. Returns
+    (proc, out, sk, error): error is None on success, else the client is already killed."""
     import tempfile, time
     tmpdir = tempfile.mkdtemp(prefix=prefix)
     env = os.environ.copy()
@@ -986,20 +1124,23 @@ def _start_channel_client(character, conf_key, prefix):
     env["XDG_CONFIG_HOME"] = os.path.join(tmpdir, "config")
     env["XDG_DATA_HOME"] = os.path.join(tmpdir, "data")
     env["TMPDIR"] = tmpdir
-    app_name = "CatchChallenger/client-qtcpu800x600"
+    app_name = "CatchChallenger/client" if gl else "CatchChallenger/client-qtcpu800x600"
     cache_name = f"argument-{SERVER_HOST}-{_config['server_port']}"
     cache_dir = os.path.join(tmpdir, "data", app_name, "datapack", cache_name)
     shutil.copytree(os.path.join(SERVER_BUILD, "datapack"), cache_dir,
                     ignore=shutil.ignore_patterns(".git"))
     conf_dir = os.path.join(tmpdir, "config", "CatchChallenger")
     os.makedirs(conf_dir, exist_ok=True)
-    with open(os.path.join(conf_dir, "client-qtcpu800x600.conf"), "w") as f:
+    with open(os.path.join(conf_dir, app_name.split("/")[-1] + ".conf"), "w") as f:
         f.write(f"[General]\nkey={conf_key}\n")
     # NO --test flag: the client stays on the map so we can drive it via the socket
     args = ["--host", SERVER_HOST, "--port", SERVER_PORT,
             "--autologin", "--character", character, "--remote-control"]
-    log_info(f"connecting client (qtcpu800x600) as {character}, driven over its channel")
-    proc, done, out, fail = run_client_async(CLIENT_CPU_BUILD, CLIENT_CPU_BIN, args, env)
+    log_info(f"connecting client ({'qtopengl' if gl else 'qtcpu800x600'}) as {character}, driven over its channel")
+    if gl:
+        proc, done, out, fail = run_client_async(CLIENT_GL_BUILD, CLIENT_GL_BIN, args, env)
+    else:
+        proc, done, out, fail = run_client_async(CLIENT_CPU_BUILD, CLIENT_CPU_BIN, args, env)
     on_map = False
     deadline = time.time() + diagnostic.scale_timeout(DIAG, 150)
     while time.time() < deadline:

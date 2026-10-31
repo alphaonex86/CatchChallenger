@@ -20,7 +20,6 @@ Inventory::Inventory() :
     label.setTransformationMode(Qt::SmoothTransformation);
     label.setCacheMode(QGraphicsItem::DeviceCoordinateCache);
     quit=new CustomButton(":/CC/images/interface/cancel.png",wdialog);
-    connect(quit,&CustomButton::clicked,this,&Inventory::removeAbove);
     QLinearGradient gradient1( 0, 0, 0, 100 );
     gradient1.setColorAt( 0.25, QColor(230,153,0));
     gradient1.setColorAt( 0.75, QColor(255,255,255));
@@ -71,6 +70,9 @@ Inventory::~Inventory()
 void Inventory::removeAbove()
 {
     emit setAbove(nullptr);
+    //a picker closed without a pick: the caller must restore its own screen (trade)
+    if(inSelection)
+        emit canceled();
 }
 
 QRectF Inventory::boundingRect() const

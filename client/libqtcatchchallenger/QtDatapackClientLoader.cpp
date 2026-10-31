@@ -457,13 +457,19 @@ void QtDatapackClientLoader::resetAll()
     }*/
     ImageitemsExtra.clear();
     ImagemonsterExtra.clear();
-    ImageitemsToLoad.clear();
-    ImagemonsterToLoad.clear();
     QtitemsExtra.clear();
     QtmonsterExtra.clear();
     QtmonsterBuffsExtra.clear();
     QtplantExtra.clear();
-    DatapackClientLoader::resetAll();
+    {
+        //an image thread not in threads (startThread() cleared the set) may still read them
+        #ifndef NOTHREADS
+        QMutexLocker a(&mutex);
+        #endif
+        ImageitemsToLoad.clear();
+        ImagemonsterToLoad.clear();
+        DatapackClientLoader::resetAll();
+    }
     #ifndef NOTHREADS
     /* Restart the thread so future parseDatapack() signals are processed
        (resetAll is also called on reconnect, not just shutdown). */
