@@ -825,8 +825,34 @@ def run_reconnect_cached_datapack(build_dir, bin_name, label, character):
                    expect_cached_datapack=True)
 
 
+# the official master keeps a character locked maxLockAge (10s) after its client
+# left: every live run logs TestPlayerLive in, the next one got 0x08 "Too recently
+# disconnected" when started at once
+LIVE_RELOGIN_DELAY = 11
+_live_last_run = [0.0]
+
+
+def wait_live_relogin():
+    remaining = _live_last_run[0] + LIVE_RELOGIN_DELAY - time.monotonic()
+    if remaining > 0:
+        time.sleep(remaining)
+
+
+def run_client_benchmark_warm(build_dir, bin_name, args, label, timeout=30):
+    """Benchmark a login with the datapack already cached, in an isolated HOME: an
+    unmeasured first run downloads it. With the operator's HOME a client paid a
+    datapack download whenever another run had left its cache stale (qtcpu800x600
+    2.2s vs qtopengl 0.9s; cached 0.6s vs 0.9s)."""
+    env = _isolated_home_env("cc-bench-")
+    if run_client_benchmark(build_dir, bin_name, args, label + " warm-up", timeout,
+                            extra_env=env) is None:
+        return None
+    return run_client_benchmark(build_dir, bin_name, args, label, timeout, extra_env=env)
+
+
 def run_client_benchmark(build_dir, bin_name, args, label, timeout=30,
-                         success_marker="MapVisualiserPlayer::mapDisplayedSlot()"):
+                         success_marker="MapVisualiserPlayer::mapDisplayedSlot()",
+                         extra_env=None):
     """Run client and measure time in ms until success_marker appears in output.
     Returns elapsed_ms (float) or None on failure/timeout.
     Runs without nice/gdb for accurate timing."""
@@ -839,6 +865,8 @@ def run_client_benchmark(build_dir, bin_name, args, label, timeout=30,
     env["QT_QPA_PLATFORM"] = "offscreen"
     for k, v in diagnostic.runtime_env(DIAG).items():
         env[k] = v
+    if extra_env:
+        env.update(extra_env)
     timeout = diagnostic.scale_timeout(DIAG, timeout)
     wrapper = diagnostic.runtime_wrapper(DIAG)
 
@@ -3413,7 +3441,7 @@ def main():
     gl_time_ms = None
 
     if cpu_ok and should_run("benchmark player on map", failed_cases):
-        cpu_time_ms = run_client_benchmark(
+        cpu_time_ms = run_client_benchmark_warm(
             CLIENT_CPU_BUILD, CLIENT_CPU_BIN,
             ["--host", SERVER_HOST, "--port", SERVER_PORT,
              "--autologin", "--character", "BenchCPU",
@@ -3422,7 +3450,7 @@ def main():
             timeout=30)
 
     if gl_ok and should_run("benchmark player on map", failed_cases):
-        gl_time_ms = run_client_benchmark(
+        gl_time_ms = run_client_benchmark_warm(
             CLIENT_GL_BUILD, CLIENT_GL_BIN,
             ["--host", SERVER_HOST, "--port", SERVER_PORT,
              "--autologin", "--character", "BenchGL",
@@ -3487,7 +3515,9 @@ def main():
         any_remote_pending = False
         while idx < len(failed_cases):
             name = failed_cases[idx]
+            # the live official server runs come after the remote phases
             if (" -> remote " in name or
+                " -> Official " in name or
                 "solo " in name or
                 "remote " in name and "server start" in name):
                 any_remote_pending = True
@@ -3659,6 +3689,7 @@ def main():
         except OSError as exc:
             log_info(f"skipping {live_label}: {live_host}:{live_port} unreachable ({exc})")
         if reachable:
+            wait_live_relogin()
             run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
                        ["--server", "Official CatchChallenger server",
                         "--autologin",
@@ -3668,6 +3699,7 @@ def main():
                        timeout=60,
                        success_marker="MapVisualiserPlayer::mapDisplayedSlot()",
                        soft_timeout=True)
+            _live_last_run[0] = time.monotonic()
 
     # ═══════════════════════════════════════════════════════════════
     # 7b. LIVE — official server, IPv4-only then IPv6-only, BOTH native
@@ -3731,6 +3763,7 @@ def main():
                 if should_run(fam_label, failed_cases):
                     print(f"\n{C_CYAN}--- Live: {fam_label} ---{C_RESET}\n")
                     if reachable:
+                        wait_live_relogin()
                         run_client(client_build, client_bin,
                                    ["--host", ip, "--port", str(live_port),
                                     "--autologin",
@@ -3740,6 +3773,7 @@ def main():
                                    timeout=60,
                                    success_marker="MapVisualiserPlayer::mapDisplayedSlot()",
                                    soft_timeout=True)
+                        _live_last_run[0] = time.monotonic()
 
     # ═══════════════════════════════════════════════════════════════
     # WINDOWS / macOS / ANDROID cross-compile + run phases used to live

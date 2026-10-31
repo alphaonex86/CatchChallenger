@@ -15,6 +15,7 @@
 "PlayerRCCPU is logged, cash: <n>"
 "Problem with the datapack list reply:https:<path> Error transferring https:<path> - server replied with status code <n> with proxy: <n> type <n> (try next)"
 "QtDatapackClientLoader::parseDatapack()"
+"TestPlayerLive is logged, cash: <n>"
 "listDatapack(): remove invalid file: <path>"
 "listDatapack(): remove invalid file: README.md"
 "listDatapack(): remove invalid file: datapack-change.md"
@@ -67,6 +68,7 @@
 Api_client_real::datapackChecksumDoneBase
 Api_client_real::datapackDownloadFinishedBase()
 Api_client_real::getHttpFileBase(): https:<path>
+Api_client_real::getHttpFileMain(): https:<path>
 Api_client_real::sendDatapackContentBase()
 Api_client_real::sendDatapackContentBase() doDifferedChecksumBase
 Api_protocol::addCharacter() pseudo: Player
@@ -139,6 +141,7 @@ Loaded map and other <n>ms
 Loaded the common datapack into <n>ms
 Loaded the server SQL datapack into <n>ms
 Loaded the server static datapack into <n>ms
+Main Problem with the datapack list reply:https:<path> Error transferring https:<path> - server replied with status code <n> with proxy: <n> type <n> (try next)
 Main: Datapack is empty or hash don't match, get from server, hash local: "<hash>" , hash on server: "<hash>"
 MainWindow::newError(): Internal error, file: <path> parseReplyData(): return false, need be aborted before, packetCode: <n>, data: <n>
 MainWindow::stateChanged(<n>)
