@@ -42,7 +42,7 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const
         if(playerInformations.quests.find(botQuests.at(index))==playerInformations.quests.cend())
         {
             //quest not started
-            if(haveStartQuestRequirement(currentQuest))
+            if(connexionManager->client->haveStartQuestRequirement(currentQuest))
                 return true;
             else
                 {}//have not the requirement
@@ -60,7 +60,7 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const
                         if(playerInformations.quests.at(botQuests.at(index)).finish_one_time)
                         {
                             //quest already done but repeatable
-                            if(haveStartQuestRequirement(currentQuest))
+                            if(connexionManager->client->haveStartQuestRequirement(currentQuest))
                                 return true;
                             else
                                 {}//have not the requirement
@@ -422,7 +422,7 @@ bool OverMapLogic::tryValidateQuestStep(const uint16_t &questId, const uint16_t 
     {
         //start for the first time the quest
         if(quest.steps.at(0).botToTalkBotId==botId
-                && haveStartQuestRequirement(quest))
+                && connexionManager->client->haveStartQuestRequirement(quest))
         {
             connexionManager->client->startQuest(questId);
             startQuest(quest);
@@ -441,7 +441,7 @@ bool OverMapLogic::tryValidateQuestStep(const uint16_t &questId, const uint16_t 
         //start again the quest if can be repeated
         if(quest.repeatable &&
                 quest.steps.at(0).botToTalkBotId==botId
-                && haveStartQuestRequirement(quest))
+                && connexionManager->client->haveStartQuestRequirement(quest))
         {
             connexionManager->client->startQuest(questId);
             startQuest(quest);
@@ -455,7 +455,7 @@ bool OverMapLogic::tryValidateQuestStep(const uint16_t &questId, const uint16_t 
             return false;
         }
     }
-    if(!haveNextStepQuestRequirements(quest))
+    if(!connexionManager->client->haveNextStepQuestRequirements(quest))
     {
         if(!silent)
             showTip(tr("You don't have the requirement to continue this quest").toStdString());
@@ -524,7 +524,7 @@ void OverMapLogic::showQuestText(const uint32_t &textId)
             case QtDatapackClientLoader::QuestCondition_haverequirements:
             {
                 const CatchChallenger::Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quest(questId);
-                if(!haveNextStepQuestRequirements(quest))
+                if(!connexionManager->client->haveNextStepQuestRequirements(quest))
                     indexCond=e.conditions.size()+999;//not validated condition
             }
             break;
@@ -542,87 +542,6 @@ void OverMapLogic::showQuestText(const uint32_t &textId)
     }
     std::string textToShow=parseHtmlToDisplay(text);
     setIG_dialog(QString::fromStdString(textToShow),QString::fromStdString(actualBot.name));
-}
-
-bool OverMapLogic::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest) const
-{
-    #ifdef DEBUG_CLIENT_QUEST
-    qDebug() << QStringLiteral("haveNextStepQuestRequirements for quest: %1").arg(questId);
-    #endif
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
-    if(playerInformations.quests.find(quest.id)==playerInformations.quests.cend())
-    {
-        qDebug() << "step out of range for: " << quest.id;
-        return false;
-    }
-    uint8_t step=playerInformations.quests.at(quest.id).step;
-    if(step<=0 || step>quest.steps.size())
-    {
-        qDebug() << "step out of range for: " << quest.id;
-        return false;
-    }
-    #ifdef DEBUG_CLIENT_QUEST
-    qDebug() << QStringLiteral("haveNextStepQuestRequirements for quest: %1, step: %2").arg(questId).arg(step);
-    #endif
-    const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
-    unsigned int index=0;
-    while(index<requirements.items.size())
-    {
-        const CatchChallenger::Quest::Item &item=requirements.items.at(index);
-        if(connexionManager->client->itemQuantity(item.item)<item.quantity)
-        {
-            #ifdef DEBUG_CLIENT_QUEST
-            qDebug() << "quest requirement, have not the quantity for the item: " << item.item;
-            #endif
-            return false;
-        }
-        index++;
-    }
-    //fights is now map<mapId, set<botId>>
-    for(const std::pair<const uint16_t, catchchallenger_datapack_set<uint8_t>> &fightEntry : requirements.fights)
-    {
-        const CATCHCHALLENGER_TYPE_MAPID &fightMapId=fightEntry.first;
-        for(const uint8_t &botFightId : fightEntry.second)
-        {
-            if(!connexionManager->client->haveBeatBot(fightMapId,botFightId))
-                return false;
-        }
-    }
-    return true;
-}
-
-bool OverMapLogic::haveStartQuestRequirement(const CatchChallenger::Quest &quest) const
-{
-    #ifdef DEBUG_CLIENT_QUEST
-    qDebug() << "check quest requirement for: " << quest.id;
-    #endif
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
-    if(playerInformations.quests.find(quest.id)!=playerInformations.quests.cend())
-    {
-        const CatchChallenger::PlayerQuest &playerquest=playerInformations.quests.at(quest.id);
-        if(playerquest.step!=0)
-            return false;
-        if(playerquest.finish_one_time && !quest.repeatable)
-            return false;
-    }
-    unsigned int index=0;
-    while(index<quest.requirements.quests.size())
-    {
-        const uint16_t &questId=quest.requirements.quests.at(index).quest;
-        if(
-                (playerInformations.quests.find(questId)==playerInformations.quests.cend() && !quest.requirements.quests.at(index).inverse)
-                ||
-                (playerInformations.quests.find(questId)!=playerInformations.quests.cend() && quest.requirements.quests.at(index).inverse)
-                )
-            return false;
-        if(playerInformations.quests.find(questId)!=playerInformations.quests.cend())
-            return false;
-        const CatchChallenger::PlayerQuest &playerquest=playerInformations.quests.at(quest.id);
-        if(!playerquest.finish_one_time)
-            return false;
-        index++;
-    }
-    return connexionManager->client->haveReputationRequirements(quest.requirements.reputation);
 }
 
 void OverMapLogic::on_IG_dialog_text_linkActivated(const QString &rawlink)
@@ -786,7 +705,7 @@ std::vector<std::pair<uint16_t,std::string> > OverMapLogic::getQuestList(const u
         if(playerInformations.quests.find(botQuests.at(index))==playerInformations.quests.cend())
         {
             //quest not started
-            if(haveStartQuestRequirement(currentQuest))
+            if(connexionManager->client->haveStartQuestRequirement(currentQuest))
             {
                 oneEntry.first=questId;
                 if(QtDatapackClientLoader::datapackLoader->has_questExtra(questId))
@@ -814,7 +733,7 @@ std::vector<std::pair<uint16_t,std::string> > OverMapLogic::getQuestList(const u
                         if(playerInformations.quests.at(botQuests.at(index)).finish_one_time)
                         {
                             //quest already done but repeatable
-                            if(haveStartQuestRequirement(currentQuest))
+                            if(connexionManager->client->haveStartQuestRequirement(currentQuest))
                             {
                                 oneEntry.first=questId;
                                 if(QtDatapackClientLoader::datapackLoader->has_questExtra(questId))

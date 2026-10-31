@@ -645,15 +645,6 @@ std::string CliApiClient::getLanguage() const
     return std::string("en");
 }
 
-bool CliApiClient::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,
-                               const CATCHCHALLENGER_TYPE_BOTID &botFightId) const
-{
-    (void)mapId;
-    (void)botFightId;
-    //a benchmark bot never fights, so no bot has ever been beaten
-    return false;
-}
-
 //---- saturation ("spam") mode ------------------------------------------
 
 void CliApiClient::setSpamMode(const bool &spam)

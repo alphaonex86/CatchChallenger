@@ -235,8 +235,6 @@ public slots:
     std::vector<std::pair<uint16_t, std::string> > getQuestList(const uint16_t &botId) const;
     void updateDisplayedQuests();
     void appendReputationPoint(const std::string &type,const int32_t &point);
-    bool haveNextStepQuestRequirements(const CatchChallenger::Quest &quest) const;
-    bool haveStartQuestRequirement(const CatchChallenger::Quest &quest) const;
     //trade
     /*void tradeRequested(const std::string &pseudo, const uint8_t &skinInt);
     void tradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt);

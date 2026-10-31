@@ -2659,15 +2659,8 @@ bool Api_protocol::haveStartQuestRequirement(const CatchChallenger::Quest &quest
             #endif
             return false;
         }
-        if(playerInformations.quests.find(questId)!=playerInformations.quests.cend())
-        {
-            #ifdef DEBUG_CLIENT_QUEST
-            std::cout << "quest never started: " << questId << std::endl;
-            #endif
-            return false;
-        }
-        const PlayerQuest &playerquest=playerInformations.quests.at(quest.id);
-        if(!playerquest.finish_one_time)
+        //same rule as the server: an inverse prerequisite is satisfied by being absent
+        if(!quest.requirements.quests.at(index).inverse && !playerInformations.quests.at(questId).finish_one_time)
         {
             #ifdef DEBUG_CLIENT_QUEST
             std::cout << "quest never finished: " << questId << std::endl;
@@ -2683,6 +2676,15 @@ void Api_protocol::addBeatenBotFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,con
 {
     Player_private_and_public_informations_Map &mapData=player_informations.mapData[mapId];
     mapData.bots_beaten.insert(botFightId);
+}
+
+bool Api_protocol::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId) const
+{
+    //the beaten-bot set the server sent at character load, kept up to date by addBeatenBotFight()
+    const std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map>::const_iterator mapIt=player_informations.mapData.find(mapId);
+    if(mapIt==player_informations.mapData.cend())
+        return false;
+    return mapIt->second.bots_beaten.find(botFightId)!=mapIt->second.bots_beaten.cend();
 }
 
 void Api_protocol::addPlayerMonsterWarehouse(const PlayerMonster &playerMonster)

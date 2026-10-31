@@ -182,8 +182,6 @@ public:
     void haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,
                        const COORD_TYPE &y,const Direction &last_direction) override;
     std::string getLanguage() const override;
-    bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,
-                     const CATCHCHALLENGER_TYPE_BOTID &botFightId) const override;
 
     //---- Api_protocol notifications a benchmark bot ignores ------------
     void lastReplyTime(const uint32_t &time) override;

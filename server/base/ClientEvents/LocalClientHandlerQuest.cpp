@@ -192,7 +192,8 @@ bool Client::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
             normalOutput("have never started the quest: "+std::to_string(questId));
             return false;
         }
-        if(!public_and_private_informations.quests.at(questId).finish_one_time)
+        //an inverse prerequisite is satisfied by being absent: at() would abort
+        if(!quest.requirements.quests.at(index).inverse && !public_and_private_informations.quests.at(questId).finish_one_time)
         {
             normalOutput("quest never finished: "+std::to_string(questId));
             return false;
