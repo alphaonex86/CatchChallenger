@@ -186,9 +186,6 @@ private:
     QList<CatchChallenger::Chat_type> chat_list_type;
     QList<QString> chat_list_text;
     QSettings settings;
-    QString lastMessageSend;
-    QTimer stopFlood;
-    int numberForFlood;
     bool haveShowDisconnectionReason;
     QStringList server_list;
     CatchChallenger::ConnectedSocket *socket;

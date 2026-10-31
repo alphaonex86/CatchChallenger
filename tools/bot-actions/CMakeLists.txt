@@ -56,8 +56,6 @@ add_executable(bot-actions
     ../libbot/actions/ActionsFight.cpp
     ../libbot/actions/ActionsQuests.cpp
     ../libbot/actions/ActionsAPIReturn.cpp
-    # qtcpu800x600's ChatParsing reused (per .pro)
-    ../../client/qtcpu800x600/base/ChatParsing.cpp
 )
 
 target_compile_definitions(bot-actions PRIVATE

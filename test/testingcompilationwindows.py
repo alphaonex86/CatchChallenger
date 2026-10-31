@@ -2888,8 +2888,8 @@ def run_wine_screenshot(exe_path, label, mode, screenshot_path,
         args.append("--main-datapack-code=test")
     # --fixed pins CCBackground's animation timers — qtopengl only.
     # qtcpu800x600's UI has no animated background (no parallax, no
-    # cloud/grass cycles) so the flag doesn't exist there; the
-    # AutoArgs parser would reject an unknown arg.
+    # cloud/grass cycles): the shared parser accepts it there but it
+    # changes nothing, so it is not passed.
     if "qtopengl" in label:
         args.append("--fixed")
     env = os.environ.copy()
@@ -3686,8 +3686,8 @@ def main():
     #   - autosolo : on-map grab inside MapVisualiserPlayer slot
     # qtopengl screenshots pass --fixed so CCBackground's cloud /
     # grass / tree-parallax timers don't drift the PNG. qtcpu800x600
-    # has no animated background — its AutoArgs doesn't even accept
-    # --fixed — so run_wine_screenshot skips the flag there.
+    # has no animated background (--fixed is a no-op there), so
+    # run_wine_screenshot skips the flag there.
     # Autosolo runs use maincode="test" (the dedicated small-map
     # fixture under datapack/map/main/test/) so the rendered scene
     # matches the blessed reference; without an explicit maincode

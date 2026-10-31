@@ -3,6 +3,7 @@
 
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../libcatchchallenger/Api_protocol.hpp"
+#include "../../../libqtcatchchallenger/ChatInputGuard.hpp"
 
 #include <QWidget>
 #include <QTimer>
@@ -29,14 +30,11 @@ public slots:
 private slots:
     void on_pushButtonChat_toggled(bool checked);
     void lineEdit_chat_text_returnPressed();
-    void removeNumberForFlood();
     void update_chat();
     void comboBox_chat_type_currentIndexChanged(int index);
 private:
     Ui::Chat *ui;
-    std::string lastMessageSend;
-    QTimer stopFlood;
-    int numberForFlood;
+    ChatInputGuard chatInputGuard;
 
     struct ChatEntry
     {

@@ -1,9 +1,11 @@
 #include "ChatParsing.hpp"
 #include "../../general/base/cpp11addition.hpp"
+#include <QRegularExpression>
+#include <QString>
 
 using namespace CatchChallenger;
 
-std::string ChatParsing::new_chat_message(const std::string &pseudo, const Player_type &player_type, const Chat_type &chat_type, const std::string &text, const bool withLink)
+std::string ChatParsing::new_chat_message(const std::string &pseudo, const Player_type &player_type, const Chat_type &chat_type, const std::string &text, const bool withLink, const bool dimSystemText)
 {
     std::string returned_html;
     returned_html+="<div style=\"";
@@ -17,17 +19,15 @@ std::string ChatParsing::new_chat_message(const std::string &pseudo, const Playe
         case Chat_type_clan://clan
             //returned_html+="color:#AA7F00;";
         break;
-        /*case Chat_type_aliance://aliance
-            returned_html+="color:#60BF20;";
-        break;*/
         case Chat_type_pm://to player
             //returned_html+="color:#5C255F;";
         break;
         case Chat_type_system://system
-            //returned_html+="color:#707070;font-style:italic;font-size:small;";
+            if(dimSystemText)
+                returned_html+="color:#707070;font-style:italic;font-size:small;";
         break;
         case Chat_type_system_important://system importance: hight
-            //returned_html+="color:#60BF20;";
+            returned_html+="";
         break;
         default:
         break;
@@ -119,4 +119,23 @@ std::string ChatParsing::toSmilies(const std::string &text)
     stringreplaceAll(newstring,":o","<img src=\":/images/smiles/face-surprise.png\" alt=\"\" style=\"vertical-align:middle;\" />");
     stringreplaceAll(newstring,";)","<img src=\":/images/smiles/face-wink.png\" alt=\"\" style=\"vertical-align:middle;\" />");
     return newstring;
+}
+
+std::string ChatParsing::botTextToDisplay(const std::string &htmlContent,const bool botHaveQuest)
+{
+    QString newContent=QString::fromStdString(htmlContent);
+    #ifdef NOREMOTE
+    QRegularExpression remote(QRegularExpression::escape("<span class=\"remote\">")+".*"+QRegularExpression::escape("</span>"));
+    remote.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
+    newContent.remove(remote);
+    #endif
+    if(!botHaveQuest)
+    {
+        QRegularExpression quest(QRegularExpression::escape("<span class=\"quest\">")+".*"+QRegularExpression::escape("</span>"));
+        quest.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
+        newContent.remove(quest);
+    }
+    newContent.replace("href=\"http","style=\"color:#BB9900;\" href=\"http",Qt::CaseInsensitive);
+    newContent.replace(QRegularExpression("(href=\"http[^>]+>[^<]+)</a>"),"\\1 <img src=\":/CC/images/link.png\" alt=\"\" /></a>");
+    return newContent.toStdString();
 }

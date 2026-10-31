@@ -122,7 +122,6 @@ set(_qtopengl_sources
     ${_qtopengl_dir}/foreground/QGraphicsTextItemOutline.cpp
     ${_qtopengl_dir}/above/AddCharacter.cpp
     ${_qtopengl_dir}/above/NewGame.cpp
-    ${_qtopengl_dir}/FacilityLibClient.cpp
     ${_qtopengl_dir}/background/CCMap.cpp
     ${_qtopengl_dir}/foreground/OverMap.cpp
     ${_qtopengl_dir}/CustomText.cpp
@@ -154,7 +153,6 @@ set(_qtopengl_sources
     ${_qtopengl_dir}/QGraphicsPixmapItemClick.cpp
     ${_qtopengl_dir}/above/MonsterDetails.cpp
     ${_qtopengl_dir}/GameLoader.cpp
-    ${_qtopengl_dir}/ChatParsing.cpp
     ${_qtopengl_dir}/GameLoaderThread.cpp
     ${_qtopengl_dir}/ProgressBarPixel.cpp
     ${_qtopengl_dir}/main.cpp

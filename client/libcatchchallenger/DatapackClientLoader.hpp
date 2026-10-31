@@ -271,6 +271,10 @@ public:
     size_t get_audioAmbiance_size() const;
     const std::string &get_audioAmbiance(const std::string &key) const;
     bool has_audioAmbiance(const std::string &key) const;
+    //sound to loop on a map: its own backgroundsound, else the zone's, else the general one for its type;
+    //first existing file, main datapack before base. Empty when none exists.
+    std::string ambianceFile(const std::string &mapSound,const std::string &zone,const std::string &mapType,
+                             const std::string &datapackPathMain,const std::string &datapackPathBase) const;
     //profileTextList
     size_t get_profileTextList_size() const;
     const ProfileText &get_profileText(const uint32_t &key) const;

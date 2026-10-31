@@ -81,10 +81,7 @@ set(_qtcpu_sources
     fight/interface/BaseWindowFightNextAction.cpp
     base/QmlInterface/AnimationControl.cpp
     base/Options.cpp
-    base/ChatParsing.cpp
     base/LanguagesSelect.cpp
-    base/FacilityLibClient.cpp
-    base/AutoArgs.cpp
 
     # base/multi.pri (multiplayer-only entrypoint pieces)
     base/SslCert.cpp

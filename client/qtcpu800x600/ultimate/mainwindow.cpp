@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "AddServer.h"
 #include "ui_mainwindow.h"
-#include "../base/AutoArgs.h"
+#include "../../libqtcatchchallenger/CliClientOptions.hpp"
 #include "../../libqtcatchchallenger/InternetUpdater.hpp"
 #include "../../libcatchchallenger/BlacklistPassword.hpp"
 #include "../../libcatchchallenger/DatapackClientLoader.hpp"
@@ -156,11 +156,8 @@ MainWindow::MainWindow(QWidget *parent) :
     if(!connect(&updateTheOkButtonTimer,&QTimer::timeout,this,&MainWindow::updateTheOkButton))
         abort();
 
-    stopFlood.setSingleShot(false);
-    stopFlood.start(1500);
     updateTheOkButtonTimer.setSingleShot(false);
     updateTheOkButtonTimer.start(1000);
-    numberForFlood=0;
     haveShowDisconnectionReason=false;
     completer=NULL;
 
@@ -216,10 +213,10 @@ MainWindow::MainWindow(QWidget *parent) :
     // still wins for --autosolo runs (it fires after the map paints,
     // typically <1.5 s after launch). Mirrors qtopengl's
     // ScreenTransition::ScreenTransition() fallback.
-    if(!AutoArgs::takeScreenshotPath.isEmpty() && !AutoArgs::autosolo)
+    if(!CliClientOptions::takeScreenshotPath.isEmpty() && !CliClientOptions::autosolo)
     {
         QTimer::singleShot(2000,this,[this](){
-            const QString outPath=AutoArgs::takeScreenshotPath;
+            const QString outPath=CliClientOptions::takeScreenshotPath;
             repaint();
             const QPixmap shot=grab();
             if(!shot.save(outPath))
@@ -235,7 +232,7 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     #if defined(CATCHCHALLENGER_SOLO)
-    if(AutoArgs::autosolo)
+    if(CliClientOptions::autosolo)
     {
         QTimer::singleShot(0,this,[this](){
             int index=ui->stackedWidget->indexOf(solowindow);
@@ -264,17 +261,17 @@ MainWindow::MainWindow(QWidget *parent) :
     #endif
 
     // --host/--port: TCP direct connect (no server list entry)
-    if(!AutoArgs::host.isEmpty() && AutoArgs::port!=0)
+    if(!CliClientOptions::host.isEmpty() && CliClientOptions::port!=0)
     {
         on_multiplayer_clicked();
         // temporary entry: mapped so on_login_clicked() can find it,
         // but NOT added to customServerConnexion or the UI.
         // unique_code is set so saveConnexionInfoList() skips the custom-server path.
         ConnexionInfo ci;
-        ci.host=AutoArgs::host;
-        ci.port=AutoArgs::port;
-        ci.name=AutoArgs::host+QStringLiteral(":")+QString::number(AutoArgs::port);
-        ci.unique_code=AutoArgs::host+QStringLiteral("-")+QString::number(AutoArgs::port);
+        ci.host=CliClientOptions::host;
+        ci.port=CliClientOptions::port;
+        ci.name=CliClientOptions::host+QStringLiteral(":")+QString::number(CliClientOptions::port);
+        ci.unique_code=CliClientOptions::host+QStringLiteral("-")+QString::number(CliClientOptions::port);
         mergedConnexionInfoList.push_back(ci);
 
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
@@ -286,13 +283,13 @@ MainWindow::MainWindow(QWidget *parent) :
     // --url: WebSocket direct connect (no server list entry). Mirrors
     // the TCP path above but writes the ws/wss URL into ConnexionInfo::ws
     // and leaves host/port unset.
-    else if(!AutoArgs::url.isEmpty())
+    else if(!CliClientOptions::url.isEmpty())
     {
         on_multiplayer_clicked();
         ConnexionInfo ci;
-        ci.ws=AutoArgs::url;
-        ci.name=AutoArgs::url;
-        ci.unique_code=AutoArgs::url;
+        ci.ws=CliClientOptions::url;
+        ci.name=CliClientOptions::url;
+        ci.unique_code=CliClientOptions::url;
         ci.port=0;
         mergedConnexionInfoList.push_back(ci);
 
@@ -302,7 +299,7 @@ MainWindow::MainWindow(QWidget *parent) :
         selectedServer=newEntry;
         on_server_select_clicked();
     }
-    else if(!AutoArgs::server.isEmpty())
+    else if(!CliClientOptions::serverName.isEmpty())
     {
         on_multiplayer_clicked();
         ListEntryEnvolued *match=nullptr;
@@ -311,7 +308,7 @@ MainWindow::MainWindow(QWidget *parent) :
             if(!serverConnexion.contains(entry))
                 continue;
             const ConnexionInfo * const connexionInfo=serverConnexion.value(entry);
-            if(connexionInfo->name==AutoArgs::server)
+            if(connexionInfo->name==CliClientOptions::serverName)
             {
                 match=entry;
                 break;
@@ -325,7 +322,7 @@ MainWindow::MainWindow(QWidget *parent) :
         }
         else
         {
-            std::cerr << "AutoArgs: server \"" << AutoArgs::server.toStdString()
+            std::cerr << "AutoArgs: server \"" << CliClientOptions::serverName.toStdString()
                       << "\" not found in server list" << std::endl;
         }
     }
@@ -1142,12 +1139,12 @@ void MainWindow::on_server_select_clicked()
     settings.endGroup();
     ui->checkBoxRememberPassword->setChecked(!ui->lineEditPass->text().isEmpty());
 
-    if(AutoArgs::autologin)
+    if(CliClientOptions::autologin)
     {
         if(ui->lineEditLogin->text().isEmpty())
         {
-            if(!AutoArgs::character.isEmpty())
-                ui->lineEditLogin->setText(AutoArgs::character);
+            if(!CliClientOptions::characterName.isEmpty())
+                ui->lineEditLogin->setText(CliClientOptions::characterName);
             else
                 ui->lineEditLogin->setText(QStringLiteral("test01"));
         }
@@ -1306,7 +1303,6 @@ void MainWindow::resetAll()
     chat_list_player_type.clear();
     chat_list_type.clear();
     chat_list_text.clear();
-    lastMessageSend.clear();
     if(ui->lineEditLogin->text().isEmpty())
         ui->lineEditLogin->setFocus();
     else if(ui->lineEditPass->text().isEmpty())
@@ -1734,7 +1730,7 @@ void MainWindow::error(QAbstractSocket::SocketError socketError)
         // would hang until the harness's outer timeout. Exit with
         // non-zero so the python `proc.wait()` rc check FAILs the test
         // immediately.
-        if(AutoArgs::closeWhenOnMap || AutoArgs::closeWhenOnMapAfter>0)
+        if(CliClientOptions::closeWhenOnMap || CliClientOptions::closeWhenOnMapAfter>0)
         {
             std::cerr << "AutoArgs: connection refused with --closewhenonmap[after], exiting with rc=2" << std::endl;
             QCoreApplication::exit(2);
@@ -2231,9 +2227,9 @@ void MainWindow::reinjectAutoArgsServer()
     //NULL, and the autologin chain stalls at state(3). Re-add the
     //synthetic entry so the match succeeds and the auto-pick continues
     //through the test harness's --closewhenonmap success path.
-    if(!AutoArgs::host.isEmpty() && AutoArgs::port!=0)
+    if(!CliClientOptions::host.isEmpty() && CliClientOptions::port!=0)
     {
-        const QString want=AutoArgs::host+QStringLiteral("-")+QString::number(AutoArgs::port);
+        const QString want=CliClientOptions::host+QStringLiteral("-")+QString::number(CliClientOptions::port);
         bool alreadyIn=false;
         for(const ConnexionInfo &existing : mergedConnexionInfoList)
         {
@@ -2243,27 +2239,27 @@ void MainWindow::reinjectAutoArgsServer()
         if(!alreadyIn)
         {
             ConnexionInfo ci;
-            ci.host=AutoArgs::host;
-            ci.port=AutoArgs::port;
-            ci.name=AutoArgs::host+QStringLiteral(":")+QString::number(AutoArgs::port);
+            ci.host=CliClientOptions::host;
+            ci.port=CliClientOptions::port;
+            ci.name=CliClientOptions::host+QStringLiteral(":")+QString::number(CliClientOptions::port);
             ci.unique_code=want;
             mergedConnexionInfoList.push_back(ci);
         }
     }
-    if(!AutoArgs::url.isEmpty())
+    if(!CliClientOptions::url.isEmpty())
     {
         bool alreadyIn=false;
         for(const ConnexionInfo &existing : mergedConnexionInfoList)
         {
-            if(existing.unique_code==AutoArgs::url)
+            if(existing.unique_code==CliClientOptions::url)
             { alreadyIn=true; break; }
         }
         if(!alreadyIn)
         {
             ConnexionInfo ci;
-            ci.ws=AutoArgs::url;
-            ci.name=AutoArgs::url;
-            ci.unique_code=AutoArgs::url;
+            ci.ws=CliClientOptions::url;
+            ci.name=CliClientOptions::url;
+            ci.unique_code=CliClientOptions::url;
             ci.port=0;
             mergedConnexionInfoList.push_back(ci);
         }
@@ -2420,10 +2416,10 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
         event.value="night";
     }
     settings.beginGroup("content");
-        if(!AutoArgs::mainDatapackCodeOverride.isEmpty())
+        if(!CliClientOptions::mainDatapackCodeOverride.isEmpty())
         {
-            settings.setValue("mainDatapackCode",AutoArgs::mainDatapackCodeOverride);
-            CommonSettingsServer::commonSettingsServer.mainDatapackCode=AutoArgs::mainDatapackCodeOverride.toStdString();
+            settings.setValue("mainDatapackCode",CliClientOptions::mainDatapackCodeOverride);
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode=CliClientOptions::mainDatapackCodeOverride.toStdString();
         }
         else if(settings.contains("mainDatapackCode"))
             CommonSettingsServer::commonSettingsServer.mainDatapackCode=settings.value("mainDatapackCode","[main]").toString().toStdString();

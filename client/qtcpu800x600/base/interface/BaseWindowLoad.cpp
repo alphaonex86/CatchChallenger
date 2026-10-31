@@ -1,8 +1,8 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
 #include "../Options.h"
-#include "../AutoArgs.h"
-#include "../FacilityLibClient.h"
+#include "../../../libqtcatchchallenger/CliClientOptions.hpp"
+#include "../../../libqtcatchchallenger/FacilityLibClient.hpp"
 #include "../../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../../general/base/CommonSettingsServer.hpp"
 #include "../../../../general/base/CommonDatapackServerSpec.hpp"
@@ -725,9 +725,9 @@ void BaseWindow::updateConnectingStatus()
             //front several game servers; pick the one whose pool name
             //matches --server, else the first ordered entry, instead of
             //waiting on a click in page_serverList
-            if(multiplayer && (AutoArgs::closeWhenOnMap || AutoArgs::closeWhenOnMapAfter>0) && !serverOrdenedList.empty())
+            if(multiplayer && (CliClientOptions::closeWhenOnMap || CliClientOptions::closeWhenOnMapAfter>0) && !serverOrdenedList.empty())
             {
-                const std::string targetName=AutoArgs::server.toStdString();
+                const std::string targetName=CliClientOptions::serverName.toStdString();
                 unsigned int i=0;
                 while(i<serverOrdenedList.size())
                 {
@@ -800,14 +800,14 @@ void BaseWindow::updateConnectingStatus()
                         CommonSettingsCommon::commonSettingsCommon.max_character>0)
                 {
                     // auto-create character when running automated (--autosolo or --character)
-                    if(AutoArgs::autosolo || !AutoArgs::character.isEmpty())
+                    if(CliClientOptions::autosolo || !CliClientOptions::characterName.isEmpty())
                     {
                         const std::vector<Profile> &profiles=CatchChallenger::CommonDatapack::commonDatapack.get_profileList();
                         if(!profiles.empty())
                         {
                             const uint8_t profileIndex=0;
                             const Profile &profile=profiles.at(profileIndex);
-                            const std::string pseudo=AutoArgs::character.isEmpty() ? "Player" : AutoArgs::character.toStdString();
+                            const std::string pseudo=CliClientOptions::characterName.isEmpty() ? "Player" : CliClientOptions::characterName.toStdString();
                             //deterministic for testingmap4client.py: pick the
                             //monstergroup whose lowest monster id is smallest,
                             //and the skin with the smallest id, so the same
@@ -867,9 +867,9 @@ void BaseWindow::updateConnectingStatus()
                     on_character_add_clicked();
                     return;
                 }
-                if(!AutoArgs::character.isEmpty())
+                if(!CliClientOptions::characterName.isEmpty())
                 {
-                    const std::string targetName=AutoArgs::character.toStdString();
+                    const std::string targetName=CliClientOptions::characterName.toStdString();
                     int matchIndex=-1;
                     for(unsigned int i=0;i<characterEntryList.size();i++)
                     {

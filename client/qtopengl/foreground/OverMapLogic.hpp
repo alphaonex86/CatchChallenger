@@ -222,7 +222,6 @@ public slots:
     //index in get_skins() for getFrontSkinPath(skinId). NEVER std::stoi the name (it
     //throws on a non-numeric skin -> broke the shop/warehouse steps). 0 if absent/unknown.
     uint8_t resolveBotSkinId() const;
-    std::string parseHtmlToDisplay(const std::string &htmlContent);
     void IG_dialog_text_linkActivated(const std::string &rawlink);
     void on_IG_dialog_text_linkActivated(const QString &rawlink);
     //quest

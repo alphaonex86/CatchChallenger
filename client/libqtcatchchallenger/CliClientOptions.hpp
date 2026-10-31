@@ -9,6 +9,13 @@
 class CliClientOptions
 {
 public:
+    // Parse every client flag (both clients, see --help), BEFORE QApplication: the
+    // recognised flags are removed from argc/argv, the rest is left for Qt. Accepts
+    // "--flag VALUE" and "--flag=VALUE". Starts from the defaults, clears all three
+    // server-selection groups when more than one is given.
+    // Returns false when --help was printed (the caller exits 0).
+    static bool parse(int &argc,char *argv[]);
+    static void printHelp(const char *progName);
     // Auto-select a server entry from the multiplayer list by its name.
     // Empty = no auto-selection; user picks manually in the UI.
     static QString serverName;
@@ -119,6 +126,9 @@ public:
     // vocabulary lives in MapControllerMP::remoteActionExecute(). See
     // client/dev.md. Used by the test harness; safe to leave off in production.
     static bool remoteControl;
+private:
+    // arg is "--name VALUE" (consumes argv[i+1]) or "--name=VALUE": stores VALUE, true when matched
+    static bool takeValue(const char *name,int &i,const int argc,char *argv[],QString &value);
 };
 
 #endif // CLICLIENTOPTIONS_HPP

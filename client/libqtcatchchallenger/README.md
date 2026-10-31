@@ -90,47 +90,39 @@ client, each in its own idiom.
   item use, wild/bot/player fight, catch, evolution, learn skill, trade, clan,
   city capture, chat, options (volume, language).
 
-## To move here (survey 2026-10-30)
+## Shared (done 2026-10-30, tested by `test/testingclientlogic.py`)
 
-Logic written twice — once in each client — that the rule above puts here. A
-third client would have to write it a third time.
+| Logic | Now in |
+|---|---|
+| CLI flag parsing + conflict check | `CliClientOptions::parse()` (both `main.cpp`, before `QApplication`) |
+| Chat HTML, entities, smilies; bot dialog HTML | `ChatParsing` (`dimSystemText` = client look choice), `ChatParsing::botTextToDisplay()` |
+| `timeToString`, `rectTouch`, `reputationRequirementsToText` | `FacilityLibClient` (qtopengl superset kept) |
+| Language pick | `Language::pickLanguage()` |
+| Chat input checks + anti-flood | `ChatInputGuard` |
+| Map ambiance choice (map → zone → general, main then base path) | `DatapackClientLoader::ambianceFile()` (libcatchchallenger) |
+| `haveStartQuestRequirement`, `haveNextStepQuestRequirements`, `haveBeatBot` | `Api_protocol` only (matches the server) |
+
+## To move here
+
+Logic still written twice — once in each client. A third client would have to
+write it a third time.
 
 | Logic | qtcpu800x600 | qtopengl | State |
 |---|---|---|---|
-| CLI flag parsing + conflict check | `base/AutoArgs.cpp` (mirrored into `CliClientOptions`) | `main.cpp` | same flags, two parsers |
-| Chat HTML, entities, smilies | `base/ChatParsing.cpp` | `ChatParsing.cpp` | identical except colours (pass the style) |
-| `timeToString`, `rectTouch`, `reputationRequirementsToText` | `base/FacilityLibClient.cpp` | `FacilityLibClient.cpp` | qtopengl is a superset |
-| Language pick (`getTheRightLanguage`) | `base/LanguagesSelect.cpp` | `LanguagesSelect.cpp` | identical logic |
-| Chat anti-flood (`removeNumberForFlood`) | `base/interface/Chat.cpp` | `foreground/OverMap.cpp` | identical |
 | Slow-server detection (`detectSlowDown`) | `base/interface/BaseWindow.cpp` | `foreground/OverMapLogic.cpp` | near identical |
-| Map ambiance choice (map → zone → general, main then base path) | `base/interface/BaseWindowMap.cpp` | `foreground/OverMapLogic.cpp` | identical, then `Audio::startAmbiance()` |
-| Quest rules (`botHaveQuest`, `tryValidateQuestStep`, `haveStartQuestRequirement`, `haveNextStepQuestRequirements`) | `base/interface/BaseWindowBot.cpp` | `foreground/OverMapLogicBot.cpp` | diverged; the two `have*` also exist in `Api_protocol` (3 copies) |
+| Quest rules (`botHaveQuest`, `tryValidateQuestStep`) | `base/interface/BaseWindowBot.cpp` | `foreground/OverMapLogicBot.cpp` | diverged |
 | Bot step dispatch (`goToBotStep`: text/shop/heal/learn/quest/clan/fight/zone...) | `base/interface/BaseWindowBot.cpp` | `foreground/OverMapLogicBot.cpp` | diverged (322 vs 287 lines) |
 | Factory price/production (`updateFactoryStatProduction`, `factoryToProductItem`) | `base/interface/BaseWindowFactory.cpp` | `foreground/OverMapLogicFactory.cpp`, `above/Factory.cpp` | near identical |
 | Reputation reward text (`appendReputationRewards`) | `base/interface/BaseWindow.cpp` | `foreground/OverMapLogic.cpp` | near identical |
 | Evolution check after fight (`checkEvolution`) | `fight/interface/BaseWindowFight.cpp` | `foreground/Battle.cpp` | diverged (58 vs 123 lines) |
 | Server list load/save (`loadXmlConnexionInfoList`, `loadConfigConnexionInfoList`, `saveConnexionInfoList`) | `ultimate/mainwindow.cpp` | `foreground/Multi.cpp` | same format, two codes |
 | Datapack cache dir per server (`serverToDatapachPath`) | `ultimate/mainwindow.cpp` | `ConnexionManager.cpp` | diverged — risk on cache/hash coherence |
-| Bot dialog HTML (`parseHtmlToDisplay`) | `base/interface/BaseWindow.cpp` | `foreground/OverMapLogicBot.cpp` | identical |
 | New-game profiles (`getProfileCount`, `getProfileIndex`) | `base/interface/NewProfile.cpp` | `above/AddCharacter.cpp` | same logic |
 
 **Why it matters, concrete case:** the three client copies of
-`haveStartQuestRequirement()` differ from the server's
-(`server/base/ClientEvents/LocalClientHandlerQuest.cpp`): after the
-prerequisite check they `return false` whenever the prerequisite quest is known,
-and read `quests.at(quest.id)` instead of `at(questId)`. So a quest with a
-non-inverse prerequisite never shows as startable on the client while the server
-accepts it. Latent today (no datapack quest uses prerequisites), but one shared
-copy would have avoided it.
-
-**Dead copies (not compiled):** `qtcpu800x600/base/` still holds old copies of
-files now in this lib — `LocalListener`, `LanBroadcastWatcher`, `ExtraSocket`,
-`QInfiniteBuffer`, `FeedNews`, `RssNews`, `InternetUpdater`, `Ultimate`,
-`BlacklistPassword`, `Map_client`, `PlatformMacro.h`. Two headers are still
-included by compiled code (`QInfiniteBuffer.h` from `ultimate/mainwindow.h` and
-`base/interface/BaseWindow.h`, `PlatformMacro.h` from `ultimate/mainwindow.cpp`)
-and should point to this lib's `.hpp`. `libqtcatchchallenger/DatapackChecksum.cpp`
-is also dead (not in `libqt.cmake`, includes headers that no longer exist).
+`haveStartQuestRequirement()` had drifted from the server: a quest with a
+non-inverse prerequisite never showed as startable, and `haveBeatBot()` always
+said yes on qtopengl and the bots. Nobody saw it because no test covered it.
 
 ## Build
 

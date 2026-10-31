@@ -15,7 +15,7 @@
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../libqtcatchchallenger/InternetUpdater.hpp"
 #include "../../../libqtcatchchallenger/SoloDatabaseInit.hpp"
-#include "../FacilityLibClient.h"
+#include "../../../libqtcatchchallenger/FacilityLibClient.hpp"
 
 const QString SoloWindow::text_catchchallenger_db_sqlite=QStringLiteral("catchchallenger.db.sqlite");
 const QString SoloWindow::text_time_played=QStringLiteral("time_played");

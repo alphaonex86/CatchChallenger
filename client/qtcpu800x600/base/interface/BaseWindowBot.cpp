@@ -1,4 +1,5 @@
 #include "BaseWindow.h"
+#include "../../../libqtcatchchallenger/ChatParsing.hpp"
 #include "ui_BaseWindow.h"
 #include "../LanguagesSelect.h"
 #include "../../../../general/base/CommonDatapackServerSpec.hpp"
@@ -122,7 +123,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
                 if(text->Attribute("lang")!=NULL && text->Attribute("lang")==language && text->GetText()!=NULL)
                 {
                     std::string textToShow=text->GetText();
-                    textToShow=parseHtmlToDisplay(textToShow);
+                    textToShow=CatchChallenger::ChatParsing::botTextToDisplay(textToShow,botHaveQuest(actualBot.botId));
                     ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
                     ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
                     ui->IG_dialog->setVisible(true);
@@ -140,7 +141,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
                 if(text->GetText()!=NULL)
                 {
                     std::string textToShow=text->GetText();
-                    textToShow=parseHtmlToDisplay(textToShow);
+                    textToShow=CatchChallenger::ChatParsing::botTextToDisplay(textToShow,botHaveQuest(actualBot.botId));
                     ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
                     ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
                     ui->IG_dialog->setVisible(true);
@@ -558,7 +559,7 @@ void BaseWindow::showQuestText(const uint32_t &textId)
         }
         index++;
     }
-    std::string textToShow=parseHtmlToDisplay(text);
+    std::string textToShow=CatchChallenger::ChatParsing::botTextToDisplay(text,botHaveQuest(actualBot.botId));
     ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
     ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
     ui->IG_dialog->setVisible(true);

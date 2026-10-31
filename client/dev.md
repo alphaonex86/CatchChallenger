@@ -37,7 +37,7 @@ the implementation is shared, NOT duplicated:
 * Wiring per client: qtopengl `client/qtopengl/main.cpp` + `ScreenTransition::setRemoteControl()`;
   qtcpu800x600 `client/qtcpu800x600/ultimate/main.cpp` + `MainWindow::wireRemoteControl()`.
   Both gate the socket on `CliClientOptions::remoteControl` (set from
-  `--remote-control`; cpu mirrors it from `AutoArgs::remoteControl`).
+  `--remote-control` by the shared `CliClientOptions::parse()`).
 
 Commands (one per line; replies are one line each unless noted):
 * `KEY <Up|Down|Left|Right|Return|Enter|Escape|Esc|Space>` — synthesised key (arrows move, Enter acts/talks, Escape closes the dialog). While a dialog is OPEN the arrows/Enter drive its hyperlinks instead of moving: arrows select the previous/next link, Enter activates the selected one (first link pre-selected) or closes a link-less dialog — same behaviour as the on-screen D-pad/A button.

@@ -12,7 +12,7 @@
 #include "../../../server/qt/InternalServer.hpp"
 #endif
 #include "../ConnexionManager.hpp"
-#include "../ChatParsing.hpp"
+#include "../../libqtcatchchallenger/ChatParsing.hpp"
 #include "../CustomText.hpp"
 #include "../LineEdit.hpp"
 #include "../ComboBox.hpp"
@@ -188,8 +188,6 @@ OverMap::OverMap()
         abort();*/
     newLanguage();
 
-    if(!connect(&stopFlood,&QTimer::timeout,this,&OverMap::removeNumberForFlood,Qt::QueuedConnection))
-        abort();
     if(!connect(chatType,static_cast<void(ComboBox::*)(int)>(&ComboBox::currentIndexChanged),this,&OverMap::comboBox_chat_type_currentIndexChanged))
         abort();
     if(!connect(chatInput,&LineEdit::returnPressed,this,&OverMap::lineEdit_chat_text_returnPressed))
@@ -230,9 +228,6 @@ OverMap::OverMap()
         abort();
     if(!connect(btnB,&CustomButton::buttonReleased,this,&OverMap::padButtonReleased))
         abort();
-
-    stopFlood.setSingleShot(false);
-    stopFlood.start(1500);
 }
 
 OverMap::~OverMap()
@@ -249,7 +244,7 @@ void OverMap::resetAll()
 void OverMap::setVar(CCMap *ccmap,ConnexionManager *connexionManager)
 {
     this->ccmap=ccmap;
-    lastMessageSend.clear();
+    chatInputGuard.reset();
     this->connexionManager=connexionManager;
     connect(connexionManager->client,&CatchChallenger::Api_protocol_Qt::Qtnumber_of_player,this,&OverMap::updatePlayerNumber,Qt::UniqueConnection);
     if(!connexionManager->client->getCaracterSelected())
@@ -269,7 +264,6 @@ void OverMap::setVar(CCMap *ccmap,ConnexionManager *connexionManager)
         chatType->addItem(tr("Clan"));
         chatType->setItemData(2,2,99);
     }*/
-    numberForFlood=0;
     connect(connexionManager->client,&CatchChallenger::Api_protocol_Qt::Qtnew_chat_text,this,&OverMap::new_chat_text,Qt::UniqueConnection);
     connect(connexionManager->client,&CatchChallenger::Api_protocol_Qt::Qtnew_system_text,this,&OverMap::new_system_text,Qt::UniqueConnection);
     updateChat();
@@ -1086,41 +1080,15 @@ void OverMap::lineEdit_chat_text_returnPressed()
 {
     CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
     QString text=chatInput->text();
-    text.remove("\n");
-    text.remove("\r");
-    text.remove("\t");
-    if(text.isEmpty())
+    const CatchChallenger::ChatInputGuard::Verdict verdict=chatInputGuard.check(text);
+    if(verdict==CatchChallenger::ChatInputGuard::Verdict_Nothing)
         return;
-    if(text.contains(QRegularExpression("^ +$")))
+    chatInput->clear();
+    if(verdict==CatchChallenger::ChatInputGuard::Verdict_Refused)
     {
-        chatInput->clear();
-        connexionManager->client->add_system_text(CatchChallenger::Chat_type_system,"Space text not allowed");
+        connexionManager->client->add_system_text(CatchChallenger::Chat_type_system,chatInputGuard.refusal());
         return;
     }
-    if(text.size()>256)
-    {
-        chatInput->clear();
-        connexionManager->client->add_system_text(CatchChallenger::Chat_type_system,"Message too long");
-        return;
-    }
-    if(!text.startsWith('/'))
-    {
-        if(text.toStdString()==lastMessageSend)
-        {
-            chatInput->clear();
-            connexionManager->client->add_system_text(CatchChallenger::Chat_type_system,"Send message like as previous");
-            return;
-        }
-        if(numberForFlood>2)
-        {
-            chatInput->clear();
-            connexionManager->client->add_system_text(CatchChallenger::Chat_type_system,"Stop flood");
-            return;
-        }
-    }
-    numberForFlood++;
-    lastMessageSend=text.toStdString();
-    chatInput->setText(QString());
     if(text=="/clan_leave")
     {
         actionClan.push_back(ActionClan_Leave);
@@ -1262,21 +1230,15 @@ void OverMap::updateChat()
         if(entry.chat_type==CatchChallenger::Chat_type_system || entry.chat_type==CatchChallenger::Chat_type_system_important)
             addPlayerInfo=false;
         if(!addPlayerInfo)
-            nameHtml+=QString::fromStdString(CatchChallenger::ChatParsing::new_chat_message(std::string(),CatchChallenger::Player_type_normal,entry.chat_type,entry.text));
+            nameHtml+=QString::fromStdString(CatchChallenger::ChatParsing::new_chat_message(std::string(),CatchChallenger::Player_type_normal,entry.chat_type,entry.text,false,true));
         else
-            nameHtml+=QString::fromStdString(CatchChallenger::ChatParsing::new_chat_message(entry.player_pseudo,entry.player_type,entry.chat_type,entry.text));
+            nameHtml+=QString::fromStdString(CatchChallenger::ChatParsing::new_chat_message(entry.player_pseudo,entry.player_type,entry.chat_type,entry.text,false,true));
         index++;
     }
     chatText->setHtml(nameHtml);
     //the chat box is laid out (and anchored to the bottom) in paint()
 }
 
-void OverMap::removeNumberForFlood()
-{
-    if(numberForFlood<=0)
-        return;
-    numberForFlood--;
-}
 
 void OverMap::keyPressEvent(QKeyEvent * event, bool &eventTriggerGeneral)
 {

@@ -64,6 +64,9 @@ if(NOT TARGET catchchallenger_qt_lib)
         ${_libqtcc_dir}/ExtraSocket.cpp
         ${_libqtcc_dir}/ConnectedSocket.cpp
         ${_libqtcc_dir}/QInfiniteBuffer.cpp
+        ${_libqtcc_dir}/ChatParsing.cpp
+        ${_libqtcc_dir}/ChatInputGuard.cpp
+        ${_libqtcc_dir}/FacilityLibClient.cpp
         # maprender/render.pri — same target.
         ${_libqtcc_dir}/maprender/MapController.cpp
         ${_libqtcc_dir}/maprender/MapControllerMPAPI.cpp

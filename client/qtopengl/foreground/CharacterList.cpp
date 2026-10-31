@@ -1,6 +1,6 @@
 #include "CharacterList.hpp"
 #include "../../libqtcatchchallenger/Language.hpp"
-#include "../FacilityLibClient.hpp"
+#include "../../libqtcatchchallenger/FacilityLibClient.hpp"
 #include "../ClientStructures.hpp"
 #include "../ConnexionManager.hpp"
 #include "../above/AddCharacter.hpp"
