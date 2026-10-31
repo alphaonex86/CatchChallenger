@@ -18,7 +18,7 @@
 #include <QCompleter>
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../../libqtcatchchallenger/ClientVariableAudio.hpp"
-#include "../base/QInfiniteBuffer.h"
+#include "../../libqtcatchchallenger/QInfiniteBuffer.hpp"
 #include "../../libqtcatchchallenger/Audio.hpp"
 #include <QAudioOutput>
 #include <QAudioSink>
