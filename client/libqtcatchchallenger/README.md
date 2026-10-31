@@ -56,7 +56,7 @@ exists on the GUI thread, so it is all converted up front).
 | Skill, buff texts; buff icon | `get_monsterSkillExtra(id)`, `get_monsterBuffExtra(id)`, `getMonsterBuffExtra(id).icon` |
 | Plant tileset; seed → plant | `getPlantExtra(id).tileset`, `get_itemToPlant(item)` |
 | Type name/colour | `get_typeExtra(id)` |
-| Quest texts; quests started by a bot | `get_questExtra(id)`, `get_botToQuestStartForBot(map,bot)` |
+| Quest texts; quests of a bot | `questText(id,textId,client,text)`; `Api_protocol::questsForBot(map,bot)` |
 | Reputation names/levels | `get_reputationExtra(name)` |
 | Zone name + ambiance; general ambiance | `get_zoneExtra(zone)`, `get_audioAmbiance(type)` |
 | Skins, player front image path | `get_skins()`, `getFrontSkinPath(skinId)` |
@@ -101,6 +101,16 @@ client, each in its own idiom.
 | Chat input checks + anti-flood | `ChatInputGuard` |
 | Map ambiance choice (map → zone → general, main then base path) | `DatapackClientLoader::ambianceFile()` (libcatchchallenger) |
 | `haveStartQuestRequirement`, `haveNextStepQuestRequirements`, `haveBeatBot` | `Api_protocol` only (matches the server) |
+| Slow-server sign (times in ms) | `SlowServerDetector` + `Api_protocol::worstRunningQueryTime()` (libcatchchallenger) |
+| Quest of a bot, quest step start/next/finish, reputation rewards | `Api_protocol::questsForBot()`, `validateQuestStep()`, `appendReputationRewards()` |
+| Quest text by step condition | `DatapackClientLoader::questText()` |
+| Factory buy/sell replies, stock, prices, production time | `FactoryTrade` (libcatchchallenger) |
+| Server list entry + `server_list.xml` loader | `ConnexionInfo`, `ConnexionInfo::loadXmlList()` |
+| New-game profile texts (list index = profile index) | `DatapackClientLoader::profileTexts()` |
+| Bot text step by language, dialog links | `Api_protocol::botStepText()`, `Api_protocol::parseBotLink()` |
+
+Each client keeps only its UI: the tip/dialog texts (own `tr()` context), the
+widgets, and what a link does on screen (clan name dialog vs popup).
 
 ## To move here
 
@@ -109,15 +119,10 @@ write it a third time.
 
 | Logic | qtcpu800x600 | qtopengl | State |
 |---|---|---|---|
-| Slow-server detection (`detectSlowDown`) | `base/interface/BaseWindow.cpp` | `foreground/OverMapLogic.cpp` | near identical |
-| Quest rules (`botHaveQuest`, `tryValidateQuestStep`) | `base/interface/BaseWindowBot.cpp` | `foreground/OverMapLogicBot.cpp` | diverged |
-| Bot step dispatch (`goToBotStep`: text/shop/heal/learn/quest/clan/fight/zone...) | `base/interface/BaseWindowBot.cpp` | `foreground/OverMapLogicBot.cpp` | diverged (322 vs 287 lines) |
-| Factory price/production (`updateFactoryStatProduction`, `factoryToProductItem`) | `base/interface/BaseWindowFactory.cpp` | `foreground/OverMapLogicFactory.cpp`, `above/Factory.cpp` | near identical |
-| Reputation reward text (`appendReputationRewards`) | `base/interface/BaseWindow.cpp` | `foreground/OverMapLogic.cpp` | near identical |
-| Evolution check after fight (`checkEvolution`) | `fight/interface/BaseWindowFight.cpp` | `foreground/Battle.cpp` | diverged (58 vs 123 lines) |
-| Server list load/save (`loadXmlConnexionInfoList`, `loadConfigConnexionInfoList`, `saveConnexionInfoList`) | `ultimate/mainwindow.cpp` | `foreground/Multi.cpp` | same format, two codes |
-| Datapack cache dir per server (`serverToDatapachPath`) | `ultimate/mainwindow.cpp` | `ConnexionManager.cpp` | diverged — risk on cache/hash coherence |
-| New-game profiles (`getProfileCount`, `getProfileIndex`) | `base/interface/NewProfile.cpp` | `above/AddCharacter.cpp` | same logic |
+| Custom server list in settings (`loadConfigConnexionInfoList`, `saveConnexionInfoList`) | `ultimate/mainwindow.cpp` (parallel key lists) | `foreground/Multi.cpp` (one `Custom-<code>` group per server) | two storage formats: one shared code means migrating one client's saved servers |
+| Datapack cache dir per server (`serverToDatapachPath`) | `ultimate/mainwindow.cpp` (`<name>/`, `<host>-<port>/`, `argument-<code>`) | `ConnexionManager.cpp` (`argument-`/`Custom-`/`Xml-<code>`) | diverged; qtcpu puts the user-typed server name in the path |
+| Evolution check after fight (`checkEvolution`) | `fight/interface/BaseWindowFight.cpp` | none live (`foreground/Battle.cpp` copy is commented out, QtQuick) | qtopengl feature missing, nothing to share yet |
+| Rest of the bot step dispatch (`goToBotStep`: shop/heal/learn/clan/fight/zone...) | `base/interface/BaseWindowBot.cpp` | `foreground/OverMapLogicBot.cpp` | mostly UI per step |
 
 **Why it matters, concrete case:** the three client copies of
 `haveStartQuestRequirement()` had drifted from the server: a quest with a

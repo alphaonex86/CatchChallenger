@@ -4,6 +4,7 @@
 #include <QDialog>
 
 #include "../../../../general/base/GeneralStructures.hpp"
+#include "../../../libcatchchallenger/DatapackClientLoader.hpp"
 
 namespace Ui {
 class NewProfile;
@@ -13,17 +14,11 @@ class NewProfile : public QDialog
 {
     Q_OBJECT
 public:
-    struct ProfileText
-    {
-        std::string name;
-        std::string description;
-    };
-    std::vector<ProfileText> profileTextList;
+    std::vector<DatapackClientLoader::ProfileText> profileTextList;
     int getProfileIndex();
     int getProfileCount();
     explicit NewProfile(const std::string &datapackPath,QWidget *parent = 0);
     ~NewProfile();
-    void loadProfileText();
     bool ok();
 public slots:
     void on_ok_clicked();

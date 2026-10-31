@@ -9,6 +9,7 @@
 #include <utime.h>
 #include <sys/stat.h>
 #endif
+#include <cstring>
 #include <iostream>
 #include <chrono>
 
@@ -999,6 +1000,86 @@ void Api_protocol::takeAnObjectOnMap()
 {
     //std::cout << "Api_protocol::takeAnObjectOnMap(): " << player_informations.public_informations.pseudo << std::endl;
     packOutcommingData(0x18,NULL,0);
+}
+
+static bool isTextInLanguage(const tinyxml2::XMLElement *text,const std::string &language)
+{
+    const char * const attribute=text->Attribute("lang");
+    if(language=="en")
+        return attribute==NULL || strcmp(attribute,"en")==0;
+    return attribute!=NULL && language==attribute;
+}
+
+static const char *botStepTextIn(const tinyxml2::XMLElement *stepXml,const std::string &language)
+{
+    const tinyxml2::XMLElement *text=stepXml->FirstChildElement("text");
+    while(text!=NULL)
+    {
+        if(text->GetText()!=NULL && isTextInLanguage(text,language))
+            return text->GetText();
+        text=text->NextSiblingElement("text");
+    }
+    return NULL;
+}
+
+bool Api_protocol::botStepText(const tinyxml2::XMLElement *stepXml,const std::string &language,std::string &text)
+{
+    if(stepXml==NULL)
+        return false;
+    const char *found=NULL;
+    if(!language.empty())
+        found=botStepTextIn(stepXml,language);
+    if(found==NULL)
+        found=botStepTextIn(stepXml,"en");
+    if(found==NULL)
+        return false;
+    text=found;
+    return true;
+}
+
+Api_protocol::BotLink Api_protocol::parseBotLink(const std::string &link,const bool &inQuest,const uint8_t &lastStep)
+{
+    BotLink botLink;
+    botLink.type=BotLink_Invalid;
+    botLink.value=0;
+    bool ok=false;
+    if(stringStartWith(link,"http://") || stringStartWith(link,"https://"))
+        botLink.type=BotLink_Url;
+    else if(stringStartWith(link,"quest_"))
+    {
+        botLink.value=stringtouint16(link.substr(6),&ok);
+        if(ok)
+            botLink.type=BotLink_Quest;
+    }
+    else if(link=="clan_create")
+        botLink.type=BotLink_ClanCreate;
+    else if(link=="close")
+        botLink.type=BotLink_Close;
+    else if(link=="next_quest_step")
+    {
+        if(inQuest)
+            botLink.type=BotLink_NextQuestStep;
+    }
+    else if(link=="next")
+    {
+        if(lastStep>=1 && lastStep<255)
+        {
+            botLink.type=BotLink_Step;
+            botLink.value=lastStep+1;
+        }
+    }
+    else
+    {
+        botLink.value=stringtouint8(link,&ok);
+        if(ok)
+        {
+            if(inQuest)
+                botLink.type=BotLink_QuestText;
+            else
+                botLink.type=BotLink_Step;
+        }
+    }
+    return botLink;
 }
 
 std::vector<ItemToSellOrBuy> Api_protocol::shopItemsFromStepXml(const tinyxml2::XMLElement *stepXml)

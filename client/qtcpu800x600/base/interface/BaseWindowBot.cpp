@@ -27,44 +27,19 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     const tinyxml2::XMLElement * stepXml=actualBot.step.at(step);
     if(strcmp(stepXml->Attribute("type"),"text")==0)
     {
-        const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-        const tinyxml2::XMLElement *text = stepXml->FirstChildElement("text");
-        if(!language.empty() && language!=BaseWindow::text_en)
-            while(text!=NULL)
-            {
-                if(text->Attribute("lang")!=NULL && text->Attribute("lang")==language && text->GetText()!=NULL)
-                {
-                    std::string textToShow=text->GetText();
-                    textToShow=CatchChallenger::ChatParsing::botTextToDisplay(textToShow,client->botHaveQuest(actualBotMapId,actualBot.botId));
-                    ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
-                    ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
-                    ui->IG_dialog->setVisible(true);
-                    //mirror to the QLocalServer GETDIALOG channel (read-only obs)
-                    if(mapController!=nullptr)
-                        mapController->setRemoteDialogText(QString::fromStdString(textToShow));
-                    return;
-                }
-                text = text->NextSiblingElement("text");
-            }
-        text = stepXml->FirstChildElement("text");
-        while(text!=NULL)
+        std::string textToShow;
+        if(!CatchChallenger::Api_protocol::botStepText(stepXml,LanguagesSelect::languagesSelect->getCurrentLanguages(),textToShow))
         {
-            if(text->Attribute("lang")==NULL || text->Attribute("lang")==language)
-                if(text->GetText()!=NULL)
-                {
-                    std::string textToShow=text->GetText();
-                    textToShow=CatchChallenger::ChatParsing::botTextToDisplay(textToShow,client->botHaveQuest(actualBotMapId,actualBot.botId));
-                    ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
-                    ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
-                    ui->IG_dialog->setVisible(true);
-                    //mirror to the QLocalServer GETDIALOG channel (read-only obs)
-                    if(mapController!=nullptr)
-                        mapController->setRemoteDialogText(QString::fromStdString(textToShow));
-                    return;
-                }
-            text = text->NextSiblingElement("text");
+            showTip(tr("Bot text not found, repport this error please").toStdString());
+            return;
         }
-        showTip(tr("Bot text not found, repport this error please").toStdString());
+        textToShow=CatchChallenger::ChatParsing::botTextToDisplay(textToShow,client->botHaveQuest(actualBotMapId,actualBot.botId));
+        ui->IG_dialog_text->setText(QString::fromStdString(textToShow));
+        ui->IG_dialog_name->setText(QString::fromStdString(actualBot.name));
+        ui->IG_dialog->setVisible(true);
+        //mirror to the QLocalServer GETDIALOG channel (read-only obs)
+        if(mapController!=nullptr)
+            mapController->setRemoteDialogText(QString::fromStdString(textToShow));
         return;
     }
     else if(strcmp(stepXml->Attribute("type"),"shop")==0)
@@ -436,107 +411,71 @@ void BaseWindow::on_IG_dialog_text_linkActivated(const QString &rawlink)
 void BaseWindow::IG_dialog_text_linkActivated(const std::string &rawlink)
 {
     ui->IG_dialog->setVisible(false);
-    std::vector<std::string> stringList=stringsplit(rawlink,';');
+    const std::vector<std::string> stringList=stringsplit(rawlink,';');
     unsigned int index=0;
     while(index<stringList.size())
     {
         const std::string &link=stringList.at(index);
-        qDebug() << "parsed link to use: " << QString::fromStdString(link);
-        if(stringStartWith(link,"http://") || stringStartWith(link,"https://"))
+        const CatchChallenger::Api_protocol::BotLink botLink=CatchChallenger::Api_protocol::parseBotLink(link,isInQuest,lastStepUsed);
+        switch(botLink.type)
         {
-            if(!QDesktopServices::openUrl(QUrl(QString::fromStdString(link))))
-                showTip(QStringLiteral("Unable to open the url: %1").arg(QString::fromStdString(link)).toStdString());
-            index++;
-            continue;
-        }
-        bool ok;
-        if(stringStartWith(link,"quest_"))
-        {
-            std::string tempLink=link;
-            stringreplaceOne(tempLink,"quest_","");
-            const uint16_t &questId=stringtouint16(tempLink,&ok);
-            if(!ok)
-            {
-                showTip(QStringLiteral("Unable to open the link: %1").arg(QString::fromStdString(link)).toStdString());
-                index++;
-                continue;
-            }
-            if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(questId))
-            {
-                showTip(tr("Quest not found").toStdString());
-                index++;
-                continue;
-            }
-            isInQuest=true;
-            this->questId=questId;
-            if(QtDatapackClientLoader::datapackLoader->has_questExtra(questId))
-            {
-                if(QtDatapackClientLoader::datapackLoader->get_questExtra(questId).autostep)
+            case CatchChallenger::Api_protocol::BotLink_Url:
+                if(!QDesktopServices::openUrl(QUrl(QString::fromStdString(link))))
+                    showTip(QStringLiteral("Unable to open the url: %1").arg(QString::fromStdString(link)).toStdString());
+            break;
+            case CatchChallenger::Api_protocol::BotLink_Quest:
+                if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.has_quest(botLink.value))
+                    showTip(tr("Quest not found").toStdString());
+                else if(!QtDatapackClientLoader::datapackLoader->has_questExtra(botLink.value))
+                    showTip(tr("Quest extra not found").toStdString());
+                else
                 {
-                    int index=0;
-                    bool ok;
-                    do
+                    isInQuest=true;
+                    questId=botLink.value;
+                    if(QtDatapackClientLoader::datapackLoader->get_questExtra(questId).autostep)
                     {
-                        ok=tryValidateQuestStep(questId);
-                        index++;
-                    } while(ok && index<99);
-                    if(index==99)
-                    {
-                        emit error("Infinity loop into autostep for quest: "+std::to_string(questId));
-                        return;
+                        int tries=0;
+                        bool validated=true;
+                        while(validated && tries<99)
+                        {
+                            validated=tryValidateQuestStep(questId);
+                            tries++;
+                        }
+                        if(validated)
+                        {
+                            emit error("Infinity loop into autostep for quest: "+std::to_string(questId));
+                            return;
+                        }
                     }
+                    showQuestText(1);
                 }
-                showQuestText(1);
-                index++;
-                continue;
-            }
-            else
+            break;
+            case CatchChallenger::Api_protocol::BotLink_ClanCreate:
             {
-                showTip(tr("Quest extra not found").toStdString());
-                index++;
-                continue;
+                bool ok;
+                std::string text = QInputDialog::getText(this,tr("Give the clan name"),tr("Clan name:"),QLineEdit::Normal,QString(), &ok).toStdString();
+                if(ok && !text.empty())
+                {
+                    actionClan.push_back(ActionClan_Create);
+                    client->createClan(text);
+                }
             }
+            break;
+            case CatchChallenger::Api_protocol::BotLink_Close:
+                return;
+            case CatchChallenger::Api_protocol::BotLink_NextQuestStep:
+                tryValidateQuestStep(questId);
+            break;
+            case CatchChallenger::Api_protocol::BotLink_Step:
+                goToBotStep(static_cast<uint8_t>(botLink.value));
+            break;
+            case CatchChallenger::Api_protocol::BotLink_QuestText:
+                showQuestText(botLink.value);
+            break;
+            default:
+                showTip(QStringLiteral("Unable to open the link: %1").arg(QString::fromStdString(link)).toStdString());
+            break;
         }
-        else if(link=="clan_create")
-        {
-            bool ok;
-            std::string text = QInputDialog::getText(this,tr("Give the clan name"),tr("Clan name:"),QLineEdit::Normal,QString(), &ok).toStdString();
-            if(ok && !text.empty())
-            {
-                actionClan.push_back(ActionClan_Create);
-                client->createClan(text);
-            }
-            index++;
-            continue;
-        }
-        else if(link=="close")
-            return;
-        else if(link=="next_quest_step" && isInQuest)
-        {
-            tryValidateQuestStep(questId);
-            index++;
-            continue;
-        }
-        else if(link=="next" && lastStepUsed>=1)
-        {
-            goToBotStep(lastStepUsed+1);
-            index++;
-            continue;
-        }
-        uint8_t step=stringtouint8(link,&ok);
-        if(!ok)
-        {
-            showTip(QStringLiteral("Unable to open the link: %1").arg(QString::fromStdString(link)).toStdString());
-            index++;
-            continue;
-        }
-        if(isInQuest)
-        {
-            showQuestText(step);
-            index++;
-            continue;
-        }
-        goToBotStep(step);
         index++;
     }
 }

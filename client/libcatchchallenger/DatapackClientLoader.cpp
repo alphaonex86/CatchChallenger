@@ -2181,6 +2181,23 @@ DatapackClientLoader::QuestTextResult DatapackClientLoader::questText(const CATC
 size_t DatapackClientLoader::get_profileTextList_size() const { return profileTextList.size(); }
 const DatapackClientLoader::ProfileText &DatapackClientLoader::get_profileText(const uint32_t &key) const { return profileTextList.at(key); }
 bool DatapackClientLoader::has_profileText(const uint32_t &key) const { return profileTextList.find(key)!=profileTextList.cend(); }
+std::vector<DatapackClientLoader::ProfileText> DatapackClientLoader::profileTexts(const size_t &profileCount) const
+{
+    std::vector<ProfileText> texts;
+    uint32_t index=0;
+    while(index<profileCount)
+    {
+        if(has_profileText(index))
+            texts.push_back(get_profileText(index));
+        else
+        {
+            std::cerr << "DatapackClientLoader::profileTexts(): no text for the profile " << std::to_string(index) << std::endl;
+            texts.push_back(ProfileText());
+        }
+        index++;
+    }
+    return texts;
+}
 //visualCategories
 size_t DatapackClientLoader::get_visualCategories_size() const { return visualCategories.size(); }
 const DatapackClientLoader::VisualCategory &DatapackClientLoader::get_visualCategory(const std::string &key) const { return visualCategories.at(key); }
