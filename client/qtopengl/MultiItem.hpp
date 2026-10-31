@@ -2,7 +2,7 @@
 #define MULTIITEM_H
 
 #include <QGraphicsItem>
-#include "ConnexionInfo.hpp"
+#include "../libqtcatchchallenger/ConnexionInfo.hpp"
 
 class MultiItem : public QGraphicsItem
 {

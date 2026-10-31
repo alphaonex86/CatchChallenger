@@ -136,7 +136,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->stackedWidget->setCurrentWidget(ui->mode);
     ui->warning->setVisible(false);
     ui->server_refresh->setEnabled(true);
-    temp_xmlConnexionInfoList=loadXmlConnexionInfoList();
+    temp_xmlConnexionInfoList=ConnexionInfo::loadXmlList(QStringLiteral(":/other/default_server_list.xml"),LanguagesSelect::languagesSelect->getCurrentLanguages(),settings);
     temp_customConnexionInfoList=loadConfigConnexionInfoList();
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
@@ -571,202 +571,6 @@ std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
         index++;
     }
     return returnedVar;
-}
-
-std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList()
-{
-    if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).isDir())
-        if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+QStringLiteral("/server_list.xml")).isFile())
-            return loadXmlConnexionInfoListFromFile(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+QStringLiteral("/server_list.xml"));
-    return loadXmlConnexionInfoListFromFile(QStringLiteral(":/other/default_server_list.xml"));
-}
-
-std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoListFromData(const QByteArray &xmlContent)
-{
-    std::vector<ConnexionInfo> returnedVar;
-    tinyxml2::XMLDocument domDocument;
-    const tinyxml2::XMLError loadOkay = domDocument.Parse(xmlContent.data(),xmlContent.size());
-    if(loadOkay!=0)
-    {
-        std::cerr << "MainWindow::loadXmlConnexionInfoList, " << domDocument.ErrorName() << std::endl;
-        return returnedVar;
-    }
-
-    const tinyxml2::XMLElement *root = domDocument.RootElement();
-    if(root==NULL)
-    {
-        std::cerr << "Unable to open the file: MainWindow::loadXmlConnexionInfoList, no root balise found for the xml file" << std::endl;
-        return returnedVar;
-    }
-    if(root->Name()==NULL)
-    {
-        qDebug() << QStringLiteral("Unable to open the file: %1, \"servers\" root balise not found 2 for the xml file").arg("server_list.xml");
-        return returnedVar;
-    }
-    if(strcmp(root->Name(),"servers")!=0)
-    {
-        qDebug() << QStringLiteral("Unable to open the file: %1, \"servers\" root balise not found for the xml file").arg("server_list.xml");
-        return returnedVar;
-    }
-
-    QRegularExpression regexHost("^[a-zA-Z0-9\\.\\-_]+$");
-    bool ok;
-    //load the content
-    const tinyxml2::XMLElement *server = root->FirstChildElement("server");
-    while(server!=NULL)
-    {
-        if(server->Attribute("unique_code")!=NULL)
-        {
-            ConnexionInfo connexionInfo;
-            connexionInfo.lan=false;
-            connexionInfo.unique_code=server->Attribute("unique_code");
-
-            if(server->Attribute("host")!=NULL)
-                connexionInfo.host=server->Attribute("host");
-            if(server->Attribute("port")!=NULL)
-            {
-                uint32_t temp_port=stringtouint32(server->Attribute("port"),&ok);
-                if(!connexionInfo.host.contains(regexHost))
-                    qDebug() << QStringLiteral("Unable to open the file: %1, host is wrong: %3 child->Name(): %2")
-                                .arg("server_list.xml").arg(server->Name()).arg(connexionInfo.host);
-                else if(!ok)
-                    qDebug() << QStringLiteral("Unable to open the file: %1, port is not a number: %3 child->Name(): %2")
-                                .arg("server_list.xml").arg(server->Name()).arg(server->Attribute("port"));
-                else if(temp_port<1 || temp_port>65535)
-                    qDebug() << QStringLiteral("Unable to open the file: %1, port is not in range: %3 child->Name(): %2")
-                                .arg("server_list.xml").arg(server->Name()).arg(server->Attribute("port"));
-                else if(connexionInfo.unique_code.isEmpty())
-                    qDebug() << QStringLiteral("Unable to open the file: %1, unique_code can't be empty: %3 child->Name(): %2")
-                                .arg("server_list.xml").arg(server->Name()).arg(server->Attribute("port"));
-                else
-                    connexionInfo.port=static_cast<uint16_t>(temp_port);
-            }
-            if(server->Attribute("ws")!=NULL)
-                connexionInfo.ws=server->Attribute("ws");
-            const tinyxml2::XMLElement *lang;
-            const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-            bool found=false;
-            if(!language.empty() && language!="en")
-            {
-                lang = server->FirstChildElement("lang");
-                while(lang!=NULL)
-                {
-                    if(lang->Attribute("lang") && lang->Attribute("lang")==language)
-                    {
-                        const tinyxml2::XMLElement *name = lang->FirstChildElement("name");
-                        if(name!=NULL && name->GetText()!=NULL)
-                            connexionInfo.name=name->GetText();
-                        const tinyxml2::XMLElement *register_page = lang->FirstChildElement("register_page");
-                        if(register_page!=NULL && register_page->GetText()!=NULL)
-                            connexionInfo.register_page=register_page->GetText();
-                        const tinyxml2::XMLElement *lost_passwd_page = lang->FirstChildElement("lost_passwd_page");
-                        if(lost_passwd_page!=NULL && lost_passwd_page->GetText()!=NULL)
-                            connexionInfo.lost_passwd_page=lost_passwd_page->GetText();
-                        const tinyxml2::XMLElement *site_page = lang->FirstChildElement("site_page");
-                        if(site_page!=NULL && site_page->GetText()!=NULL)
-                            connexionInfo.site_page=site_page->GetText();
-                        found=true;
-                        break;
-                    }
-                    lang = lang->NextSiblingElement("lang");
-                }
-            }
-            if(!found)
-            {
-                lang = server->FirstChildElement("lang");
-                while(lang!=NULL)
-                {
-                    if(lang->Attribute("lang")==NULL || strcmp(lang->Attribute("lang"),"en")==0)
-                    {
-                        const tinyxml2::XMLElement *name = lang->FirstChildElement("name");
-                        if(name!=NULL && name->GetText()!=NULL)
-                            connexionInfo.name=name->GetText();
-                        const tinyxml2::XMLElement *register_page = lang->FirstChildElement("register_page");
-                        if(register_page!=NULL && register_page->GetText()!=NULL)
-                            connexionInfo.register_page=register_page->GetText();
-                        const tinyxml2::XMLElement *lost_passwd_page = lang->FirstChildElement("lost_passwd_page");
-                        if(lost_passwd_page!=NULL && lost_passwd_page->GetText()!=NULL)
-                            connexionInfo.lost_passwd_page=lost_passwd_page->GetText();
-                        const tinyxml2::XMLElement *site_page = lang->FirstChildElement("site_page");
-                        if(site_page!=NULL && site_page->GetText()!=NULL)
-                            connexionInfo.site_page=site_page->GetText();
-                        break;
-                    }
-                    lang = lang->NextSiblingElement("lang");
-                }
-            }
-            settings.beginGroup(QStringLiteral("Xml-%1").arg(server->Attribute("unique_code")));
-            if(settings.contains(QStringLiteral("connexionCounter")))
-            {
-                connexionInfo.connexionCounter=settings.value("connexionCounter").toUInt(&ok);
-                if(!ok)
-                    connexionInfo.connexionCounter=0;
-            }
-            else
-                connexionInfo.connexionCounter=0;
-
-            //proxy
-            if(settings.contains(QStringLiteral("proxyPort")))
-            {
-                connexionInfo.proxyPort=static_cast<uint16_t>(settings.value("proxyPort").toUInt(&ok));
-                if(!ok)
-                    connexionInfo.proxyPort=9050;
-            }
-            else
-                connexionInfo.proxyPort=9050;
-            if(settings.contains(QStringLiteral("proxyHost")))
-                connexionInfo.proxyHost=settings.value(QStringLiteral("proxyHost")).toString();
-            else
-                connexionInfo.proxyHost=QString();
-
-            if(settings.contains(QStringLiteral("lastConnexion")))
-            {
-                connexionInfo.lastConnexion=settings.value(QStringLiteral("lastConnexion")).toUInt(&ok);
-                if(!ok)
-                    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-            }
-            else
-                connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-            settings.endGroup();
-            if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
-                connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-            returnedVar.push_back(connexionInfo);
-        }
-        else
-            qDebug() << QStringLiteral("Unable to open the file: %1, missing host or port: child->Name(): %2")
-                        .arg("server_list.xml").arg(server->Name());
-        server = server->NextSiblingElement("server");
-    }
-    return returnedVar;
-}
-
-std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoListFromFile(const QString &file)
-{
-    std::vector<ConnexionInfo> returnedVar;
-    //open and quick check the file
-    QFile itemsFile(file);
-    QByteArray xmlContent;
-    if(!itemsFile.open(QIODevice::ReadOnly))
-    {
-        qDebug() << QStringLiteral("Unable to open the file: %1, error: %2").arg(itemsFile.fileName()).arg(itemsFile.errorString());
-        return returnedVar;
-    }
-    xmlContent=itemsFile.readAll();
-    itemsFile.close();
-    return loadXmlConnexionInfoListFromData(xmlContent);
-}
-
-bool ConnexionInfo::operator<(const ConnexionInfo &connexionInfo) const
-{
-    if(connexionCounter<connexionInfo.connexionCounter)
-        return false;
-    if(connexionCounter>connexionInfo.connexionCounter)
-        return true;
-    if(lastConnexion<connexionInfo.lastConnexion)
-        return false;
-    if(lastConnexion>connexionInfo.lastConnexion)
-        return true;
-    return true;
 }
 
 void MainWindow::displayServerList()
@@ -1229,7 +1033,7 @@ void MainWindow::saveConnexionInfoList()
             else
                 settings.remove(QStringLiteral("connexionCounter"));
             if(connexionInfo.lastConnexion>0 && connexionInfo.connexionCounter>0)
-                settings.setValue(QStringLiteral("lastConnexion"),connexionInfo.lastConnexion);
+                settings.setValue(QStringLiteral("lastConnexion"),static_cast<quint64>(connexionInfo.lastConnexion));
             else
                 settings.remove(QStringLiteral("lastConnexion"));
             settings.endGroup();
@@ -2116,7 +1920,7 @@ void MainWindow::httpFinished()
             }
         }
     }
-    temp_xmlConnexionInfoList=loadXmlConnexionInfoListFromData(content);
+    temp_xmlConnexionInfoList=ConnexionInfo::loadXmlList(content,LanguagesSelect::languagesSelect->getCurrentLanguages(),settings);
     //Snapshot the current selection's unique_code BEFORE the merge-list
     //rebuild. After we reassign mergedConnexionInfoList below, every
     //pointer held inside serverConnexion becomes dangling (it pointed

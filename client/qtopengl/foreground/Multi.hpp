@@ -9,7 +9,7 @@
 #include "../ImagesStrechMiddle.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
-#include "../ConnexionInfo.hpp"
+#include "../../libqtcatchchallenger/ConnexionInfo.hpp"
 #include "../CCScrollZone.hpp"
 
 class AddOrEditServer;
@@ -40,9 +40,7 @@ public:
     void server_select_finished();
     void server_remove_clicked();
     void saveConnexionInfoList();
-    std::vector<ConnexionInfo> loadXmlConnexionInfoList();
-    std::vector<ConnexionInfo> loadXmlConnexionInfoList(const QByteArray &xmlContent);
-    std::vector<ConnexionInfo> loadXmlConnexionInfoList(const QString &file);
+    static std::string serverListLanguage();
     std::vector<ConnexionInfo> loadConfigConnexionInfoList();
     void httpFinished();
     void downloadFile();
