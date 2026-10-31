@@ -27,7 +27,7 @@ import cleanup_helpers
 sys.dont_write_bytecode = True
 
 
-import os, sys, signal, subprocess, threading, shutil, multiprocessing, json, re, time, base64
+import os, sys, signal, subprocess, threading, shutil, multiprocessing, json, re, time, base64, atexit
 from remote_build import (start_remote_builds, collect_remote_results,
                           REMOTE_SERVERS, REMOTE_NODES, node_runs, get_node,
                           setup_remote_server_runtime, start_remote_server,
@@ -801,11 +801,29 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     return False
 
 
+# client HOMEs hold a whole datapack copy, on tmpfs (RAM): removed at exit, pass or fail
+# (the client output is already in the log), else every run leaked hundreds of MB.
+_scratch_dirs = []
+def _scratch_dir(prefix):
+    import tempfile
+    path = tempfile.mkdtemp(prefix=prefix, dir=test_config.TMPFS_ROOT)
+    _scratch_dirs.append(path)
+    return path
+def _remove_scratch_dirs():
+    i = 0
+    while i < len(_scratch_dirs):
+        try:
+            shutil.rmtree(_scratch_dirs[i])
+        except OSError as e:
+            print(f"[WARN] scratch dir not removed: {_scratch_dirs[i]}: {e}")
+        i += 1
+atexit.register(_remove_scratch_dirs)
+
+
 def _isolated_home_env(prefix):
     """extra_env for run_client: a fresh HOME/XDG tree, never the operator's (its cached
     datapack, hash and stored account would leak into the test)."""
-    import tempfile
-    home = tempfile.mkdtemp(prefix=prefix, dir=test_config.TMPFS_ROOT)
+    home = _scratch_dir(prefix)
     return {"HOME": home, "XDG_DATA_HOME": os.path.join(home, "share"),
             "XDG_CONFIG_HOME": os.path.join(home, "config"),
             "XDG_CACHE_HOME": os.path.join(home, "cache")}
@@ -952,7 +970,6 @@ class _GLChannelSession:
     See client/dev.md and map/main/test/TOTEST.md for the command vocabulary and
     the map fixture coordinates."""
     def __init__(self, mc, build_dir=None, bin_name=None):
-        import tempfile
         self.mc = mc
         # default to the qtopengl client; pass build_dir/bin_name to drive qtcpu800x600
         self.build_dir = build_dir if build_dir is not None else CLIENT_GL_BUILD
@@ -960,8 +977,7 @@ class _GLChannelSession:
         self.proc = None
         self.sk = None
         self.out = []
-        self.tmpdir = tempfile.mkdtemp(prefix="cc-chan-",
-                                       dir=_config["paths"].get("tmpfs_root", "/tmp"))
+        self.tmpdir = _scratch_dir("cc-chan-")
 
     def _reader(self):
         for l in iter(self.proc.stdout.readline, b""):
