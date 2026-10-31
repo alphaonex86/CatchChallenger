@@ -727,6 +727,40 @@ def check_reused_query_number(label):
     return True
 
 
+def check_no_fd_leak(label):
+    """Each client connection opened a socket the gateway never closed
+    (LinkToGameServer::tryConnect): it ran out of fds and refused everybody."""
+    if gateway_proc is None or gateway_proc.poll() is not None:
+        log_fail(label, "gateway not running")
+        return False
+    hello = bytes([0xA0, 0x00, 0x9c, 0xd6, 0x49, 0x8d, 0x14])
+    fd_dir = f"/proc/{gateway_proc.pid}/fd"
+    connections = 10
+    try:
+        before = len(os.listdir(fd_dir))
+        index = 0
+        while index < connections:
+            sk = socket.create_connection((BACKEND_HOST, GATEWAY_PORT), timeout=10)
+            sk.sendall(hello)
+            sk.settimeout(15)
+            reply = sk.recv(4096)
+            sk.close()
+            if not reply:
+                log_fail(label, f"connection {index}: no reply to the protocol header")
+                return False
+            index += 1
+        time.sleep(1.0)
+        after = len(os.listdir(fd_dir))
+    except OSError as e:
+        log_fail(label, f"gateway connection: {e}")
+        return False
+    if after - before >= connections // 2:
+        log_fail(label, f"gateway fds {before} -> {after} after {connections} connections (leak)")
+        return False
+    log_pass(label, f"gateway fds {before} -> {after} after {connections} connections")
+    return True
+
+
 def _kill(proc):
     if proc is None:
         return
@@ -1091,6 +1125,7 @@ def main():
         if not reused_qn_checked:
             reused_qn_checked = True
             check_reused_query_number(f"{case}: reused query number")
+            check_no_fd_leak(f"{case}: no fd leak per connection")
         # Stop gateway first so valgrind's report appears in the FAIL
         # context window for THIS case, not the next one.
         stop_gateway(case)
@@ -1108,11 +1143,12 @@ def main():
                      f"{len(plan)-pi} remaining case(s) to stay under "
                      f"the harness cap")
             while pi < len(plan):
-                dp2, mc2, sc2, dh2, gh2 = plan[pi]
+                dp2, mc2, sc2, dh2, gh2, mi2 = plan[pi]
                 pi += 1
                 case2 = (f"{os.path.basename(dp2)}/{mc2}"
                          + (f"/{sc2}" if sc2 else "")
-                         + f" dest_http={dh2} gw_http={gh2}")
+                         + f" dest_http={dh2} gw_http={gh2}"
+                         + f" minimize={mi2}")
                 if not should_run(case2, failed_cases):
                     continue
                 log_fail(f"{case2}: client→map",

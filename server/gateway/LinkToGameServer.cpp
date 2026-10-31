@@ -97,12 +97,6 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
 
     //gethostbyname( deprecated
 
-    const int &socketFd=socket(AF_INET, SOCK_STREAM, 0);
-    if(socketFd<0)
-    {
-        std::cerr << "ERROR opening socket to game server server (abort)" << std::endl;
-        return -1;
-    }
     //resolv again the dns
     struct addrinfo hints;
     struct addrinfo *result, *rp;

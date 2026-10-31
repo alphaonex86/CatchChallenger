@@ -1909,6 +1909,48 @@ def check_proxy_reused_query_number(tag, base, work_root, db_name, max_players,
     log_pass(label, "offending client dropped, proxy login still serves")
 
 
+def check_proxy_select_no_fd_leak(tag, work_root, spawned_servers):
+    """Each select through a proxy login opened a socket it never closed: after
+    ~1000 selects the login hit its fd limit and answered every select 0x04
+    "Server internal problem" (prod 2026-10-31, 1016 leaked sockets)."""
+    label = f"{tag}/proxy-select-no-fd-leak"
+    logins = [s for s in spawned_servers if s.label == "loginproxy" and s.proc.poll() is None]
+    if not logins:
+        log_fail(label, "no running proxy login")
+        return
+    fd_dir = f"/proc/{logins[0].proc.pid}/fd"
+    selects = 6
+    stamp = "%x" % (int(time.time() * 1000) & 0xFFFFFFF)
+    try:
+        unique_key = _game_unique_key(work_root)
+        before = len(os.listdir(fd_dir))
+        index = 0
+        while index < selects:
+            user = ("fdleak%d" % index + stamp).encode()
+            conn, logged = _raw_login(PORT_LOGIN_PROXY, user)
+            character_id, added = _raw_add_character(conn, "Fl%d" % index + stamp)
+            if character_id is None:
+                conn.sock.close()
+                log_fail(label, f"account {user!r}: login {logged!r}, character creation {added!r}")
+                return
+            selected = conn.query(0xAC, bytes([0]) + struct.pack("<II", unique_key, character_id),
+                                  dynamic=False, timeout=20)
+            conn.sock.close()
+            if selected is None:
+                log_fail(label, f"select {index}: no reply through the proxy")
+                return
+            index += 1
+        time.sleep(2)
+        after = len(os.listdir(fd_dir))
+    except (OSError, AttributeError, TypeError) as e:
+        log_fail(label, f"raw proxy session: {e!r}")
+        return
+    if after - before >= selects // 2:
+        log_fail(label, f"proxy login fds {before} -> {after} after {selects} selects (leak)")
+    else:
+        log_pass(label, f"proxy login fds {before} -> {after} after {selects} selects")
+
+
 def _run_cluster_variant(db_name, base, max_players,
                          mirror_label, mirror_url,
                          spawned_servers, t_start):
@@ -2054,6 +2096,7 @@ def _run_cluster_variant(db_name, base, max_players,
             check_kicked_connection_closes(f"{tag}/game1-kick-closes", PORT_GAME_1)
             check_proxy_reused_query_number(tag, base, work_root, db_name, max_players,
                                             mirror_url, spawned_servers)
+            check_proxy_select_no_fd_leak(tag, work_root, spawned_servers)
             check_late_master_reply_keeps_link(tag, work_root, game1)
     finally:
         # Stop only the servers spawned by THIS variant; leave any
