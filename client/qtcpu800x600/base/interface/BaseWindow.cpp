@@ -57,7 +57,8 @@ std::vector<QIcon> BaseWindow::icon_server_list_color;
 BaseWindow::BaseWindow() :
     ui(new Ui::BaseWindowUI),
     closeWhenOnMapAfterRemaining_(0),
-    actualBotMapId(0)
+    actualBotMapId(0),
+    factoryMapId(0)
 {
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
@@ -107,7 +108,6 @@ BaseWindow::BaseWindow() :
     waitToSell=false;
     haveClanInformations=false;
     factoryId=0;
-    factoryInProduction=false;
     datapackDownloadedCount=0;
     datapackDownloadedSize=0;
     progressingDatapackFileSize=0;

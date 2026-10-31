@@ -133,7 +133,6 @@ set(_qtopengl_sources
     ${_qtopengl_dir}/foreground/OverMapLogicTrade.cpp
     ${_qtopengl_dir}/foreground/OverMapLogicShop.cpp
     ${_qtopengl_dir}/foreground/OverMapLogicBot.cpp
-    ${_qtopengl_dir}/foreground/OverMapLogicFactory.cpp
     ${_qtopengl_dir}/foreground/OverMapLogicClan.cpp
     ${_qtopengl_dir}/above/inventory/Inventory.cpp
     ${_qtopengl_dir}/above/inventory/Plant.cpp

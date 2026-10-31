@@ -248,6 +248,12 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             showTip(tr("Industry called but wrong id").toStdString());
             return;
         }
+        if(factoryId>=QtDatapackClientLoader::datapackLoader->getMap(actualBotMapId).industries.size())
+        {
+            showTip(tr("The factory is not found").toStdString());
+            return;
+        }
+        factoryMapId=actualBotMapId;
         ui->factoryResources->clear();
         ui->factoryProducts->clear();
         ui->factoryStatus->setText(tr("Waiting of status"));

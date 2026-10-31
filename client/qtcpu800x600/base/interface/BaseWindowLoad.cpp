@@ -93,6 +93,7 @@ void BaseWindow::resetAll()
     ui->plantUse->setVisible(false);
     ui->craftingUse->setVisible(false);
     waitToSell=false;
+    factoryTrade.reset();
     fightTimerFinish=false;
     ui->tabWidgetTrainerCard->setCurrentWidget(ui->tabWidgetTrainerCardPage1);
     ui->selectMonster->setVisible(false);
