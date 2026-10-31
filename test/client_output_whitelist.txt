@@ -102,6 +102,7 @@ AutoArgs: server="" host="<n>.<n>" port=<n> url="" autologin=true character="Tes
 AutoArgs: server="" host="<n>:<n>::<n>:ff<n>" port=<n> url="" autologin=true character="PlayerCPU" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=false mainDatapackCodeOverride="" takeScreenshotPath=""
 AutoArgs: server="" host="localhost" port=<n> url="" autologin=true character="PlayerCPU" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=false mainDatapackCodeOverride="" takeScreenshotPath=""
 AutoArgs: server="" host="localhost" port=<n> url="" autologin=true character="PlayerRCCPU" closeWhenOnMap=true closeWhenOnMapAfter=<n> dropSendDataAfterOnMap=false autosolo=false mainDatapackCodeOverride="" takeScreenshotPath=""
+AutoSelect character: PlayerDupGL id=<n>
 AutoSelect character: PlayerGL id=<n>
 AutoSelect character: PlayerRCGL id=<n>
 AutoSelect character: TestPlayerLive id=<n>
@@ -117,7 +118,7 @@ CatchChallenger::CommonDatapack::commonDatapack.parseDatapack end took <n>ms to 
 CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() other took <n>ms to parse <path>
 CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took <n>ms to parse <path>
 CliClientOptions: --closewhenonmap, exiting in <n>s
-CliClientOptions: errorString with --closewhenonmap[after], exiting with rc=<n>
+CliClientOptions: error with --closewhenonmap[after], exiting with rc=<n>: Unable to login: Already logged
 CommonDatapackServerSpec::applyMonstersRate() drop dual call
 CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase is now:
 CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase is now: https:<path>
@@ -145,6 +146,7 @@ Main Problem with the datapack list reply:https:<path> Error transferring https:
 Main: Datapack is empty or hash don't match, get from server, hash local: "<hash>" , hash on server: "<hash>"
 MainWindow::newError(): Internal error, file: <path> parseReplyData(): return false, need be aborted before, packetCode: <n>, data: <n>
 MainWindow::stateChanged(<n>)
+MainWindow::stateChanged(<n>) client!=NULL
 MainWindow::stateChanged(<n>) mostly quit
 MapController::loadBotOnTheMap() skin empty
 MapControllerMP::datapackParsedMainSub()
@@ -206,10 +208,12 @@ Raw file to create:
 ScreenTransition::closeEvent()
 ScreenTransition::closeEvent: internalServer->isFinished()
 ScreenTransition::errorString()
+ScreenTransition::errorString(Already logged)
 ScreenTransition::errorString(Internal error, file: <path>
 ScreenTransition::errorString(Too recently disconnected)
 ScreenTransition::is_started(<n>)
 Select character: <n>
+Selected character not found, reason: Already logged, data: <n>
 Selected character not found, reason: Too recently disconnected, data: <n>
 Start split: <hex> and size <n>, cursor: <n>
 Stop character loading for now, then character_selected=false
