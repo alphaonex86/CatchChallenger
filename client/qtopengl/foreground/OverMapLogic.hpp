@@ -6,6 +6,7 @@
 #include "../../libqtcatchchallenger/maprender/MapVisualiserPlayer.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../../libcatchchallenger/SlowServerDetector.hpp"
+#include "../../libqtcatchchallenger/Api_protocol_Qt.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <QAudioSink>
 #include "../../libqtcatchchallenger/QInfiniteBuffer.hpp"
@@ -122,6 +123,12 @@ public slots:
     //bot fights win rewards (cash + mark beaten) then return to the map; wild wins
     //and all losses go straight to battleFinished (no reward).
     void battleWon();
+    //evolution screen: the queued level up evolutions one at a time, or the item one (already done, cannot cancel)
+    void ensureAnimation();
+    void checkEvolution();
+    void showItemEvolution(const uint16_t &from,const uint16_t &to);
+    void evolutionDone();
+    void evolutionClosed();
     void openBagForBattle();
     void openMonsterListForBattle();
     void lastReplyTime(const uint32_t &time);
@@ -284,6 +291,9 @@ private:
     int playerIndex;
 
     Animation *animation;
+    CatchChallenger::Api_protocol_Qt::PendingEvolution currentEvolution;
+    bool evolutionByItem;//already done by the server with the item use, nothing to confirm
+    bool evolutionShown;
     Encyclopedia *encyclopedia;
     Shop *shop;
     Factory *factory;

@@ -892,23 +892,9 @@ void BotTargetList::updatePlayerStep()
                                     //win
                                     player.canMoveOnMap=true;
                                     player.api->fightFinished();
-                                    CatchChallenger::PlayerMonster *monster=player.api->evolutionByLevelUp();
-                                    if(monster!=NULL)
-                                    {
-                                        const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster->monster);
-                                        unsigned int index=0;
-                                        while(index<monsterInformations.evolutions.size())
-                                        {
-                                            const CatchChallenger::Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
-                                            if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.data.level==monster->level)
-                                            {
-                                                const uint8_t &monsterEvolutionPostion=player.api->getPlayerMonsterPosition(monster);
-                                                player.api->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
-                                                break;
-                                            }
-                                            index++;
-                                        }
-                                    }
+                                    CatchChallenger::Api_protocol_Qt::PendingEvolution evolution;
+                                    while(player.api->nextEvolution(evolution))
+                                        player.api->confirmEvolution(evolution);//a bot always accepts
                                 }
                             }
                             else
@@ -930,23 +916,9 @@ void BotTargetList::updatePlayerStep()
                             //win
                             player.canMoveOnMap=true;
                             player.api->fightFinished();
-                            CatchChallenger::PlayerMonster *monster=player.api->evolutionByLevelUp();
-                            if(monster!=NULL)
-                            {
-                                const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.get_monster(monster->monster);
-                                unsigned int index=0;
-                                while(index<monsterInformations.evolutions.size())
-                                {
-                                    const CatchChallenger::Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
-                                    if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.data.level==monster->level)
-                                    {
-                                        const uint8_t &monsterEvolutionPostion=player.api->getPlayerMonsterPosition(monster);
-                                        player.api->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
-                                        break;
-                                    }
-                                    index++;
-                                }
-                            }
+                            CatchChallenger::Api_protocol_Qt::PendingEvolution evolution;
+                            while(player.api->nextEvolution(evolution))
+                                player.api->confirmEvolution(evolution);//a bot always accepts
                         }
 
                         if(apiSelectedClient==api)

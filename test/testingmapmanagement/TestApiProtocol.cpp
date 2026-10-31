@@ -74,7 +74,9 @@ void MapControllerMpStub::onPing(uint8_t queryNumber)
 TestApiProtocol::TestApiProtocol() :
     Api_protocol(),
     map_controller(nullptr),
-    lastNewError()
+    lastNewError(),
+    recordWrites(false),
+    written()
 {
     // parseMessage() pushes to delayedMessages while !character_selected;
     // mark "logged in + character selected" so map packets parse
@@ -279,7 +281,12 @@ std::string TestApiProtocol::getLanguage() const { return "en"; }
 
 void TestApiProtocol::reset() {}
 ssize_t TestApiProtocol::readFromSocket(char *, const size_t &) { return 0; }
-ssize_t TestApiProtocol::writeToSocket(const char * const, const size_t &size) { return static_cast<ssize_t>(size); }
+ssize_t TestApiProtocol::writeToSocket(const char * const data, const size_t &size)
+{
+    if(recordWrites)
+        written.append(data,size);
+    return static_cast<ssize_t>(size);
+}
 void TestApiProtocol::registerOutputQuery(const uint8_t &, const uint8_t &) {}
 bool TestApiProtocol::disconnectClient() { return true; }
 CompressionProtocol::CompressionType TestApiProtocol::getCompressType() const { return CompressionProtocol::None; }

@@ -800,7 +800,7 @@ void Api_protocol::confirmEvolutionByPosition(const uint8_t &monsterPosition)
         std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    char buffer[2];
+    char buffer[1];
     buffer[0]=(uint8_t)monsterPosition;
     packOutcommingData(0x0F,buffer,sizeof(buffer));
 }

@@ -34,6 +34,7 @@
 #include "../../../libcatchchallenger/FactoryTrade.hpp"
 #include "../../../libqtcatchchallenger/maprender/MapController.hpp"
 #include "Chat.h"
+#include "../../fight/interface/EvolutionScreen.h"
 #include "NewProfile.h"
 
 #ifndef CATCHCHALLENGER_BASEWINDOW_H
@@ -224,8 +225,8 @@ private slots:
     void factoryToProductItem(QListWidgetItem *item);
     void factoryToResourceItem(QListWidgetItem *item);
     void insert_player(const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
-    void animationFinished();
-    void evolutionCanceled();
+    void evolutionDone();
+    void evolutionClosed();
     void teleportConditionNotRespected(const std::string &text);
     static std::string reputationRequirementsToText(const ReputationRequirements &reputationRequirements);
 
@@ -494,8 +495,9 @@ private:
     NewProfile *newProfile;
     uint32_t datapackFileNumber;
     int32_t datapackFileSize;
-    QWidget *previousAnimationWidget;
-    uint8_t monsterEvolutionPostion;
+    EvolutionScreen *evolutionScreen;
+    CatchChallenger::Api_protocol_Qt::PendingEvolution currentEvolution;
+    bool evolutionByItem;//already applied by the item, nothing to confirm
     uint32_t mLastGivenXP;
     uint8_t currentMonsterLevel;
     std::unordered_set<std::string> supportedImageFormats;
@@ -625,7 +627,6 @@ private:
     std::unordered_map<uint16_t,uint32_t> tradeOtherObjects,tradeCurrentObjects;
     std::vector<CatchChallenger::PlayerMonster> tradeOtherMonsters,tradeCurrentMonsters;
     std::vector<uint8_t> tradeCurrentMonstersPosition;
-    std::vector<uint8_t> tradeEvolutionMonsters;
 
     //quest
     bool isInQuest;

@@ -340,9 +340,19 @@ public:
     virtual uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster) override;
     void catchIsDone();
     bool doTheOtherMonsterTurn() override;
-    PlayerMonster * evolutionByLevelUp();
-    uint8_t getPlayerMonsterPosition(const PlayerMonster * const playerMonster);
-    void confirmEvolutionByPosition(const uint8_t &monterPosition);
+    struct PendingEvolution
+    {
+        uint8_t monsterPosition;
+        CATCHCHALLENGER_TYPE_MONSTER from;
+        CATCHCHALLENGER_TYPE_MONSTER to;
+        bool traded;
+    };
+    //pop the next queued evolution still valid (level up or trade); false when none
+    bool nextEvolution(PendingEvolution &evolution);
+    //the monsters received by a trade, evolve if they have a trade evolution
+    void addTradeEvolutions(const std::vector<uint8_t> &monsterPositions);
+    //tell the server and apply it locally; a cancelled evolution is just not confirmed, it comes back at the next level up
+    void confirmEvolution(const PendingEvolution &evolution);
     void addToEncyclopedia(const uint16_t &monster);
     //bool giveXPSP(int xp,int sp) override;
     uint32_t lastGivenXP();
@@ -353,7 +363,7 @@ private:
 private:
     bool socketDisconnectedForReconnectFirstTry;
     uint32_t mLastGivenXP;
-    std::vector<uint8_t> mEvolutionByLevelUp;
+    std::vector<PendingEvolution> pendingEvolutions;
     std::vector<Skill::AttackReturn> fightEffectList;
     Player_private_and_public_informations player_informations_local;
     std::string randomSeeds;
@@ -362,6 +372,9 @@ private:
     bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
     bool internalTryEscape() override;
     void levelUp(const uint8_t &level,const uint8_t &monsterIndex) override;
+    void confirmEvolutionTo(PlayerMonster * playerMonster,const uint16_t &monster) override;
+    void queueEvolution(const uint8_t &monsterPosition,const bool &traded);
+    bool applyObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition);
     void addXPSP();
     uint8_t getOneSeed(const uint8_t &max) override;
 };

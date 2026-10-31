@@ -49,6 +49,8 @@ OverMapLogic::OverMapLogic() :
     playerIndex=0;
 
     animation=nullptr;
+    evolutionByItem=false;
+    evolutionShown=false;
     encyclopedia=nullptr;
     shop=nullptr;
     currentBotFightId=0xFFFF;
@@ -146,6 +148,8 @@ void OverMapLogic::resetAll()
     visualCategory.clear();
     if(factory!=nullptr)
         factory->resetAll();
+    evolutionByItem=false;
+    evolutionShown=false;
     OverMap::resetAll();
     #ifndef CATCHCHALLENGER_NOAUDIO
     AudioGL::audio->stopCurrentAmbiance();
@@ -1754,6 +1758,58 @@ void OverMapLogic::battleFinished()
     ccmap->mapController.unblock();
     //return to the map overlay (the fight replaced the overmap foreground)
     emit setForeground(this);
+    checkEvolution();
+}
+
+void OverMapLogic::ensureAnimation()
+{
+    if(animation==nullptr)
+    {
+        animation=new Animation();
+        if(!connect(animation,&Animation::setAbove,this,&OverMapLogic::setAbove))
+            abort();
+        if(!connect(animation,&Animation::evolved,this,&OverMapLogic::evolutionDone))
+            abort();
+        if(!connect(animation,&Animation::closed,this,&OverMapLogic::evolutionClosed))
+            abort();
+    }
+}
+
+void OverMapLogic::checkEvolution()
+{
+    //one at a time, evolutionClosed() shows the next one
+    if(evolutionShown)
+        return;
+    if(connexionManager->client->nextEvolution(currentEvolution))
+    {
+        ensureAnimation();
+        evolutionByItem=false;
+        evolutionShown=true;
+        animation->startEvolution(currentEvolution.from,currentEvolution.to,true);
+        setAbove(animation);
+    }
+}
+
+void OverMapLogic::showItemEvolution(const uint16_t &from,const uint16_t &to)
+{
+    ensureAnimation();
+    evolutionByItem=true;
+    evolutionShown=true;
+    animation->startEvolution(from,to,false);
+    setAbove(animation);
+}
+
+void OverMapLogic::evolutionDone()
+{
+    if(!evolutionByItem)
+        connexionManager->client->confirmEvolution(currentEvolution);
+}
+
+void OverMapLogic::evolutionClosed()
+{
+    evolutionByItem=false;
+    evolutionShown=false;
+    checkEvolution();
 }
 
 void OverMapLogic::openBagForBattle()
@@ -2272,13 +2328,15 @@ void OverMapLogic::objectSelection(const bool &ok, const uint16_t &itemId, const
             const std::string monsterName=QtDatapackClientLoader::datapackLoader->has_monsterExtra(monster.monster)
                     ?QtDatapackClientLoader::datapackLoader->get_monsterExtra(monster.monster).name
                     :std::to_string(monster.monster);
+            const uint16_t monsterBefore=monster.monster;
             if(connexionManager->client->useObjectOnMonsterByPosition(item,monsterPosition))
             {
-                connexionManager->client->useObjectOnMonsterByPosition(item,monsterPosition);
-                showTip(tr("Using <b>%1</b> on <b>%2</b>")
-                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(item).name))
-                        .arg(QString::fromStdString(monsterName)).toStdString());
-                //evolution animation/check is wired with the Battle/Animation screen
+                if(dp.has_evolutionItem(item))
+                    showItemEvolution(monsterBefore,playerInformations.monsters.at(monsterPosition).monster);
+                else
+                    showTip(tr("Using <b>%1</b> on <b>%2</b>")
+                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemExtra(item).name))
+                            .arg(QString::fromStdString(monsterName)).toStdString());
             }
             else
             {
@@ -2382,10 +2440,7 @@ void OverMapLogic::objectSelection(const bool &ok, const uint16_t &itemId, const
             {
                 const uint8_t pos=connexionManager->client->getCurrentSelectedMonsterNumber();
                 if(connexionManager->client->useObjectOnMonsterByPosition(itemId,pos))
-                {
                     remove_to_inventory(itemId,1);
-                    connexionManager->client->useObjectOnMonsterByPosition(itemId,pos);
-                }
             }
             if(Battle::battle!=nullptr)
                 Battle::battle->doNextAction();
