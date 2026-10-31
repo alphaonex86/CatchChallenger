@@ -7,7 +7,7 @@
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../../general/base/CommonSettingsServer.hpp"
 #include "ui_BaseWindow.h"
-#include "../../base/FacilityLibClient.h"
+#include "../../../libqtcatchchallenger/FacilityLibClient.hpp"
 
 #include <QListWidgetItem>
 #include <QBuffer>

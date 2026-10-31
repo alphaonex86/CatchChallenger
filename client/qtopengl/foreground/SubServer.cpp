@@ -1,7 +1,7 @@
 #include "SubServer.hpp"
 #include "../../libqtcatchchallenger/Language.hpp"
 #include "../../libqtcatchchallenger/CliClientOptions.hpp"
-#include "../FacilityLibClient.hpp"
+#include "../../libqtcatchchallenger/FacilityLibClient.hpp"
 #include <QTreeWidgetItem>
 #include <QHeaderView>
 #include <iostream>

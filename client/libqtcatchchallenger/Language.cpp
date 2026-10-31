@@ -26,3 +26,18 @@ const QString &Language::getLanguage() const
 {
     return m_lang;
 }
+
+std::string Language::pickLanguage(const std::string &savedLanguage,const bool savedLanguageAvailable,
+                                   const std::unordered_map<std::string,std::string> &languagesByShortName,
+                                   const std::string &systemLanguageName,const std::string &systemLocaleName)
+{
+    if(languagesByShortName.empty())
+        return "en";
+    if(!savedLanguage.empty() && savedLanguageAvailable)
+        return savedLanguage;
+    if(languagesByShortName.find(systemLanguageName)!=languagesByShortName.cend())
+        return languagesByShortName.at(systemLanguageName);
+    if(languagesByShortName.find(systemLocaleName)!=languagesByShortName.cend())
+        return languagesByShortName.at(systemLocaleName);
+    return "en";
+}

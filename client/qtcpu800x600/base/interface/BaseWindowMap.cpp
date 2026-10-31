@@ -4,7 +4,7 @@
 #include "../../../../general/base/CommonSettingsServer.hpp"
 #include "../../../libqtcatchchallenger/maprender/QMap_client.hpp"
 #include "../../../libcatchchallenger/Api_protocol.hpp"
-#include "../AutoArgs.h"
+#include "../../../libqtcatchchallenger/CliClientOptions.hpp"
 #include <QTimer>
 #include <QCoreApplication>
 #include <QKeyEvent>
@@ -228,9 +228,9 @@ void BaseWindow::currentMapLoaded()
     // beat we'd get a half-painted frame on slow VPS / wine64.
     // Mirrors what qtopengl ScreenTransition::mapDisplayedSlot does
     // for the qtopengl client side.
-    if(!AutoArgs::takeScreenshotPath.isEmpty())
+    if(!CliClientOptions::takeScreenshotPath.isEmpty())
     {
-        const QString outPath=AutoArgs::takeScreenshotPath;
+        const QString outPath=CliClientOptions::takeScreenshotPath;
         std::cerr << "AutoArgs: --take-screenshot=" << outPath.toStdString()
                   << ", will save and exit in 500ms" << std::endl;
         QTimer::singleShot(500,this,[this,outPath]{
@@ -247,27 +247,27 @@ void BaseWindow::currentMapLoaded()
             QCoreApplication::quit();
         });
     }
-    if(AutoArgs::closeWhenOnMap)
+    if(CliClientOptions::closeWhenOnMap)
     {
         std::cerr << "AutoArgs: --closewhenonmap, exiting in 1s" << std::endl;
         QTimer::singleShot(1000,QCoreApplication::instance(),&QCoreApplication::quit);
     }
     //--test-dialogoverflow: push a long text into the dialog and self-check it
     //never overflows (the --test-clicksign hook lives in the shared map controller)
-    if(AutoArgs::dialogOverflowTest)
+    if(CliClientOptions::dialogOverflowTest)
     {
         std::cerr << "AutoArgs: --test-dialogoverflow, checking dialog wordwrap/scroll" << std::endl;
         runDialogOverflowSelfTest();
     }
-    if(AutoArgs::closeWhenOnMapAfter>0 && !closeWhenOnMapAfterTimer_.isActive())
+    if(CliClientOptions::closeWhenOnMapAfter>0 && !closeWhenOnMapAfterTimer_.isActive())
     {
-        std::cerr << "AutoArgs: --closewhenonmapafter=" << AutoArgs::closeWhenOnMapAfter
-                  << ", toggling direction each 1s, quitting in " << AutoArgs::closeWhenOnMapAfter << "s" << std::endl;
-        closeWhenOnMapAfterRemaining_=AutoArgs::closeWhenOnMapAfter;
+        std::cerr << "AutoArgs: --closewhenonmapafter=" << CliClientOptions::closeWhenOnMapAfter
+                  << ", toggling direction each 1s, quitting in " << CliClientOptions::closeWhenOnMapAfter << "s" << std::endl;
+        closeWhenOnMapAfterRemaining_=CliClientOptions::closeWhenOnMapAfter;
         connect(&closeWhenOnMapAfterTimer_,&QTimer::timeout,this,&BaseWindow::closeWhenOnMapAfterToggle);
         closeWhenOnMapAfterTimer_.start(1000);
     }
-    if(AutoArgs::dropSendDataAfterOnMap && !CatchChallenger::Api_protocol::dropOutputAfterOnMap)
+    if(CliClientOptions::dropSendDataAfterOnMap && !CatchChallenger::Api_protocol::dropOutputAfterOnMap)
     {
         std::cerr << "AutoArgs: --dropsenddataafteronmap, dropping all client->server traffic from now on" << std::endl;
         CatchChallenger::Api_protocol::dropOutputAfterOnMap=true;
@@ -296,52 +296,8 @@ void BaseWindow::currentMapLoaded()
     #ifndef CATCHCHALLENGER_NOAUDIO
     //sound
     {
-        std::vector<std::string> soundList;
-        const std::string &backgroundsound=mapController->currentBackgroundsound();
-        //map sound
-        if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
-            soundList.push_back(backgroundsound);
-        //zone sound
-        QMap_client *mapFull=mapController->currentMapFull();
-        if(!mapFull->zone.empty())
-            if(QtDatapackClientLoader::datapackLoader->has_zoneExtra(mapFull->zone))
-            {
-                const DatapackClientLoader::ZoneExtra &zoneExtra=QtDatapackClientLoader::datapackLoader->get_zoneExtra(mapFull->zone);
-                if(zoneExtra.audioAmbiance.find(type)!=zoneExtra.audioAmbiance.cend())
-                {
-                    const std::string &backgroundsound=zoneExtra.audioAmbiance.at(type);
-                    if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
-                        soundList.push_back(backgroundsound);
-                }
-            }
-        //general sound
-        if(QtDatapackClientLoader::datapackLoader->has_audioAmbiance(type))
-        {
-            const std::string &backgroundsound=QtDatapackClientLoader::datapackLoader->get_audioAmbiance(type);
-            if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
-                soundList.push_back(backgroundsound);
-        }
-
-        std::string finalSound;
-        unsigned int index=0;
-        while(index<soundList.size())
-        {
-            //search into main datapack
-            const std::string &fileToSearchMain=client->datapackPathMain()+soundList.at(index);
-            if(QFileInfo(QString::fromStdString(fileToSearchMain)).isFile())
-            {
-                finalSound=fileToSearchMain;
-                break;
-            }
-            //search into base datapack
-            const std::string &fileToSearchBase=client->datapackPathBase()+soundList.at(index);
-            if(QFileInfo(QString::fromStdString(fileToSearchBase)).isFile())
-            {
-                finalSound=fileToSearchBase;
-                break;
-            }
-            index++;
-        }
+        const std::string finalSound=QtDatapackClientLoader::datapackLoader->ambianceFile(mapController->currentBackgroundsound(),
+                mapController->currentMapFull()->zone,type,client->datapackPathMain(),client->datapackPathBase());
 
         //set the sound
         if(!finalSound.empty() && currentAmbiance.file!=finalSound)

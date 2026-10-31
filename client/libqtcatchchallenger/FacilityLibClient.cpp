@@ -1,5 +1,5 @@
 #include "FacilityLibClient.hpp"
-#include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "QtDatapackClientLoader.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include <QObject>
 #include <iostream>

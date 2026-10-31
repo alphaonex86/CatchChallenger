@@ -1385,25 +1385,6 @@ void BaseWindow::appendReputationPoint(const std::string &type,const int32_t &po
     #endif
 }
 
-std::string BaseWindow::parseHtmlToDisplay(const std::string &htmlContent)
-{
-    QString newContent=QString::fromStdString(htmlContent);
-    #ifdef NOREMOTE
-    QRegularExpression remote(QRegularExpression::escape("<span class=\"remote\">")+".*"+QRegularExpression::escape("</span>"));
-    remote.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
-    newContent.remove(remote);
-    #endif
-    if(!botHaveQuest(actualBot.botId))//if have not quest
-    {
-        QRegularExpression quest(QRegularExpression::escape("<span class=\"quest\">")+".*"+QRegularExpression::escape("</span>"));
-        quest.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
-        newContent.remove(quest);
-    }
-    newContent.replace("href=\"http","style=\"color:#BB9900;\" href=\"http",Qt::CaseInsensitive);
-    newContent.replace(QRegularExpression("(href=\"http[^>]+>[^<]+)</a>"),"\\1 <img src=\":/images/link.png\" alt=\"\" /></a>");
-    return newContent.toStdString();
-}
-
 void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
 {
     if(objectInUsing.empty())

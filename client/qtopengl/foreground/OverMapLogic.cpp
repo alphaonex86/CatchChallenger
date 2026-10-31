@@ -992,52 +992,8 @@ void OverMapLogic::currentMapLoaded()
     #ifndef CATCHCHALLENGER_NOAUDIO
     //sound
     {
-        std::vector<std::string> soundList;
-        const std::string &backgroundsound=ccmap->mapController.currentBackgroundsound();
-        //map sound
-        if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
-            soundList.push_back(backgroundsound);
-        //zone sound
-        CatchChallenger::QMap_client *mapFull=ccmap->mapController.currentMapFull();
-        if(!mapFull->zone.empty())
-            if(QtDatapackClientLoader::datapackLoader->has_zoneExtra(mapFull->zone))
-            {
-                const QtDatapackClientLoader::ZoneExtra &zoneExtra=QtDatapackClientLoader::datapackLoader->get_zoneExtra(mapFull->zone);
-                if(zoneExtra.audioAmbiance.find(type)!=zoneExtra.audioAmbiance.cend())
-                {
-                    const std::string &backgroundsound=zoneExtra.audioAmbiance.at(type);
-                    if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
-                        soundList.push_back(backgroundsound);
-                }
-            }
-        //general sound
-        if(QtDatapackClientLoader::datapackLoader->has_audioAmbiance(type))
-        {
-            const std::string &backgroundsound=QtDatapackClientLoader::datapackLoader->get_audioAmbiance(type);
-            if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
-                soundList.push_back(backgroundsound);
-        }
-
-        std::string finalSound;
-        unsigned int index=0;
-        while(index<soundList.size())
-        {
-            //search into main datapack
-            const std::string &fileToSearchMain=connexionManager->client->datapackPathMain()+soundList.at(index);
-            if(QFileInfo(QString::fromStdString(fileToSearchMain)).isFile())
-            {
-                finalSound=fileToSearchMain;
-                break;
-            }
-            //search into base datapack
-            const std::string &fileToSearchBase=connexionManager->client->datapackPathBase()+soundList.at(index);
-            if(QFileInfo(QString::fromStdString(fileToSearchBase)).isFile())
-            {
-                finalSound=fileToSearchBase;
-                break;
-            }
-            index++;
-        }
+        const std::string finalSound=QtDatapackClientLoader::datapackLoader->ambianceFile(ccmap->mapController.currentBackgroundsound(),
+                ccmap->mapController.currentMapFull()->zone,type,connexionManager->client->datapackPathMain(),connexionManager->client->datapackPathBase());
 
         //set the sound
         if(!finalSound.empty() && currentAmbianceFile!=finalSound)

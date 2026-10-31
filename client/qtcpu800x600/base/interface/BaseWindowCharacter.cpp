@@ -5,7 +5,7 @@
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../FacilityLibClient.h"
+#include "../../../libqtcatchchallenger/FacilityLibClient.hpp"
 #include "NewGame.h"
 #include <iostream>
 

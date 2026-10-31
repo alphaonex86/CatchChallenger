@@ -2132,6 +2132,45 @@ bool DatapackClientLoader::has_zoneExtra(const std::string &key) const { return 
 size_t DatapackClientLoader::get_audioAmbiance_size() const { return audioAmbiance.size(); }
 const std::string &DatapackClientLoader::get_audioAmbiance(const std::string &key) const { return audioAmbiance.at(key); }
 bool DatapackClientLoader::has_audioAmbiance(const std::string &key) const { return audioAmbiance.find(key)!=audioAmbiance.cend(); }
+
+std::string DatapackClientLoader::ambianceFile(const std::string &mapSound,const std::string &zone,const std::string &mapType,
+                                               const std::string &datapackPathMain,const std::string &datapackPathBase) const
+{
+    std::vector<std::string> soundList;
+    if(!mapSound.empty())
+        soundList.push_back(mapSound);
+    if(!zone.empty() && has_zoneExtra(zone))
+    {
+        const ZoneExtra &zoneExtra=get_zoneExtra(zone);
+        if(zoneExtra.audioAmbiance.find(mapType)!=zoneExtra.audioAmbiance.cend())
+        {
+            const std::string &zoneSound=zoneExtra.audioAmbiance.at(mapType);
+            if(!zoneSound.empty() && !vectorcontainsAtLeastOne(soundList,zoneSound))
+                soundList.push_back(zoneSound);
+        }
+    }
+    if(has_audioAmbiance(mapType))
+    {
+        const std::string &generalSound=get_audioAmbiance(mapType);
+        if(!generalSound.empty() && !vectorcontainsAtLeastOne(soundList,generalSound))
+            soundList.push_back(generalSound);
+    }
+    unsigned int index=0;
+    while(index<soundList.size())
+    {
+        const std::string candidates[2]={datapackPathMain+soundList.at(index),datapackPathBase+soundList.at(index)};
+        unsigned int candidateIndex=0;
+        while(candidateIndex<2)
+        {
+            struct stat fileStat;
+            if(stat(candidates[candidateIndex].c_str(),&fileStat)==0 && S_ISREG(fileStat.st_mode))
+                return candidates[candidateIndex];
+            candidateIndex++;
+        }
+        index++;
+    }
+    return std::string();
+}
 //profileTextList
 size_t DatapackClientLoader::get_profileTextList_size() const { return profileTextList.size(); }
 const DatapackClientLoader::ProfileText &DatapackClientLoader::get_profileText(const uint32_t &key) const { return profileTextList.at(key); }

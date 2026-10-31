@@ -1,7 +1,6 @@
 #include <QApplication>
 #include "mainwindow.h"
 #include "../base/LanguagesSelect.h"
-#include "../base/AutoArgs.h"
 #include "../../libqtcatchchallenger/CerrLineAtomic.hpp"
 #include "../../libqtcatchchallenger/LocalListener.hpp"
 #include "../../libqtcatchchallenger/CliClientOptions.hpp"
@@ -18,41 +17,13 @@ int main(int argc, char *argv[])
      * splice or tear each other's message. Wrap the streams before anything
      * can log. */
     CatchChallenger::CerrLineAtomic::install();
-    AutoArgs::parse(argc,argv);
-    // --take-screenshot wants reproducible PNGs: tile-variant
-    // selectors (lava, plant cycles, follower-NPC offsets) all
-    // call std::rand(), so pin the seed before any of them runs.
-    // Mirrors the same srand(42) qtopengl/main.cpp:344 does for
-    // the same reason — the per-pixel-tolerance diff in
-    // testingcompilationwindows otherwise flaps on every
-    // random-frame draw.
-    if(!AutoArgs::takeScreenshotPath.isEmpty())
-    {
+    if(!CliClientOptions::parse(argc,argv))
+        return 0;
+    // --take-screenshot wants reproducible PNGs: tile-variant selectors (lava,
+    // plant cycles, follower-NPC offsets) all call std::rand(), so pin the seed
+    // before any of them runs (same as qtopengl/main.cpp).
+    if(!CliClientOptions::takeScreenshotPath.isEmpty())
         std::srand(42);
-        // Mirror AutoArgs::takeScreenshotPath into the shared-lib's
-        // CliClientOptions::takeScreenshotPath. The shared
-        // MapVisualiser/MapController code only knows about
-        // CliClientOptions, so without this the follower-NPC
-        // animation timers in MapVisualiser-map.cpp:258 still get
-        // created and tile-cycle the sprite between paint() and
-        // grab(), producing a ~0.83 % per-pixel drift at the player
-        // sprite + follower NPC coords (x=172..243, y=226..315) on
-        // every run. Same gate also forces bot lookAt
-        // "random"/"loop"/"move" to "bottom" in MapController.cpp:281
-        // for deterministic facing.
-        CliClientOptions::takeScreenshotPath=AutoArgs::takeScreenshotPath;
-    }
-    // Mirror the TEST-ONLY flags into the shared CliClientOptions: the click-to-
-    // sign self-test lives in the shared map controller and the dialog-overflow
-    // self-test reads CliClientOptions, so both clients route through it.
-    CliClientOptions::clickSignTest=AutoArgs::clickSignTest;
-    CliClientOptions::clickDoorTest=AutoArgs::clickDoorTest;
-    CliClientOptions::keyboardTest=AutoArgs::keyboardTest;
-    CliClientOptions::dialogOverflowTest=AutoArgs::dialogOverflowTest;
-    CliClientOptions::autosoloClick=AutoArgs::autosoloClick;
-    CliClientOptions::autosoloClickDx=AutoArgs::autosoloClickDx;
-    CliClientOptions::autosoloClickDy=AutoArgs::autosoloClickDy;
-    CliClientOptions::remoteControl=AutoArgs::remoteControl;
     QApplication a(argc, argv);
     a.setApplicationName("client-qtcpu800x600");
     a.setOrganizationName("CatchChallenger");
@@ -116,12 +87,12 @@ int main(int argc, char *argv[])
     //socket. Only wired when --remote-control opened the socket above.
     if(CliClientOptions::remoteControl)
         w.wireRemoteControl(&localListener);
-    if(!AutoArgs::takeScreenshotPath.isEmpty())
+    if(!CliClientOptions::takeScreenshotPath.isEmpty())
         //Screenshot regression needs the window painted before grab().
         w.show();
-    else if(!AutoArgs::host.isEmpty() || !AutoArgs::server.isEmpty() ||
-            !AutoArgs::url.isEmpty() || AutoArgs::closeWhenOnMap ||
-            AutoArgs::dropSendDataAfterOnMap || AutoArgs::autosolo)
+    else if(!CliClientOptions::host.isEmpty() || !CliClientOptions::serverName.isEmpty() ||
+            !CliClientOptions::url.isEmpty() || CliClientOptions::closeWhenOnMap ||
+            CliClientOptions::dropSendDataAfterOnMap || CliClientOptions::autosolo)
         //Automated connect / autosolo / closeWhenOnMap (test & CI
         //path): self-terminates on the map marker, no operator — keep
         //the window off the user's screen. showMinimized() still

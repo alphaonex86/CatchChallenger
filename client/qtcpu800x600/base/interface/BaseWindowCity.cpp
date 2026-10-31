@@ -2,7 +2,7 @@
 #include "ui_BaseWindow.h"
 #include "../../../../general/base/FacilityLib.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../FacilityLibClient.h"
+#include "../../../libqtcatchchallenger/FacilityLibClient.hpp"
 
 #include <QInputDialog>
 

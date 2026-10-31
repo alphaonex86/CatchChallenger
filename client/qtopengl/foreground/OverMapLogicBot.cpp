@@ -1,4 +1,5 @@
 #include "OverMapLogic.hpp"
+#include "../../libqtcatchchallenger/ChatParsing.hpp"
 #include "../ConnexionManager.hpp"
 #include "../background/CCMap.hpp"
 #include "../../libqtcatchchallenger/Language.hpp"
@@ -143,7 +144,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
                 if(text->Attribute("lang")!=NULL && text->Attribute("lang")==language && text->GetText()!=NULL)
                 {
                     std::string textToShow=text->GetText();
-                    textToShow=parseHtmlToDisplay(textToShow);
+                    textToShow=CatchChallenger::ChatParsing::botTextToDisplay(textToShow,botHaveQuest(actualBot.botId));
                     setIG_dialog(QString::fromStdString(textToShow),QString::fromStdString(actualBot.name));
                     return;
                 }
@@ -156,7 +157,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
                 if(text->GetText()!=NULL)
                 {
                     std::string textToShow=text->GetText();
-                    textToShow=parseHtmlToDisplay(textToShow);
+                    textToShow=CatchChallenger::ChatParsing::botTextToDisplay(textToShow,botHaveQuest(actualBot.botId));
                     setIG_dialog(QString::fromStdString(textToShow),QString::fromStdString(actualBot.name));
                     return;
                 }
@@ -540,7 +541,7 @@ void OverMapLogic::showQuestText(const uint32_t &textId)
         }
         index++;
     }
-    std::string textToShow=parseHtmlToDisplay(text);
+    std::string textToShow=CatchChallenger::ChatParsing::botTextToDisplay(text,botHaveQuest(actualBot.botId));
     setIG_dialog(QString::fromStdString(textToShow),QString::fromStdString(actualBot.name));
 }
 
@@ -799,25 +800,6 @@ std::vector<std::pair<uint16_t,std::string> > OverMapLogic::getQuestList(const u
         ++i;
     }
     return entryList;
-}
-
-std::string OverMapLogic::parseHtmlToDisplay(const std::string &htmlContent)
-{
-    QString newContent=QString::fromStdString(htmlContent);
-    #ifdef NOREMOTE
-    QRegularExpression remote(QRegularExpression::escape("<span class=\"remote\">")+".*"+QRegularExpression::escape("</span>"));
-    remote.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
-    newContent.remove(remote);
-    #endif
-    if(!botHaveQuest(actualBot.botId))//if have not quest
-    {
-        QRegularExpression quest(QRegularExpression::escape("<span class=\"quest\">")+".*"+QRegularExpression::escape("</span>"));
-        quest.setPatternOptions(QRegularExpression::InvertedGreedinessOption);
-        newContent.remove(quest);
-    }
-    newContent.replace("href=\"http","style=\"color:#BB9900;\" href=\"http",Qt::CaseInsensitive);
-    newContent.replace(QRegularExpression("(href=\"http[^>]+>[^<]+)</a>"),"\\1 <img src=\":/CC/images/link.png\" alt=\"\" /></a>");
-    return newContent.toStdString();
 }
 
 bool OverMapLogic::nextStepQuest(const CatchChallenger::Quest &quest)

@@ -6,6 +6,7 @@
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
+#include "../../libqtcatchchallenger/ChatInputGuard.hpp"
 
 class MapMonsterPreview;
 class ImagesStrechMiddle;
@@ -74,7 +75,6 @@ public:
     void comboBox_chat_type_currentIndexChanged(int index);
     void new_system_text(const CatchChallenger::Chat_type &chat_type, const std::string &text);
     void new_chat_text(CatchChallenger::Chat_type chat_type,std::string text,std::string pseudo,CatchChallenger::Player_type player_type);
-    void removeNumberForFlood();
 
     void openMonster();
     void updatePlayerNumber(const uint16_t &number,const uint16_t &max_players);
@@ -85,9 +85,7 @@ public:
     virtual void showTip(const std::string &tip) = 0;
     virtual void showPlace(const std::string &place) = 0;
 protected:
-    QTimer stopFlood;
-    int numberForFlood;
-    std::string lastMessageSend;
+    CatchChallenger::ChatInputGuard chatInputGuard;
     ConnexionManager *connexionManager;
     MonsterDetails *monsterDetails;
 

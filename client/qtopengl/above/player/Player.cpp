@@ -1,7 +1,7 @@
 #include "Player.hpp"
 #include "../../../libqtcatchchallenger/Language.hpp"
 #include "../../ConnexionManager.hpp"
-#include "../../FacilityLibClient.hpp"
+#include "../../../libqtcatchchallenger/FacilityLibClient.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../../general/base/CommonDatapack.hpp"
 #include <QPainter>

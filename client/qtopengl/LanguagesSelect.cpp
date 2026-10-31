@@ -1,4 +1,5 @@
 #include "LanguagesSelect.hpp"
+#include "../libqtcatchchallenger/Language.hpp"
 #include "../qt/Options.hpp"
 #include "../../general/base/tinyXML2/tinyxml2.hpp"
 
@@ -119,22 +120,8 @@ std::string LanguagesSelect::getCurrentLanguages()
 std::string LanguagesSelect::getTheRightLanguage() const
 {
     const std::string &language=Options::options.getLanguage();
-    if(languagesByShortName.size()==0)
-        return "en";
-    else if(language.empty() || languagesByMainCode.find(language)==languagesByMainCode.cend())
-    {
-        if(languagesByShortName.find(QLocale::languageToString(QLocale::system().language()).toStdString())!=
-                languagesByShortName.cend())
-            return languagesByShortName.at(QLocale::languageToString(QLocale::system().language()).toStdString());
-        else if(languagesByShortName.find(QLocale::system().name().toStdString())!=
-                languagesByShortName.cend())
-            return languagesByShortName.at(QLocale::system().name().toStdString());
-        else
-            return "en";
-    }
-    else
-        return language;
-    return "en";
+    return ::Language::pickLanguage(language,languagesByMainCode.find(language)!=languagesByMainCode.cend(),languagesByShortName,
+                                    QLocale::languageToString(QLocale::system().language()).toStdString(),QLocale::system().name().toStdString());
 }
 
 void LanguagesSelect::setCurrentLanguage(const std::string &newLanguage)

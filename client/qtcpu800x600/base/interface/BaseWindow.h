@@ -280,7 +280,6 @@ private slots:
 
     //bot
     void goToBotStep(const uint8_t &step);
-    std::string parseHtmlToDisplay(const std::string &htmlContent);
 
     //fight
     void wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);

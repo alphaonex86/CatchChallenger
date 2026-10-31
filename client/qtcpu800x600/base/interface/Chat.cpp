@@ -1,6 +1,6 @@
 #include "Chat.h"
 #include "ui_Chat.h"
-#include "../ChatParsing.hpp"
+#include "../../../libqtcatchchallenger/ChatParsing.hpp"
 #include "../../../libqtcatchchallenger/Api_client_real.hpp"
 #include "../../../libqtcatchchallenger/maprender/MapController.hpp"
 
@@ -15,16 +15,11 @@ Chat::Chat(QWidget *parent) :
     ui(new Ui::Chat)
 {
     ui->setupUi(this);
-    if(!connect(&stopFlood,&QTimer::timeout,this,&Chat::removeNumberForFlood,Qt::QueuedConnection))
-        abort();
     if(!connect(ui->comboBox_chat_type,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&Chat::comboBox_chat_type_currentIndexChanged))
         abort();
     if(!connect(ui->lineEdit_chat_text,&QLineEdit::returnPressed,this,&Chat::lineEdit_chat_text_returnPressed))
         abort();
 
-    stopFlood.setSingleShot(false);
-    stopFlood.start(1500);
-    numberForFlood=0;
     client=NULL;
 
     setClan(false);
@@ -80,41 +75,15 @@ void Chat::on_pushButtonChat_toggled(bool checked)
 void Chat::lineEdit_chat_text_returnPressed()
 {
     QString text=ui->lineEdit_chat_text->text();
-    text.remove("\n");
-    text.remove("\r");
-    text.remove("\t");
-    if(text.isEmpty())
+    const ChatInputGuard::Verdict verdict=chatInputGuard.check(text);
+    if(verdict==ChatInputGuard::Verdict_Nothing)
         return;
-    if(text.contains(QRegularExpression("^ +$")))
+    ui->lineEdit_chat_text->clear();
+    if(verdict==ChatInputGuard::Verdict_Refused)
     {
-        ui->lineEdit_chat_text->clear();
-        new_system_text(Chat_type_system,"Space text not allowed");
+        new_system_text(Chat_type_system,chatInputGuard.refusal());
         return;
     }
-    if(text.size()>256)
-    {
-        ui->lineEdit_chat_text->clear();
-        new_system_text(Chat_type_system,"Message too long");
-        return;
-    }
-    if(!text.startsWith('/'))
-    {
-        if(text.toStdString()==lastMessageSend)
-        {
-            ui->lineEdit_chat_text->clear();
-            new_system_text(Chat_type_system,"Send message like as previous");
-            return;
-        }
-        if(numberForFlood>2)
-        {
-            ui->lineEdit_chat_text->clear();
-            new_system_text(Chat_type_system,"Stop flood");
-            return;
-        }
-    }
-    numberForFlood++;
-    lastMessageSend=text.toStdString();
-    ui->lineEdit_chat_text->setText(QString());
     if(!text.startsWith("/pm "))
     {
         Chat_type chat_type;
@@ -161,13 +130,6 @@ void Chat::lineEdit_chat_text_returnPressed()
         client->sendPM(text.toStdString(),pseudo.toStdString());
         new_chat_text(Chat_type_pm,text.toStdString(),tr("To: ").toStdString()+pseudo.toStdString(),Player_type_normal);
     }
-}
-
-void Chat::removeNumberForFlood()
-{
-    if(numberForFlood<=0)
-        return;
-    numberForFlood--;
 }
 
 void Chat::new_system_text(CatchChallenger::Chat_type chat_type,std::string text)
