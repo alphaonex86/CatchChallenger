@@ -1488,8 +1488,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 case 0x03:
                 {
                     PlayerMonster monster;
-                    if(!dataToPlayerMonster(data+pos,size-pos,monster))
+                    //returns the size read, -1 on error
+                    const int returnVar=dataToPlayerMonster(data+pos,size-pos,monster);
+                    if(returnVar<0)
+                    {
+                        parseError("Protocol wrong or corrupted","wrong monster for trade add");
                         return false;
+                    }
+                    pos+=returnVar;
                     tradeAddTradeMonster(monster);
                 }
                 break;

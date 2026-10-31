@@ -801,15 +801,21 @@ def run_client(build_dir, bin_name, args, label, timeout=CLIENT_TIMEOUT,
     return False
 
 
+def _isolated_home_env(prefix):
+    """extra_env for run_client: a fresh HOME/XDG tree, never the operator's (its cached
+    datapack, hash and stored account would leak into the test)."""
+    import tempfile
+    home = tempfile.mkdtemp(prefix=prefix, dir=test_config.TMPFS_ROOT)
+    return {"HOME": home, "XDG_DATA_HOME": os.path.join(home, "share"),
+            "XDG_CONFIG_HOME": os.path.join(home, "config"),
+            "XDG_CACHE_HOME": os.path.join(home, "cache")}
+
+
 def run_reconnect_cached_datapack(build_dir, bin_name, label, character):
     """Two logins sharing ONE client data dir (isolated, never the operator's): the
     second finds the base datapack cached and must not request it again -
     run_client() fails on that double request."""
-    import tempfile
-    home = tempfile.mkdtemp(prefix="cc-reconnect-", dir=test_config.TMPFS_ROOT)
-    env = {"HOME": home, "XDG_DATA_HOME": os.path.join(home, "share"),
-           "XDG_CONFIG_HOME": os.path.join(home, "config"),
-           "XDG_CACHE_HOME": os.path.join(home, "cache")}
+    env = _isolated_home_env("cc-reconnect-")
     args = ["--host", SERVER_HOST, "--port", SERVER_PORT, "--autologin",
             "--character", character, "--closewhenonmap"]
     if run_client(build_dir, bin_name, args, label + ": first login", timeout=30,
@@ -2108,6 +2114,145 @@ def run_qtopengl_nurse_heal_link_channel_test(dp_name, mc, failed_cases):
         s.kill()
 
 
+# ---- solo savegame (SQLite) edits shared by the channel tests ----
+# The savegame's .xxh32 companion is a SCHEMA checksum (xxh32 of the embedded
+# :/catchchallenger-sqlite.sql), NOT a data checksum (see
+# client/libqtcatchchallenger/SoloDatabaseInit.cpp), so editing rows keeps it valid.
+def _solo_db_path(tmpdir):
+    return os.path.join(tmpdir, "home", ".local", "share", "CatchChallenger",
+                        "client", "solo", "catchchallenger.db.sqlite")
+
+
+def _solo_decode_items(hexstr):
+    """character.item BLOB: delta-encoded (uint16 id-delta, uint32 qty) entries
+    (see server ClientHeavyLoadSelectCharCommon.cpp)."""
+    import struct
+    raw = bytes.fromhex(hexstr)
+    out = {}
+    pos = 0
+    last = 0
+    while pos + 6 <= len(raw):
+        delta = struct.unpack_from("<H", raw, pos)[0]
+        pos += 2
+        iid = (delta + last) & 0xFFFF
+        last = iid
+        qty = struct.unpack_from("<I", raw, pos)[0]
+        pos += 4
+        out[iid] = qty
+    return out
+
+
+def _solo_encode_items(items):
+    import struct
+    out = b""
+    last = 0
+    keys = sorted(items.keys())
+    i = 0
+    while i < len(keys):
+        iid = keys[i]
+        out += struct.pack("<H", (iid - last) & 0xFFFF) + struct.pack("<I", items[iid])
+        last = iid
+        i += 1
+    return out.hex()
+
+
+def _solo_db_grant_item(db_path, item_id):
+    """Give one item_id to the solo character. Returns (ok, error)."""
+    import sqlite3
+    con = sqlite3.connect(db_path)
+    try:
+        cur = con.cursor()
+        cur.execute("SELECT item FROM character WHERE id=1")
+        row = cur.fetchone()
+        if row is None:
+            return False, "no character row in savegame"
+        items = _solo_decode_items(row[0])
+        items[item_id] = 1
+        cur.execute("UPDATE character SET item=? WHERE id=1", (_solo_encode_items(items),))
+        con.commit()
+    finally:
+        con.close()
+    return True, ""
+
+
+def _solo_db_set_first_monster(db_path, monster, level, xp, hp):
+    """Rewrite the first team monster of the solo character (hp must stay under the
+    max of that monster at that level). Returns (ok, error)."""
+    import sqlite3
+    con = sqlite3.connect(db_path)
+    try:
+        cur = con.cursor()
+        cur.execute("SELECT id FROM monster WHERE character=1 ORDER BY position LIMIT 1")
+        row = cur.fetchone()
+        if row is None:
+            return False, "no monster row in savegame"
+        cur.execute("UPDATE monster SET monster=?,level=?,xp=?,hp=? WHERE id=?", (monster, level, xp, hp, row[0]))
+        con.commit()
+    finally:
+        con.close()
+    return True, ""
+
+
+def _walk_city_water_until_fight(s, max_moves=60):
+    """From the city spawn (15,26) step onto the water tiles (15,27)/(16,27) just
+    below (needs the swim item) and oscillate until a wild water fight starts.
+    The encounter is a per-step countdown seeded 0..15. Returns (ok, detail)."""
+    def pos():
+        st = s.state()
+        return (st[1], st[2]) if st else None
+
+    def step(key):
+        before = pos()
+        n = 0
+        while n < 2:
+            s.send(f"KEY {key}")
+            time.sleep(clamp_local(0.8))
+            if s.infight():
+                return pos()
+            if pos() != before:
+                break
+            n += 1
+        return pos()
+
+    step("Down")
+    if s.infight():
+        return True, "fight on the first water step"
+    if pos() != (15, 27):
+        return False, f"could not enter water tile (15,27); at {pos()} (item gating not honoured?)"
+    moves = 0
+    i = 0
+    while moves < max_moves:
+        if s.infight():
+            return True, f"fight after {moves} water steps"
+        key = "Right" if (i % 2 == 0) else "Left"
+        i += 1
+        before = pos()
+        now = step(key)
+        if s.infight():
+            return True, f"fight after {moves} water steps"
+        if now != before:
+            moves += 1
+        if now not in [(15, 27), (16, 27)]:
+            return False, f"wandered off the water tiles to {now}"
+    return False, f"no water fight after {moves} water steps; {s.send('GETFIGHT')}"
+
+
+def _city_swim_item():
+    """The Water layer's walkOn gating item id, read from the datapack layers.xml
+    (not hardcoded). Returns (item, error)."""
+    import xml.etree.ElementTree as ET
+    layers_path = os.path.join(CLIENT_GL_BUILD, "datapack", "internal", "map", "layers.xml")
+    if not os.path.isfile(layers_path):
+        return -1, f"layers.xml not found at {layers_path}"
+    try:
+        for ent in ET.parse(layers_path).getroot().findall("monstersCollision"):
+            if ent.get("layer") == "Water" and ent.get("type") == "walkOn" and ent.get("item"):
+                return int(ent.get("item")), ""
+    except Exception as e:
+        return -1, f"failed to parse layers.xml: {e}"
+    return -1, "no Water walkOn gating item in layers.xml"
+
+
 def run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases):
     """Channel-driven WATER/FISH scenario from TOTEST.md: 'edit the db to have the
     swim/fish item, then fight a water monster'.
@@ -2132,74 +2277,14 @@ def run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases):
 
     No production code is modified; the only mutation is the isolated solo
     savegame DB the harness itself owns."""
-    import struct, sqlite3
-    import xml.etree.ElementTree as ET
     case = f"qtopengl water swim-item DB-grant -> water fight ({dp_name} {mc})"
     if not should_run(case, failed_cases):
         return
     print(f"\n{C_CYAN}--- water/fish DB-edit + water fight: {dp_name} {mc} ---{C_RESET}\n")
-
-    # --- detect the Water walkOn gating item id from the datapack (no hardcode) ---
-    layers_path = os.path.join(CLIENT_GL_BUILD, "datapack", "internal", "map", "layers.xml")
-    if not os.path.isfile(layers_path):
-        log_fail(case, f"layers.xml not found at {layers_path}")
-        return
-    swim_item = -1
-    try:
-        for ent in ET.parse(layers_path).getroot().findall("monstersCollision"):
-            if ent.get("layer") == "Water" and ent.get("type") == "walkOn" and ent.get("item"):
-                swim_item = int(ent.get("item"))
-                break
-    except Exception as e:
-        log_fail(case, f"failed to parse layers.xml: {e}")
-        return
+    swim_item, err = _city_swim_item()
     if swim_item < 0:
-        log_fail(case, "no Water walkOn gating item in layers.xml")
+        log_fail(case, err)
         return
-
-    # --- inventory BLOB codec: delta-encoded (uint16 id-delta, uint32 qty) ---
-    def decode_items(hexstr):
-        raw = bytes.fromhex(hexstr)
-        out = {}
-        pos = 0
-        last = 0
-        while pos + 6 <= len(raw):
-            delta = struct.unpack_from("<H", raw, pos)[0]
-            pos += 2
-            iid = (delta + last) & 0xFFFF
-            last = iid
-            qty = struct.unpack_from("<I", raw, pos)[0]
-            pos += 4
-            out[iid] = qty
-        return out
-
-    def encode_items(items):
-        out = b""
-        last = 0
-        keys = sorted(items.keys())
-        i = 0
-        while i < len(keys):
-            iid = keys[i]
-            out += struct.pack("<H", (iid - last) & 0xFFFF) + struct.pack("<I", items[iid])
-            last = iid
-            i += 1
-        return out.hex()
-
-    def grant_item(db_path, item_id):
-        con = sqlite3.connect(db_path)
-        try:
-            cur = con.cursor()
-            cur.execute("SELECT item FROM character WHERE id=1")
-            row = cur.fetchone()
-            if row is None:
-                return False, "no character row in savegame"
-            items = decode_items(row[0])
-            items[item_id] = 1
-            cur.execute("UPDATE character SET item=? WHERE id=1", (encode_items(items),))
-            con.commit()
-        finally:
-            con.close()
-        return True, ""
 
     # --- run 1: create the fresh savegame, confirm swim item absent ---
     s1 = _GLChannelSession(mc)
@@ -2211,8 +2296,7 @@ def run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases):
             print(f"  | {l}")
         return
     save_dir = s1.tmpdir
-    db_path = os.path.join(save_dir, "home", ".local", "share", "CatchChallenger",
-                           "client", "solo", "catchchallenger.db.sqlite")
+    db_path = _solo_db_path(save_dir)
     inv1 = s1.inv()
     s1.kill()
     if not os.path.isfile(db_path):
@@ -2223,7 +2307,7 @@ def run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases):
         return
 
     # --- grant the swim item in the savegame DB (schema checksum unaffected) ---
-    granted, gerr = grant_item(db_path, swim_item)
+    granted, gerr = _solo_db_grant_item(db_path, swim_item)
     if not granted:
         log_fail(case, f"DB item-grant failed: {gerr}")
         return
@@ -2244,64 +2328,188 @@ def run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases):
             log_fail(case, f"swim item {swim_item} not loaded after DB grant: {inv2}")
             return
 
-        # helper: step one tile in a direction (turn then move; at most 2 presses)
-        def pos():
-            st = s2.state()
-            return (st[1], st[2]) if st else None
-
-        def step(key):
-            before = pos()
-            n = 0
-            while n < 2:
-                s2.send(f"KEY {key}")
-                time.sleep(clamp_local(0.8))
-                if s2.infight():
-                    return pos()
-                if pos() != before:
-                    break
-                n += 1
-            return pos()
-
-        # spawn is city (15,26); the two city water tiles are (15,27) and (16,27),
-        # directly below the spawn. Without the swim item the next move is refused.
-        step("Down")
-        on_water = pos()
-        if on_water != (15, 27):
-            log_fail(case, f"could not enter water tile (15,27) with swim item {swim_item}; "
-                           f"at {on_water} (item gating not honoured?)")
-            return
-
-        # oscillate on the two water tiles until a wild water fight starts. The
-        # encounter is a per-step countdown seeded 0..15, so ~16 water steps suffice;
-        # allow a wide margin.
-        won = False
-        moves = 0
-        i = 0
-        while moves < 60 and not won:
-            if s2.infight():
-                won = True
-                break
-            key = "Right" if (i % 2 == 0) else "Left"
-            i += 1
-            before = pos()
-            now = step(key)
-            if s2.infight():
-                won = True
-                break
-            if now != before:
-                moves += 1
-            if now not in [(15, 27), (16, 27)]:
-                log_fail(case, f"wandered off the water tiles to {now}")
-                return
-        if not won:
-            log_fail(case, f"no water fight after {moves} water steps; {s2.send('GETFIGHT')}")
+        fought, detail = _walk_city_water_until_fight(s2)
+        if not fought:
+            log_fail(case, detail)
             for l in s2.tail():
                 print(f"  | {l}")
             return
         log_pass(case, f"swim item {swim_item} granted via savegame DB; entered water; "
-                       f"water-monster fight after {moves} water steps")
+                       f"water-monster {detail}")
     finally:
         s2.kill()
+
+
+# 640x480 offscreen viewport: Battle "Next" (message bar, right) and the evolution
+# screen button (Cancel while it runs, OK at the end), see Battle::paint/Animation::paint
+_GL_BATTLE_NEXT = "CLICKSCREEN 564 416"
+_GL_EVOLUTION_BUTTON = "CLICKSCREEN 320 302"
+
+
+def _monster_level_xp(monster_id, level):
+    """XP needed to leave `level` for monster_id: the curve of
+    general/base/fight/FightLoaderMonster.cpp (pow(level,p)*xp_max/pow(100,p)).
+    Returns -1 when the datapack has no such monster."""
+    import xml.etree.ElementTree as ET
+    path = os.path.join(CLIENT_GL_BUILD, "datapack", "internal", "monsters", "monster.xml")
+    for m in ET.parse(path).getroot().findall("monster"):
+        if m.get("id") == str(monster_id):
+            p = float(m.get("pow", "1"))
+            xp_max = int(m.get("xp_for_max_level", m.get("xp_max", "0")))
+            return int(pow(level, p)) * xp_max // int(pow(100, p))
+    return -1
+
+
+def _first_team_monster(s):
+    team = s.team()
+    return team[0] if team else None
+
+
+def _win_wild_fight(s, won):
+    """Attack until won() (the client stays in fight until "You win!" is clicked,
+    and one more attack on the KO wild monster gets the client kicked), then press
+    Next until the Battle screen calls win() -> back to the map (evolution check)."""
+    s.send(_GL_BATTLE_NEXT, 0.8)          # dismiss the presentation
+    j = 0
+    while j < 30 and s.infight() and not won():
+        s.send("FIGHTSKILL 201", 0.8)      # starter skill Tackle
+        j += 1
+    if not won():
+        return False
+    j = 0
+    while j < 10 and s.infight():
+        s.send(_GL_BATTLE_NEXT, 0.8)
+        j += 1
+    return not s.infight()
+
+
+def _restart_on_save(mc, save_dir):
+    s = _GLChannelSession(mc)
+    s.tmpdir = save_dir
+    ok, err = s.start()
+    return s, ok, err
+
+
+def run_qtopengl_evolution_channel_test(dp_name, mc, failed_cases):
+    """Monster evolution end to end against the embedded server, checked on the
+    savegame the SERVER wrote (restart = data reloaded from the server DB):
+      * item: evolution item 42 on monster 39 -> 40 (packet 0x10 must reach the
+        server; it used to be applied twice locally and never sent);
+      * level up, animation completed: monster 54 at level 17 one XP short of 18
+        (its evolution level) wins a wild water fight -> the evolution screen runs
+        to the end -> 0x0F confirm (it used to be 2 bytes: the server kicked) -> 55;
+      * level up, Cancel pressed: nothing sent, still 54 after the restart.
+    The savegame is edited between runs like the water test (rows only)."""
+    swim_item, err = _city_swim_item()
+    cases = [("item", f"qtopengl evolution by item reaches the server ({dp_name} {mc})"),
+             ("level", f"qtopengl evolution by level up, completed, reaches the server ({dp_name} {mc})"),
+             ("cancel", f"qtopengl evolution by level up, cancelled, nothing sent ({dp_name} {mc})")]
+    i = 0
+    while i < len(cases):
+        kind, case = cases[i]
+        if should_run(case, failed_cases):
+            print(f"\n{C_CYAN}--- evolution over channel ({kind}): {dp_name} {mc} ---{C_RESET}\n")
+            if swim_item < 0:
+                log_fail(case, err)
+            else:
+                _run_evolution_case(kind, case, mc, swim_item)
+        i += 1
+
+
+def _run_evolution_case(kind, case, mc, swim_item):
+    # run 1: fresh savegame
+    s1 = _GLChannelSession(mc)
+    ok, serr = s1.start()
+    s1.kill()
+    if not ok:
+        log_fail(case, f"run1 start: {serr}")
+        for l in s1.tail(): print(f"  | {l}")
+        return
+    save_dir = s1.tmpdir
+    db_path = _solo_db_path(save_dir)
+    if kind == "item":
+        from_id, to_id = 39, 40
+        done, derr = _solo_db_set_first_monster(db_path, from_id, 5, 0, 1)
+        if done:
+            done, derr = _solo_db_grant_item(db_path, 42)
+    else:
+        from_id, to_id = 54, 55
+        xp = _monster_level_xp(from_id, 17)
+        if xp <= 0:
+            log_fail(case, f"monster {from_id} not in the datapack")
+            return
+        # 10 hp: under the level 17 max, enough against a level 2-5 wild monster
+        done, derr = _solo_db_set_first_monster(db_path, from_id, 17, xp - 1, 10)
+        if done:
+            done, derr = _solo_db_grant_item(db_path, swim_item)
+    if not done:
+        log_fail(case, f"savegame edit failed: {derr}")
+        return
+    # run 2: evolve
+    s2, ok, serr = _restart_on_save(mc, save_dir)
+    detail = ""
+    try:
+        if not ok:
+            log_fail(case, f"run2 start: {serr}")
+            for l in s2.tail(): print(f"  | {l}")
+            return
+        first = _first_team_monster(s2)
+        if first is None or first[0] != from_id:
+            log_fail(case, f"savegame edit not loaded: team={s2.team()}")
+            return
+        if kind == "item":
+            s2.send("FIGHTITEM 42 0")
+            if not s2.wait(lambda: (_first_team_monster(s2) or (0,))[0] == to_id, timeout=10):
+                log_fail(case, f"item 42 did not evolve {from_id}; team={s2.team()}")
+                for l in s2.tail(): print(f"  | {l}")
+                return
+        else:
+            fought, fdetail = _walk_city_water_until_fight(s2)
+            if not fought:
+                log_fail(case, fdetail)
+                for l in s2.tail(): print(f"  | {l}")
+                return
+            if not _win_wild_fight(s2, lambda: (_first_team_monster(s2) or (0, 0))[1] >= 18):
+                log_fail(case, f"wild fight not won (no level 18); team={s2.team()} {s2.send('GETFIGHT')}")
+                for l in s2.tail(): print(f"  | {l}")
+                return
+            if kind == "cancel":
+                time.sleep(1.0)
+                s2.send(_GL_EVOLUTION_BUTTON)                 # Cancel while it runs
+                time.sleep(6.0)                               # longer than the animation
+                if _first_team_monster(s2)[0] != from_id:
+                    log_fail(case, f"cancelled evolution still evolved; team={s2.team()}")
+                    return
+                s2.send(_GL_EVOLUTION_BUTTON)                 # OK
+            else:
+                if not s2.wait(lambda: (_first_team_monster(s2) or (0,))[0] == to_id, timeout=15):
+                    log_fail(case, f"evolution screen did not evolve {from_id}; team={s2.team()}")
+                    for l in s2.tail(): print(f"  | {l}")
+                    return
+                s2.send(_GL_EVOLUTION_BUTTON)                 # OK
+        time.sleep(2.0)
+        if s2.proc.poll() is not None or s2.state() is None:
+            log_fail(case, f"client disconnected/kicked after the evolution (rc={s2.proc.poll()})")
+            for l in s2.tail(): print(f"  | {l}")
+            return
+        detail = f"local team {s2.team()}"
+    finally:
+        s2.kill()
+    # run 3: the server state, reloaded from its savegame
+    expected = from_id if kind == "cancel" else to_id
+    s3, ok, serr = _restart_on_save(mc, save_dir)
+    try:
+        if not ok:
+            log_fail(case, f"run3 start: {serr}")
+            for l in s3.tail(): print(f"  | {l}")
+            return
+        first = _first_team_monster(s3)
+        if first is None or first[0] != expected:
+            log_fail(case, f"server kept {first} (expected monster {expected}); {detail}")
+            return
+        log_pass(case, f"server savegame has monster {expected}; {detail}")
+    finally:
+        s3.kill()
 
 
 def run_qtopengl_cave_fight_loss_nocrash_channel_test(dp_name, mc, failed_cases):
@@ -3061,6 +3269,7 @@ def main():
                 run_qtopengl_house2_click_bots_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_nurse_heal_link_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_water_fish_dbedit_channel_test(dp_name, mc, failed_cases)
+                run_qtopengl_evolution_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_cave_fight_loss_nocrash_channel_test(dp_name, mc, failed_cases)
                 run_qtopengl_sign_keyboard_channel_test(dp_name, mc, failed_cases)
 
@@ -3174,7 +3383,8 @@ def main():
                         "--closewhenonmap"],
                        "qtcpu800x600 connect to server",
                        timeout=30,
-                       success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+                       success_marker="MapVisualiserPlayer::mapDisplayedSlot()",
+                       extra_env=_isolated_home_env("cc-connect-"))
 
         if gl_ok and should_run("qtopengl connect to server", failed_cases):
             run_client(CLIENT_GL_BUILD, CLIENT_GL_BIN,
@@ -3183,7 +3393,8 @@ def main():
                         "--closewhenonmap"],
                        "qtopengl connect to server",
                        timeout=30,
-                       success_marker="MapVisualiserPlayer::mapDisplayedSlot()")
+                       success_marker="MapVisualiserPlayer::mapDisplayedSlot()",
+                       extra_env=_isolated_home_env("cc-connect-"))
 
         if cpu_ok and should_run("qtcpu800x600 reconnect with cached datapack", failed_cases):
             run_reconnect_cached_datapack(CLIENT_CPU_BUILD, CLIENT_CPU_BIN,

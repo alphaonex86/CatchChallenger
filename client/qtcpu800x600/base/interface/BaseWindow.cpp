@@ -536,7 +536,8 @@ void BaseWindow::connectAllSignals()
     if(!connect(client,&CatchChallenger::Api_client_real::QtrecipeUsed,     this,&BaseWindow::recipeUsed))
         abort();
     //trade
-    if(!connect(client,&CatchChallenger::Api_client_real::QttradeRequested,             this,&BaseWindow::tradeRequested))
+    //queued: the slot opens a modal dialog, its event loop must not run inside the packet parse (re-entrant parse)
+    if(!connect(client,&CatchChallenger::Api_client_real::QttradeRequested,             this,&BaseWindow::tradeRequested,Qt::QueuedConnection))
         abort();
     if(!connect(client,&CatchChallenger::Api_client_real::QttradeAcceptedByOther,       this,&BaseWindow::tradeAcceptedByOther))
         abort();
@@ -570,7 +571,7 @@ void BaseWindow::connectAllSignals()
     if(!connect(client,&CatchChallenger::Api_client_real::QthaveBuyFactoryObject,       this,&BaseWindow::haveBuyFactoryObject))
         abort();
     //battle
-    if(!connect(client,&CatchChallenger::Api_client_real::QtbattleRequested,            this,&BaseWindow::battleRequested))
+    if(!connect(client,&CatchChallenger::Api_client_real::QtbattleRequested,            this,&BaseWindow::battleRequested,Qt::QueuedConnection))
         abort();
     if(!connect(client,&CatchChallenger::Api_client_real::QtbattleAcceptedByOther,      this,&BaseWindow::battleAcceptedByOther))
         abort();

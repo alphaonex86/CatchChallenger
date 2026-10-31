@@ -168,7 +168,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         }
         normalOutput(public_and_private_informations.public_informations.pseudo+" have take to "+arguments.at(1)+" the item with id: "+std::to_string(objectId)+" in quantity: "+std::to_string(quantity));
 
-        if(!ClientList::list->isNull(indexConnected))
+        if(ClientList::list->isNull(indexConnected))
         {
             receiveSystemText("player is not connected, usage: /take objectId player [quantity=1]");
             return;
@@ -311,7 +311,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
 
-        if(!ClientList::list->isNull(indexConnected))
+        if(ClientList::list->isNull(indexConnected))
         {
             receiveSystemText("player is not connected/bug");
             return;
@@ -367,7 +367,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
 
-        if(!ClientList::list->isNull(indexConnected))
+        if(ClientList::list->isNull(indexConnected))
         {
             receiveSystemText("player is not connected/bug");
             return;
@@ -381,7 +381,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         }
         if(client.getInTrade())
         {
-            receiveSystemText(extraText+" is already in battle");
+            receiveSystemText(extraText+" is already in trade");
             return;
         }
         if(!otherPlayerIsInRange(client))

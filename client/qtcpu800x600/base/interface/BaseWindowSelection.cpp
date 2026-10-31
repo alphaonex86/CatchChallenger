@@ -258,8 +258,9 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             //get the right monster
             tradeCurrentMonstersPosition.push_back(monsterPosition);
             tradeCurrentMonsters.push_back(playerMonster.at(monsterPosition));
-            client->removeMonsterByPosition(monsterPosition);
+            //send before the local remove: addMonsterByPosition() rejects a position past the shrunk team (the last monster was never sent)
             client->addMonsterByPosition(monsterPosition);
+            client->removeMonsterByPosition(monsterPosition);
             QListWidgetItem *item=new QListWidgetItem();
             item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra(tradeCurrentMonsters.back().monster).name));
             item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.back().level));

@@ -25,8 +25,9 @@ void Client::registerBattleRequest(Client &otherPlayerBattle)
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(otherPlayerBattle->public_and_private_informations.public_informations.pseudo+" have requested battle with you");
     #endif
-    this->otherPlayerBattle=otherPlayerBattle.getOtherPlayerBattle();
-    otherPlayerBattle.otherPlayerBattle=getOtherPlayerBattle();
+    //link both players: the accept is looked up from either side (it read getOtherPlayerBattle(), still unset: the battle never started)
+    this->otherPlayerBattle=otherPlayerBattle.getIndexConnect();
+    otherPlayerBattle.otherPlayerBattle=getIndexConnect();
 
     //send the network reply
     uint32_t posOutput=0;
